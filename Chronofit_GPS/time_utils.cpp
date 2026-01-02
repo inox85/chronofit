@@ -1,0 +1,291 @@
+#include "time_utils.h"
+#include <TimeLib.h>  // se usi TimeLib
+#include "globals.h"
+#include "constants.h"
+#include <Arduino.h>
+#include <ArduinoJson.h>
+#include "printer.h"
+#include "services_serial.h"
+#include <LittleFS.h>
+#include "debug.h"
+#include "routes.h"
+#include "params.h"
+#include "diagnostic.h"
+#include "settings.h"
+
+// void updateTime(int hh, int mm, int ss) {
+
+//     ss = (ss + 1) % 60;
+//     if (ss == 0) {
+//        mm = (mm + 1) % 60;
+//        if (mm == 0) hh = (hh + 1) % 24;
+//     }
+
+//     setTime(hh + utcOffset, mm, ss, day(), month(), year());  // aggiorna l’orario in Timelib
+// }
+
+
+PreciseTime getPreciseTime() {
+    PreciseTime t;
+
+    uint64_t rawUs = micros64() - syncReference;
+    uint64_t elapsedUs = correctedElapsedUs(rawUs);
+
+    uint32_t elapsedMs = (elapsedUs + 500) / 1000;
+
+    t.ms = elapsedMs % 1000;
+
+    uint32_t totalSec = ppsS + elapsedMs / 1000;
+    t.ss = totalSec % 60;
+
+    uint32_t totalMin = ppsM + totalSec / 60;
+    t.mm = totalMin % 60;
+
+    t.hh = (ppsH + totalMin / 60) % 24;
+
+    return t;
+}
+
+PreciseTime getPreciseSensorTime(int i) {
+    PreciseTime t;
+
+    uint64_t rawUs = sensorTime[i] - syncReference;
+    uint64_t elapsedUs = correctedElapsedUs(rawUs);
+    
+    uint32_t elapsedMs = (elapsedUs + 500) / 1000;
+
+    t.ms = elapsedMs % 1000;
+
+    uint32_t totalSec = ppsS + elapsedMs / 1000;
+    t.ss = totalSec % 60;
+
+    uint32_t totalMin = ppsM + totalSec / 60;
+    t.mm = totalMin % 60;
+
+    t.hh = (ppsH + totalMin / 60) % 24;
+
+    return t;
+}
+
+
+void checkPointRoutine(int i) {
+
+  PreciseTime t = getPreciseSensorTime(i);
+
+  uint16_t ms = t.ms;
+  uint8_t hh = t.hh;
+  uint8_t mm = t.mm;
+  uint8_t ss = t.ss;
+
+  // 🔹 Crea il JSON base
+  StaticJsonDocument<256> checkpoint;
+  checkpoint["lineNumber"] = i+1;
+  checkpoint["lineId"] = lineIds[i];
+  checkpoint["competitor"] = competitors[i];
+  checkpoint["hour"] = hh;
+  checkpoint["minute"] = mm;
+  checkpoint["second"] = ss;
+  checkpoint["millis"] = ms;
+
+  // // 🔹 Calcola il prossimo indice
+  // int sessionRowIndex = 0;
+
+  // // Leggi l’ultimo indice dal file se esiste
+  // File file = LittleFS.open("/session.json", "r");
+  // if (file) {
+  //     while (file.available()) {
+  //         String line = file.readStringUntil('\n');
+  //         DynamicJsonDocument tmp(256);
+  //         DeserializationError err = deserializeJson(tmp, line);
+  //         if (!err) {
+  //             int idx = tmp["index"] | 0;
+  //             if (idx > sessionRowIndex) sessionRowIndex = idx;
+  //         }
+  //     }
+  //     file.close();
+  // }
+
+  // 🔹 Calcola nuovo index
+  sessionRowIndex = sessionRowIndex + 1;
+  checkpoint["index"] = sessionRowIndex;
+
+  if(printEnabled){
+    printFormatted(sessionRowIndex, lineIds[i], competitors[i], hh, mm, ss, ms, 1);
+  }
+
+  // 🔹 Crea una copia ordinata del JSON (index per primo)
+  StaticJsonDocument<256> ordered;
+  ordered["index"] = sessionRowIndex;
+
+  // Copia i campi principali in ordine desiderato
+  if (checkpoint.containsKey("lineNumber")) ordered["lineNumber"] = checkpoint["lineNumber"];
+  if (checkpoint.containsKey("lineId")) ordered["lineId"] = checkpoint["lineId"];
+  if (checkpoint.containsKey("competitor")) ordered["competitor"] = checkpoint["competitor"];
+  if (checkpoint.containsKey("hour")) ordered["hour"] = checkpoint["hour"];
+  if (checkpoint.containsKey("minute")) ordered["minute"] = checkpoint["minute"];
+  if (checkpoint.containsKey("second")) ordered["second"] = checkpoint["second"];
+  if (checkpoint.containsKey("millis")) ordered["millis"] = checkpoint["millis"];
+
+  // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
+  File file = LittleFS.open("/session.json", "a");
+  if (!file) {
+      debug("Errore apertura file per scrittura!");
+      return;
+  }
+  serializeJson(ordered, file);  // no indentazione
+  file.println();                // nuova riga
+  file.close();
+
+  #ifdef DEBUG
+    Serial.printf("Checkpoint #%d salvato su LittleFS (in append)\n", sessionRowIndex);
+  #endif
+
+  // 🔹 Invia sul WebSocket
+  StaticJsonDocument<256> wsDoc = ordered;
+  wsDoc["t"] = "checkPoint";
+
+  String jsonMessage;
+  serializeJson(wsDoc, jsonMessage);
+  //ws.cleanupClients(); // rimuove client chiusi
+  ws.textAll(jsonMessage);
+}
+
+
+
+// ----------------------------------------
+// Funzione di supporto: gestione sincronizzazione PPS
+void handlePpsSync() {
+  ppsTriggered = false;
+
+  ppsH = gps.time.hour() + utcOffset;
+  ppsM = gps.time.minute();
+  ppsS = gps.time.second();
+
+
+  //updateTime(hour, minute, second);   // <-- qui va messo
+
+  lastBroadcast = millis();
+}
+
+
+// Funzione di supporto: gestione sincronizzazione Line
+void handleLineSync() {
+
+  // 🔹 Usa l’ora temporanea (può venire dall’ultimo GPS valido)
+  ppsH = temp_hh;
+  ppsM = temp_mm;
+  ppsS = temp_ss;
+
+  //updateTime(hour, minute, second);   // <-- qui va messo
+
+  lastBroadcast = millis();
+
+  // 🔹 Aggiorna stato
+  syncStatus = SYNC_SET_BY_LINE_SIGNAL;
+
+}
+
+void broadcastAsync(const String& message) {
+  ws.cleanupClients(); // rimuove client chiusi
+
+  for (auto& client : ws.getClients()) { 
+      client.text(message); // invio asincrono, non blocca
+  }
+}
+
+
+int getLastSessionRowIndex(){
+  int lastIdx = 0;
+  File file = LittleFS.open("/session.json", "r");
+  if (file) {
+      while (file.available()) {
+          String line = file.readStringUntil('\n');
+          DynamicJsonDocument tmp(256);
+          DeserializationError err = deserializeJson(tmp, line);
+          if (!err) {
+              int idx = tmp["index"] | 0;
+              if (idx > lastIdx) lastIdx = idx;
+          }
+      }
+      file.close();
+  }
+  return lastIdx;
+}
+
+
+void broadcastTime() {
+  PreciseTime t = getPreciseTime();
+  StaticJsonDocument<256> doc;
+  doc["t"] = "timeUpdate";
+  doc["h"] = t.hh;
+  doc["m"] = t.mm;
+  doc["s"] = t.ss;
+  doc["ms"] = t.ms;
+
+  doc["lt"] = gps.location.isValid() ? gps.location.lat() : 0;
+  doc["ln"] = gps.location.isValid() ? gps.location.lng() : 0;
+  doc["st"] = gps.satellites.value();
+  doc["sy"] = syncStatus;
+  doc["ls"] = (millis() - lastGPSSync) / 1000;
+  doc["lg"] = GPSRefreshInterval * 60;
+  doc["pw"] = powerSource;
+  doc["ts"] = syncTestRequested;
+  
+
+  fixStatus = syncMode == MODE_SYNC_GPS;
+
+  if (gps.time.isValid())
+    fixStatus += 2;
+  if (gps.location.isValid())
+    fixStatus += 4;
+
+  doc["f"] = fixStatus;
+
+  String json;
+  serializeJson(doc, json);
+  ws.cleanupClients(); // rimuove client chiusi
+  ws.textAll(json);  // 🔹 invia a tutti i client connessi
+
+}
+
+uint32_t correctedElapsedUs(uint32_t rawUs) {
+    return (uint64_t)(rawUs * calibrationFactor) + 500;
+}
+
+uint64_t micros64() {
+    static uint32_t last = 0;
+    static uint64_t high = 0;
+
+    uint32_t now = (uint32_t)esp_timer_get_time();  // micros() a 32 bit
+    if (now < last) {         // overflow rilevato
+        high += (uint64_t)1 << 32;
+    }
+    last = now;
+
+    return high | now;
+}
+
+double setTimeBaseCalibration(double deltaUs, double minutes) {
+    if (minutes <= 0.0) {
+        Serial.println("Invalid minutes for calibration");
+        return -1.0;  // valore di errore
+    }
+
+    // Tempo atteso in microsecondi
+    double T_us = minutes * 60.0 * 1e6;
+
+    // Calcolo fattore di calibrazione
+    calibrationFactor = 1.0 + (deltaUs / T_us);
+
+    // Scrittura nel settings
+    double calFactorSaved = writeDoubleToSettings("timeCal", calibrationFactor);
+
+    // Log seriale
+    Serial.println("Calibrazione aggiornata:");
+    Serial.println(String("delta_us=") + deltaUs);
+    Serial.println(String("minutes=") + minutes);
+    Serial.println(String("factor=") + String(calFactorSaved, 10));
+
+    return calFactorSaved;
+}
+

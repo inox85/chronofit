@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChronoREI Upload</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="navbar">
+    <img src="/logo.png" alt="Logo">
+  </div>
+
+  <div class="container">
+    <h2>Device Update</h2>
+
+    <div class="card">
+      <h3>Upload Firmware</h3>
+      <input type="file" id="fw-file">
+      <button onclick="uploadFW()">Upload .BIN</button>
+      <p id="fw-msg"></p>
+    </div>
+
+    <hr>
+
+    <div class="card">
+      <h3>Upload Filesystem</h3>
+      <input type="file" id="fs-file">
+      <button onclick="uploadFS()">Upload FS</button>
+      <p id="fs-msg"></p>
+    </div>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
+</html>

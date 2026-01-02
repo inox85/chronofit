@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronofit</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+
+  <!-- COLORE DELLA STATUS BAR SU ANDROID -->
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="/manifest.json">
+</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<body>
+
+  <div id="splash">
+    <img src="/logo.png" alt="Logo">
+  </div>
+
+
+  <!-- Overlay Conferma Clear Session -->
+  <div id="clearSessionOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Confirm</h2>
+      <p>Delete entire session?</p>
+
+      <div class="button-row">
+        <button class="big-button" id="clearSessionCancel">Cancel</button>
+        <button class="big-button" id="clearSessionConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay Messaggio OK -->
+  <div id="okMessageOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Message</h2>
+      <p id="okMessageText">Operazione completata con successo.</p>
+
+      <div class="button-row" style="justify-content:center;">
+        <button class="big-button" id="okMessageButton">OK</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="timeChoiceOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <div class="icon-text-row">
+
+        <span id="incon-time-setup" class="icon-button" onclick="onTimeSettingsAction()" title="Confirm">
+          <span class="icon">⚙️</span>
+          <span class="label">Setup</span>
+        </span>
+
+        <span id="incon-sync-test" class="icon-button" onclick="onSyncTestAction()" title="Cancel">
+          <span class="icon">⏱️</span>
+          <span class="label">Sync test</span>
+        </span>
+
+        <span id="incon-undo" class="icon-button" onclick="onGoHomeAction()" title="Cancel">
+          <span class="icon">↩️</span>
+          <span class="label">Home</span>
+        </span>
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay e popup per Edit Time -->
+  <div id="settingsOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Time settings</h2>
+      <p id="pos">Lat: --, Lng: --, Sat: --, Fix: --</p>
+          
+      <div class="toggle-row">
+        <span>Sync method</span>
+        <select id="sync-method-select" onchange="updateTimeSettingsVisibility()">
+          <option value="0">Manual setting</option>
+          <option value="1">Line closure</option>
+          <option value="2">GPS sync</option>
+        </select>
+      </div>
+
+      <!-- Setting 2: Timezone -->
+      <div class="toggle-row gps-sync hidden">
+        <span>GPS Sync interval</span>
+        <select id="sync-interval-select">
+          <option value="0">1 Second</option>
+          <option value="1">1 Minute</option>
+          <option value="5">5 Minutes</option>
+          <option value="10">10 Minutes</option>
+          <option value="15">15 Minutes</option>
+          <option value="20">20 Minutes</option>
+          <option value="25">25 Minutes</option>
+          <option value="30">30 Minutes</option>
+          <option value="60">1 Hour</option>
+        </select>
+      </div>
+
+      <!-- Setting 2: Timezone -->
+      <div class="toggle-row gps-sync hidden">
+        <span>Timezone</span>
+        <select id="timezone-select">
+          <option value="-12">UTC-12: Baker Island</option>
+          <option value="-11">UTC-11: Niue, Samoa</option>
+          <option value="-10">UTC-10: Hawaii, Tahiti</option>
+          <option value="-9">UTC-9: Alaska</option>
+          <option value="-8">UTC-8: Los Angeles, Vancouver</option>
+          <option value="-7">UTC-7: Denver, Phoenix</option>
+          <option value="-6">UTC-6: Mexico City, Chicago</option>
+          <option value="-5">UTC-5: New York, Toronto</option>
+          <option value="-4">UTC-4: Santiago, Caracas</option>
+          <option value="-3">UTC-3: Buenos Aires, Montevideo</option>
+          <option value="-2">UTC-2: South Georgia</option>
+          <option value="-1">UTC-1: Azores, Cape Verde</option>
+          <option value="0" selected>UTC+0: London, Lisbon</option>
+          <option value="1">UTC+1: Paris, Berlin, Rome</option>
+          <option value="2">UTC+2: Athens, Cairo, Helsinki</option>
+          <option value="3">UTC+3: Moscow, Riyadh, Nairobi</option>
+          <option value="4">UTC+4: Dubai, Baku</option>
+          <option value="5">UTC+5: Karachi, Tashkent</option>
+          <option value="6">UTC+6: Dhaka, Almaty</option>
+          <option value="7">UTC+7: Bangkok, Jakarta</option>
+          <option value="8">UTC+8: Beijing, Singapore, Perth</option>
+          <option value="9">UTC+9: Tokyo, Seoul</option>
+          <option value="10">UTC+10: Sydney, Vladivostok</option>
+          <option value="11">UTC+11: Solomon Is.</option>
+          <option value="12">UTC+12: Auckland, Fiji</option>
+          <option value="13">UTC+13: Tonga, Phoenix Is.</option>
+          <option value="14">UTC+14: Line Islands</option>
+        </select>
+      </div>
+
+      <div class="toggle-row manual-sync">
+        <span class="time-set-fields">Time to set</span>
+        <input class="manual-inputs" type="number" id="hour" placeholder="HH" min="0" max="23" onfocus="this.select()">
+        <input class="manual-inputs" type="number" id="minute" placeholder="MM" min="0" max="59" onfocus="this.select()">
+        <input class="manual-inputs" type="number" id="second" placeholder="SS" min="0" max="59" onfocus="this.select()">
+      </div>
+
+      <div class="button-row">
+        <!--<button class="big-button">Clear session</button>-->
+        <button class="big-button" id="closeTimePopup">Close</button>
+        <button class="big-button" id="confirmTimePopup" onclick="onApplyClick()">Apply</button>
+      </div>
+      
+      <p id="time-settings-field"></p>
+    </div>
+  </div>
+
+  <div id="fullscreenOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Fullscreen Mode</h2>
+      <p>Would you like to enable fullscreen mode for a better experience?</p>
+      <div class="fullscreen-buttons">
+        <button class="big-button confirm" id="yesFullscreen">Yes</button>
+        <button class="big-button cancel" id="noFullscreen">No</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="navbar">
+    <img src="/logo.png" alt="Logo">
+  </div>
+  
+  <div class="container">
+
+  <div id="popup" class="popup hidden">No connection to Chronofit device</div>
+  
+  <div class="card left">
+
+    <p id="time">--:--:--</p>
+    <p id="status" class="status nosync">GPS Status: Not synchronized</p>
+    <p id="sync-msg"></p>
+
+    <div class="table-wrapper">
+    <table class="checkpoint-settings">
+      <thead>
+        <tr>
+          <th>Line</th>
+          <th>ID</th>
+          <th>Competitor</th>
+          <th>ms</th>
+          <th>#</th>
+          <th>➡</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="l1" data-line="1" placeholder="line1 ID" value="001"></td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c1" data-line="1" placeholder="Competitor 1" value="000000"></td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d1" data-line="1" placeholder="0" value="0"></td>
+          <td><button data-color= "#ffcccc"  class="toggle-btn" data-line="1">#</button></td>
+          <td><button style="background-color: #ffcccc" onclick="sendCheckPoint(1)">➡</button></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="l2" data-line="2" placeholder="line2 ID" value="002"></td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c2" data-line="2" placeholder="Competitor 2" value="000000"></td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d2" data-line="2" placeholder="0" value="0"></td>
+          <td><button data-color= "#ccffcc" class="toggle-btn" data-line="2">#</button></td>
+          <td><button style="background-color: #ccffcc" onclick="sendCheckPoint(2)">➡</button></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="l3" data-line="3" placeholder="line3 ID" value="003"></td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c3" data-line="3" placeholder="Competitor 3" value="000000"></td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d3" data-line="3" placeholder="0" value="0"></td>
+          <td><button data-color= "#ccccff" class="toggle-btn" data-line="3">#</button></td> 
+          <td><button style="background-color: #ccccff" onclick="sendCheckPoint(3)">➡</button></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="l4" data-line="4" placeholder="line4 ID" value="004"></td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c4" data-line="4" placeholder="Competitor 4" value="000000"></td>
+          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-line="4" id="d4" placeholder="0" value="0"></td>
+          <td><button data-color= "#fff5cc" class="toggle-btn" data-line="4">#</button></td>
+          <td><button style="background-color: #fff5cc" onclick="sendCheckPoint(4)">➡</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p id="fields-msg"></p>
+
+  <hr class="divider">
+
+  <h3>Settings</h3>
+
+  <div class="toggle-row">
+    <span>Timing station name</span>
+    <input type="text" id="station-name-input" placeholder="Station name" onblur="setSettings()">
+  </div>
+
+  <!-- Setting 1: Print on paper -->
+  <div class="toggle-row">
+    <span>Print on paper</span>
+    <label class="switch">
+      <input type="checkbox" id="printToggle" onchange="setSettings()" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-row">
+    <span>Show sync test rows</span>
+    <label class="switch">
+      <input type="checkbox" class="toggle-btn" data-line="5">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-row">
+    <span>Fullscreen</span>
+    <label class="switch">
+      <input type="checkbox" id="fullscreenToggle" onchange="toggleFullscreen(this)">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+
+  <p id="settings-field"></p>
+
+  </div>
+
+  <div class="card table-card right">
+    <div class="table-wrapper">
+      <table id="event-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Line</th>
+            <th>ID</th>
+            <th>Competitor</th>
+            <th>Timestamp</th>
+            <th>Edit</th>
+            <th>Send</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="button-row">
+      <button class="big-button" onclick="clearSession()">Clear session</button>
+      <button class="big-button" onclick="downloadSession()">Download session file</button>
+    </div>
+
+  </div>
+
+  <script src="/script.js"></script>
+
+</body>
+</html>

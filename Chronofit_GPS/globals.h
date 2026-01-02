@@ -1,0 +1,74 @@
+#ifndef GLOBALS_H
+#define GLOBALS_H
+
+#include <Arduino.h>
+#include "constants.h"
+#include <ESPAsyncWebServer.h>
+#include <TinyGPSPlus.h>
+#include <DNSServer.h>
+
+// --- Costanti ---
+extern const char *ssid;
+extern const byte DNS_PORT;
+
+extern DNSServer dnsServer;
+
+// --- Hardware ---
+
+extern TinyGPSPlus gps;
+
+// --- Variabili generali ---
+extern String stationName;
+
+// --- PPS ---
+extern volatile uint8_t ppsH, ppsM, ppsS;
+extern volatile bool ppsTriggered;
+extern volatile bool lineTriggered;
+
+extern double calibrationFactor;
+
+extern bool testOnSync;
+extern int calRunning;
+extern int calPpsCount;
+
+extern int fixStatus;
+
+extern volatile uint64_t calStartUs;
+extern volatile uint64_t lastSyncTrigger;
+extern volatile uint64_t syncReference;
+extern unsigned long gpsTimeOffsetUs;
+extern int utcOffset;
+
+extern int syncEnabled;
+
+// --- Sensori ---
+extern int lineIds[5];
+extern int competitors[5];
+extern unsigned long delays[5];
+extern volatile unsigned long lastSensorsSignal[5];
+extern int sensorsPins[5];
+extern volatile  bool lastSensorState[5];
+extern volatile bool sensorTriggered[5];
+extern volatile uint64_t sensorTime[5];
+
+extern volatile int syncTestRequested;
+
+// --- Varie ---
+extern unsigned long lastBroadcast;
+
+extern int printEnabled;
+
+extern int temp_hh;
+extern int temp_mm;
+extern int temp_ss;
+
+extern int syncStatus;
+extern int syncMode;
+extern unsigned long lastGPSSync;
+extern int GPSRefreshInterval;
+
+extern int lastBroadCastSecond;
+
+extern int sessionRowIndex;
+
+#endif
