@@ -126,6 +126,10 @@ void setup() {
 
   server.begin();
 
+  while (ServicesSerial.available()){
+    ServicesSerial.read();
+  }
+
 }
 
 void configFS(){
@@ -143,7 +147,6 @@ void loop() {
   dnsServer.processNextRequest();
 
   if(syncStatus != SYNC_WAIT_LINE_SIGNAL){
-    processServicesSerial();
 
     if(((millis() - lastGPSSync)/60000 >= GPSRefreshInterval || GPSRefreshInterval == 0) 
         && syncMode == MODE_SYNC_GPS) {
@@ -151,6 +154,9 @@ void loop() {
     }
   }
 
+  if(ppsTriggered){
+    processServicesSerial();
+  }
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
 
   if (ppsTriggered && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
