@@ -93,7 +93,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         syncStatus = SYNC_MANUAL_SET;
         syncMode = MODE_SYNC_MANUAL;
         debug("Impostazione orario manuale!");
+
+        writeIntToSettings("syncMode", syncMode);
+
         request->send(200, "text/plain", "Time manually set");
+
 
       } else if (mode == MODE_SYNC_LINE && request->hasParam("hour") && request->hasParam("minute") && request->hasParam("second")){
 
@@ -103,8 +107,13 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         syncStatus = SYNC_WAIT_LINE_SIGNAL;
         syncMode = MODE_SYNC_LINE;
         utcOffset = 0;
+
+        writeIntToSettings("syncMode", syncMode);
+
         debug("In attesa di sincronismo da linea!");
         request->send(200, "text/plain", "Wait line signal");
+
+
 
       } else if (mode == MODE_SYNC_GPS && request->hasParam("gpsInterval") && request->hasParam("utcOffset")){
 
@@ -113,6 +122,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         GPSRefreshInterval = request->getParam("gpsInterval")->value().toInt();
         utcOffset = request->getParam("utcOffset")->value().toInt();
 
+        writeIntToSettings("syncMode", syncMode);
+        writeIntToSettings("refInt", GPSRefreshInterval);
+        writeIntToSettings("utcOffset", utcOffset);
+        
         debug("Attesa sincronizzazione GPS");
         request->send(200, "text/plain", "Wait GPS");
 
@@ -122,6 +135,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     }
     
   });
+
 
 
   server.on("/checkPoint", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -263,7 +277,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     Serial.printf("Ricevuti: %s, %d\n", text.c_str(), cr);
 
-    // 🔧 Test: commenta temporaneamente la chiamata
+    // 🔧 GPS: commenta temporaneamente la chiamata
     printOnPrinter(text, cr);
 
     request->send(200, "text/plain", "Printed successfully");
@@ -305,6 +319,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   server.on("/syncTest", HTTP_GET, [](AsyncWebServerRequest *request){
 
     syncTestRequested = 1;
+    actualSecond = -1;
     sweepBuzz();
     digitalWrite(12, HIGH);
 
@@ -482,6 +497,20 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   request->send(LittleFS, "/session.json", "application/json");
   });
 
+  server.on("/systemSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+    StaticJsonDocument<512> doc;
+    
+    doc["timeBaseCal"] = calibrationFactor;
+    doc["calPpsCount"] = calPpsCount;
+    doc["calPpsTotal"] = CAL_WINDOW_SEC;
+
+    String json;
+    serializeJson(doc, json);
+
+    request->send(200, "application/json", json);
+  });
+
   server.on("/timeBaseCal", HTTP_GET, [](AsyncWebServerRequest *request) {
 
     if (request->hasParam("delta_us") && request->hasParam("minutes")) {
@@ -516,7 +545,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 }
 
 String serializeSettings(){
- StaticJsonDocument<512> doc;
+  StaticJsonDocument<512> doc;
   doc["t"] = "paramsUpdated";
   doc["c1"] = competitors[0];
   doc["c2"] = competitors[1];
@@ -550,3 +579,4 @@ void broadCastSettings(){
   String message = serializeSettings();
   ws.textAll(message);
 }
+

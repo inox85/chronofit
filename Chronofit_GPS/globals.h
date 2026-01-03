@@ -53,6 +53,11 @@ extern volatile uint64_t sensorTime[5];
 
 extern volatile int syncTestRequested;
 
+extern volatile int8_t actualSecond;
+extern volatile int8_t actualSecondForTest;
+
+extern volatile uint32_t ppsCounter;
+
 // --- Varie ---
 extern unsigned long lastBroadcast;
 

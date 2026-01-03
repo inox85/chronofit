@@ -437,9 +437,32 @@ function stopWatchdog() {
   }
 }
 
+
+const generalPopup = document.getElementById("generalPopup");
+const generalPopupText = document.getElementById("generalPopupText");
+
+function showGeneralPopup(message, bgColor = "#3b55ffff") {
+  generalPopupText.innerText = message;
+  generalPopup.style.backgroundColor = bgColor;
+
+  if (!generalPopup.classList.contains("show")) {
+    generalPopup.classList.remove("hidden");
+    setTimeout(() => generalPopup.classList.add("show"), 10); // fade-in
+  }
+}
+
+function hideGeneralPopup() {
+  if (generalPopup.classList.contains("show")) {
+    generalPopup.classList.remove("show"); // fade-out
+    setTimeout(() => generalPopup.classList.add("hidden"), 500); // nasconde dopo transizione
+  }
+}
+
+
 const FLAG_SYNC_ENABLED = 1; // 0001
 const FLAG_TIME_VALID = 2; // 0010
 const FLAG_LOCATION_VALID = 4; // 0100
+const FLAG_TIMEBASE_CALIBRATION = 8; // 1000
 
 const SYNC_NONE = 0;
 const SYNC_MANUAL_SET = 1;  // Tempo settato manualmente
@@ -499,6 +522,13 @@ function updateClockFromData(data) {
     const syncEnabled = (fixFlags & FLAG_SYNC_ENABLED) !== 0;
     const timeValid = (fixFlags & FLAG_TIME_VALID) !== 0;
     const locationValid = (fixFlags & FLAG_LOCATION_VALID) !== 0;
+    const calRunning = (fixFlags & FLAG_TIMEBASE_CALIBRATION) !== 0;
+
+    if (calRunning) {
+      showGeneralPopup("Timebase calibration running...", "#ff9800"); // arancione per calibrazione
+    } else {
+      hideGeneralPopup();
+    }
 
     const syncStatus = data.sy; 
 
@@ -541,7 +571,7 @@ function updateClockFromData(data) {
           statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync 1s)";
         }
       }else{
-        statusElem.innerText = "Sync test: 🔵 Waiting for the next minute to start... ";
+        statusElem.innerText = "Sync test: ⏱️ Waiting for the next minute to start... ";
       }
 
     }

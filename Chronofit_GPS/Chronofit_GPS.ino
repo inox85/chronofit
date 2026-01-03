@@ -47,6 +47,7 @@ void IRAM_ATTR sensorISR(void *arg) {
 void IRAM_ATTR onPpsInterrupt() {
   lastSyncTrigger = micros64();
   ppsTriggered = true;
+  ppsCounter++;
 }
 
 void setup() {
@@ -55,6 +56,12 @@ void setup() {
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
 
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
+  
+  syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
+  if(syncMode == MODE_SYNC_GPS)
+    syncStatus = SYNC_FIRST_GPS_SYNC;
+  GPSRefreshInterval = readIntFromSettings("refInt", 0);
+  utcOffset = readIntFromSettings("utcOffset", 0);
 
   Serial.println();
   Serial.print("Time cal factor: ");
@@ -96,8 +103,16 @@ void setup() {
   if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
     debug("❌ Errore nella configurazione dell'IP statico");
   }
+
   
-  WiFi.softAP(ssid);
+  uint64_t chipId = ESP.getEfuseMac();
+  // Converti il chipId in una stringa esadecimale
+  String chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
+
+  // Crea l'SSID con il chipId
+  String ssid_sn = String(ssid) + "_" + chipIdStr; 
+
+  WiFi.softAP(ssid_sn);
   #ifdef DEBUG
     Serial.println("Access Point avviato");
     Serial.print("IP: ");
@@ -139,27 +154,24 @@ void loop() {
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
 
   if (ppsTriggered && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
-
-      // 🔒 latch immediato
+    
+      
       uint64_t thisPpsUs = lastSyncTrigger;
       ppsTriggered = false;   // consumato QUI, una sola volta
 
-      // ------------------------------------------------
-      // 🔹 SINCRONIZZAZIONE ORARIO (solo quando serve)
-      // ------------------------------------------------
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
+        
+        // if (testOnSync && syncStatus != SYNC_FIRST_GPS_SYNC) {
+        //     sensorTime[4] = thisPpsUs;
+        //     sensorTriggered[4] = true;
+        //     handleSensorTrigger();
+        //     //buzzerBeep(100, 3, 50, 500, 128);
+        // }
 
-          if (testOnSync && syncStatus != SYNC_FIRST_GPS_SYNC) {
-              sensorTime[4] = thisPpsUs;
-              sensorTriggered[4] = true;
-              handleSensorTrigger();
-              //buzzerBeep(100, 3, 50, 500, 128);
-          }
-
-          syncReference = thisPpsUs;
-          syncStatus = SYNC_GPS_SYNCED;
-          handlePpsSync();          // NON deve più toccare ppsTriggered
-          lastGPSSync = lastBroadcast;
+        syncReference = thisPpsUs;
+        syncStatus = SYNC_GPS_SYNCED;
+        handlePpsSync();          // NON deve più toccare ppsTriggered
+        lastGPSSync = millis();
       }
 
       // ------------------------------------------------
@@ -199,19 +211,19 @@ void loop() {
   handleSensorTrigger();
 
   PreciseTime t = getPreciseTime();
+  actualSecond = t.ss;
 
-  if(t.ss != lastBroadCastSecond && t.ms < 10){
-    lastBroadCastSecond = t.ss;
+  if(actualSecond != lastBroadCastSecond && t.ms < 10){
+    lastBroadCastSecond = actualSecond;
     broadcastTime();  
   }
 
-  checkTestRequest();
+  if(actualSecond == 0){
+    ppsCounter = 0;
+  }
 
-  checkPowerSource();
+  //Serial.println(ppsCounter);
 
-}
-
-void checkTestRequest(){
   if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
     if(syncMode == MODE_SYNC_GPS){
       sweepBuzz();   
@@ -224,15 +236,19 @@ void checkTestRequest(){
   }
 
   if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) {
-    PreciseTime t = getPreciseTime();
-    if(t.ss == 0){
+    if((ppsCounter % 60) == 0){
       syncTestRequested = 0;
       digitalWrite(12, LOW);
       sensorTime[4] = lastSyncTrigger;
       sensorTriggered[4] = true;
     }
   }
+
+
+  checkPowerSource();
+
 }
+
 
 
 void handleSensorTrigger(){

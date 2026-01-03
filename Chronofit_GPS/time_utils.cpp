@@ -13,17 +13,6 @@
 #include "diagnostic.h"
 #include "settings.h"
 
-// void updateTime(int hh, int mm, int ss) {
-
-//     ss = (ss + 1) % 60;
-//     if (ss == 0) {
-//        mm = (mm + 1) % 60;
-//        if (mm == 0) hh = (hh + 1) % 24;
-//     }
-
-//     setTime(hh + utcOffset, mm, ss, day(), month(), year());  // aggiorna l’orario in Timelib
-// }
-
 
 PreciseTime getPreciseTime() {
     PreciseTime t;
@@ -31,11 +20,15 @@ PreciseTime getPreciseTime() {
     uint64_t rawUs = micros64() - syncReference;
     uint64_t elapsedUs = correctedElapsedUs(rawUs);
 
-    uint32_t elapsedMs = (elapsedUs + 500) / 1000;
+    uint32_t elapsedSec = elapsedUs / 1000000;
+    uint32_t remUs     = elapsedUs % 1000000;
 
-    t.ms = elapsedMs % 1000;
+    uint32_t ms = (remUs + 500) / 1000;
+    if (ms >= 1000) ms = 999;
 
-    uint32_t totalSec = ppsS + elapsedMs / 1000;
+    t.ms = ms;
+
+    uint32_t totalSec = ppsS + elapsedSec;
     t.ss = totalSec % 60;
 
     uint32_t totalMin = ppsM + totalSec / 60;
@@ -43,20 +36,32 @@ PreciseTime getPreciseTime() {
 
     t.hh = (ppsH + totalMin / 60) % 24;
 
+    // Serial.print("rawUS: ");
+    // Serial.println(rawUs);
+    // Serial.print("elapsedUs: ");
+    // Serial.println(elapsedUs);
+    // Serial.print("remUs: ");
+    // Serial.println(remUs);
+
     return t;
 }
+
 
 PreciseTime getPreciseSensorTime(int i) {
     PreciseTime t;
 
     uint64_t rawUs = sensorTime[i] - syncReference;
     uint64_t elapsedUs = correctedElapsedUs(rawUs);
-    
-    uint32_t elapsedMs = (elapsedUs + 500) / 1000;
 
-    t.ms = elapsedMs % 1000;
+    uint32_t elapsedSec = elapsedUs / 1000000;
+    uint32_t remUs     = elapsedUs % 1000000;
 
-    uint32_t totalSec = ppsS + elapsedMs / 1000;
+    uint32_t ms = (remUs + 500) / 1000;
+    if (ms >= 1000) ms = 999;
+
+    t.ms = ms;
+
+    uint32_t totalSec = ppsS + elapsedSec;
     t.ss = totalSec % 60;
 
     uint32_t totalMin = ppsM + totalSec / 60;
@@ -236,8 +241,12 @@ void broadcastTime() {
 
   if (gps.time.isValid())
     fixStatus += 2;
+
   if (gps.location.isValid())
     fixStatus += 4;
+  
+  if(calRunning)
+    fixStatus += 8;
 
   doc["f"] = fixStatus;
 
@@ -246,23 +255,30 @@ void broadcastTime() {
   ws.cleanupClients(); // rimuove client chiusi
   ws.textAll(json);  // 🔹 invia a tutti i client connessi
 
+  Serial.println(json);
+
 }
 
-uint32_t correctedElapsedUs(uint32_t rawUs) {
-    return (uint64_t)(rawUs * calibrationFactor) + 500;
+uint64_t correctedElapsedUs(uint64_t rawUs) {
+    return (uint64_t)(rawUs * calibrationFactor);
 }
+
+// uint64_t micros64() {
+//     static uint32_t last = 0;
+//     static uint64_t high = 0;
+
+//     uint32_t now = (uint32_t)esp_timer_get_time();  // micros() a 32 bit
+//     if (now < last) {         // overflow rilevato
+//         high += (uint64_t)1 << 32;
+//     }
+//     last = now;
+
+//     return high | now;
+// }
+
 
 uint64_t micros64() {
-    static uint32_t last = 0;
-    static uint64_t high = 0;
-
-    uint32_t now = (uint32_t)esp_timer_get_time();  // micros() a 32 bit
-    if (now < last) {         // overflow rilevato
-        high += (uint64_t)1 << 32;
-    }
-    last = now;
-
-    return high | now;
+  return esp_timer_get_time();  
 }
 
 double setTimeBaseCalibration(double deltaUs, double minutes) {

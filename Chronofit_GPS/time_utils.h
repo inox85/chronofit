@@ -17,6 +17,8 @@ void checkPointRoutine(int i);
 
 PreciseTime getPreciseTime();           // legge l'orario corrente
 
+PreciseTime getPreciseSensorTime(int i);
+
 void handlePpsSync();
 
 void handleLineSync();
@@ -27,7 +29,7 @@ int getLastSessionRowIndex();
 
 void broadcastAsync(const String& message);
 
-uint32_t correctedElapsedUs(uint32_t rawUs);
+uint64_t correctedElapsedUs(uint64_t rawUs);
 
 uint64_t micros64();
 

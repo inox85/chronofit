@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChronoREI Upload</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>ChronoREI Admin Upload</title>
+  <link rel="stylesheet" href="/admin.css">
 </head>
 <body>
   <div class="navbar">
@@ -12,25 +12,144 @@
   </div>
 
   <div class="container">
-    <h2>Device Update</h2>
+    <h2>Device Update - Admin</h2>
 
+    <!-- Stato Sistema -->
     <div class="card">
-      <h3>Upload Firmware</h3>
-      <input type="file" id="fw-file">
-      <button onclick="uploadFW()">Upload .BIN</button>
-      <p id="fw-msg"></p>
+      <h3>Stato Sistema</h3>
+
+      <table style="width:100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Parametro</th>
+            <th style="text-align:right;">Valore</th>
+            <th style="text-align:left;">Unità</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Drift Stimato</td>
+            <td id="sys-drift" style="text-align:right;">--</td>
+            <td>ms/min</td>
+          </tr>
+          <tr>
+            <td>Fattore di Calibrazione</td>
+            <td id="sys-cal-factor" style="text-align:right;">--</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>Ultima Sync PPS</td>
+            <td id="sys-last-pps" style="text-align:right;">--</td>
+            <td>s</td>
+          </tr>
+          <tr>
+            <td>Stato GPS</td>
+            <td id="sys-gps" style="text-align:right;">--</td>
+            <td>-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Upload Firmware -->
+  <div class="card">
+    <h3>Upload Firmware</h3>
+    <input type="file" id="fw-file">
+    <button onclick="uploadFW()">Upload .BIN</button>
+    <p id="fw-msg"></p>
+  </div>
+
+  <hr>
+
+  <!-- Upload Filesystem -->
+  <div class="card">
+    <h3>Upload Filesystem</h3>
+    <input type="file" id="fs-file">
+    <button onclick="uploadFS()">Upload FS</button>
+    <p id="fs-msg"></p>
+  </div>
+
+  <hr>
+
+  <!-- Calibrazione Automatica -->
+  <div class="card">
+    <h3>Calibrazione Automatica</h3>
+    <p>Esegui la calibrazione automatica dei parametri di sistema.</p>
+    <button onclick="runAutoCalibration()">Avvia Calibrazione</button>
+    <p id="calib-msg"></p>
+  </div>
+
+  <hr>
+
+  <!-- Parametri variazione -->
+  <div class="card">
+    <h3>Parametri di Variazione</h3>
+
+    <label for="delta-ms">Variazione:</label>
+    <input type="number" id="delta-ms" placeholder="es. 10"> ms
+    <br><br>
+
+    <label for="delta-min">Intervallo:</label>
+    <input type="number" id="delta-min" placeholder="es. 5"> min
+    <br><br>
+
+    <button onclick="setDelta()">Salva Parametri</button>
+    <p id="delta-msg"></p>
+  </div>
+
+  <hr>
+
+    
+
+    <!-- File System Manager -->
+  <div class="card">
+    <h3>File System Manager</h3>
+
+    <!-- Info memoria -->
+    <div>
+      <strong>Memoria:</strong>
+      <span id="fs-used">--</span> /
+      <span id="fs-total">--</span>
+      (<span id="fs-free">--</span> liberi)
+    </div>
+
+    <br>
+
+    <!-- Upload file -->
+    <div>
+      <input type="file" id="fs-upload-file">
+      <button onclick="uploadFile()">Carica File</button>
+      <p id="fs-upload-msg"></p>
     </div>
 
     <hr>
 
-    <div class="card">
-      <h3>Upload Filesystem</h3>
-      <input type="file" id="fs-file">
-      <button onclick="uploadFS()">Upload FS</button>
-      <p id="fs-msg"></p>
-    </div>
+    <!-- Lista file -->
+    <table style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Nome file</th>
+          <th style="text-align:right;">Dimensione</th>
+          <th style="text-align:center;">Azioni</th>
+        </tr>
+      </thead>
+      <tbody id="fs-file-list">
+        <!-- popolata da JS -->
+        <tr>
+          <td>---</td>
+          <td style="text-align:right;">---</td>
+          <td style="text-align:center;">---</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <br>
+
+    <button onclick="refreshFileList()">Aggiorna elenco</button>
   </div>
 
-  <script src="/script.js"></script>
+  <script src="/admin.js"></script>
 </body>
 </html>

@@ -98,6 +98,10 @@
           <option value="25">25 Minutes</option>
           <option value="30">30 Minutes</option>
           <option value="60">1 Hour</option>
+          <option value="120">2 Hour</option>
+          <option value="280">3 Hour</option>
+          <option value="240">4 Hour</option>
+          <option value="300">5 Hour</option>
         </select>
       </div>
 
@@ -170,7 +174,12 @@
   <div class="container">
 
   <div id="popup" class="popup hidden">No connection to Chronofit device</div>
-  
+
+    <!-- General popup -->
+  <div id="generalPopup" class="popup hidden">
+    <span id="generalPopupText">Messaggio generico</span>
+  </div>
+
   <div class="card left">
 
     <p id="time">--:--:--</p>

@@ -23,6 +23,7 @@ String stationName = "";
 volatile uint8_t ppsH, ppsM, ppsS = 0;
 volatile bool ppsTriggered = false;
 volatile bool lineTriggered = false;
+volatile uint32_t ppsCounter = 0;
 
 bool testOnSync = true;
 int calRunning = 0;
@@ -51,8 +52,10 @@ volatile bool lastSensorState[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
 volatile bool sensorTriggered[5] = {false, false, false, false, false};
 volatile uint64_t sensorTime[5] = {0, 0, 0, 0, 0};
 
-
 volatile int syncTestRequested = 0;
+
+volatile int8_t actualSecond = 0;
+volatile int8_t actualSecondForTest = 0;
 
 // --- Varie ---
 unsigned long lastBroadcast = 0;
