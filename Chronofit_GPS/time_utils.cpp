@@ -18,13 +18,13 @@ PreciseTime getPreciseTime() {
   PreciseTime t;
 
   uint64_t rawUs = micros64() - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs);
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs     = elapsedUs % 1000000ULL;
 
   // millisecondi arrotondati
-  uint32_t ms = (remUs + 500) / 1000;
+  uint32_t ms = (remUs) / 1000;
   if (ms >= 1000) ms = 999;
   t.ms = ms;
 
@@ -43,13 +43,13 @@ PreciseTime getPreciseSensorTime(int i) {
     PreciseTime t;
 
   uint64_t rawUs = sensorTime[i] - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs);
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs     = elapsedUs % 1000000ULL;
 
   // millisecondi arrotondati
-  uint32_t ms = (remUs + 500) / 1000;
+  uint32_t ms = (remUs) / 1000;
   if (ms >= 1000) ms = 999;
   t.ms = ms;
 
@@ -264,7 +264,7 @@ void broadcastTime() {
   ws.cleanupClients(); // rimuove client chiusi
   ws.textAll(json);  // 🔹 invia a tutti i client connessi
 
-  Serial.println(json);
+  //Serial.println(json);
 
 }
 

@@ -36,6 +36,7 @@ extern int fixStatus;
 
 extern volatile uint64_t calStartUs;
 extern volatile uint64_t lastSyncTrigger;
+extern volatile uint64_t lastNmeaValid;
 extern volatile uint64_t syncReference;
 extern unsigned long gpsTimeOffsetUs;
 extern int utcOffset;

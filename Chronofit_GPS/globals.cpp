@@ -35,6 +35,7 @@ int prevFixStatus = 0;
 
 volatile uint64_t calStartUs = 0;
 volatile uint64_t lastSyncTrigger = 0;
+volatile uint64_t lastNmeaValid = 0;
 volatile uint64_t syncReference = 0;
 unsigned long gpsTimeOffsetUs = 0;
 int utcOffset = 0;

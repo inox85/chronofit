@@ -154,21 +154,15 @@ void loop() {
   }
 
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
+  uint64_t delta = lastNmeaValid - lastSyncTrigger;
 
-  if (ppsTriggered && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
-    
+  if (ppsTriggered && (delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+      
+
       uint64_t thisPpsUs = lastSyncTrigger;
       ppsTriggered = false;   // consumato QUI, una sola volta
 
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
-        
-        // if (testOnSync && syncStatus != SYNC_FIRST_GPS_SYNC) {
-        //     sensorTime[4] = thisPpsUs;
-        //     sensorTriggered[4] = true;
-        //     handleSensorTrigger();
-        //     //buzzerBeep(100, 3, 50, 500, 128);
-        // }
-
         syncReference = thisPpsUs;
         syncStatus = SYNC_GPS_SYNCED;
         handlePpsSync();          // NON deve più toccare ppsTriggered
@@ -280,6 +274,7 @@ bool processServicesSerial() {
     gps.encode(c);  // decodifica NMEA
     //Serial.print(c);
     if(gps.time.isValid()){
+      lastNmeaValid = micros64();
       return true;
     }
   }
