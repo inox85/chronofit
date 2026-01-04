@@ -24,7 +24,7 @@ constexpr int BUZZER = 15;
 
 constexpr int POWER_SOURCE = 36;
 
-constexpr uint32_t CAL_WINDOW_SEC = 3600UL;
+constexpr uint32_t CAL_WINDOW_SEC = 600UL;
 constexpr uint32_t CAL_WINDOW_US  = CAL_WINDOW_SEC * 1000000UL;
 
 #endif
