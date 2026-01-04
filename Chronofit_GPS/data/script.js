@@ -545,7 +545,7 @@ function updateClockFromData(data) {
       statusElem.innerText = "Sync mode: Manual — Status: 🟢 OK"
     }
     if(syncStatus === SYNC_WAIT_LINE_SIGNAL){
-      statusElem.innerText = "Sync mode: Line — Status: ⏳ waiting for signal..."
+      statusElem.innerText = "Sync mode: Line — Status: ⏳ waiting for trigger..."
     }
     if(syncStatus === SYNC_SET_BY_LINE_SIGNAL){
       statusElem.innerText = "Sync mode: Line — Status: 🟢 synced";

@@ -175,12 +175,22 @@ void handlePpsSync() {
 // Funzione di supporto: gestione sincronizzazione Line
 void handleLineSync() {
 
-  // 🔹 Usa l’ora temporanea (può venire dall’ultimo GPS valido)
-  ppsH = temp_hh;
-  ppsM = temp_mm;
-  ppsS = temp_ss;
+  // PPS = inizio del secondo successivo
+  uint32_t hh = temp_hh;
+  uint32_t mm = temp_mm;
+  uint32_t ss = temp_ss;
 
-  //updateTime(hour, minute, second);   // <-- qui va messo
+  // rollover
+  if (ss >= 60) { ss = 0; mm++; }
+  if (mm >= 60) { mm = 0; hh = (hh + 1) % 24; }
+
+  // 🔒 ancora assoluta (epoch-like, giornaliera)
+  ppsEpochSec = (uint64_t)hh * 3600ULL +
+                (uint64_t)mm * 60ULL +
+                (uint64_t)ss;
+
+  // riferimento temporale
+  syncReference = lastSyncTrigger;
 
   lastBroadcast = millis();
 

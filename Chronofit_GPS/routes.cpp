@@ -81,26 +81,21 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       int mode = request->getParam("mode")->value().toInt();
 
       if (mode == MODE_SYNC_MANUAL && request->hasParam("hour") && request->hasParam("minute") && request->hasParam("second")) {
-        lastSyncTrigger = micros();
-        int h = request->getParam("hour")->value().toInt();
-        int m = request->getParam("minute")->value().toInt();
-        int s = request->getParam("second")->value().toInt();
+        temp_hh = request->getParam("hour")->value().toInt();
+        temp_mm = request->getParam("minute")->value().toInt();
+        temp_ss = request->getParam("second")->value().toInt();
 
-        ppsH = h;
-        ppsM = m;
-        ppsS = s;
-        syncReference = micros64();
         syncStatus = SYNC_MANUAL_SET;
         syncMode = MODE_SYNC_MANUAL;
         debug("Impostazione orario manuale!");
 
         writeIntToSettings("syncMode", syncMode);
+        handleLineSync();
 
         request->send(200, "text/plain", "Time manually set");
 
 
       } else if (mode == MODE_SYNC_LINE && request->hasParam("hour") && request->hasParam("minute") && request->hasParam("second")){
-
         temp_hh = request->getParam("hour")->value().toInt();
         temp_mm  = request->getParam("minute")->value().toInt();
         temp_ss = request->getParam("second")->value().toInt();

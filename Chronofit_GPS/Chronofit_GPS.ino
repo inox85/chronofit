@@ -142,9 +142,11 @@ void loop() {
 
   dnsServer.processNextRequest();
 
-  if(syncStatus != SYNC_WAIT_LINE_SIGNAL){
-    processServicesSerial();
+  bool validNmea = false;
 
+  validNmea = processServicesSerial();
+  
+  if(syncStatus != SYNC_WAIT_LINE_SIGNAL){
     if(((millis() - lastGPSSync)/60000 >= GPSRefreshInterval || GPSRefreshInterval == 0) 
         && syncMode == MODE_SYNC_GPS) {
       syncStatus = SYNC_WAIT_GPS;
@@ -153,9 +155,8 @@ void loop() {
 
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
 
-  if (ppsTriggered && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+  if (ppsTriggered && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
     
-      
       uint64_t thisPpsUs = lastSyncTrigger;
       ppsTriggered = false;   // consumato QUI, una sola volta
 
@@ -273,11 +274,15 @@ void handleSensorTrigger(){
   }
 }
 
-void processServicesSerial() {
+bool processServicesSerial() {
   while (ServicesSerial.available()) {
     char c = ServicesSerial.read();
     gps.encode(c);  // decodifica NMEA
-    //Serial.print(c); // opzionale per debug
+    //Serial.print(c);
+    if(gps.time.isValid()){
+      return true;
+    }
   }
+  return false;
 }
 
