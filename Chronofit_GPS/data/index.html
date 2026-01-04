@@ -264,6 +264,14 @@
   </div>
 
   <div class="toggle-row">
+    <span>Show Δ Time column</span>
+    <label class="switch">
+      <input type="checkbox" id="toggle-delta-time" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-row">
     <span>Fullscreen</span>
     <label class="switch">
       <input type="checkbox" id="fullscreenToggle" onchange="toggleFullscreen(this)">
@@ -286,7 +294,7 @@
             <th>ID</th>
             <th>Competitor</th>
             <th>Timestamp</th>
-            <th>Δ Time</th>
+            <th class="delta-time-col">Δ Time</th>
             <th>Edit</th>
             <th>Send</th>
           </tr>

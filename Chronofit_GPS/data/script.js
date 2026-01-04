@@ -797,7 +797,7 @@ function editRow(button) {
   const row = button.closest("tr");
   const cells = row.querySelectorAll("td");
 
-  for (let i = 1; i < cells.length - 2; i++) {
+  for (let i = 1; i < cells.length - 3; i++) {
     const cell = cells[i];
     const currentValue = cell.textContent.trim();
 
@@ -1182,7 +1182,9 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Carica audio files nella cache...")
     cacheAudioFiles();
 
-
+    console.log("Timposto toggle delta time a default...")
+    const chk = document.getElementById("toggle-delta-time");
+    toggleDeltaTimeColumn(chk.checked);
 });
 
 
@@ -1330,3 +1332,29 @@ function onApplyClick() {
       message.style.color = "red";
     }
   }
+
+  function toggleDeltaTimeColumn(show) {
+    const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
+
+    // header
+    document.querySelectorAll("th.delta-time-col").forEach(th => {
+      th.style.display = display;
+    });
+
+    // celle
+    document.querySelectorAll("td.delta-time").forEach(td => {
+      td.style.display = display;
+    });
+
+    // se la mostri, ricalcola i delta
+    if (show) recalcDeltaTimes();
+  }
+
+
+  document
+  .getElementById("toggle-delta-time")
+  .addEventListener("change", e => {
+    toggleDeltaTimeColumn(e.target.checked);
+  });
+
+
