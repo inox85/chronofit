@@ -688,10 +688,12 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}">${lineNumber}</td>
     <td>${lineId}</td>
     <td>${competitor}</td>
-    <td>${timestamp}</td>
+    <td class="timestamp">${timestamp}</td>
+    <td class="delta-time"></td>
     <td><button class="edit-btn">✎</button></td>
     <td><button class="send-btn">➡</button></td>
   `;
+
 
   // Aggiungi gli eventi ai pulsanti della riga
   const editBtn = row.querySelector(".edit-btn");
@@ -709,6 +711,86 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
 
 }
 
+function timestampToMs(ts) {
+  // "19:16:04.770"
+  const [time, ms] = ts.split(".");
+  const [h, m, s] = time.split(":").map(Number);
+  return ((h * 3600 + m * 60 + s) * 1000) + Number(ms);
+}
+
+function formatDelta(ms) {
+  const sign = ms <= 0 ? "+" : "-";
+  ms = Math.abs(ms);
+
+  const hours   = Math.floor(ms / 3600000);
+  ms %= 3600000;
+
+  const minutes = Math.floor(ms / 60000);
+  ms %= 60000;
+
+  const seconds = Math.floor(ms / 1000);
+  const millis  = ms % 1000;
+
+  return (
+    sign +
+    String(hours).padStart(2, "0") + ":" +
+    String(minutes).padStart(2, "0") + ":" +
+    String(seconds).padStart(2, "0") + "." +
+    String(millis).padStart(3, "0")
+  );
+}
+
+
+function recalcDeltaTimes() {
+  const rows = Array.from(
+    document.querySelectorAll("#event-table tbody tr")
+  ).filter(row => row.style.display !== "none");
+
+  // partiamo dal basso (riga più vecchia)
+  let nextTime = null;
+
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const row = rows[i];
+    const tsCell = row.querySelector(".timestamp");
+    const deltaCell = row.querySelector(".delta-time");
+
+    if (!tsCell || !deltaCell) continue;
+
+    const currentMs = timestampToMs(tsCell.textContent.trim());
+
+    // riga più in basso → niente delta
+    if (nextTime === null) {
+      deltaCell.textContent = "—";
+      nextTime = currentMs;
+      continue;
+    }
+
+    const delta = nextTime - currentMs;
+    deltaCell.textContent = formatDelta(delta);
+    nextTime = currentMs;
+  }
+}
+
+
+function applyLineFilter() {
+  const activeLines = Array.from(document.querySelectorAll(".toggle-btn"))
+    .filter(el => {
+      if (el.tagName === "BUTTON") return !el.classList.contains("inactive");
+      if (el.tagName === "INPUT" && el.type === "checkbox") return el.checked;
+      return false;
+    })
+    .map(el => el.dataset.line);
+
+  const rows = document.querySelectorAll("#event-table tbody tr");
+
+  rows.forEach(row => {
+    const line = String(row.getAttribute("data-line"));
+    row.style.display = activeLines.includes(line) ? "" : "none";
+  });
+
+  // 🔥 ricalcolo intertempi DOPO il filtro
+  recalcDeltaTimes();
+}
 
 
 function editRow(button) {
@@ -792,6 +874,8 @@ function saveRow(button) {
 
   // 🔹 Invia la riga aggiornata all’ESP
   sendUpdatedCheckPointRow(row);
+
+  recalcDeltaTimes();
 }
 
 function sendUpdatedCheckPointRow(row) {
@@ -906,25 +990,25 @@ document.querySelectorAll('.toggle-btn').forEach(el => {
 
 
 
-function applyLineFilter() {
-  // seleziona tutti gli elementi toggle attivi
-  const activeLines = Array.from(document.querySelectorAll(".toggle-btn"))
-    .filter(el => {
-      // button attivo se non ha classe 'inactive'
-      if (el.tagName === "BUTTON") return !el.classList.contains("inactive");
-      // checkbox attivo se checked
-      if (el.tagName === "INPUT" && el.type === "checkbox") return el.checked;
-      return false;
-    })
-    .map(el => el.dataset.line);
+// function applyLineFilter() {
+//   // seleziona tutti gli elementi toggle attivi
+//   const activeLines = Array.from(document.querySelectorAll(".toggle-btn"))
+//     .filter(el => {
+//       // button attivo se non ha classe 'inactive'
+//       if (el.tagName === "BUTTON") return !el.classList.contains("inactive");
+//       // checkbox attivo se checked
+//       if (el.tagName === "INPUT" && el.type === "checkbox") return el.checked;
+//       return false;
+//     })
+//     .map(el => el.dataset.line);
 
-  const rows = document.querySelectorAll("#event-table tbody tr");
+//   const rows = document.querySelectorAll("#event-table tbody tr");
 
-  rows.forEach(row => {
-    const line = String(row.getAttribute("data-line"));
-    row.style.display = activeLines.includes(line) ? "" : "none";
-  });
-}
+//   rows.forEach(row => {
+//     const line = String(row.getAttribute("data-line"));
+//     row.style.display = activeLines.includes(line) ? "" : "none";
+//   });
+// }
 
 async function downloadSession() {
   try {
