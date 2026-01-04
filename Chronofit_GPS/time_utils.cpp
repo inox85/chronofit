@@ -15,61 +15,52 @@
 
 
 PreciseTime getPreciseTime() {
-    PreciseTime t;
+  PreciseTime t;
 
-    uint64_t rawUs = micros64() - syncReference;
-    uint64_t elapsedUs = correctedElapsedUs(rawUs);
+  uint64_t rawUs = micros64() - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs);
 
-    uint32_t elapsedSec = elapsedUs / 1000000;
-    uint32_t remUs     = elapsedUs % 1000000;
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs     = elapsedUs % 1000000ULL;
 
-    uint32_t ms = (remUs + 500) / 1000;
-    if (ms >= 1000) ms = 999;
+  // millisecondi arrotondati
+  uint32_t ms = (remUs + 500) / 1000;
+  if (ms >= 1000) ms = 999;
+  t.ms = ms;
 
-    t.ms = ms;
+  // ⏱️ tempo assoluto
+  uint64_t absSec = ppsEpochSec + elapsedSec;
 
-    uint32_t totalSec = ppsS + elapsedSec;
-    t.ss = totalSec % 60;
+  t.ss = absSec % 60;
+  t.mm = (absSec / 60) % 60;
+  t.hh = (absSec / 3600) % 24;
 
-    uint32_t totalMin = ppsM + totalSec / 60;
-    t.mm = totalMin % 60;
-
-    t.hh = (ppsH + totalMin / 60) % 24;
-
-    // Serial.print("rawUS: ");
-    // Serial.println(rawUs);
-    // Serial.print("elapsedUs: ");
-    // Serial.println(elapsedUs);
-    // Serial.print("remUs: ");
-    // Serial.println(remUs);
-
-    return t;
+  return t;
 }
 
 
 PreciseTime getPreciseSensorTime(int i) {
     PreciseTime t;
 
-    uint64_t rawUs = sensorTime[i] - syncReference;
-    uint64_t elapsedUs = correctedElapsedUs(rawUs);
+  uint64_t rawUs = sensorTime[i] - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs);
 
-    uint32_t elapsedSec = elapsedUs / 1000000;
-    uint32_t remUs     = elapsedUs % 1000000;
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs     = elapsedUs % 1000000ULL;
 
-    uint32_t ms = (remUs + 500) / 1000;
-    if (ms >= 1000) ms = 999;
+  // millisecondi arrotondati
+  uint32_t ms = (remUs + 500) / 1000;
+  if (ms >= 1000) ms = 999;
+  t.ms = ms;
 
-    t.ms = ms;
+  // ⏱️ tempo assoluto
+  uint64_t absSec = ppsEpochSec + elapsedSec;
 
-    uint32_t totalSec = ppsS + elapsedSec;
-    t.ss = totalSec % 60;
+  t.ss = absSec % 60;
+  t.mm = (absSec / 60) % 60;
+  t.hh = (absSec / 3600) % 24;
 
-    uint32_t totalMin = ppsM + totalSec / 60;
-    t.mm = totalMin % 60;
-
-    t.hh = (ppsH + totalMin / 60) % 24;
-
-    return t;
+  return t;
 }
 
 
@@ -158,16 +149,24 @@ void checkPointRoutine(int i) {
 
 
 // ----------------------------------------
-// Funzione di supporto: gestione sincronizzazione PPS
 void handlePpsSync() {
-  ppsTriggered = false;
 
-  ppsH = gps.time.hour() + utcOffset;
-  ppsM = gps.time.minute();
-  ppsS = gps.time.second();
+  // PPS = inizio del secondo successivo
+  uint32_t hh = gps.time.hour() + utcOffset;
+  uint32_t mm = gps.time.minute();
+  uint32_t ss = gps.time.second() + 1;
 
+  // rollover
+  if (ss >= 60) { ss = 0; mm++; }
+  if (mm >= 60) { mm = 0; hh = (hh + 1) % 24; }
 
-  //updateTime(hour, minute, second);   // <-- qui va messo
+  // 🔒 ancora assoluta (epoch-like, giornaliera)
+  ppsEpochSec = (uint64_t)hh * 3600ULL +
+                (uint64_t)mm * 60ULL +
+                (uint64_t)ss;
+
+  // riferimento temporale
+  syncReference = lastSyncTrigger;
 
   lastBroadcast = millis();
 }

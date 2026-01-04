@@ -21,6 +21,7 @@ String stationName = "";
 
 // --- PPS ---
 volatile uint8_t ppsH, ppsM, ppsS = 0;
+uint64_t ppsEpochSec = 0;
 volatile bool ppsTriggered = false;
 volatile bool lineTriggered = false;
 volatile uint32_t ppsCounter = 0;

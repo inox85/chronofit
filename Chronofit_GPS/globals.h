@@ -22,6 +22,7 @@ extern String stationName;
 
 // --- PPS ---
 extern volatile uint8_t ppsH, ppsM, ppsS;
+extern uint64_t ppsEpochSec;
 extern volatile bool ppsTriggered;
 extern volatile bool lineTriggered;
 
