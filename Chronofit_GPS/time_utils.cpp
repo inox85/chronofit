@@ -268,23 +268,14 @@ void broadcastTime() {
 
 }
 
+
+double readInternalTemp() {
+  return (double)(temprature_sens_read() - 32) / 1.8;
+}
+
 uint64_t correctedElapsedUs(uint64_t rawUs) {
     return (uint64_t)(rawUs * calibrationFactor);
 }
-
-// uint64_t micros64() {
-//     static uint32_t last = 0;
-//     static uint64_t high = 0;
-
-//     uint32_t now = (uint32_t)esp_timer_get_time();  // micros() a 32 bit
-//     if (now < last) {         // overflow rilevato
-//         high += (uint64_t)1 << 32;
-//     }
-//     last = now;
-
-//     return high | now;
-// }
-
 
 uint64_t micros64() {
   return esp_timer_get_time();  

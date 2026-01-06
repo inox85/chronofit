@@ -135,7 +135,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   server.on("/checkPoint", HTTP_GET, [](AsyncWebServerRequest *request) {
     int lineNumber = 0;
-    unsigned long mowMicros = micros();
+    uint32_t mowMicros = micros64();
     if (request->hasParam("lineNumber")) {
         lineNumber = request->getParam("lineNumber")->value().toInt();
     }
@@ -499,6 +499,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["timeBaseCal"] = calibrationFactor;
     doc["calPpsCount"] = calPpsCount;
     doc["calPpsTotal"] = CAL_WINDOW_SEC;
+    doc["intTemp"] = readInternalTemp();
 
     String json;
     serializeJson(doc, json);

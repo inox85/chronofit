@@ -78,4 +78,8 @@ extern int lastBroadCastSecond;
 
 extern int sessionRowIndex;
 
+extern "C" uint8_t temprature_sens_read();
+
+
+
 #endif
