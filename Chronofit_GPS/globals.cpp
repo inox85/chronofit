@@ -41,6 +41,8 @@ unsigned long gpsTimeOffsetUs = 0;
 int utcOffset = 0;
 
 double calibrationFactor = 1.0;
+double calTemp = 50;
+double compFactor = 0.03;
 
 int syncEnabled = 1;
 

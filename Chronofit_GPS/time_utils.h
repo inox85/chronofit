@@ -36,3 +36,5 @@ uint64_t micros64();
 double setTimeBaseCalibration(double deltaUs, double minutes);
 
 double readInternalTemp();
+
+double termFactor(double T);

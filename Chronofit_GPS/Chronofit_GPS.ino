@@ -158,7 +158,6 @@ void loop() {
 
   if (ppsTriggered && (delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       
-
       uint64_t thisPpsUs = lastSyncTrigger;
       ppsTriggered = false;   // consumato QUI, una sola volta
 
@@ -189,6 +188,8 @@ void loop() {
               Serial.println(thisPpsUs);
               Serial.print("Calibration error (us): ");
               Serial.println(errorUs);
+
+              writeDoubleToSettings("calTempRef", readInternalTemp());
 
               setTimeBaseCalibration(errorUs, calPpsCount / 60);
 

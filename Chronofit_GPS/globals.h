@@ -27,6 +27,7 @@ extern volatile bool ppsTriggered;
 extern volatile bool lineTriggered;
 
 extern double calibrationFactor;
+extern double calTempRef;
 
 extern bool testOnSync;
 extern int calRunning;

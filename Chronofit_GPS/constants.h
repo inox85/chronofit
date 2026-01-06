@@ -27,4 +27,6 @@ constexpr int POWER_SOURCE = 36;
 constexpr uint32_t CAL_WINDOW_SEC = 3600UL;
 constexpr uint32_t CAL_WINDOW_US  = CAL_WINDOW_SEC * 1000000UL;
 
+constexpr double a = -0.035e-6;      // coefficiente quarzo (ppm/°C²)
+
 #endif
