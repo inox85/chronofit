@@ -83,24 +83,6 @@ void checkPointRoutine(int i) {
   checkpoint["second"] = ss;
   checkpoint["millis"] = ms;
 
-  // // 🔹 Calcola il prossimo indice
-  // int sessionRowIndex = 0;
-
-  // // Leggi l’ultimo indice dal file se esiste
-  // File file = LittleFS.open("/session.json", "r");
-  // if (file) {
-  //     while (file.available()) {
-  //         String line = file.readStringUntil('\n');
-  //         DynamicJsonDocument tmp(256);
-  //         DeserializationError err = deserializeJson(tmp, line);
-  //         if (!err) {
-  //             int idx = tmp["index"] | 0;
-  //             if (idx > sessionRowIndex) sessionRowIndex = idx;
-  //         }
-  //     }
-  //     file.close();
-  // }
-
   // 🔹 Calcola nuovo index
   sessionRowIndex = sessionRowIndex + 1;
   checkpoint["index"] = sessionRowIndex;
@@ -268,13 +250,15 @@ void broadcastTime() {
 
 }
 
-
 double readInternalTemp() {
-  return (double)(temprature_sens_read() - 32) / 1.8;
+  double t =  (double)(temprature_sens_read() - 32) / 1.8;
+  return round(t * 10.0) / 10.0;   // 1 decimale
 }
 
 uint64_t correctedElapsedUs(uint64_t rawUs) {
-    return (uint64_t)(rawUs * calibrationFactor);
+  //double T =  readInternalTemp();
+  return (uint64_t)(rawUs * calibrationFactor);
+  //return (uint64_t)(rawUs * calibrationFactor * termFactor(T));
 }
 
 uint64_t micros64() {
@@ -303,5 +287,11 @@ double setTimeBaseCalibration(double deltaUs, double minutes) {
     Serial.println(String("factor=") + String(calFactorSaved, 10));
 
     return calFactorSaved;
+}
+
+double termFactor(double T) {
+    double dT = T - Tref;
+    double df_over_f = a * dT * dT;  // deriva relativa del quarzo
+    return 1.0 - df_over_f;          // fattore moltiplicativo
 }
 
