@@ -239,7 +239,7 @@
 
   <hr class="divider">
 
-  <h3>Settings</h3>
+  <h3>Quick settings</h3>
 
   <div class="toggle-row">
     <span>Timing station name</span>
@@ -264,7 +264,15 @@
   </div>
 
   <div class="toggle-row">
-    <span>Show Δ Time column</span>
+    <span>Show absolute time column</span>
+    <label class="switch">
+      <input type="checkbox" id="toggle-timestamp" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-row">
+    <span>Show Δ time column</span>
     <label class="switch">
       <input type="checkbox" id="toggle-delta-time" checked>
       <span class="slider"></span>
@@ -293,7 +301,7 @@
             <th>Line</th>
             <th>ID</th>
             <th>Competitor</th>
-            <th>Timestamp</th>
+            <th class="timestamp-col">Timestamp</th>
             <th class="delta-time-col">Δ Time</th>
             <th>Edit</th>
             <th>Send</th>

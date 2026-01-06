@@ -790,6 +790,7 @@ function applyLineFilter() {
 
   // 🔥 ricalcolo intertempi DOPO il filtro
   recalcDeltaTimes();
+  updateVisibleColumns();
 }
 
 
@@ -1350,6 +1351,29 @@ function onApplyClick() {
     if (show) recalcDeltaTimes();
   }
 
+    function toggleTimestampColumn(show) {
+    const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
+
+    // header
+    document.querySelectorAll("th.timestamp-col").forEach(th => {
+      th.style.display = display;
+    });
+
+    // celle
+    document.querySelectorAll("td.timestamp").forEach(td => {
+      td.style.display = display;
+    });
+
+    // se la mostri, ricalcola i delta
+    if (show) recalcDeltaTimes();
+  }
+
+  function updateVisibleColumns(){
+    let deltaTimeVisible = document.getElementById("toggle-delta-time").checked;
+    toggleDeltaTimeColumn(deltaTimeVisible);
+    let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
+    toggleTimestampColumn(absoluteTimeVisible); 
+  }
 
   document
   .getElementById("toggle-delta-time")
@@ -1357,4 +1381,9 @@ function onApplyClick() {
     toggleDeltaTimeColumn(e.target.checked);
   });
 
+  document
+  .getElementById("toggle-timestamp")
+  .addEventListener("change", e => {
+    toggleTimestampColumn(e.target.checked);
+  });
 
