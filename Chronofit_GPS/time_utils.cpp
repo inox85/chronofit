@@ -289,9 +289,3 @@ double setTimeBaseCalibration(double deltaUs, double minutes) {
     return calFactorSaved;
 }
 
-double termFactor(double T) {
-    double dT = T - Tref;
-    double df_over_f = a * dT * dT;  // deriva relativa del quarzo
-    return 1.0 - df_over_f;          // fattore moltiplicativo
-}
-
