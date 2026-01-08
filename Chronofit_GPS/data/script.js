@@ -1302,88 +1302,104 @@ function updateTimeSettingsVisibility() {
 
 
 function onApplyClick() {
-    const hour = document.getElementById("hour");
-    const minute = document.getElementById("minute");
-    const message = document.getElementById("time-settings-field");
-    const manualSyncRow = document.querySelector(".toggle-row.manual-sync");
+  const hour = document.getElementById("hour");
+  const minute = document.getElementById("minute");
+  const message = document.getElementById("time-settings-field");
+  const manualSyncRow = document.querySelector(".toggle-row.manual-sync");
 
-    console.log("Apply!");
-    
-    // se non è visibile → ok, lascia procedere
-    if (manualSyncRow.classList.contains("hidden")) {
-      console.log("Controlli hidden!");
-      setTimeSyncMode();
-      return;
-    }
-
-    const validHour = hour.value !== "" && hour.value >= 0 && hour.value <= 23;
-    const validMinute = minute.value !== "" && minute.value >= 0 && minute.value <= 59;
-    console.log(validHour);
-    console.log(validMinute);
-
-    if (validHour && validMinute) {
-      console.log("Sincronizzo!");
-      // pulisci messaggio ed esegui realmente l'Apply
-      message.textContent = "";
-      setTimeSyncMode();
-    } else {
-      console.log("Tempo non impostato!");
-      // mostra messaggio di errore
-      message.textContent = "Enter a valid hour and minute.";
-      message.style.color = "red";
-    }
+  console.log("Apply!");
+  
+  // se non è visibile → ok, lascia procedere
+  if (manualSyncRow.classList.contains("hidden")) {
+    console.log("Controlli hidden!");
+    setTimeSyncMode();
+    return;
   }
 
-  function toggleDeltaTimeColumn(show) {
-    const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
+  const validHour = hour.value !== "" && hour.value >= 0 && hour.value <= 23;
+  const validMinute = minute.value !== "" && minute.value >= 0 && minute.value <= 59;
+  console.log(validHour);
+  console.log(validMinute);
 
-    // header
-    document.querySelectorAll("th.delta-time-col").forEach(th => {
-      th.style.display = display;
-    });
-
-    // celle
-    document.querySelectorAll("td.delta-time").forEach(td => {
-      td.style.display = display;
-    });
-
-    // se la mostri, ricalcola i delta
-    if (show) recalcDeltaTimes();
+  if (validHour && validMinute) {
+    console.log("Sincronizzo!");
+    // pulisci messaggio ed esegui realmente l'Apply
+    message.textContent = "";
+    setTimeSyncMode();
+  } else {
+    console.log("Tempo non impostato!");
+    // mostra messaggio di errore
+    message.textContent = "Enter a valid hour and minute.";
+    message.style.color = "red";
   }
+}
 
-    function toggleTimestampColumn(show) {
-    const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
+function toggleDeltaTimeColumn(show) {
+  const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
 
-    // header
-    document.querySelectorAll("th.timestamp-col").forEach(th => {
-      th.style.display = display;
-    });
-
-    // celle
-    document.querySelectorAll("td.timestamp").forEach(td => {
-      td.style.display = display;
-    });
-
-    // se la mostri, ricalcola i delta
-    if (show) recalcDeltaTimes();
-  }
-
-  function updateVisibleColumns(){
-    let deltaTimeVisible = document.getElementById("toggle-delta-time").checked;
-    toggleDeltaTimeColumn(deltaTimeVisible);
-    let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
-    toggleTimestampColumn(absoluteTimeVisible); 
-  }
-
-  document
-  .getElementById("toggle-delta-time")
-  .addEventListener("change", e => {
-    toggleDeltaTimeColumn(e.target.checked);
+  // header
+  document.querySelectorAll("th.delta-time-col").forEach(th => {
+    th.style.display = display;
   });
 
-  document
-  .getElementById("toggle-timestamp")
-  .addEventListener("change", e => {
-    toggleTimestampColumn(e.target.checked);
+  // celle
+  document.querySelectorAll("td.delta-time").forEach(td => {
+    td.style.display = display;
   });
 
+  // se la mostri, ricalcola i delta
+  if (show) recalcDeltaTimes();
+}
+
+function toggleTimestampColumn(show) {
+  const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
+
+  // header
+  document.querySelectorAll("th.timestamp-col").forEach(th => {
+    th.style.display = display;
+  });
+
+  // celle
+  document.querySelectorAll("td.timestamp").forEach(td => {
+    td.style.display = display;
+  });
+
+  // se la mostri, ricalcola i delta
+  if (show) recalcDeltaTimes();
+}
+
+function updateVisibleColumns(){
+  let deltaTimeVisible = document.getElementById("toggle-delta-time").checked;
+  toggleDeltaTimeColumn(deltaTimeVisible);
+  let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
+  toggleTimestampColumn(absoluteTimeVisible); 
+}
+
+document
+.getElementById("toggle-delta-time")
+.addEventListener("change", e => {
+  toggleDeltaTimeColumn(e.target.checked);
+});
+
+document
+.getElementById("toggle-timestamp")
+.addEventListener("change", e => {
+  toggleTimestampColumn(e.target.checked);
+});
+
+
+// seleziona l'intera riga dell'header
+const headerRow = document.querySelector("#event-table thead tr");
+
+// cambia cursore per tutta la riga
+headerRow.style.cursor = "pointer";
+
+// aggiungi click listener alla riga
+headerRow.addEventListener("click", () => {
+  document.getElementById("tableSettingsOverlay").style.display = "flex";
+});
+
+// chiudi il popup con il bottone Close
+document.getElementById("closeTablePopup").addEventListener("click", () => {
+  document.getElementById("tableSettingsOverlay").style.display = "none";
+});

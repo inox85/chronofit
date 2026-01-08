@@ -156,6 +156,37 @@
     </div>
   </div>
 
+
+  <!-- Overlay e popup per Edit Time -->
+  <div id="tableSettingsOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Table settings</h2>
+
+      <div class="toggle-row">
+        <span>Show absolute time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-timestamp" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show Δ time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-delta-time" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="button-row">
+        <!--<button class="big-button">Clear session</button>-->
+        <button class="big-button" id="closeTablePopup">Close</button>
+      </div>
+      
+      <p id="time-settings-field"></p>
+    </div>
+  </div>
+
   <div id="fullscreenOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
       <h2>Fullscreen Mode</h2>
@@ -259,22 +290,6 @@
     <span>Show sync test rows</span>
     <label class="switch">
       <input type="checkbox" class="toggle-btn" data-line="5">
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="toggle-row">
-    <span>Show absolute time column</span>
-    <label class="switch">
-      <input type="checkbox" id="toggle-timestamp" checked>
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="toggle-row">
-    <span>Show Δ time column</span>
-    <label class="switch">
-      <input type="checkbox" id="toggle-delta-time" checked>
       <span class="slider"></span>
     </label>
   </div>
