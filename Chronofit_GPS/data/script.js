@@ -486,16 +486,16 @@ function handleUpdate(data) {
     const printToggle = document.getElementById("printToggle");
     prevPowerSource = data.pw;
 
-    if(data.pw === POWER_MODE_NONE){
+    if(prevPowerSource === POWER_MODE_NONE){
       console.log("Switching to low power config")
       printToggle.checked = 0;
       printToggle.disabled = 1;
-    }else if(data.pw === POWER_MODE_USB){
+    }else if(prevPowerSource === POWER_MODE_USB){
       console.log("Switching to power bank power config")
       printToggle.checked = 1;
       printToggle.disabled = 0;
     }
-    else if(data.pw === POWER_MODE_BATTERY){
+    else if(prevPowerSource === POWER_MODE_BATTERY){
       console.log("Switching to battery bank power config")
       printToggle.checked = 1;
       printToggle.disabled = 0;
@@ -657,6 +657,9 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   const tbody = document.querySelector("#event-table tbody");
   const row = document.createElement("tr");
 
+  // subito dopo: const row = document.createElement("tr");
+  row.classList.add("row-enter");
+
   const timestamp = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(millis).padStart(3, "0")}`;
   const index = rowIndex;
 
@@ -694,7 +697,6 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td><button class="send-btn">➡</button></td>
   `;
 
-
   // Aggiungi gli eventi ai pulsanti della riga
   const editBtn = row.querySelector(".edit-btn");
   const sendBtn = row.querySelector(".send-btn");
@@ -705,6 +707,18 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   //tbody.appendChild(row);
 
   tbody.insertBefore(row, tbody.firstChild);
+
+  // forza reflow (FONDAMENTALE)
+  row.offsetHeight;
+
+  // attiva animazione
+  row.classList.add("row-enter-active");
+
+  // (opzionale) rimuovi highlight dopo 1.5s
+  setTimeout(() => {
+    row.classList.remove("row-enter");
+    row.classList.remove("row-enter-active");
+  }, 1500);
 
   // Applica subito il filtro
   applyLineFilter();

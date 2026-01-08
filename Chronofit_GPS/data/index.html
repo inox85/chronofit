@@ -13,7 +13,8 @@
   <link rel="manifest" href="/manifest.json">
 </head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=0.8, minimum-scale=0.8">
 <body>
 
   <div id="splash">
@@ -160,7 +161,7 @@
   <!-- Overlay e popup per Edit Time -->
   <div id="tableSettingsOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Table settings</h2>
+      <h2>Table column settings</h2>
 
       <div class="toggle-row">
         <span>Show absolute time column</span>
@@ -177,7 +178,19 @@
           <span class="slider"></span>
         </label>
       </div>
+
+      <hr class="divider">
       
+      <h2>Table row settings</h2>
+
+      <div class="toggle-row">
+        <span>Show sync test rows</span>
+        <label class="switch">
+          <input type="checkbox" class="toggle-btn" data-line="5">
+          <span class="slider"></span>
+        </label>
+      </div>
+
       <div class="button-row">
         <!--<button class="big-button">Clear session</button>-->
         <button class="big-button" id="closeTablePopup">Close</button>
@@ -282,14 +295,6 @@
     <span>Print on paper</span>
     <label class="switch">
       <input type="checkbox" id="printToggle" onchange="setSettings()" checked>
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="toggle-row">
-    <span>Show sync test rows</span>
-    <label class="switch">
-      <input type="checkbox" class="toggle-btn" data-line="5">
       <span class="slider"></span>
     </label>
   </div>

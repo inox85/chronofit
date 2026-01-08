@@ -523,7 +523,6 @@ input:checked + .slider:before {
 
 .fullscreen-popup h2 {
   font-family: 'Nunito';
-  margin-top: 0;
   color: #222;
 }
 
@@ -652,4 +651,22 @@ input:checked + .slider:before {
 #generalPopup {
   background-color: #ffeb3b; /* giallo di default */
   color: #000;
+}
+
+#event-table tr.row-enter td {
+  opacity: 0;
+}
+
+#event-table tr.row-enter td > * {
+  transform: translateY(-10px);
+}
+
+#event-table tr.row-enter.row-enter-active td {
+  opacity: 1;
+  transition: opacity 1000ms ease;
+}
+
+#event-table tr.row-enter.row-enter-active td > * {
+  transform: translateY(0);
+  transition: transform 1000ms ease;
 }
