@@ -1,5 +1,26 @@
-let timeOffset = 0;
+const FLAG_SYNC_ENABLED = 1; // 0001
+const FLAG_TIME_VALID = 2; // 0010
+const FLAG_LOCATION_VALID = 4; // 0100
+const FLAG_TIMEBASE_CALIBRATION = 8; // 1000
 
+const SYNC_NONE = 0;
+const SYNC_MANUAL_SET = 1;  // Tempo settato manualmente
+const SYNC_WAIT_LINE_SIGNAL = 2;  // In attesa del segnale di sincronismo (esterno)
+const SYNC_SET_BY_LINE_SIGNAL =3;  // Tempo impostato tramite segnale esterno
+const SYNC_FIRST_GPS_SYNC = 4;   // In attesa della sincronizzazione GPS
+const SYNC_WAIT_GPS = 5;   // Sincronizzato tramite GPS
+const SYNC_GPS_SYNCED = 6;   // Sincronizzato tramite GPS
+
+const GPS_TEST_REQESTED = 1;
+const GPS_TEST_DONE = 0;
+
+const POWER_MODE_NONE = 0;   // Alimentatore esterno non collegato
+const POWER_MODE_USB = 1;   // Dispositivo alimentato da POWER BANK
+const POWER_MODE_BATTERY = 2;   // Dispositivo alimentato a 12V
+
+let prevPowerSource = 1;
+
+let timeOffset = 0;
 
 const audioFiles = [
   "/sound1.mp3",
@@ -7,6 +28,14 @@ const audioFiles = [
   "/sound3.mp3",
   "/sound4.mp3"
 ];
+
+const lineColors = {
+  1: "#ffcccc", // rosso tenue
+  2: "#ccffcc", // verde tenue
+  3: "#ccccff", // blu tenue
+  4: "#fff5cc", // giallo tenue
+  5: "#808080ff" // giallo tenue
+};
 
 const audioCache = {};
 
@@ -171,13 +200,14 @@ function fillSettingsFields(data){
 
   
   document.getElementById("timezone-select").value = data.utc ?? 0;
-  document.getElementById("printToggle").checked = data.print ?? 0;
   document.getElementById("station-name-input").value = data.sn;
   //document.getElementById("gpsToggle").checked = data.gps ?? 0;
 
   document.getElementById("sync-method-select").value = data.sm;
   document.getElementById("sync-method-select").dispatchEvent(new Event("change"));
   document.getElementById("sync-interval-select").value = data.si ?? 0
+
+  handlePowerUpdate(data);
 }
 
 function setTimeSyncMode(){
@@ -397,6 +427,7 @@ function handleMessage(data) {
 
     case TYPE_ROW_UPDATED:
       console.log("⚙️ Row updated!");
+      updateRowFromBroadcas(data);
       break;
   }
 }
@@ -451,14 +482,21 @@ function stopWatchdog() {
 const generalPopup = document.getElementById("generalPopup");
 const generalPopupText = document.getElementById("generalPopupText");
 
-function showGeneralPopup(message, bgColor = "#3b55ffff") {
+function showGeneralPopup(message, bgColor = "#3b55ffff", duration = 3000) {
   generalPopupText.innerText = message;
   generalPopup.style.backgroundColor = bgColor;
 
   if (!generalPopup.classList.contains("show")) {
     generalPopup.classList.remove("hidden");
-    setTimeout(() => generalPopup.classList.add("show"), 10); // fade-in
+    setTimeout(() => generalPopup.classList.add("show"), 5); // fade-in
   }
+
+  // Nascondi il popup dopo 'duration' millisecondi
+  setTimeout(() => {
+    generalPopup.classList.remove("show");
+    // opzionale: dopo la transizione, aggiungi di nuovo hidden
+    setTimeout(() => generalPopup.classList.add("hidden"), 300); // 300ms dipende dalla durata della transizione CSS
+  }, duration);
 }
 
 function hideGeneralPopup() {
@@ -469,29 +507,8 @@ function hideGeneralPopup() {
 }
 
 
-const FLAG_SYNC_ENABLED = 1; // 0001
-const FLAG_TIME_VALID = 2; // 0010
-const FLAG_LOCATION_VALID = 4; // 0100
-const FLAG_TIMEBASE_CALIBRATION = 8; // 1000
 
-const SYNC_NONE = 0;
-const SYNC_MANUAL_SET = 1;  // Tempo settato manualmente
-const SYNC_WAIT_LINE_SIGNAL = 2;  // In attesa del segnale di sincronismo (esterno)
-const SYNC_SET_BY_LINE_SIGNAL =3;  // Tempo impostato tramite segnale esterno
-const SYNC_FIRST_GPS_SYNC = 4;   // In attesa della sincronizzazione GPS
-const SYNC_WAIT_GPS = 5;   // Sincronizzato tramite GPS
-const SYNC_GPS_SYNCED = 6;   // Sincronizzato tramite GPS
-
-const GPS_TEST_REQESTED = 1;
-const GPS_TEST_DONE = 0;
-
-const POWER_MODE_NONE = 0;   // Alimentatore esterno non collegato
-const POWER_MODE_USB = 1;   // Dispositivo alimentato da POWER BANK
-const POWER_MODE_BATTERY = 2;   // Dispositivo alimentato a 12V
-
-let prevPowerSource = 1;
-
-function handleUpdate(data) {
+function handlePowerUpdate(data) {
   if (prevPowerSource !== data.pw) {
     const printToggle = document.getElementById("printToggle");
     prevPowerSource = data.pw;
@@ -536,13 +553,11 @@ function updateClockFromData(data) {
 
     if (calRunning) {
       showGeneralPopup("Timebase calibration running...", "#ff9800"); // arancione per calibrazione
-    } else {
-      hideGeneralPopup();
-    }
+    } 
 
     const syncStatus = data.sy; 
 
-    handleUpdate(data);
+    handlePowerUpdate(data);
 
     let syncTestIcon = document.getElementById("incon-sync-test");
     //syncTestIcon.style.display = "none";
@@ -672,14 +687,6 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
 
   const timestamp = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(millis).padStart(3, "0")}`;
   const index = rowIndex;
-
-  const lineColors = {
-    1: "#ffcccc", // rosso tenue
-    2: "#ccffcc", // verde tenue
-    3: "#ccccff", // blu tenue
-    4: "#fff5cc", // giallo tenue
-    5: "#808080ff" // giallo tenue
-  };
 
   const activeLines = Array.from(document.querySelectorAll(".toggle-btn:not(.inactive)"))
   .map(btn => btn.dataset.line);
@@ -849,7 +856,6 @@ function applyLineFilter() {
   updateVisibleColumns();
 }
 
-
 function editRow(button) {
   const row = button.closest("tr");
 
@@ -869,7 +875,7 @@ function editRow(button) {
     }
 
     // Event Time → orario mascherato
-    else if (cell.classList.contains("timestamp-col")) {
+    else if (cell.classList.contains("timestamp")) {
       cell.innerHTML = `
         <input type="text" value="${value}" style="width:90%"
           maxlength="12"
@@ -1060,28 +1066,6 @@ document.querySelectorAll('.toggle-btn').forEach(el => {
   }
 });
 
-
-
-// function applyLineFilter() {
-//   // seleziona tutti gli elementi toggle attivi
-//   const activeLines = Array.from(document.querySelectorAll(".toggle-btn"))
-//     .filter(el => {
-//       // button attivo se non ha classe 'inactive'
-//       if (el.tagName === "BUTTON") return !el.classList.contains("inactive");
-//       // checkbox attivo se checked
-//       if (el.tagName === "INPUT" && el.type === "checkbox") return el.checked;
-//       return false;
-//     })
-//     .map(el => el.dataset.line);
-
-//   const rows = document.querySelectorAll("#event-table tbody tr");
-
-//   rows.forEach(row => {
-//     const line = String(row.getAttribute("data-line"));
-//     row.style.display = activeLines.includes(line) ? "" : "none";
-//   });
-// }
-
 async function downloadSession() {
   try {
     const response = await fetch('/downloadSession');
@@ -1211,9 +1195,6 @@ function sendSettingsRowData(data) {
   .catch(err => console.error('Errore di rete:', err));
 }
 
-// Avvia connessione all’apertura pagina
-//addEventListener("load", connectWebSocket);
-
 function toggleFullscreen(checkbox) {
   if (checkbox.checked) {
     // Entra in fullscreen
@@ -1231,7 +1212,6 @@ function toggleFullscreen(checkbox) {
     }
   }
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -1436,9 +1416,6 @@ function toggleTimestampColumn(show) {
     td.style.display = display;
   });
 
-  // se la mostri, ricalcola i delta
-  if (show) recalcDeltaTimes();
-  if (show) recalcElapsedTimes();
 }
 
 function toggleElapsedTimeColumn(show) {
@@ -1455,7 +1432,7 @@ function toggleElapsedTimeColumn(show) {
   });
 
   // se la mostri, ricalcola i delta
-  if (show) recalcDeltaTimes();
+
   if (show) recalcElapsedTimes();
 }
 
@@ -1488,7 +1465,6 @@ document
 });
 
 
-
 // seleziona l'intera riga dell'header
 const headerRow = document.querySelector("#event-table thead tr");
 
@@ -1504,3 +1480,66 @@ headerRow.addEventListener("click", () => {
 document.getElementById("closeTablePopup").addEventListener("click", () => {
   document.getElementById("tableSettingsOverlay").style.display = "none";
 });
+
+
+function updateRowFromBroadcas(data) {
+  const table = document.getElementById("event-table");
+  const tbody = table.querySelector("tbody");
+
+  console.log("Aggiorno riga da broadcast:", data);
+
+  const index = Number(data.index);
+  if (isNaN(index)) return;
+
+  // trova la riga tramite la colonna #
+  const row = [...tbody.rows].find(r =>
+    Number(r.querySelector("td")?.textContent) === index
+  );
+
+  if (!row) {
+    console.warn("Row not found:", index);
+    return;
+  }
+
+  // se la riga è in edit, evita overwrite
+  if (row.querySelector("input")) {
+    console.warn("Row in edit, skipped:", index);
+    return;
+  }
+
+  // aggiorna ID
+  const idCell = row.querySelector(".col-id");
+  if (idCell && data.lineId !== undefined) {
+    idCell.textContent = data.lineId;
+  }
+
+  // aggiorna competitor
+  const competitorCell = row.querySelector(".col-competitor");
+  if (competitorCell && data.competitor !== undefined) {
+    competitorCell.textContent = data.competitor;
+  }
+
+  // aggiorna event time
+  const timeCell = row.querySelector(".timestamp");
+  if (timeCell) {
+    timeCell.textContent = formatTime(
+      data.hour,
+      data.minute,
+      data.second,
+      data.millis
+    );
+  }
+
+  showGeneralPopup(`Row ${index} has been updated`,  lineColors[data.lineNumber]);
+  recalcDeltaTimes();
+  recalcElapsedTimes();
+}
+
+function formatTime(h, m, s, ms) {
+  return (
+    String(h).padStart(2, "0") + ":" +
+    String(m).padStart(2, "0") + ":" +
+    String(s).padStart(2, "0") + "." +
+    String(ms).padStart(3, "0")
+  );
+}

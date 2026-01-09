@@ -11,6 +11,7 @@
 #include "printer.h"
 #include "buzzer.h"
 #include "settings.h"
+#include "diagnostic.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -566,6 +567,7 @@ String serializeSettings(){
   doc["ss"] = syncStatus;
   doc["sn"] = stationName;
   doc["si"] = GPSRefreshInterval;
+  doc["pw"] = powerSource;
 
   String message;
   serializeJson(doc, message);
@@ -581,6 +583,14 @@ void broadCastSettings(){
 void broadCastRowEdited(const DynamicJsonDocument& entry){
   StaticJsonDocument<512> doc;
   doc["t"] = TYPE_ROW_UPDATED;
+  doc["index"] = entry["index"];
+  doc["lineNumber"] = entry["lineNumber"];
+  doc["lineId"] = entry["lineId"];
+  doc["competitor"] = entry["competitor"];
+  doc["hour"] = entry["hour"];
+  doc["minute"] = entry["minute"];
+  doc["second"] = entry["second"];
+  doc["millis"] = entry["millis"];
 
   String message;
   serializeJson(doc, message);

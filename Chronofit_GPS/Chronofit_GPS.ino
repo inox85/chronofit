@@ -203,7 +203,6 @@ void loop() {
       }
   }
 
-
   handleSensorTrigger();
 
   PreciseTime t = getPreciseTime();
