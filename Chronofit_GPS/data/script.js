@@ -693,6 +693,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td>${competitor}</td>
     <td class="timestamp">${timestamp}</td>
     <td class="delta-time"></td>
+    <td class="elapsed-time"></td>
     <td><button class="edit-btn">✎</button></td>
     <td><button class="send-btn">➡</button></td>
   `;
@@ -732,8 +733,13 @@ function timestampToMs(ts) {
   return ((h * 3600 + m * 60 + s) * 1000) + Number(ms);
 }
 
-function formatDelta(ms) {
-  const sign = ms <= 0 ? "+" : "-";
+function formatDelta(ms, signed) {
+  let sign = "";
+
+  if (signed) {
+    sign = ms <= 0 ? "+" : "-";
+  }
+
   ms = Math.abs(ms);
 
   const hours   = Math.floor(ms / 3600000);
@@ -754,6 +760,31 @@ function formatDelta(ms) {
   );
 }
 
+
+function recalcElapsedTimes() {
+  const rows = Array.from(
+    document.querySelectorAll("#event-table tbody tr")
+  ).filter(row => row.style.display !== "none");
+
+  // partiamo dal basso (riga più vecchia)
+  const firstRow = rows[rows.length - 1];
+  const firstTsCell = firstRow ? firstRow.querySelector(".timestamp") : null;
+  const firstTimeMs = firstTsCell ? timestampToMs(firstTsCell.textContent.trim()) : null;
+
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const row = rows[i];
+    const tsCell = row.querySelector(".timestamp");
+    const deltaCell = row.querySelector(".elapsed-time");
+
+    if (!tsCell || !deltaCell) continue;
+
+    const currentMs = timestampToMs(tsCell.textContent.trim());
+
+    const delta = firstTimeMs - currentMs;
+    deltaCell.textContent = formatDelta(delta, false);
+
+  }
+}
 
 function recalcDeltaTimes() {
   const rows = Array.from(
@@ -780,7 +811,7 @@ function recalcDeltaTimes() {
     }
 
     const delta = nextTime - currentMs;
-    deltaCell.textContent = formatDelta(delta);
+    deltaCell.textContent = formatDelta(delta, true);
     nextTime = currentMs;
   }
 }
@@ -804,6 +835,7 @@ function applyLineFilter() {
 
   // 🔥 ricalcolo intertempi DOPO il filtro
   recalcDeltaTimes();
+  recalcElapsedTimes();
   updateVisibleColumns();
 }
 
@@ -1363,6 +1395,7 @@ function toggleDeltaTimeColumn(show) {
 
   // se la mostri, ricalcola i delta
   if (show) recalcDeltaTimes();
+  if (shol) recalcElapsedTimes();
 }
 
 function toggleTimestampColumn(show) {
@@ -1380,9 +1413,31 @@ function toggleTimestampColumn(show) {
 
   // se la mostri, ricalcola i delta
   if (show) recalcDeltaTimes();
+  if (shol) recalcElapsedTimes();
 }
 
+function toggleElapsedTimeColumn(show) {
+  const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
+
+  // header
+  document.querySelectorAll("th.elapsed-time-col").forEach(th => {
+    th.style.display = display;
+  });
+
+  // celle
+  document.querySelectorAll("td.elapsed-time").forEach(td => {
+    td.style.display = display;
+  });
+
+  // se la mostri, ricalcola i delta
+  if (show) recalcDeltaTimes();
+  if (shol) recalcElapsedTimes();
+}
+
+
 function updateVisibleColumns(){
+  let elapsedTimeVisible = document.getElementById("toggle-elapsed-time").checked;
+  toggleElapsedTimeColumn(elapsedTimeVisible);
   let deltaTimeVisible = document.getElementById("toggle-delta-time").checked;
   toggleDeltaTimeColumn(deltaTimeVisible);
   let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
@@ -1400,6 +1455,13 @@ document
 .addEventListener("change", e => {
   toggleTimestampColumn(e.target.checked);
 });
+
+document
+.getElementById("toggle-elapsed-time")
+.addEventListener("change", e => {
+  toggleElapsedTimeColumn(e.target.checked);
+});
+
 
 
 // seleziona l'intera riga dell'header

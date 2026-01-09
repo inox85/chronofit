@@ -164,7 +164,7 @@
       <h2>Table column settings</h2>
 
       <div class="toggle-row">
-        <span>Show absolute time column</span>
+        <span>Show event time column</span>
         <label class="switch">
           <input type="checkbox" id="toggle-timestamp" checked>
           <span class="slider"></span>
@@ -172,9 +172,17 @@
       </div>
 
       <div class="toggle-row">
-        <span>Show Δ time column</span>
+        <span>Show incremental Δ column</span>
         <label class="switch">
           <input type="checkbox" id="toggle-delta-time" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show elapsed time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-elapsed-time" checked>
           <span class="slider"></span>
         </label>
       </div>
@@ -321,8 +329,9 @@
             <th>Line</th>
             <th>ID</th>
             <th>Competitor</th>
-            <th class="timestamp-col">Timestamp</th>
-            <th class="delta-time-col">Δ Time</th>
+            <th class="timestamp-col">Event Time</th>
+            <th class="delta-time-col">Incremental Δ</th>
+            <th class="elapsed-time-col">Elapsed Time</th>
             <th>Edit</th>
             <th>Send</th>
           </tr>
