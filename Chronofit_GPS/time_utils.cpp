@@ -120,14 +120,13 @@ void checkPointRoutine(int i) {
 
   // 🔹 Invia sul WebSocket
   StaticJsonDocument<256> wsDoc = ordered;
-  wsDoc["t"] = "checkPoint";
+  wsDoc["t"] = TYPE_CHECKPOINT;
 
   String jsonMessage;
   serializeJson(wsDoc, jsonMessage);
   //ws.cleanupClients(); // rimuove client chiusi
   ws.textAll(jsonMessage);
 }
-
 
 
 // ----------------------------------------
@@ -212,7 +211,7 @@ int getLastSessionRowIndex(){
 void broadcastTime() {
   PreciseTime t = getPreciseTime();
   StaticJsonDocument<256> doc;
-  doc["t"] = "timeUpdate";
+  doc["t"] = TYPE_TIME_UPDATE;
   doc["h"] = t.hh;
   doc["m"] = t.mm;
   doc["s"] = t.ss;

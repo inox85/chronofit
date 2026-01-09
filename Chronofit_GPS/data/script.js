@@ -360,9 +360,14 @@ function connectWebSocket() {
   };
 }
 
+const TYPE_CHECKPOINT = 0;
+const TYPE_TIME_UPDATE = 1;
+const TYPE_SESSION_CLEARED = 2;
+const TYPE_PARAMS_UPDATED = 3;
+
 function handleMessage(data) {
   switch (data.t) {
-    case "checkPoint":
+    case TYPE_CHECKPOINT:
       addEventToTable(
         data.index,
         data.lineNumber,
@@ -375,16 +380,16 @@ function handleMessage(data) {
       );
       break;
 
-    case "timeUpdate":
+    case TYPE_TIME_UPDATE:
       updateClockFromData(data);
       break;
 
-    case "sessionCleared":
+    case TYPE_SESSION_CLEARED:
       console.log("🧹 Session cleared signal!");
       clearEventTableRows();
       break;
 
-    case "paramsUpdated":
+    case TYPE_PARAMS_UPDATED:
       console.log("⚙️ Params update!");
       fillSettingsFields(data);
       break;

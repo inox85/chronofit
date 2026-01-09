@@ -226,7 +226,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         Serial.println("Sessione cancellata dal filesystem.");
         sessionRowIndex = 0;
         StaticJsonDocument<512> doc;
-        doc["t"] = "sessionCleared";
+        doc["t"] = TYPE_SESSION_CLEARED;
 
         String message;
         serializeJson(doc, message);
@@ -542,7 +542,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
 String serializeSettings(){
   StaticJsonDocument<512> doc;
-  doc["t"] = "paramsUpdated";
+  doc["t"] = TYPE_PARAMS_UPDATED;
   doc["c1"] = competitors[0];
   doc["c2"] = competitors[1];
   doc["c3"] = competitors[2];
