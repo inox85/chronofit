@@ -449,11 +449,13 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
                 entry["millis"] = millis;
                 updated = true;
                 debug("Riga aggiornata");
+                broadCastRowEdited(entry);
             }
 
             String outLine;
             serializeJson(entry, outLine);
             outFile.println(outLine);
+            
         }
         // --- Se non trovato, aggiungi alla fine ---
         if (!updated) {
@@ -573,6 +575,16 @@ String serializeSettings(){
 
 void broadCastSettings(){
   String message = serializeSettings();
+  ws.textAll(message);
+}
+
+void broadCastRowEdited(const DynamicJsonDocument& entry){
+  StaticJsonDocument<512> doc;
+  doc["t"] = TYPE_ROW_UPDATED;
+
+  String message;
+  serializeJson(doc, message);
+
   ws.textAll(message);
 }
 

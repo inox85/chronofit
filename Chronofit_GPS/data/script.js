@@ -364,6 +364,7 @@ const TYPE_CHECKPOINT = 0;
 const TYPE_TIME_UPDATE = 1;
 const TYPE_SESSION_CLEARED = 2;
 const TYPE_PARAMS_UPDATED = 3;
+const TYPE_ROW_UPDATED = 4;
 
 function handleMessage(data) {
   switch (data.t) {
@@ -392,6 +393,10 @@ function handleMessage(data) {
     case TYPE_PARAMS_UPDATED:
       console.log("⚙️ Params update!");
       fillSettingsFields(data);
+      break;
+
+    case TYPE_ROW_UPDATED:
+      console.log("⚙️ Row updated!");
       break;
   }
 }
@@ -692,10 +697,10 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-millis", millis);
 
   row.innerHTML = `
-    <td>${index}</td>
-    <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}">${lineNumber}</td>
-    <td>${lineId}</td>
-    <td>${competitor}</td>
+    <td class="col-index">${index}</td>
+    <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}" class="col-line">${lineNumber}</td>
+    <td class="col-id">${lineId}</td>
+    <td class="col-competitor">${competitor}</td>
     <td class="timestamp">${timestamp}</td>
     <td class="delta-time"></td>
     <td class="elapsed-time"></td>
@@ -847,35 +852,50 @@ function applyLineFilter() {
 
 function editRow(button) {
   const row = button.closest("tr");
-  const cells = row.querySelectorAll("td");
 
-  for (let i = 1; i < cells.length - 3; i++) {
-    const cell = cells[i];
-    const currentValue = cell.textContent.trim();
+  // colonne editabili
+  const editableCells = row.querySelectorAll(
+    ".col-id, .col-competitor, .timestamp"
+  );
 
-    if (!cell.querySelector("input")) {
-      // Prime 3 celle numeriche
-      if (i === 1 || i === 2 || i === 3) {
-        cell.innerHTML = `<input type="number" step="any" value="${currentValue}" style="width:90%">`;
-      }
-      // Ultima cella -> input orario mascherato hh:mm:ss.mmm
-      else if (i === cells.length - 3) {
-        cell.innerHTML = `
-          <input type="text" value="${currentValue}" style="width:90%" maxlength="12"
-            placeholder="hh:mm:ss.mmm"
-            oninput="maskTimeInput(this)">
-        `;
-      }
-      // Tutte le altre -> testo normale
-      else {
-        cell.innerHTML = `<input class="edit-timestamp" type="text" value="${currentValue}" style="width:90%">`;
-      }
+  editableCells.forEach(cell => {
+    if (cell.querySelector("input")) return;
+
+    const value = cell.textContent.trim();
+
+    // ID → numero
+    if (cell.classList.contains("col-id")) {
+      cell.innerHTML = `<input type="number" value="${value}" style="width:90%">`;
     }
-  }
+
+    // Event Time → orario mascherato
+    else if (cell.classList.contains("timestamp-col")) {
+      cell.innerHTML = `
+        <input type="text" value="${value}" style="width:90%"
+          maxlength="12"
+          placeholder="hh:mm:ss.mmm"
+          oninput="maskTimeInput(this)">
+      `;
+    }
+
+    // Δ e Elapsed → numerici (o testo se preferisci)
+    else if (
+      cell.classList.contains("delta-time-col") ||
+      cell.classList.contains("elapsed-time-col")
+    ) {
+      cell.innerHTML = `<input type="number" step="any" value="${value}" style="width:90%">`;
+    }
+
+    // Competitor → testo
+    else {
+      cell.innerHTML = `<input type="text" value="${value}" style="width:90%">`;
+    }
+  });
 
   button.textContent = "💾";
   button.onclick = () => saveRow(button);
 }
+
 
 // Funzione di mascheratura oraria hh:mm:ss.mmm
 function maskTimeInput(input) {
@@ -1400,7 +1420,7 @@ function toggleDeltaTimeColumn(show) {
 
   // se la mostri, ricalcola i delta
   if (show) recalcDeltaTimes();
-  if (shol) recalcElapsedTimes();
+  if (show) recalcElapsedTimes();
 }
 
 function toggleTimestampColumn(show) {
@@ -1418,7 +1438,7 @@ function toggleTimestampColumn(show) {
 
   // se la mostri, ricalcola i delta
   if (show) recalcDeltaTimes();
-  if (shol) recalcElapsedTimes();
+  if (show) recalcElapsedTimes();
 }
 
 function toggleElapsedTimeColumn(show) {
@@ -1436,7 +1456,7 @@ function toggleElapsedTimeColumn(show) {
 
   // se la mostri, ricalcola i delta
   if (show) recalcDeltaTimes();
-  if (shol) recalcElapsedTimes();
+  if (show) recalcElapsedTimes();
 }
 
 
