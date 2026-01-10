@@ -400,14 +400,14 @@ function handleMessage(data) {
   switch (data.t) {
     case TYPE_CHECKPOINT:
       addEventToTable(
-        data.index,
-        data.lineNumber,
-        data.lineId,
-        data.competitor,
-        data.hour,
-        data.minute,
-        data.second,
-        data.millis
+        data.id,
+        data.ln,
+        data.lId,
+        data.c,
+        data.h,
+        data.m,
+        data.s,
+        data.ms
       );
       break;
 
@@ -1128,14 +1128,13 @@ function jsonToCsv(array) {
   return [header, ...rows].join('\r\n');
 }
 
-
 function jsonToCsvTimeStamp(array) {
   if (!array.length) return '';
 
   const keys = Object.keys(array[0]);
 
   // Header CSV: prime 4 colonne + timestamp
-  const header = `${keys[0]};${keys[1]};${keys[2]};${keys[3]};timestamp`;
+  const header = `ID;Line number;Line ID;Competitor;Timestamp`;
 
   const rows = array.map(obj => {
     
@@ -1488,7 +1487,7 @@ function updateRowFromBroadcas(data) {
 
   console.log("Aggiorno riga da broadcast:", data);
 
-  const index = Number(data.index);
+  const index = Number(data.id);
   if (isNaN(index)) return;
 
   // trova la riga tramite la colonna #

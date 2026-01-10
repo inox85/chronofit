@@ -27,4 +27,13 @@ constexpr int POWER_SOURCE = 36;
 constexpr uint32_t CAL_WINDOW_SEC = 3600UL;
 constexpr uint32_t CAL_WINDOW_US  = CAL_WINDOW_SEC * 1000000UL;
 
+constexpr const char INDEX_FIELD[] = "id";
+constexpr const char LINE_NUMBER_FIELD[] = "ln";
+constexpr const char LINE_ID_FIELD[] = "lId";
+constexpr const char COMPETITOR_FIELD[] = "c";
+constexpr const char HOUR_FIELD[] = "h";
+constexpr const char MINUTE_FIELD[] = "m";
+constexpr const char SECOND_FIELD[] = "s";
+constexpr const char MILLIS_FIELD[] = "ms";
+
 #endif

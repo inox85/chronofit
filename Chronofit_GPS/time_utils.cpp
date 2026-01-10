@@ -75,17 +75,17 @@ void checkPointRoutine(int i) {
 
   // 🔹 Crea il JSON base
   StaticJsonDocument<256> checkpoint;
-  checkpoint["lineNumber"] = i+1;
-  checkpoint["lineId"] = lineIds[i];
-  checkpoint["competitor"] = competitors[i];
-  checkpoint["hour"] = hh;
-  checkpoint["minute"] = mm;
-  checkpoint["second"] = ss;
-  checkpoint["millis"] = ms;
+  checkpoint[LINE_NUMBER_FIELD] = i+1;
+  checkpoint[LINE_ID_FIELD] = lineIds[i];
+  checkpoint[COMPETITOR_FIELD] = competitors[i];
+  checkpoint[HOUR_FIELD] = hh;
+  checkpoint[MINUTE_FIELD] = mm;
+  checkpoint[SECOND_FIELD] = ss;
+  checkpoint[MILLIS_FIELD] = ms;
 
   // 🔹 Calcola nuovo index
   sessionRowIndex = sessionRowIndex + 1;
-  checkpoint["index"] = sessionRowIndex;
+  checkpoint[INDEX_FIELD] = sessionRowIndex;
 
   if(printEnabled){
     printFormatted(sessionRowIndex, lineIds[i], competitors[i], hh, mm, ss, ms, 1);
@@ -93,16 +93,16 @@ void checkPointRoutine(int i) {
 
   // 🔹 Crea una copia ordinata del JSON (index per primo)
   StaticJsonDocument<256> ordered;
-  ordered["index"] = sessionRowIndex;
+  ordered[INDEX_FIELD] = sessionRowIndex;
 
   // Copia i campi principali in ordine desiderato
-  if (checkpoint.containsKey("lineNumber")) ordered["lineNumber"] = checkpoint["lineNumber"];
-  if (checkpoint.containsKey("lineId")) ordered["lineId"] = checkpoint["lineId"];
-  if (checkpoint.containsKey("competitor")) ordered["competitor"] = checkpoint["competitor"];
-  if (checkpoint.containsKey("hour")) ordered["hour"] = checkpoint["hour"];
-  if (checkpoint.containsKey("minute")) ordered["minute"] = checkpoint["minute"];
-  if (checkpoint.containsKey("second")) ordered["second"] = checkpoint["second"];
-  if (checkpoint.containsKey("millis")) ordered["millis"] = checkpoint["millis"];
+  if (checkpoint.containsKey(LINE_NUMBER_FIELD)) ordered[LINE_NUMBER_FIELD] = checkpoint[LINE_NUMBER_FIELD];
+  if (checkpoint.containsKey(LINE_ID_FIELD)) ordered[LINE_ID_FIELD] = checkpoint[LINE_ID_FIELD];
+  if (checkpoint.containsKey(COMPETITOR_FIELD)) ordered[COMPETITOR_FIELD] = checkpoint[COMPETITOR_FIELD];
+  if (checkpoint.containsKey(HOUR_FIELD)) ordered[HOUR_FIELD] = checkpoint[HOUR_FIELD];
+  if (checkpoint.containsKey(MINUTE_FIELD)) ordered[MINUTE_FIELD] = checkpoint[MINUTE_FIELD];
+  if (checkpoint.containsKey(SECOND_FIELD)) ordered[SECOND_FIELD] = checkpoint[SECOND_FIELD];
+  if (checkpoint.containsKey(MILLIS_FIELD)) ordered[MILLIS_FIELD] = checkpoint[MILLIS_FIELD];
 
   // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
   File file = LittleFS.open("/session.json", "a");
@@ -198,7 +198,7 @@ int getLastSessionRowIndex(){
           DynamicJsonDocument tmp(256);
           DeserializationError err = deserializeJson(tmp, line);
           if (!err) {
-              int idx = tmp["index"] | 0;
+              int idx = tmp[INDEX_FIELD] | 0;
               if (idx > lastIdx) lastIdx = idx;
           }
       }
