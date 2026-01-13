@@ -168,9 +168,6 @@ void loop() {
         lastGPSSync = millis();
       }
 
-      // ------------------------------------------------
-      // 🔹 CALIBRAZIONE QUARZO (SEMPRE)
-      // ------------------------------------------------
       if (calRunning) {
 
           calPpsCount++;
@@ -212,12 +209,10 @@ void loop() {
     lastBroadCastSecond = actualSecond;
     broadcastTime();  
   }
-
+  
   if(actualSecond == 0){
     ppsCounter = 0;
   }
-
-  //Serial.println(ppsCounter);
 
   if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
     if(syncMode == MODE_SYNC_GPS){
@@ -239,12 +234,9 @@ void loop() {
     }
   }
 
-
   checkPowerSource();
 
 }
-
-
 
 void handleSensorTrigger(){
   for (int i = 0; i < 5; i++) {
@@ -255,6 +247,12 @@ void handleSensorTrigger(){
         lastSyncTrigger = sensorTime[i];    //lineTriggered = true;
         syncReference = lastSyncTrigger;
         handleLineSync();
+      }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START)
+      {
+        lastSyncTrigger = sensorTime[i];    //lineTriggered = true;
+        syncReference = lastSyncTrigger;
+        handleLineSync();
+        checkPointRoutine(i);
       }else{
         if(i == 4){
           printOnPrinter("---GPS SYNC TEST START---", 1);

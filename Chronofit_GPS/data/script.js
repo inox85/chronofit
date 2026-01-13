@@ -10,6 +10,8 @@ const SYNC_SET_BY_LINE_SIGNAL =3;  // Tempo impostato tramite segnale esterno
 const SYNC_FIRST_GPS_SYNC = 4;   // In attesa della sincronizzazione GPS
 const SYNC_WAIT_GPS = 5;   // Sincronizzato tramite GPS
 const SYNC_GPS_SYNCED = 6;   // Sincronizzato tramite GPS
+const ELAPSED_WAITING_START = 7;   // In attesa di un segnale si inizio cronometraggio
+const ELAPSED_TIME_STARTED = 8;   // In attesa di un segnale si inizio cronometraggio
 
 const GPS_TEST_REQESTED = 1;
 const GPS_TEST_DONE = 0;
@@ -570,6 +572,7 @@ function updateClockFromData(data) {
       statusElem.innerText = "Sync mode: Manual — Status: 🟢 OK"
     }
     if(syncStatus === SYNC_WAIT_LINE_SIGNAL){
+      document.getElementById("time").innerText = "00:00:00.000";
       statusElem.innerText = "Sync mode: Line — Status: ⏳ waiting for trigger..."
     }
     if(syncStatus === SYNC_SET_BY_LINE_SIGNAL){
@@ -599,7 +602,13 @@ function updateClockFromData(data) {
         statusElem.innerText = "Sync test: ⏱️ Waiting for the next minute to start... ";
       }
 
+    }if(syncStatus == ELAPSED_WAITING_START){
+      document.getElementById("time").innerText = "00:00:00.000";
+      statusElem.innerText = "🟢 Waiting for timing start...";
+    }if(syncStatus == ELAPSED_TIME_STARTED){
+      statusElem.innerText = "⏱️ Timing started! ";
     }
+    
   
   if(timeValid && locationValid){
     let tzOffsetAuto = Math.round(data.ln / 15); 

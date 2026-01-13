@@ -27,6 +27,8 @@ void broadcastTime();
 
 int getLastSessionRowIndex();
 
+void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms);
+
 void broadcastAsync(const String& message);
 
 uint64_t correctedElapsedUs(uint64_t rawUs);

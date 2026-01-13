@@ -7,10 +7,13 @@
 #define SYNC_FIRST_GPS_SYNC           4   // Sincronizzato tramite GPS
 #define SYNC_WAIT_GPS                 5   // In attesa della sincronizzazione GPS
 #define SYNC_GPS_SYNCED               6   // Sincronizzato tramite GPS
+#define ELAPSED_WAITING_START         7   // In attesa di un segnale si inizio cronometraggio
+#define ELAPSED_TIME_STARTED          8   // In attesa di un segnale si inizio cronometraggio
 
 #define MODE_SYNC_MANUAL              0
 #define MODE_SYNC_LINE                1
 #define MODE_SYNC_GPS                 2
+#define MODE_ELAPSED_TIME             3   
 
 #define POWER_MODE_NONE               0
 #define POWER_MODE_USB                1

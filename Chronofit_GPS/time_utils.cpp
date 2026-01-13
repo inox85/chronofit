@@ -176,7 +176,11 @@ void handleLineSync() {
   lastBroadcast = millis();
 
   // 🔹 Aggiorna stato
-  syncStatus = SYNC_SET_BY_LINE_SIGNAL;
+  if(syncMode == MODE_SYNC_LINE)
+    syncStatus = SYNC_SET_BY_LINE_SIGNAL;
+    // 🔹 Aggiorna stato
+  if(syncMode == MODE_ELAPSED_TIME)
+    syncStatus = ELAPSED_TIME_STARTED;
 
 }
 
@@ -216,6 +220,48 @@ void broadcastTime() {
   doc["m"] = t.mm;
   doc["s"] = t.ss;
   doc["ms"] = t.ms;
+
+  doc["lt"] = gps.location.isValid() ? gps.location.lat() : 0;
+  doc["ln"] = gps.location.isValid() ? gps.location.lng() : 0;
+  doc["st"] = gps.satellites.value();
+  doc["sy"] = syncStatus;
+  doc["ls"] = (millis() - lastGPSSync) / 1000;
+  doc["lg"] = GPSRefreshInterval * 60;
+  doc["pw"] = powerSource;
+  doc["ts"] = syncTestRequested;
+  
+  fixStatus = syncMode == MODE_SYNC_GPS;
+
+  if (gps.time.isValid())
+    fixStatus += 2;
+
+  if (gps.location.isValid())
+    fixStatus += 4;
+  
+  if(calRunning)
+    fixStatus += 8;
+
+  doc["f"] = fixStatus;
+
+  String json;
+  serializeJson(doc, json);
+  ws.cleanupClients(); // rimuove client chiusi
+  ws.textAll(json);  // 🔹 invia a tutti i client connessi
+
+  //Serial.println(json);
+
+}
+
+
+
+void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms) {
+
+  StaticJsonDocument<256> doc;
+  doc["t"] = TYPE_TIME_UPDATE;
+  doc["h"] = hh;
+  doc["m"] = mm;
+  doc["s"] = ss;
+  doc["ms"] = ms;
 
   doc["lt"] = gps.location.isValid() ? gps.location.lat() : 0;
   doc["ln"] = gps.location.isValid() ? gps.location.lng() : 0;

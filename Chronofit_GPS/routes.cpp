@@ -126,13 +126,23 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         request->send(200, "text/plain", "Wait GPS");
 
       }
+      else if (mode == MODE_ELAPSED_TIME && request->hasParam("hour") && request->hasParam("minute") && request->hasParam("second")){
+
+        syncStatus = ELAPSED_WAITING_START;
+        syncMode = MODE_ELAPSED_TIME;
+        temp_hh = 0;
+        temp_mm  = 0;
+        temp_ss = 0;
+
+        debug("Attesa di un segnale di start");
+        request->send(200, "text/plain", "Wait GPS");
+
+      }
     } else {
       request->send(400, "text/plain", "Missed params");
     }
     
   });
-
-
 
   server.on("/checkPoint", HTTP_GET, [](AsyncWebServerRequest *request) {
     int lineNumber = 0;
@@ -143,12 +153,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
-    // 🔹 Salva e invia
-    //checkPointRoutine(lineNumber);
 
-    // 🔹 Risposta al client (opzionale)
-    //String jsonMessage;
-    //serializeJson(doc, jsonMessage); // senza type, se vuoi
     request->send(200, "text/plain", "CheckPoint received!");
   });
 
