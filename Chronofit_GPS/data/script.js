@@ -605,6 +605,7 @@ function updateClockFromData(data) {
     }if(syncStatus == ELAPSED_WAITING_START){
       document.getElementById("time").innerText = "00:00:00.000";
       statusElem.innerText = "🟢 Waiting for timing start...";
+
     }if(syncStatus == ELAPSED_TIME_STARTED){
       statusElem.innerText = "⏱️ Timing started! ";
     }
@@ -672,14 +673,14 @@ function sendToPrinter(text) {
 // Overload compatibile: accetta un oggetto checkpoint
 function addEventToTableFromCheckpoint(checkpoint) {
   // checkpoint deve avere: index, lineNumber, lineId, competitor, hour, minute, millis
-  const rowIndex = checkpoint.index;
-  const lineNumber = checkpoint.lineNumber;
-  const lineId = checkpoint.lineId; // correggiamo qui: "lineId", non "line"
-  const competitor = checkpoint.competitor;
-  const hour = checkpoint.hour;
-  const minute = checkpoint.minute;
-  const second = checkpoint.second;
-  const millis = checkpoint.millis;
+  const rowIndex = checkpoint.id;
+  const lineNumber = checkpoint.ln;
+  const lineId = checkpoint.lId; // correggiamo qui: "lineId", non "line"
+  const competitor = checkpoint.c;
+  const hour = checkpoint.h;
+  const minute = checkpoint.m;
+  const second = checkpoint.s;
+  const millis = checkpoint.ms;
 
   // Richiama la funzione originale
   addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, second, millis);
