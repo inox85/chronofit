@@ -82,6 +82,13 @@ span{
   min-height: 50px;
   font-size: 20px;
 }
+
+.small-button{
+  color: white;
+  height: 50px;
+  font-size: 20px;
+}
+
 /* Mobile: disattiva sticky */
 @media (max-width: 800px) {
   .container {

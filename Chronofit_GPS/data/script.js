@@ -212,6 +212,19 @@ function fillSettingsFields(data){
   handlePowerUpdate(data);
 }
 
+function setElapsedTimemode(){
+  let url = `/setTime?mode=${encodeURIComponent(3)}`;
+  console.log(url);
+  
+  fetch(url)
+  .then(res=>res.text())
+  .then(msg=>
+    document.getElementById("settings-field").innerText = msg,
+    setTimeout(() => { document.getElementById("settings-field").innerText = ""; }, 3000)
+  )
+  .catch(err => console.error("Error fetching JSON:", err));
+}
+
 function setTimeSyncMode(){
   let h = document.getElementById("hour").value;
   let m = document.getElementById("minute").value;
@@ -565,7 +578,12 @@ function updateClockFromData(data) {
     //syncTestIcon.style.display = "none";
     syncTestIcon.classList.add("disabled");
 
+    const elapsedTimeControls = document.getElementById("elapsedTimeControls");
+    elapsedTimeControls.classList.add("hidden");
+
+
     if(syncStatus === SYNC_NONE){
+      document.getElementById("time").innerText = "00:00:00.000";
       statusElem.innerText = "Sync mode: Manual — Status: 🔴 not set";
     }
     if(syncStatus === SYNC_MANUAL_SET){
@@ -602,11 +620,17 @@ function updateClockFromData(data) {
         statusElem.innerText = "Sync test: ⏱️ Waiting for the next minute to start... ";
       }
 
-    }if(syncStatus == ELAPSED_WAITING_START){
+    }
+    if(syncStatus == ELAPSED_WAITING_START){
+      elapsedTimeControls.classList.remove("hidden");
+      const startButton = document.getElementById("startButton");
+      startButton.innerText = "Start";
       document.getElementById("time").innerText = "00:00:00.000";
       statusElem.innerText = "🟢 Waiting for timing start...";
-
     }if(syncStatus == ELAPSED_TIME_STARTED){
+      elapsedTimeControls.classList.remove("hidden");
+      const startButton = document.getElementById("startButton");
+      startButton.innerText = "Stop";
       statusElem.innerText = "⏱️ Timing started! ";
     }
     
@@ -777,7 +801,7 @@ function formatDelta(ms, signed) {
 
   const seconds = Math.floor(ms / 1000);
   const millis  = ms % 1000;
-
+  
   return (
     sign +
     String(hours).padStart(2, "0") + ":" +

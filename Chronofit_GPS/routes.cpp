@@ -126,7 +126,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         request->send(200, "text/plain", "Wait GPS");
 
       }
-      else if (mode == MODE_ELAPSED_TIME && request->hasParam("hour") && request->hasParam("minute") && request->hasParam("second")){
+      else if (mode == MODE_ELAPSED_TIME){
 
         syncStatus = ELAPSED_WAITING_START;
         syncMode = MODE_ELAPSED_TIME;

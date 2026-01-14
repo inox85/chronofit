@@ -236,8 +236,13 @@
   <div class="card left">
 
     <p id="time">--:--:--</p>
-    <p id="status" class="status nosync">GPS Status: Not synchronized</p>
+    <p id="status" class="status nosync">Device ot synchronized</p>
     <p id="sync-msg"></p>
+
+    <div class="button-row hidden" id="elapsedTimeControls">
+      <button class="small-button" id="startButton" onclick="sendCheckPoint(1)">Start</button>
+      <button class="small-button" id="resetButton" onclick="setElapsedTimemode()">Reset</button>
+    </div>
 
     <div class="table-wrapper">
     <table class="checkpoint-settings">
