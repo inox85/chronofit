@@ -2,6 +2,7 @@
 #pragma once
 #include <ESPAsyncWebServer.h>
 #include "globals.h"
+#include <ArduinoJson.h>
 
 void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws);
 // 👇 aggiungi questo:
