@@ -442,17 +442,17 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
             DynamicJsonDocument entry(256);
             if (deserializeJson(entry, lineStr)) continue;
 
-            int currentIndex = entry["index"].as<int>();
+            int currentIndex = entry[INDEX_FIELD].as<int>();
 
             // --- Aggiorna se l'index corrisponde ---
             if (currentIndex == entryIndex) {
-                entry["competitor"] = competitor;
-                entry["lineNumber"] = lineNumber;
-                entry["lineId"] = lineId;
-                entry["hour"] = hour;
-                entry["minute"] = minute;
-                entry["second"] = second;
-                entry["millis"] = millis;
+                entry[LINE_NUMBER_FIELD] = lineNumber;
+                entry[LINE_ID_FIELD] = lineId;
+                entry[COMPETITOR_FIELD] = competitor;
+                entry[HOUR_FIELD] = hour;
+                entry[MINUTE_FIELD] = minute;
+                entry[SECOND_FIELD] = second;
+                entry[MILLIS_FIELD] = millis;
                 updated = true;
                 debug("Riga aggiornata");
                 broadCastRowEdited(entry);
@@ -466,14 +466,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         // --- Se non trovato, aggiungi alla fine ---
         if (!updated) {
             DynamicJsonDocument newEntry(256);
-            newEntry["index"] = entryIndex;
-            newEntry["lineNumber"] = lineNumber;
-            newEntry["lineId"] = lineId;
-            newEntry["competitor"] = competitor;
-            newEntry["hour"] = hour;
-            newEntry["minute"] = minute;
-            newEntry["second"] = second;
-            newEntry["millis"] = millis;
+            newEntry[INDEX_FIELD] = entryIndex;
+            newEntry[LINE_NUMBER_FIELD] = lineNumber;
+            newEntry[LINE_ID_FIELD] = lineId;
+            newEntry[COMPETITOR_FIELD] = competitor;
+            newEntry[HOUR_FIELD] = hour;
+            newEntry[MINUTE_FIELD] = minute;
+            newEntry[SECOND_FIELD] = second;
+            newEntry[MILLIS_FIELD] = millis;
 
             String newLine;
             serializeJson(newEntry, newLine);
@@ -585,17 +585,27 @@ void broadCastSettings(){
   ws.textAll(message);
 }
 
+
+// constexpr const char INDEX_FIELD[] = "id";
+// constexpr const char LINE_NUMBER_FIELD[] = "ln";
+// constexpr const char LINE_ID_FIELD[] = "lId";
+// constexpr const char COMPETITOR_FIELD[] = "c";
+// constexpr const char HOUR_FIELD[] = "h";
+// constexpr const char MINUTE_FIELD[] = "m";
+// constexpr const char SECOND_FIELD[] = "s";
+// constexpr const char MILLIS_FIELD[] = "ms";
+
 void broadCastRowEdited(const DynamicJsonDocument& entry){
   StaticJsonDocument<512> doc;
   doc["t"] = TYPE_ROW_UPDATED;
-  doc["index"] = entry["index"];
-  doc["lineNumber"] = entry["lineNumber"];
-  doc["lineId"] = entry["lineId"];
-  doc["competitor"] = entry["competitor"];
-  doc["hour"] = entry["hour"];
-  doc["minute"] = entry["minute"];
-  doc["second"] = entry["second"];
-  doc["millis"] = entry["millis"];
+  doc[INDEX_FIELD] = entry[INDEX_FIELD];
+  doc[LINE_NUMBER_FIELD] = entry[LINE_NUMBER_FIELD];
+  doc[LINE_ID_FIELD] = entry[LINE_ID_FIELD];
+  doc[COMPETITOR_FIELD] = entry[COMPETITOR_FIELD];
+  doc[HOUR_FIELD] = entry[HOUR_FIELD];
+  doc[MINUTE_FIELD] = entry[MINUTE_FIELD];
+  doc[SECOND_FIELD] = entry[SECOND_FIELD];
+  doc[MILLIS_FIELD] = entry[MILLIS_FIELD];
 
   String message;
   serializeJson(doc, message);

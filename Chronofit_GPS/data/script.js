@@ -20,6 +20,8 @@ const POWER_MODE_NONE = 0;   // Alimentatore esterno non collegato
 const POWER_MODE_USB = 1;   // Dispositivo alimentato da POWER BANK
 const POWER_MODE_BATTERY = 2;   // Dispositivo alimentato a 12V
 
+
+
 let prevPowerSource = 1;
 
 let timeOffset = 0;
@@ -441,7 +443,7 @@ function handleMessage(data) {
       break;
 
     case TYPE_ROW_UPDATED:
-      console.log("⚙️ Row updated!");
+      console.log("⚙️ Row update!");
       updateRowFromBroadcas(data);
       break;
   }
@@ -1043,6 +1045,15 @@ function sendRow(button) {
   const [timePart, millisPart] = timestamp.split(".");
   const [hour, minute, second] = timePart.split(":");
 
+  // const INDEX_FIELD = "id";
+  // const LINE_NUMBER_FIELD = "ln";
+  // const LINE_ID_FIELD = "lId";
+  // const COMPETITOR_FIELD = "c";
+  // const HOUR_FIELD = "h";
+  // const MINUTE_FIELD = "m";
+  // const SECOND_FIELD = "s";
+  // const MILLIS_FIELD = "ms";
+
   // 🔹 Crea l'oggetto messaggio
   const messageObj = {
     index,
@@ -1542,28 +1553,28 @@ function updateRowFromBroadcas(data) {
 
   // aggiorna ID
   const idCell = row.querySelector(".col-id");
-  if (idCell && data.lineId !== undefined) {
-    idCell.textContent = data.lineId;
+  if (idCell && data.lId !== undefined) {
+    idCell.textContent = data.lId;
   }
 
   // aggiorna competitor
   const competitorCell = row.querySelector(".col-competitor");
-  if (competitorCell && data.competitor !== undefined) {
-    competitorCell.textContent = data.competitor;
+  if (competitorCell && data.c !== undefined) {
+    competitorCell.textContent = data.c;
   }
 
   // aggiorna event time
   const timeCell = row.querySelector(".timestamp");
   if (timeCell) {
     timeCell.textContent = formatTime(
-      data.hour,
-      data.minute,
-      data.second,
-      data.millis
+      data.h,
+      data.m,
+      data.s,
+      data.ms
     );
   }
 
-  showGeneralPopup(`Row ${index} has been updated`,  lineColors[data.lineNumber]);
+  showGeneralPopup(`Row ${index} has been updated`,  lineColors[data.ln]);
   recalcDeltaTimes();
   recalcElapsedTimes();
 }
