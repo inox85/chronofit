@@ -747,6 +747,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td class="timestamp">${timestamp}</td>
     <td class="delta-time"></td>
     <td class="elapsed-time"></td>
+    <td><button class="penality penality-btn">0</button></td>
     <td><button class="edit-btn">✎</button></td>
     <td><button class="send-btn">➡</button></td>
   `;
@@ -1481,6 +1482,25 @@ function toggleElapsedTimeColumn(show) {
 }
 
 
+function togglePenalityColumn(show) {
+  const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
+
+  // header
+  document.querySelectorAll("th.penality-col").forEach(th => {
+    th.style.display = display;
+  });
+
+  // celle
+  document.querySelectorAll("td:has(.penality)").forEach(td => {
+    td.style.display = display;
+  });
+
+  // se la mostri, ricalcola i delta
+
+  if (show) recalcElapsedTimes();
+}
+
+
 function updateVisibleColumns(){
   let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
   toggleTimestampColumn(absoluteTimeVisible); 
@@ -1488,6 +1508,8 @@ function updateVisibleColumns(){
   toggleElapsedTimeColumn(elapsedTimeVisible);
   let deltaTimeVisible = document.getElementById("toggle-delta-time").checked;
   toggleDeltaTimeColumn(deltaTimeVisible);
+  let penalityVisible = document.getElementById("toggle-penality").checked;
+  togglePenalityColumn(penalityVisible);
 }
 
 document
@@ -1506,6 +1528,12 @@ document
 .getElementById("toggle-elapsed-time")
 .addEventListener("change", e => {
   toggleElapsedTimeColumn(e.target.checked);
+});
+
+document
+.getElementById("toggle-penality")
+.addEventListener("change", e => {
+  togglePenalityColumn(e.target.checked);
 });
 
 
