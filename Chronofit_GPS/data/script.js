@@ -512,7 +512,7 @@ function showGeneralPopup(message, bgColor = "#3b55ffff", duration = 3000) {
   setTimeout(() => {
     generalPopup.classList.remove("show");
     // opzionale: dopo la transizione, aggiungi di nuovo hidden
-    setTimeout(() => generalPopup.classList.add("hidden"), 300); // 300ms dipende dalla durata della transizione CSS
+    setTimeout(() => generalPopup.classList.add("hidden"), 1000); // 300ms dipende dalla durata della transizione CSS
   }, duration);
 }
 
@@ -569,7 +569,7 @@ function updateClockFromData(data) {
     const calRunning = (fixFlags & FLAG_TIMEBASE_CALIBRATION) !== 0;
 
     if (calRunning) {
-      showGeneralPopup("Timebase calibration running...", "#ff9800"); // arancione per calibrazione
+      showGeneralPopup("Timebase calibration running...", "#ff9800", 5000); // arancione per calibrazione
     } 
 
     const syncStatus = data.sy; 
@@ -1482,12 +1482,12 @@ function toggleElapsedTimeColumn(show) {
 
 
 function updateVisibleColumns(){
+  let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
+  toggleTimestampColumn(absoluteTimeVisible); 
   let elapsedTimeVisible = document.getElementById("toggle-elapsed-time").checked;
   toggleElapsedTimeColumn(elapsedTimeVisible);
   let deltaTimeVisible = document.getElementById("toggle-delta-time").checked;
   toggleDeltaTimeColumn(deltaTimeVisible);
-  let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
-  toggleTimestampColumn(absoluteTimeVisible); 
 }
 
 document
