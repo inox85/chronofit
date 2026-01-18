@@ -408,6 +408,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         int minute = doc["minute"].as<int>();
         int second = doc["second"].as<int>();
         int millis = doc["millis"].as<int>();
+        int penality = doc["penality"].as<int>();
 
         #ifdef DEBUG
           Serial.printf("Aggiorno riga index=%d,  lineNumber=%d, lineId=%d, competitor=%d, %02d:%02d.%d\n",
@@ -453,6 +454,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
                 entry[MINUTE_FIELD] = minute;
                 entry[SECOND_FIELD] = second;
                 entry[MILLIS_FIELD] = millis;
+                entry[PENALITY_FIELD] = penality;
+                
                 updated = true;
                 debug("Riga aggiornata");
                 broadCastRowEdited(entry);
@@ -474,6 +477,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
             newEntry[MINUTE_FIELD] = minute;
             newEntry[SECOND_FIELD] = second;
             newEntry[MILLIS_FIELD] = millis;
+            newEntry[PENALITY_FIELD] = penality;
 
             String newLine;
             serializeJson(newEntry, newLine);
@@ -585,15 +589,6 @@ void broadCastSettings(){
   ws.textAll(message);
 }
 
-
-// constexpr const char INDEX_FIELD[] = "id";
-// constexpr const char LINE_NUMBER_FIELD[] = "ln";
-// constexpr const char LINE_ID_FIELD[] = "lId";
-// constexpr const char COMPETITOR_FIELD[] = "c";
-// constexpr const char HOUR_FIELD[] = "h";
-// constexpr const char MINUTE_FIELD[] = "m";
-// constexpr const char SECOND_FIELD[] = "s";
-// constexpr const char MILLIS_FIELD[] = "ms";
 
 void broadCastRowEdited(const DynamicJsonDocument& entry){
   StaticJsonDocument<512> doc;

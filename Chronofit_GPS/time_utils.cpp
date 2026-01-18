@@ -82,6 +82,7 @@ void checkPointRoutine(int i) {
   checkpoint[MINUTE_FIELD] = mm;
   checkpoint[SECOND_FIELD] = ss;
   checkpoint[MILLIS_FIELD] = ms;
+  checkpoint[PENALITY_FIELD] = 0;
 
   // 🔹 Calcola nuovo index
   sessionRowIndex = sessionRowIndex + 1;
@@ -103,6 +104,7 @@ void checkPointRoutine(int i) {
   if (checkpoint.containsKey(MINUTE_FIELD)) ordered[MINUTE_FIELD] = checkpoint[MINUTE_FIELD];
   if (checkpoint.containsKey(SECOND_FIELD)) ordered[SECOND_FIELD] = checkpoint[SECOND_FIELD];
   if (checkpoint.containsKey(MILLIS_FIELD)) ordered[MILLIS_FIELD] = checkpoint[MILLIS_FIELD];
+  if (checkpoint.containsKey(PENALITY_FIELD)) ordered[PENALITY_FIELD] = checkpoint[PENALITY_FIELD];
 
   // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
   File file = LittleFS.open("/session.json", "a");

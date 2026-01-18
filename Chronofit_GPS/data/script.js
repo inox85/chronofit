@@ -424,7 +424,8 @@ function handleMessage(data) {
         data.h,
         data.m,
         data.s,
-        data.ms
+        data.ms,
+        0
       );
       break;
 
@@ -707,14 +708,15 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const minute = checkpoint.m;
   const second = checkpoint.s;
   const millis = checkpoint.ms;
+  const penality = checkpoint.x;
 
   // Richiama la funzione originale
-  addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, second, millis);
+  addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, second, millis, penality);
 }
 
 
-function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis) {
-  console.log(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis);
+function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis, penality) {
+  console.log(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis, penality);
   const tbody = document.querySelector("#event-table tbody");
   const row = document.createElement("tr");
 
@@ -738,6 +740,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-hour", hour);
   row.setAttribute("data-minute", minute);
   row.setAttribute("data-millis", millis);
+  row.setAttribute("data-penality", 0);
 
   row.innerHTML = `
     <td class="col-index">${index}</td>
@@ -747,7 +750,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td class="timestamp">${timestamp}</td>
     <td class="delta-time"></td>
     <td class="elapsed-time"></td>
-    <td><button class="penality penality-btn">0</button></td>
+    <td><button class="penality penality-btn">${penality}</button></td>
     <td><button class="edit-btn">✎</button></td>
     <td><button class="send-btn">➡</button></td>
   `;
@@ -961,21 +964,32 @@ function saveRow(button) {
   const row = button.closest("tr");
   const inputs = row.querySelectorAll("input");
 
-  // Salva valori e aggiorna dataset
+  // Salva valori input
   inputs.forEach((input, i) => {
     const newValue = input.value.trim();
     const cell = input.parentElement;
     cell.textContent = newValue;
 
     switch(i) {
-      case 0: row.dataset.lineNumber = Number(newValue); break;
-      case 1: row.dataset.lineId = Number(newValue); break;
-      case 2: row.dataset.competitor = Number(newValue); break;
-      case 3: row.dataset.hour = Number(newValue); break;
-      case 4: row.dataset.minute = Number(newValue); break;
-      case 5: row.dataset.millis = Number(newValue); break;
+      case 0: row.dataset.lineId = Number(newValue); break;
+      case 1: row.dataset.competitor = newValue; break;
+      case 2: {
+        // timestamp → hh:mm:ss.mmm
+        const [hms, ms] = newValue.split(".");
+        const [h, m, s] = hms.split(":");
+        row.dataset.hour = Number(h);
+        row.dataset.minute = Number(m);
+        row.dataset.millis = Number(ms);
+        break;
+      }
     }
   });
+
+  // 🔹 SALVA PENALITY DAL BUTTON
+  const penalityBtn = row.querySelector(".penality-btn");
+  if (penalityBtn) {
+    row.dataset.penality = Number(penalityBtn.textContent.trim());
+  }
 
   // Ripristina pulsante Edit
   button.textContent = "✎";
@@ -987,9 +1001,7 @@ function saveRow(button) {
   if (editBtn) editBtn.onclick = () => editRow(editBtn);
   if (sendBtn) sendBtn.onclick = () => sendRow(sendBtn);
 
-  // 🔹 Invia la riga aggiornata all’ESP
   sendUpdatedCheckPointRow(row);
-
   recalcDeltaTimes();
 }
 
@@ -1004,6 +1016,8 @@ function sendUpdatedCheckPointRow(row) {
   const timestamp = cells[4].textContent.trim();
   const [timePart, millisPart] = timestamp.split(".");
   const [hour, minute, second] = timePart.split(":");
+   // ✅ valore reale
+  const penality = Number(row.dataset.penality) || 0;
 
   const messageObj = {
     index,
@@ -1013,7 +1027,8 @@ function sendUpdatedCheckPointRow(row) {
     hour: parseInt(hour),
     minute: parseInt(minute),
     second: parseInt(second),
-    millis: parseInt(millisPart)
+    millis: parseInt(millisPart),
+    penality
   };
 
   console.log("Invio aggiornamento riga:", messageObj);
@@ -1615,3 +1630,41 @@ function formatTime(h, m, s, ms) {
     String(ms).padStart(3, "0")
   );
 }
+
+let currentPenaltyButton = null;
+
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("penality-btn")) {
+
+    currentPenaltyButton = e.target;
+
+    // valore attuale nel popup
+    const currentValue = currentPenaltyButton.textContent.trim();
+    document.getElementById("penalty-input").value = currentValue || 0;
+
+    // mostra popup
+    document.getElementById("assingPenality").style.display = "flex";
+  }
+});
+
+
+document.getElementById("confirmPenalityButton").addEventListener("click", () => {
+  if (!currentPenaltyButton) return;
+
+  const value = Number(document.getElementById("penalty-input").value) || 0;
+
+  // aggiorna bottone (UI)
+  currentPenaltyButton.textContent = value;
+
+  // 🔹 salva il valore sul <tr>
+  const row = currentPenaltyButton.closest("tr");
+  row.dataset.penality = value;
+
+  console.log("Valore del dataset", value);
+
+  // chiudi popup
+  document.getElementById("assingPenality").style.display = "none";
+  currentPenaltyButton = null;
+  
+  sendUpdatedCheckPointRow(row);
+});
