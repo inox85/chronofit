@@ -655,14 +655,14 @@ input:checked + .slider:before {
 .divider {
   border: 0;
   height: 1px;
-  background: #222; /* colore linea */
+  background: #3b3737; /* colore linea */
   margin: 1px 0px;    /* spazio verticale */
 }
 
 /* Personalizzazione colore di default */
 #generalPopup {
   background-color: #ffeb3b; /* giallo di default */
-  color: #000;
+  color: #000; 
 }
 
 #event-table tr.row-enter td {
@@ -681,4 +681,8 @@ input:checked + .slider:before {
 #event-table tr.row-enter.row-enter-active td > * {
   transform: translateY(0);
   transition: transform 1000ms ease;
+}
+
+#event-table tbody tr.negative-row td {
+  background-color: #888;
 }

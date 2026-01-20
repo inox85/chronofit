@@ -9,19 +9,22 @@ constexpr int GPS_RX = 17;
 constexpr int PRINTER_TX  = 16;
 
 // --- Pin sensori ---
+
 constexpr int SENSOR_IN1 = 26;
 constexpr int SENSOR_IN2 = 27;
 constexpr int SENSOR_IN3 = 25;
 constexpr int SENSOR_IN4 = 13;
 
 constexpr int LED_1 = 12;
-constexpr int LED_2 = 12;
-constexpr int LED_3 = 12;
+constexpr int LED_2 = 2;
+constexpr int LED_3 = 14;
 
 // --- Altri pin ---
+
 constexpr int PPS_PIN = 34;
 
 // --- Costanti generiche ---
+
 constexpr int TIME_UPDATE_INTERVAL = 1000;
 constexpr int LAST_CLIENT_CHECK = 1000;
 
@@ -41,8 +44,5 @@ constexpr const char MINUTE_FIELD[] = "m";
 constexpr const char SECOND_FIELD[] = "s";
 constexpr const char MILLIS_FIELD[] = "ms";
 constexpr const char PENALITY_FIELD[] = "x";
-
-
-
 
 #endif

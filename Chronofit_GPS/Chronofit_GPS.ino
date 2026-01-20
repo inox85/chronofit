@@ -24,23 +24,25 @@
 #define PROTOTYPE
 
 void IRAM_ATTR sensorISR(void *arg) {
-    int i = (int)arg;
 
-    bool current = digitalRead(sensorsPins[i]);
+  int i = (int)arg;
 
-    // fronte HIGH -> LOW
-    if (lastSensorState[i] == HIGH && current == LOW) {
-        unsigned long now = millis();
-        uint64_t nowMicros = micros64();
+  bool current = digitalRead(sensorsPins[i]);
 
-        if ((unsigned long)(now - lastSensorsSignal[i]) > delays[i]) {
-            sensorTime[i] = nowMicros;
-            sensorTriggered[i] = true;
-            lastSensorsSignal[i] = now;
-        }
-    }
+  // fronte HIGH -> LOW
+  if (lastSensorState[i] == HIGH && current == LOW) {
+      unsigned long now = millis();
+      uint64_t nowMicros = micros64();
 
-    lastSensorState[i] = current;
+      if ((unsigned long)(now - lastSensorsSignal[i]) > delays[i]) {
+          sensorTime[i] = nowMicros;
+          sensorTriggered[i] = true;
+          lastSensorsSignal[i] = now;
+      }
+  }
+
+  lastSensorState[i] = current;
+  
 }
 
 // --- ISR PPS ---
@@ -58,8 +60,10 @@ void setup() {
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
   
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
+
   if(syncMode == MODE_SYNC_GPS)
     syncStatus = SYNC_FIRST_GPS_SYNC;
+
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
 
@@ -75,8 +79,14 @@ void setup() {
   sweepBuzz();
 
   pinMode(0, INPUT);
-  pinMode(12, OUTPUT);
-  digitalWrite(12, LOW);
+
+  pinMode(LED_1, OUTPUT);
+  digitalWrite(LED_1, LOW);
+  pinMode(LED_2, OUTPUT);
+  digitalWrite(LED_2, LOW);
+  pinMode(LED_3, OUTPUT);
+  digitalWrite(LED_3, LOW);
+  
   
   for (int i = 0; i < 4; i++) {
     pinMode(sensorsPins[i], INPUT_PULLUP);
@@ -94,8 +104,7 @@ void setup() {
 
   sessionRowIndex = getLastSessionRowIndex();
   
-  // --- WiFi AP ---
-    // Imposta un IP statico per l’AP
+  // Imposta un IP statico per l’AP
   IPAddress local_IP(192, 168, 1, 1);
   IPAddress gateway(192, 168, 1, 1);
   IPAddress subnet(255, 255, 255, 0);
@@ -104,7 +113,6 @@ void setup() {
     debug("❌ Errore nella configurazione dell'IP statico");
   }
 
-  
   uint64_t chipId = ESP.getEfuseMac();
   // Converti il chipId in una stringa esadecimale
   String chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
@@ -121,7 +129,6 @@ void setup() {
 
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
 
-    // Registra tutte le route
   registerRoutes(server, ws);
 
   server.begin();
@@ -180,22 +187,22 @@ void loop() {
           Serial.println(calPpsCount);
 
           if (calPpsCount >= CAL_WINDOW_SEC) {   // 600 PPS = 10 minuti
-              calRunning = false;
+            calRunning = false;
 
-              int32_t errorUs = (int32_t)CAL_WINDOW_US - (int32_t)(thisPpsUs - calStartUs);
+            int32_t errorUs = (int32_t)CAL_WINDOW_US - (int32_t)(thisPpsUs - calStartUs);
 
-              Serial.print("Cal start us: ");
-              Serial.println(calStartUs);
-              Serial.print("Cal end us: ");
-              Serial.println(thisPpsUs);
-              Serial.print("Calibration error (us): ");
-              Serial.println(errorUs);
+            Serial.print("Cal start us: ");
+            Serial.println(calStartUs);
+            Serial.print("Cal end us: ");
+            Serial.println(thisPpsUs);
+            Serial.print("Calibration error (us): ");
+            Serial.println(errorUs);
 
-              writeDoubleToSettings("calTempRef", readInternalTemp());
+            writeDoubleToSettings("calTempRef", readInternalTemp());
 
-              setTimeBaseCalibration(errorUs, calPpsCount / 60);
+            setTimeBaseCalibration(errorUs, calPpsCount / 60);
 
-              sweepBuzz();
+            sweepBuzz();
           }
 
       } else {

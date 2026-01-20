@@ -755,6 +755,8 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td><button class="send-btn">➡</button></td>
   `;
 
+  
+
   // Aggiungi gli eventi ai pulsanti della riga
   const editBtn = row.querySelector(".edit-btn");
   const sendBtn = row.querySelector(".send-btn");
@@ -791,23 +793,26 @@ function timestampToMs(ts) {
 }
 
 function formatDelta(ms, signed) {
+
+  if (ms > 0) {
+    return "—";
+  }
+
   let sign = "";
 
   if (signed) {
-    sign = ms <= 0 ? "+" : "-";
+    sign = "+";
   }
 
   ms = Math.abs(ms);
 
   const hours   = Math.floor(ms / 3600000);
   ms %= 3600000;
-
   const minutes = Math.floor(ms / 60000);
   ms %= 60000;
-
   const seconds = Math.floor(ms / 1000);
   const millis  = ms % 1000;
-  
+
   return (
     sign +
     String(hours).padStart(2, "0") + ":" +
@@ -816,6 +821,7 @@ function formatDelta(ms, signed) {
     String(millis).padStart(3, "0")
   );
 }
+
 
 
 function recalcElapsedTimes() {
@@ -858,7 +864,16 @@ function recalcDeltaTimes() {
 
     if (!tsCell || !deltaCell) continue;
 
-    const currentMs = timestampToMs(tsCell.textContent.trim());
+    // pulizia stato precedente
+    row.classList.remove("negative-row");
+
+    const timestamp = tsCell.textContent.trim();
+    const currentMs = timestampToMs(timestamp);
+
+    // Evidenzia se timestamp è 00:00:00.000
+    if (timestamp === "00:00:00.000") {
+      row.classList.add("negative-row");
+    }
 
     // riga più in basso → niente delta
     if (nextTime === null) {
@@ -868,7 +883,14 @@ function recalcDeltaTimes() {
     }
 
     const delta = nextTime - currentMs;
-    deltaCell.textContent = formatDelta(delta, true);
+
+    if (delta > 0) {
+      deltaCell.textContent = "—";
+      row.classList.add("negative-row"); // mantiene evidenziazione delta negativo
+    } else {
+      deltaCell.textContent = formatDelta(delta, true);
+    }
+
     nextTime = currentMs;
   }
 }
