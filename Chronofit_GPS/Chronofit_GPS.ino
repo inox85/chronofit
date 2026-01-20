@@ -145,6 +145,11 @@ void loop() {
   bool validNmea = false;
 
   validNmea = processServicesSerial();
+
+  if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
+    lastClientCheck = millis();
+    digitalWrite(LED_1, checkConnectedClient());
+  }
   
   if(syncStatus != SYNC_WAIT_LINE_SIGNAL){
     if(((millis() - lastGPSSync)/60000 >= GPSRefreshInterval || GPSRefreshInterval == 0) 
@@ -218,7 +223,7 @@ void loop() {
     if(syncMode == MODE_SYNC_GPS){
       sweepBuzz();   
       syncTestRequested = 1;
-      digitalWrite(12, HIGH);
+      digitalWrite(LED_2, HIGH);
     }
     else{
       buzzerBeep(50,1,0,250,128);
@@ -236,6 +241,15 @@ void loop() {
 
   checkPowerSource();
 
+}
+
+bool checkConnectedClient(){
+  int n = WiFi.softAPgetStationNum();
+  if(n > 0)
+  {
+    return true;
+  }
+  return false;
 }
 
 void handleSensorTrigger(){

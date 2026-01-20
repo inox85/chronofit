@@ -78,3 +78,5 @@ int GPSRefreshInterval = 0;
 int lastBroadCastSecond = 0;
 
 int sessionRowIndex = 0;
+
+unsigned long lastClientCheck = 0;

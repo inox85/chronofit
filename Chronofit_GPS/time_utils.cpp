@@ -38,7 +38,6 @@ PreciseTime getPreciseTime() {
   return t;
 }
 
-
 PreciseTime getPreciseSensorTime(int i) {
     PreciseTime t;
 
@@ -249,8 +248,6 @@ void broadcastTime() {
   serializeJson(doc, json);
   ws.cleanupClients(); // rimuove client chiusi
   ws.textAll(json);  // 🔹 invia a tutti i client connessi
-
-  //Serial.println(json);
 
 }
 
