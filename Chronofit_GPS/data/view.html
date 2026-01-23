@@ -21,7 +21,6 @@
     <img src="/logo.png" alt="Logo">
   </div>
 
-
   <!-- Overlay Conferma Clear Session -->
   <div id="clearSessionOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
@@ -253,10 +252,11 @@
     <span id="generalPopupText">Messaggio generico</span>
   </div>
 
-  <div class="card left">
+  <div class="card left" style="max-height:7em">
 
-    <p id="time">--:--:--</p>
-    <p id="status" class="status nosync">Device ot synchronized</p>
+    <p id="time" style="font-size:4em">00:00:00.000</p>
+  <div style="display:none">
+    <p id="status" class="status nosync">Sync mode: Manual — Status: 🟢 OK</p>
     <p id="sync-msg"></p>
 
     <div class="button-row hidden" id="elapsedTimeControls">
@@ -282,7 +282,7 @@
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="l1" data-line="1" placeholder="line1 ID" value="001"></td>
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c1" data-line="1" placeholder="Competitor 1" value="000000"></td>
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d1" data-line="1" placeholder="0" value="0"></td>
-          <td><button data-color= "#ffcccc"  class="toggle-btn" data-line="1">#</button></td>
+          <td><button data-color="#ffcccc" class="toggle-btn" data-line="1" style="background-color: rgb(255, 204, 204);">#</button></td>
           <td><button style="background-color: #ffcccc" onclick="sendCheckPoint(1)">➡</button></td>
         </tr>
         <tr>
@@ -290,7 +290,7 @@
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="l2" data-line="2" placeholder="line2 ID" value="002"></td>
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c2" data-line="2" placeholder="Competitor 2" value="000000"></td>
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d2" data-line="2" placeholder="0" value="0"></td>
-          <td><button data-color= "#ccffcc" class="toggle-btn" data-line="2">#</button></td>
+          <td><button data-color="#ccffcc" class="toggle-btn" data-line="2" style="background-color: rgb(204, 255, 204);">#</button></td>
           <td><button style="background-color: #ccffcc" onclick="sendCheckPoint(2)">➡</button></td>
         </tr>
         <tr>
@@ -298,7 +298,7 @@
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="l3" data-line="3" placeholder="line3 ID" value="003"></td>
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c3" data-line="3" placeholder="Competitor 3" value="000000"></td>
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d3" data-line="3" placeholder="0" value="0"></td>
-          <td><button data-color= "#ccccff" class="toggle-btn" data-line="3">#</button></td> 
+          <td><button data-color="#ccccff" class="toggle-btn" data-line="3" style="background-color: rgb(204, 204, 255);">#</button></td> 
           <td><button style="background-color: #ccccff" onclick="sendCheckPoint(3)">➡</button></td>
         </tr>
         <tr>
@@ -306,7 +306,7 @@
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="l4" data-line="4" placeholder="line4 ID" value="004"></td>
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c4" data-line="4" placeholder="Competitor 4" value="000000"></td>
           <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-line="4" id="d4" placeholder="0" value="0"></td>
-          <td><button data-color= "#fff5cc" class="toggle-btn" data-line="4">#</button></td>
+          <td><button data-color="#fff5cc" class="toggle-btn" data-line="4" style="background-color: rgb(255, 245, 204);">#</button></td>
           <td><button style="background-color: #fff5cc" onclick="sendCheckPoint(4)">➡</button></td>
         </tr>
       </tbody>
@@ -328,7 +328,7 @@
   <div class="toggle-row">
     <span>Print on paper</span>
     <label class="switch">
-      <input type="checkbox" id="printToggle" onchange="setSettings()" checked>
+      <input type="checkbox" id="printToggle" onchange="setSettings()" checked="" disabled="">
       <span class="slider"></span>
     </label>
   </div>
@@ -341,10 +341,9 @@
     </label>
   </div>
 
-
   <p id="settings-field"></p>
-
-  </div>
+ </div>
+</div>
 
   <div class="card table-card right">
     <div class="table-wrapper">
@@ -367,7 +366,7 @@
       </table>
     </div>
 
-    <div class="button-row">
+    <div class="button-row" style="display:none;">
       <button class="big-button" onclick="clearSession()">Clear session</button>
       <button class="big-button" onclick="downloadSession()">Download session file</button>
     </div>
