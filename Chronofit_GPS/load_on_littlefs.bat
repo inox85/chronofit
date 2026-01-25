@@ -5,7 +5,7 @@ REM ===================== CONFIG =====================
 set MKLITTLEFS=mklittlefs.exe
 set ESPTOOL=esptool.exe
 
-set PORT=COM5
+set PORT=COM3
 set BAUD=921600
 set CHIP=esp32
 REM set CHIP=esp32c3
