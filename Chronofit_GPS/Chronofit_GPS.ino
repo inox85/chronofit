@@ -76,6 +76,10 @@ void setup() {
 
   buzzerInit(BUZZER);
 
+  printerInit();
+
+  printOnPrinter("Avvio sistema", 2);
+
   sweepBuzz();
 
   pinMode(0, INPUT);
