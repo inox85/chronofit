@@ -159,6 +159,24 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     request->send(200, "text/plain", "CheckPoint received!");
   });
 
+    // --- JSON completo ---
+  server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+    StaticJsonDocument<512> doc;
+    
+    PreciseTime t = getPreciseTime();
+
+    doc["hh"] = t.hh;
+    doc["mm"] = t.mm;
+    doc["ss"] = t.ss;
+    doc["ms"] = t.ms;
+
+    String json;
+    serializeJson(doc, json);
+
+    request->send(200, "application/json", json);
+
+  });
 
     // --- JSON completo ---
   server.on("/allSettings", HTTP_GET, [](AsyncWebServerRequest *request) {

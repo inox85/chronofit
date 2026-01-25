@@ -39,7 +39,7 @@ PreciseTime getPreciseTime() {
 }
 
 PreciseTime getPreciseSensorTime(int i) {
-    PreciseTime t;
+   PreciseTime t;
 
   uint64_t rawUs = sensorTime[i] - syncReference;
   uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
