@@ -1690,3 +1690,89 @@ document.getElementById("confirmPenalityButton").addEventListener("click", () =>
   
   sendUpdatedCheckPointRow(row);
 });
+
+function normalizeHeader(text) {
+  return text
+    .replace(/❌/g, "penality")
+    .replace(/⏱️/g, "time")
+    .replace(/\s+/g, " ")
+    .replace("Δ", "Delta")
+    .trim();
+}
+
+function downloadActualView() {
+
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[:.]/g,'-');
+
+  filename = `table_view_${timestamp}.csv`;
+
+  const table = document.getElementById("event-table");
+  if (!table) return;
+
+  const isVisible = (el) => {
+    const style = window.getComputedStyle(el);
+    return style.display !== "none" && style.visibility !== "hidden";
+  };
+
+  const rows = [];
+
+  // --- HEADER ---
+  const headerCells = Array.from(table.querySelectorAll("thead th"));
+  const visibleIndexes = [];
+
+  const headerRow = [];
+
+  headerCells.forEach((th, i) => {
+    const text = normalizeHeader(th.innerText);;
+
+    // ❌ escludi Edit e Send
+    if (["edit", "send"].includes(text.toLowerCase())) return;
+
+    if (isVisible(th)) {
+      visibleIndexes.push(i);
+      headerRow.push(text);
+    }
+  });
+
+  rows.push(headerRow.join(";"));
+
+  // --- BODY ---
+  const bodyRows = table.querySelectorAll("tbody tr");
+
+  bodyRows.forEach(tr => {
+    // ❌ riga nascosta
+    if (!isVisible(tr)) return;
+
+    const cells = tr.querySelectorAll("td");
+
+    // ❌ riga incompleta / template
+    if (cells.length < Math.max(...visibleIndexes) + 1) return;
+
+    const row = [];
+
+    visibleIndexes.forEach(i => {
+      let text = cells[i].innerText || "";
+      text = text.replace(/\n/g, " ").replace(/;/g, ",");
+      row.push(text);
+    });
+
+    // ❌ evita righe completamente vuote
+    if (row.every(v => v === "")) return;
+
+    rows.push(row.join(";"));
+  });
+
+  // --- DOWNLOAD ---
+  const csvContent = rows.join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
