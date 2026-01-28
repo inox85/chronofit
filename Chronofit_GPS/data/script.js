@@ -647,10 +647,10 @@ function updateClockFromData(data) {
       //timezoneElem.innerText = "Estimated timezone: UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
   } else if(syncEnabled && (!timeValid || !locationValid)){
       // GPS in attesa segnale
-      document.getElementById("pos").innerText = "🟡 " +  "Lat:--" + ", Lng:--" +", Sat: 0" ;   
+      document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
   } else {
       // GPS disabilitato
-      document.getElementById("pos").innerText = "🔴 " + "Lat:--" + ", Lng:--" +", Sat: 0" ;
+      document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
   }
 }
 
@@ -682,15 +682,34 @@ async function populateTableFromSaved() {
     console.error("Errore caricamento checkpoint:", err);
   }
 }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-function sendToPrinter(text) {
+async function printFixInfos() {
+  const fixInfos = document
+    .getElementById("pos")
+    .innerText
+    .substring(2)
+    .split(",");
+
+  sendToPrinter("GPS FIX INFOS:", 1);
+
+  for (const element of fixInfos) {
+    sendToPrinter(element, 1);
+    await sleep(100);   // ⏳ vero delay
+  }
+}
+
+
+function sendToPrinter(text, cr) {
   const encodedText = encodeURIComponent(text);
-  const url = `/print?text=${encodedText}`;
+  const url = `/print?text=${encodedText}&${cr}`;
 
   fetch(url)
     .then(response => {
       if (!response.ok) throw new Error("Errore durante la stampa");
-      console.log("Comando di stampa inviato con successo");
+      console.log(`Stampa inviata -> ${encodedText}`);
     })
     .catch(error => {
       console.error("Errore:", error);
