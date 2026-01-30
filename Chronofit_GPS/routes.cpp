@@ -12,9 +12,120 @@
 #include "buzzer.h"
 #include "settings.h"
 #include "diagnostic.h"
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include "FS.h"
+
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
+
+void activateAccessPoint(){
+   // Imposta un IP statico per l’AP
+  IPAddress local_IP(192, 168, 1, 1);
+  IPAddress gateway(192, 168, 1, 1);
+  IPAddress subnet(255, 255, 255, 0);
+
+  if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
+    debug("❌ Errore nella configurazione dell'IP statico");
+  }
+
+  uint64_t chipId = ESP.getEfuseMac();
+  // Converti il chipId in una stringa esadecimale
+  String chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
+
+  // Crea l'SSID con il chipId
+  String ssid_sn = String(ssid) + "_" + chipIdStr; 
+
+  WiFi.softAP(ssid_sn);
+  #ifdef DEBUG
+    Serial.println("Access Point avviato");
+    Serial.print("IP: ");
+    Serial.println(WiFi.softAPIP());
+  #endif
+
+  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+
+  registerRoutes(server, ws);
+
+  server.begin();
+}
+
+bool postSessionJson(const char* url, const char* filePath) {
+
+  // Controllo esistenza file
+  if (!LittleFS.exists(filePath)) {
+    Serial.println("❌ File non trovato: " + String(filePath));
+    return false;
+  }
+
+  // Apro il file in lettura
+  File file = LittleFS.open(filePath, "r");
+  if (!file) {
+    Serial.println("❌ Errore apertura file");
+    return false;
+  }
+
+  // Creo HTTP client
+  HTTPClient http;
+  http.begin(url);
+  http.addHeader("Content-Type", "application/json"); // JSON
+
+  // POST leggendo il file direttamente come payload
+  int httpResponseCode = http.sendRequest("POST", &file, file.size());
+
+  file.close(); // chiudo file
+
+  if (httpResponseCode > 0) {
+    Serial.print("✅ POST OK, HTTP code: ");
+    Serial.println(httpResponseCode);
+    Serial.println(http.getString()); // risposta server
+    http.end();
+    return true;
+  } else {
+    Serial.print("❌ POST fallita: ");
+    Serial.println(http.errorToString(httpResponseCode));
+    http.end();
+    return false;
+  }
+}
+
+
+bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
+
+  WiFi.begin(ssid, password);
+
+  unsigned long start = millis();
+
+#ifdef DEBUG
+  Serial.print("Connessione a ");
+  Serial.print(ssid);
+#endif
+
+  while (WiFi.status() != WL_CONNECTED && millis() - start < timeoutMs) {
+    delay(500);
+#ifdef DEBUG
+    Serial.print(".");
+#endif
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+#ifdef DEBUG
+    Serial.println("\n✅ STA connessa");
+    Serial.print("STA IP: ");
+    Serial.println(WiFi.localIP());
+#endif
+    return true;
+  } else {
+#ifdef DEBUG
+    Serial.println("\n⚠️ Connessione STA fallita");
+#endif
+    return false;
+  }
+}
+
+
+
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
                AwsEventType type, void *arg, uint8_t *data, size_t len) {

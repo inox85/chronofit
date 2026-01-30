@@ -107,36 +107,9 @@ void setup() {
   configFS();
 
   sessionRowIndex = getLastSessionRowIndex();
+
+  activateAccessPoint();
   
-  // Imposta un IP statico per l’AP
-  IPAddress local_IP(192, 168, 1, 1);
-  IPAddress gateway(192, 168, 1, 1);
-  IPAddress subnet(255, 255, 255, 0);
-
-  if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
-    debug("❌ Errore nella configurazione dell'IP statico");
-  }
-
-  uint64_t chipId = ESP.getEfuseMac();
-  // Converti il chipId in una stringa esadecimale
-  String chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
-
-  // Crea l'SSID con il chipId
-  String ssid_sn = String(ssid) + "_" + chipIdStr; 
-
-  WiFi.softAP(ssid_sn);
-  #ifdef DEBUG
-    Serial.println("Access Point avviato");
-    Serial.print("IP: ");
-    Serial.println(WiFi.softAPIP());
-  #endif
-
-  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
-
-  registerRoutes(server, ws);
-
-  server.begin();
-
 }
 
 void configFS(){

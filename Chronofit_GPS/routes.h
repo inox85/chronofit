@@ -5,6 +5,19 @@
 #include <ArduinoJson.h>
 
 void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws);
+
+void activateAccessPoint();
+
+bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs);
+
+// POST del file session.json a Hooklistener
+// postSessionJson(
+//   "https://app.hooklistener.com/w/my-first-endpoint-lwi8/esp32",
+//   "/session.json"
+// );
+
+bool postSessionJson(const char* url, const char* filePath);
+
 // 👇 aggiungi questo:
 void onWsEvent(AsyncWebSocket *server,
                AsyncWebSocketClient *client,
