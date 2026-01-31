@@ -109,6 +109,8 @@ void setup() {
   sessionRowIndex = getLastSessionRowIndex();
 
   activateAccessPoint();
+
+  connectToWiFi("VM-Wi-Fi 2.4GHz", "ElettraMarghe2021", 10000);
   
 }
 
@@ -119,6 +121,8 @@ void configFS(){
   }
 
   server.serveStatic("/", LittleFS, "/");
+
+
 }
 
 

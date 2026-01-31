@@ -27,4 +27,7 @@ unsigned int readUIntFromSettings(const char* key, unsigned int val);
 uint64_t writeULong64ToSettings(const char* key, uint64_t val);
 uint64_t readULong64FromSettings(const char* key, uint64_t val);
 
+String writeStringToSettings(const char* key, const String& val);
+String readStringFromSettings(const char* key, const String& def);
+
 #endif  // SETTINGS_H

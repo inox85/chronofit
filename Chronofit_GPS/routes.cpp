@@ -97,34 +97,32 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
   unsigned long start = millis();
 
-#ifdef DEBUG
+
   Serial.print("Connessione a ");
   Serial.print(ssid);
-#endif
+
 
   while (WiFi.status() != WL_CONNECTED && millis() - start < timeoutMs) {
     delay(500);
-#ifdef DEBUG
+
     Serial.print(".");
-#endif
+
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-#ifdef DEBUG
+
     Serial.println("\n✅ STA connessa");
     Serial.print("STA IP: ");
     Serial.println(WiFi.localIP());
-#endif
+
     return true;
   } else {
-#ifdef DEBUG
+
     Serial.println("\n⚠️ Connessione STA fallita");
-#endif
+
     return false;
   }
 }
-
-
 
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,

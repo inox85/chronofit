@@ -229,6 +229,30 @@
     </div>
   </div>
 
+    <!-- Overlay e popup per la connessione Wi-Fi -->
+  <div id="wifiOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Connect to Wi-Fi for internet access</h2>
+
+      <div class="input-row">
+        <label for="wifi-ssid">SSID</label>
+        <input type="text" id="wifi-ssid" placeholder="Enter Wi-Fi SSID">
+      </div>
+
+      <div class="input-row">
+        <label for="wifi-password">Password</label>
+        <input type="password" id="wifi-password" placeholder="Enter Wi-Fi password">
+      </div>
+
+      <div class="button-row">
+        <button class="big-button" id="connectWiFiBtn" onclick="connectWiFi()">Connect</button>
+        <button class="big-button" id="closeWifiPopup">Cancel</button>
+      </div>
+
+      <p id="wifi-status-field"></p>
+    </div>
+  </div>
+
   <div id="fullscreenOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
       <h2>Fullscreen Mode</h2>
@@ -254,7 +278,18 @@
   </div>
 
   <div class="card left">
-
+  <!-- Navbar interna della card -->
+    <div class="card-navbar">
+      <div class="card-status-item" id="wifi-notify">
+        <span class="status-icon">Wi-Fi:</span>
+        <span id="wifiStatus" class="status-icon">❌</span>
+      </div>
+      <div class="card-status-item" id="gps-notify">
+        <span class="status-icon">GPS:</span>
+        <span id="gpsStatus" class="status-icon">❌</span>
+      </div>
+    </div>
+    
     <p id="time">--:--:--</p>
     <p id="status" class="status nosync">Device ot synchronized</p>
     <p id="sync-msg"></p>

@@ -268,7 +268,7 @@ function sendCheckPoint(lineNumber) {
       //  output.innerText = "";
       //}, 3000);
     })
-    .catch(err => console.error("Error fetching JSON:", err));
+    .catch(err => console.error("Error fetching JSON:", err)); 
 }
 
 
@@ -1390,6 +1390,11 @@ document.getElementById("time").addEventListener("click", () => {
   document.getElementById("timeChoiceOverlay").style.display = "flex";
 });
 
+// Apri popup premendo sull'orario
+document.getElementById("wifi-notify").addEventListener("click", () => {
+  document.getElementById("wifiOverlay").style.display = "flex";
+});
+
 function onTimeSettingsAction(){
   updateParams();
   document.getElementById("timeChoiceOverlay").style.display = "none"
@@ -1794,4 +1799,8 @@ function downloadActualView() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function connectWiFi(){
+  document.getElementById("wifiOverlay").style.display = "none";
 }
