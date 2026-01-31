@@ -61,6 +61,9 @@ volatile int syncTestRequested = 0;
 volatile int8_t actualSecond = 0;
 volatile int8_t actualSecondForTest = 0;
 
+volatile bool internetOK = false;
+
+
 // --- Varie ---
 unsigned long lastBroadcast = 0;
 

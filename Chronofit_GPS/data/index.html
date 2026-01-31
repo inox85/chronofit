@@ -241,12 +241,24 @@
 
       <div class="input-row">
         <label for="wifi-password">Password</label>
-        <input type="password" id="wifi-password" placeholder="Enter Wi-Fi password">
+
+        <div class="password-row">
+          <input type="password" id="wifi-password" placeholder="Enter Wi-Fi password">
+
+          <div class="toggle-row">
+            <span>Show</span>
+            <label class="switch">
+              <input type="checkbox" id="show-password" onchange="togglePassword()">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+        </div>
       </div>
 
       <div class="button-row">
         <button class="big-button" id="connectWiFiBtn" onclick="connectWiFi()">Connect</button>
-        <button class="big-button" id="closeWifiPopup">Cancel</button>
+        <button class="big-button" id="closeWifiPopup" onclick="closeWiFiPopup()">Cancel</button>
       </div>
 
       <p id="wifi-status-field"></p>

@@ -12,7 +12,7 @@
 #include "params.h"
 #include "diagnostic.h"
 #include "settings.h"
-
+#include <WiFi.h>
 
 PreciseTime getPreciseTime() {
   PreciseTime t;
@@ -243,6 +243,17 @@ void broadcastTime() {
     fixStatus += 8;
 
   doc["f"] = fixStatus;
+
+  if(WiFi.status() == WL_CONNECTED)
+  {  
+    if(internetOK)
+      doc["w"] = 2;
+    else
+      doc["w"] = 1;
+
+  }else{
+    doc["w"] = 0;
+  }
 
   String json;
   serializeJson(doc, json);

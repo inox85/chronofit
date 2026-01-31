@@ -35,3 +35,5 @@ void broadCastRowEdited(const DynamicJsonDocument& entry);
 
 extern AsyncWebServer server;
 extern AsyncWebSocket ws;
+
+void internetCheckTask(void *pvParameters);

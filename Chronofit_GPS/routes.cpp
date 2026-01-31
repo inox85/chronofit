@@ -97,30 +97,36 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
   unsigned long start = millis();
 
-
   Serial.print("Connessione a ");
   Serial.print(ssid);
+  
+  xTaskCreatePinnedToCore(
+    internetCheckTask,
+    "InternetCheck",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0   // core 0 (WiFi sta su core 0/1 senza problemi)
+  );
 
+  return true;
 
-  while (WiFi.status() != WL_CONNECTED && millis() - start < timeoutMs) {
-    delay(500);
+}
 
-    Serial.print(".");
+void internetCheckTask(void *pvParameters) {
+  for (;;) {
+    if (WiFi.status() == WL_CONNECTED) {
+      WiFiClient client;
+      client.setTimeout(2000);
+      //Serial.println("Tentativo di accesso internet...");
+      internetOK = client.connect("8.8.8.8", 53);
+      client.stop();
+    } else {
+      internetOK = false;
+    }
 
-  }
-
-  if (WiFi.status() == WL_CONNECTED) {
-
-    Serial.println("\n✅ STA connessa");
-    Serial.print("STA IP: ");
-    Serial.println(WiFi.localIP());
-
-    return true;
-  } else {
-
-    Serial.println("\n⚠️ Connessione STA fallita");
-
-    return false;
+    vTaskDelay(pdMS_TO_TICKS(5000)); // ogni 30 s
   }
 }
 
@@ -268,8 +274,33 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     request->send(200, "text/plain", "CheckPoint received!");
   });
 
+  server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest *request) {
+    Serial.println("Richiesta connessione wifi...");
+
+    String ssid = request->hasParam("ssid") ? request->getParam("ssid")->value() : "";
+    String pw   = request->hasParam("pw")   ? request->getParam("pw")->value()   : "";
+
+    Serial.println("Salvo credenziali...");
+    writeStringToSettings("ssid", ssid);
+    writeStringToSettings("pw", pw);
+
+    Serial.println("Richieste connessione:");
+    Serial.println(ssid);
+    Serial.println(pw);
+
+    // Copia in buffer temporaneo sicuro
+    char ssidBuf[64];
+    char pwBuf[64];
+    ssid.toCharArray(ssidBuf, sizeof(ssidBuf));
+    pw.toCharArray(pwBuf, sizeof(pwBuf));
+
+    connectToWiFi(ssidBuf, pwBuf, 10000);
+  
+    request->send(200, "text/plain", "Wifi connecting...");
+});
+
     // --- JSON completo ---
-  server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
+server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
 
     StaticJsonDocument<512> doc;
     
@@ -297,6 +328,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     debug(message);
 
   });
+
+
 
   server.on("/getCheckpoints", HTTP_GET, [](AsyncWebServerRequest *request) {
     debug("Sending data from json...");

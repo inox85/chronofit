@@ -16,6 +16,10 @@ const ELAPSED_TIME_STARTED = 8;   // In attesa di un segnale si inizio cronometr
 const GPS_TEST_REQESTED = 1;
 const GPS_TEST_DONE = 0;
 
+const WIFI_STATUS_DISCONNECTED = 0;
+const WIFI_STATUS_CONNECTED = 1;
+const WIFI_STATUS_INTERNET_OK = 2;
+
 const POWER_MODE_NONE = 0;   // Alimentatore esterno non collegato
 const POWER_MODE_USB = 1;   // Dispositivo alimentato da POWER BANK
 const POWER_MODE_BATTERY = 2;   // Dispositivo alimentato a 12V
@@ -560,6 +564,8 @@ function updateClockFromData(data) {
 
 
     let statusElem = document.getElementById("status");
+    let wifiNavBar = document.getElementById("wifiStatus");
+    let gpsNavBar = document.getElementById("gpsStatus");
     //let timezoneElem = document.getElementById("timezone");
 
     const fixFlags = data.f; // esempio: 7
@@ -574,6 +580,7 @@ function updateClockFromData(data) {
     } 
 
     const syncStatus = data.sy; 
+    const wifiStatus = data.w; // 0=disconnected, 1=connecting, 2=connected
 
     handlePowerUpdate(data);
 
@@ -584,6 +591,13 @@ function updateClockFromData(data) {
     const elapsedTimeControls = document.getElementById("elapsedTimeControls");
     elapsedTimeControls.classList.add("hidden");
 
+    if(wifiStatus == WIFI_STATUS_CONNECTED){
+      wifiNavBar.innerText =  "🟡";
+    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK){
+      wifiNavBar.innerText =  "🟢";
+    }else{
+      wifiNavBar.innerText =  "🔴";
+    }
 
     if(syncStatus === SYNC_NONE){
       document.getElementById("time").innerText = "00:00:00.000";
@@ -643,14 +657,17 @@ function updateClockFromData(data) {
     let offsetString =  "UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
     document.getElementById("pos").innerText = "🟢 " + "Lat: " 
       + data.lt.toFixed(6) + ", Lng: " + data.ln.toFixed(6) + ", Sat: " + data.st + " [" + offsetString +"]";
-  
+
+    gpsNavBar.innerText = "🟢 Lat: " + data.lt.toFixed(6) + ", Lng:" + data.ln.toFixed(6);
       //timezoneElem.innerText = "Estimated timezone: UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
   } else if(syncEnabled && (!timeValid || !locationValid)){
       // GPS in attesa segnale
       document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
+      gpsNavBar.innerText = "🟡";
   } else {
       // GPS disabilitato
       document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
+      gpsNavBar.innerText = "🔴";
   }
 }
 
@@ -1801,6 +1818,27 @@ function downloadActualView() {
   URL.revokeObjectURL(url);
 }
 
-function connectWiFi(){
+function connectWiFi() {
+  const ssid = document.getElementById("wifi-ssid").value;
+  const pw   = document.getElementById("wifi-password").value;
+
+  const url = `/wifi?ssid=${encodeURIComponent(ssid)}&pw=${encodeURIComponent(pw)}`;
+
+  fetch(url)
+    .then(r => r.text())
+    .then(t => console.log(t))
+    .catch(e => console.error(e));
+
   document.getElementById("wifiOverlay").style.display = "none";
+}
+
+function closeWiFiPopup(){
+  document.getElementById("wifiOverlay").style.display = "none";
+}
+
+function togglePassword() {
+  const pwInput = document.getElementById("wifi-password");
+  const toggle  = document.getElementById("show-password");
+
+  pwInput.type = toggle.checked ? "text" : "password";
 }
