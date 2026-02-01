@@ -247,12 +247,16 @@ void broadcastTime() {
   if(WiFi.status() == WL_CONNECTED)
   {  
     if(internetOK)
-      doc["w"] = 2;
+      doc["w"] = 3;
     else
-      doc["w"] = 1;
+      doc["w"] = 2;
 
   }else{
-    doc["w"] = 0;
+    if(millis() - startAttemptTime < wifiTimeout) {
+      doc["w"] = 1;
+    }else{
+      doc["w"] = 0;
+    }
   }
 
   String json;

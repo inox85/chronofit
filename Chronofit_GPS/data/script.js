@@ -17,8 +17,9 @@ const GPS_TEST_REQESTED = 1;
 const GPS_TEST_DONE = 0;
 
 const WIFI_STATUS_DISCONNECTED = 0;
-const WIFI_STATUS_CONNECTED = 1;
-const WIFI_STATUS_INTERNET_OK = 2;
+const WIFI_STATUS_CONNECING = 1;
+const WIFI_STATUS_CONNECTED = 2;
+const WIFI_STATUS_INTERNET_OK = 3;
 
 const POWER_MODE_NONE = 0;   // Alimentatore esterno non collegato
 const POWER_MODE_USB = 1;   // Dispositivo alimentato da POWER BANK
@@ -593,9 +594,11 @@ function updateClockFromData(data) {
 
     if(wifiStatus == WIFI_STATUS_CONNECTED){
       wifiNavBar.innerText =  "🟡";
+    }else if(wifiStatus == WIFI_STATUS_CONNECING){
+      wifiNavBar.innerText =  "🔄";
     }else if(wifiStatus == WIFI_STATUS_INTERNET_OK){
       wifiNavBar.innerText =  "🟢";
-    }else{
+    }else if(wifiStatus == WIFI_STATUS_DISCONNECTED){
       wifiNavBar.innerText =  "🔴";
     }
 
@@ -658,7 +661,7 @@ function updateClockFromData(data) {
     document.getElementById("pos").innerText = "🟢 " + "Lat: " 
       + data.lt.toFixed(6) + ", Lng: " + data.ln.toFixed(6) + ", Sat: " + data.st + " [" + offsetString +"]";
 
-    gpsNavBar.innerText = "🟢 Lat: " + data.lt.toFixed(6) + ", Lng:" + data.ln.toFixed(6);
+    gpsNavBar.innerText = "🟢 Lt: " + data.lt.toFixed(6) + ", Ln: " + data.ln.toFixed(6);
       //timezoneElem.innerText = "Estimated timezone: UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
   } else if(syncEnabled && (!timeValid || !locationValid)){
       // GPS in attesa segnale
@@ -1407,10 +1410,7 @@ document.getElementById("time").addEventListener("click", () => {
   document.getElementById("timeChoiceOverlay").style.display = "flex";
 });
 
-// Apri popup premendo sull'orario
-document.getElementById("wifi-notify").addEventListener("click", () => {
-  document.getElementById("wifiOverlay").style.display = "flex";
-});
+
 
 function onTimeSettingsAction(){
   updateParams();
@@ -1822,7 +1822,7 @@ function connectWiFi() {
   const ssid = document.getElementById("wifi-ssid").value;
   const pw   = document.getElementById("wifi-password").value;
 
-  const url = `/wifi?ssid=${encodeURIComponent(ssid)}&pw=${encodeURIComponent(pw)}`;
+  const url = `/wifiConnect?ssid=${encodeURIComponent(ssid)}&pw=${encodeURIComponent(pw)}`;
 
   fetch(url)
     .then(r => r.text())
@@ -1831,6 +1831,25 @@ function connectWiFi() {
 
   document.getElementById("wifiOverlay").style.display = "none";
 }
+
+// Apri popup premendo sull'orario
+document.getElementById("wifi-notify").addEventListener("click", () => {
+
+  fetch('/wifiCredential')
+    .then(res => {
+      if (!res.ok) throw new Error("Errore nella fetch");
+      return res.json();
+    })
+    .then(data => {
+      console.log("Credenziali ricevute:");
+      console.log(data);
+      document.getElementById("wifi-ssid").value = data.ssid;
+      document.getElementById("wifi-password").value = data.pw;
+    })
+  .catch(err => console.error("Errore:", err));
+
+  document.getElementById("wifiOverlay").style.display = "flex";
+});
 
 function closeWiFiPopup(){
   document.getElementById("wifiOverlay").style.display = "none";

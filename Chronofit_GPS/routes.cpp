@@ -99,6 +99,16 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
   Serial.print("Connessione a ");
   Serial.print(ssid);
+
+  WiFi.onEvent([](WiFiEvent_t event) {
+    if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
+      Serial.println("Connesso con IP");
+    }
+    if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+      Serial.println("Disconnesso");
+    }
+  });
+
   
   xTaskCreatePinnedToCore(
     internetCheckTask,
@@ -274,7 +284,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     request->send(200, "text/plain", "CheckPoint received!");
   });
 
-  server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/wifiConnect", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Richiesta connessione wifi...");
 
     String ssid = request->hasParam("ssid") ? request->getParam("ssid")->value() : "";
@@ -300,7 +310,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 });
 
     // --- JSON completo ---
-server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
 
     StaticJsonDocument<512> doc;
     
@@ -317,6 +327,22 @@ server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "application/json", json);
 
   });
+
+    // --- JSON completo ---
+  server.on("/wifiCredential", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+    StaticJsonDocument<256> doc;
+    
+    doc["ssid"] = readStringFromSettings("ssid", "");
+    doc["pw"] = readStringFromSettings("pw", "");
+
+    String json;
+    serializeJson(doc, json);
+
+    request->send(200, "application/json", json);
+
+  });
+
 
     // --- JSON completo ---
   server.on("/allSettings", HTTP_GET, [](AsyncWebServerRequest *request) {

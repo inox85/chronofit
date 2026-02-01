@@ -61,6 +61,10 @@ volatile int syncTestRequested = 0;
 volatile int8_t actualSecond = 0;
 volatile int8_t actualSecondForTest = 0;
 
+// WiFi Connection
+
+unsigned long startAttemptTime = 0;
+const unsigned long wifiTimeout = 10000; // 10 secondi
 volatile bool internetOK = false;
 
 
