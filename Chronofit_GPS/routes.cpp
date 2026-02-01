@@ -17,7 +17,7 @@
 #include "FS.h"
 #include <WiFiClientSecure.h>
 #include <base64.h>
-
+#include "secrets.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -95,12 +95,17 @@ bool postSessionJson(const char* url, const char* filePath) {
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
+  
+  String msgJson = serializeMessage("Connecting to WiFi for internet access...");
+  ws.textAll(msgJson);
+
   WiFi.begin(ssid, password);
 
   unsigned long start = millis();
 
   Serial.print("Connessione a ");
   Serial.print(ssid);
+
 
   WiFi.onEvent([](WiFiEvent_t event) {
     if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
@@ -785,6 +790,17 @@ String serializeSettings(){
   return message;
 }
 
+String serializeMessage(String msg){
+  StaticJsonDocument<512> doc;
+  doc["t"] = TYPE_GENERIC_MESSAGE;
+  doc["msg"] = msg;
+
+  String message;
+  serializeJson(doc, message);
+
+  return message;
+}
+
 void broadCastSettings(){
   String message = serializeSettings();
   ws.textAll(message);
@@ -867,7 +883,7 @@ void sendBrevoMail() {
       "\"email\":\"inox85@hotmail.com\","
       "\"name\":\"Admin\""
     "}],"
-    "\"subject\":\"Sessione\","
+    "\"subject\":\"File sessione di gara da Chronofit [ " + String(latitude, 6) + ", " + String(longitude, 6) + "]\","
     "\"htmlContent\":\"<p>In allegato trovi il file di sessione.</p>"
       "<p>Visualizza la posizione su Google Maps: "
       "<a href=\\\"" + mapsLink + "\\\" target=\\\"_blank\\\">Apri Google Maps</a></p>\","

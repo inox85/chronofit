@@ -1,2 +1,3 @@
 Chronofit_GPS/littlefs.bin
 *.bin
+Chronofit_GPS/secrets.h

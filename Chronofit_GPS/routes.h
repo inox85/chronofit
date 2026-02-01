@@ -41,3 +41,5 @@ void internetCheckTask(void *pvParameters);
 String fileToBase64(const char *path);
 
 void sendBrevoMail();
+
+String serializeMessage(String msg);
