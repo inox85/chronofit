@@ -28,3 +28,6 @@
 #define TYPE_PARAMS_UPDATED           3
 #define TYPE_ROW_UPDATED              4
 
+#define BREVO_API_KEY "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"
+#define BREVO_HOST "api.brevo.com"
+#define BREVO_PORT 443

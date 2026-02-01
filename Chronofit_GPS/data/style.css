@@ -81,11 +81,15 @@ span{
   color: white;
 }
 
-
 .big-button{
   color: white;
   min-height: 50px;
   font-size: 20px;
+}
+
+.big-button.disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .small-button{

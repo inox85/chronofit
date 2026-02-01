@@ -37,3 +37,7 @@ extern AsyncWebServer server;
 extern AsyncWebSocket ws;
 
 void internetCheckTask(void *pvParameters);
+
+String fileToBase64(const char *path);
+
+void sendBrevoMail();

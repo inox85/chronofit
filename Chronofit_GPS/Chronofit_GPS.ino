@@ -110,10 +110,6 @@ void setup() {
 
   activateAccessPoint();
 
-  //connectToWiFi("VM-Wi-Fi 2.4GHz", "ElettraMarghe2021", 10000);
-  //delay(10000);
-  //connectToWiFi("I&M Wi-Fi 2.4GHz", "Ciaone1234", 10000);
-  
 }
 
 void configFS(){

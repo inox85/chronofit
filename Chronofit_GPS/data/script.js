@@ -417,6 +417,8 @@ const TYPE_TIME_UPDATE = 1;
 const TYPE_SESSION_CLEARED = 2;
 const TYPE_PARAMS_UPDATED = 3;
 const TYPE_ROW_UPDATED = 4;
+const TYPE_GENERIC_MESSAGE = 5;
+const TYPE_EMAIL_SENT = 6;
 
 function handleMessage(data) {
   switch (data.t) {
@@ -452,6 +454,15 @@ function handleMessage(data) {
       console.log("⚙️ Row update!");
       updateRowFromBroadcas(data);
       break;
+
+    case TYPE_GENERIC_MESSAGE:
+      console.log("⚙️ Generic message received:", data);
+      showGeneralPopup(data.msg, "#3b55ffff", 3000 );
+      break;
+
+    case TYPE_EMAIL_SENT:
+      console.log("📧 Email sent confirmation:", data)
+      showGeneralPopup("Email sent successfully!", "rgb(9, 139, 0)", 3000 );
   }
 }
 
@@ -591,6 +602,12 @@ function updateClockFromData(data) {
 
     const elapsedTimeControls = document.getElementById("elapsedTimeControls");
     elapsedTimeControls.classList.add("hidden");
+    
+    //document.getElementById("sendEmailBtn").disabled = true;
+
+    const btn = document.getElementById("sendEmailBtn");
+    btn.disabled = true;
+    btn.classList.add("disabled");
 
     if(wifiStatus == WIFI_STATUS_CONNECTED){
       wifiNavBar.innerText =  "🟡";
@@ -598,6 +615,8 @@ function updateClockFromData(data) {
       wifiNavBar.innerText =  "🔄";
     }else if(wifiStatus == WIFI_STATUS_INTERNET_OK){
       wifiNavBar.innerText =  "🟢";
+      btn.disabled = false;
+      btn.classList.remove("disabled");
     }else if(wifiStatus == WIFI_STATUS_DISCONNECTED){
       wifiNavBar.innerText =  "🔴";
     }
@@ -1860,4 +1879,29 @@ function togglePassword() {
   const toggle  = document.getElementById("show-password");
 
   pwInput.type = toggle.checked ? "text" : "password";
+}
+
+// Apri popup premendo sull'orario
+document.getElementById("gps-notify").addEventListener("click", () => {
+  document.getElementById("settingsOverlay").style.display = "flex";
+});
+
+async function sendActualView(){
+try {
+    // Sostituisci con l'IP del tuo ESP32 nella rete locale
+
+    const url = `/email`;
+    // Richiesta GET
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Errore HTTP: ${response.status}`);
+    }
+
+    const text = await response.text();
+    console.log("Richiesta di email inviata", text);
+
+  } catch (err) {
+    console.error("Errore invio email!", err);
+  }
 }

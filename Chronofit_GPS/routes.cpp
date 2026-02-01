@@ -15,6 +15,8 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include "FS.h"
+#include <WiFiClientSecure.h>
+#include <base64.h>
 
 
 AsyncWebServer server(80);
@@ -325,6 +327,17 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serializeJson(doc, json);
 
     request->send(200, "application/json", json);
+
+  });
+
+    // --- JSON completo ---
+  server.on("/email", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+    if(internetOK){
+      sendBrevoMail();
+    }
+
+    request->send(200, "text/plain", "Email sended!");
 
   });
 
@@ -795,4 +808,113 @@ void broadCastRowEdited(const DynamicJsonDocument& entry){
 
   ws.textAll(message);
 }
+
+String fileToBase64(const char *path) {
+  File file = LittleFS.open(path, "r");
+  if (!file) return "";
+
+  String encoded;
+  uint8_t buf[96];  // multiplo di 3
+
+  while (file.available()) {
+    int len = file.read(buf, sizeof(buf));
+    encoded += base64::encode(buf, len);
+  }
+
+  file.close();
+  return encoded;
+}
+
+
+void sendBrevoMail() {
+  Serial.println("Inizio invio mail!");
+
+  WiFiClientSecure client;
+  client.setInsecure();  // semplifica TLS
+
+  Serial.println("Verifico connessione...");
+  if (!client.connect(BREVO_HOST, BREVO_PORT)) {
+    Serial.println("Connessione Brevo fallita");
+    return;
+  }
+  Serial.println("OK");
+
+  // Leggo il JSON ma lo invio come .txt
+  String attachmentBase64 = fileToBase64("/session.json");
+
+  Serial.println("Carico allegato...");
+
+  if (attachmentBase64.length() == 0) {
+    Serial.println("Allegato vuoto");
+    return;
+  }
+
+  Serial.println("OK");
+
+  float latitude = gps.location.isValid() ? gps.location.lat() : 0;
+  float longitude = gps.location.isValid() ? gps.location.lng() : 0;
+
+  String mapsLink = "https://www.google.com/maps/search/?api=1&query=" + String(latitude, 6) + "," + String(longitude, 6);
+  Serial.println("Link creato!");
+
+  String body =
+  "{"
+    "\"sender\":{"
+      "\"name\":\"Chronofit\","
+      "\"email\":\"inox85@gmail.com\""
+    "},"
+    "\"to\":[{"
+      "\"email\":\"inox85@hotmail.com\","
+      "\"name\":\"Admin\""
+    "}],"
+    "\"subject\":\"Sessione\","
+    "\"htmlContent\":\"<p>In allegato trovi il file di sessione.</p>"
+      "<p>Visualizza la posizione su Google Maps: "
+      "<a href=\\\"" + mapsLink + "\\\" target=\\\"_blank\\\">Apri Google Maps</a></p>\","
+    "\"attachment\":[{"
+      "\"content\":\"" + attachmentBase64 + "\","
+      "\"name\":\"session.txt\""
+    "}]"
+  "}";
+
+  Serial.println("Mail costruita!");
+  client.print(
+    "POST /v3/smtp/email HTTP/1.1\r\n"
+    "Host: " BREVO_HOST "\r\n"
+    "api-key: " BREVO_API_KEY "\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: " + String(body.length()) + "\r\n"
+    "Connection: close\r\n\r\n" +
+    body
+  );
+
+  Serial.println("Richiesta inviata a Brevo");
+
+  // Lettura intestazioni HTTP
+  while (client.connected()) {
+    String line = client.readStringUntil('\n');
+    if (line == "\r") break; // fine headers
+  }
+
+  // Leggi tutto il corpo (JSON di Brevo)
+  String response = "";
+  while (client.available()) {
+    response += client.readString();
+  }
+
+  Serial.println("=== Risposta Brevo ===");
+  Serial.println(response);
+
+  // Analisi semplice: verifica se contiene "messageId"
+  if (response.indexOf("messageId") >= 0) {
+    Serial.println("Mail accettata");
+  } else {
+    Serial.println("Errore invio mail!");
+  }
+  
+}
+
+
+
+
 
