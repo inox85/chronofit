@@ -95,7 +95,6 @@ bool postSessionJson(const char* url, const char* filePath) {
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
-  
   String msgJson = serializeMessage("Connecting to WiFi for internet access...");
   ws.textAll(msgJson);
 
@@ -110,9 +109,15 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   WiFi.onEvent([](WiFiEvent_t event) {
     if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
       Serial.println("Connesso con IP");
+        
+      String msgJson = serializeMessage("WiFi connected with IP address");
+      ws.textAll(msgJson);
     }
     if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
       Serial.println("Disconnesso");
+        
+      String msgJson = serializeMessage("WiFi disconnected");
+      ws.textAll(msgJson);
     }
   });
 
@@ -338,8 +343,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     // --- JSON completo ---
   server.on("/email", HTTP_GET, [](AsyncWebServerRequest *request) {
 
-    if(internetOK){
-      sendBrevoMail();
+    if(internetOK && request->hasParam("address")){
+      String emailAddress = request->getParam("address")->value();
+      Serial.println("Richiesta invio mail da:");
+      Serial.println(emailAddress);
+      sendBrevoMail(emailAddress);
     }
 
     request->send(200, "text/plain", "Email sended!");
@@ -842,7 +850,7 @@ String fileToBase64(const char *path) {
 }
 
 
-void sendBrevoMail() {
+void sendBrevoMail(String emailAddress) {
   Serial.println("Inizio invio mail!");
 
   WiFiClientSecure client;
@@ -874,24 +882,25 @@ void sendBrevoMail() {
   Serial.println("Link creato!");
 
   String body =
-  "{"
-    "\"sender\":{"
-      "\"name\":\"Chronofit\","
-      "\"email\":\"inox85@gmail.com\""
-    "},"
-    "\"to\":[{"
-      "\"email\":\"inox85@hotmail.com\","
-      "\"name\":\"Admin\""
-    "}],"
-    "\"subject\":\"File sessione di gara da Chronofit [ " + String(latitude, 6) + ", " + String(longitude, 6) + "]\","
-    "\"htmlContent\":\"<p>In allegato trovi il file di sessione.</p>"
-      "<p>Visualizza la posizione su Google Maps: "
-      "<a href=\\\"" + mapsLink + "\\\" target=\\\"_blank\\\">Apri Google Maps</a></p>\","
-    "\"attachment\":[{"
-      "\"content\":\"" + attachmentBase64 + "\","
-      "\"name\":\"session.txt\""
-    "}]"
-  "}";
+    "{"
+      "\"sender\":{"
+        "\"name\":\"Chronofit\","
+        "\"email\":\"inox85@gmail.com\""
+      "},"
+      "\"to\":[{"
+        "\"email\":\"" + emailAddress + "\","
+        "\"name\":\"Admin\""
+      "}],"
+      "\"subject\":\"File sessione di gara da Chronofit [ " 
+          + String(latitude, 6) + ", " + String(longitude, 6) + "]\","
+      "\"htmlContent\":\"<p>In allegato trovi il file di sessione.</p>"
+        "<p>Visualizza la posizione su Google Maps: "
+        "<a href=\\\"" + mapsLink + "\\\" target=\\\"_blank\\\">Apri Google Maps</a></p>\","
+      "\"attachment\":[{"
+        "\"content\":\"" + attachmentBase64 + "\","
+        "\"name\":\"session.txt\""
+      "}]"
+    "}";
 
   Serial.println("Mail costruita!");
   client.print(
@@ -924,6 +933,8 @@ void sendBrevoMail() {
   // Analisi semplice: verifica se contiene "messageId"
   if (response.indexOf("messageId") >= 0) {
     Serial.println("Mail accettata");
+    String msgJson = serializeMessage("Mail sent successfully!");
+    ws.textAll(msgJson);
   } else {
     Serial.println("Errore invio mail!");
   }

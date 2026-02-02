@@ -174,7 +174,8 @@ hr {
 input[type="text"],
 input[type="number"],
 input[type="numeric"],
-input[type="password"] {
+input[type="password"], 
+input[type="email"] {
   font-family: 'Nunito';
   width: 100%;
   padding: 0px;

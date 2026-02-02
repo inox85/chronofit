@@ -265,6 +265,31 @@
     </div>
   </div>
 
+  <!-- Overlay e popup per inserimento Email -->
+  <div id="emailOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Insert your email</h2>
+
+      <div class="input-row">
+        <label for="user-email">Email</label>
+        <input type="email" id="user-email" placeholder="Enter email">
+      </div>
+
+      <div class="input-row">
+        <label for="user-email-confirm">Confirm Email</label>
+        <input type="email" id="user-email-confirm" placeholder="Confirm email">
+      </div>
+
+      <div class="button-row">
+        <button class="big-button" onclick="confirmEmail()">Confirm</button>
+        <button class="big-button" onclick="closeEmailPopup()">Cancel</button>
+      </div>
+
+      <p id="email-status-field"></p>
+    </div>
+  </div>
+
+
   <div id="fullscreenOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
       <h2>Fullscreen Mode</h2>

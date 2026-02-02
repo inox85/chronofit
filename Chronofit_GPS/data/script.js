@@ -1886,22 +1886,71 @@ document.getElementById("gps-notify").addEventListener("click", () => {
   document.getElementById("settingsOverlay").style.display = "flex";
 });
 
-async function sendActualView(){
+function sendActualView(){
+  openEmailPopup();
+}
+
+
+function openEmailPopup() {
+  document.getElementById("emailOverlay").style.display = "flex";
+}
+
+function closeEmailPopup() {
+  document.getElementById("emailOverlay").style.display = "none";
+}
+
+async function sendEmail(emailAddress) {
+
+  const url = `/email?address=${encodeURIComponent(emailAddress)}`;
+
+  console.log(url);
+  // Richiesta GET
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+    throw new Error(`Errore HTTP: ${response.status}`);
+  }
+
+  const text = await response.text();
+  console.log("Richiesta di email inviata", text);
+
+}
+
+async function confirmEmail() {
+  const email = document.getElementById("user-email").value.trim();
+  const confirm = document.getElementById("user-email-confirm").value.trim();
+  const status = document.getElementById("email-status-field");
+
+  if (!email || !confirm) {
+    status.textContent = "Please fill in both fields";
+    status.style.color = "red";
+    return;
+  }
+
+  if (email !== confirm) {
+    status.textContent = "Emails do not match";
+    status.style.color = "red";
+    return;
+  }
+
+  // Validazione email base
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    status.textContent = "Invalid email format";
+    status.style.color = "red";
+    return;
+  }
+
+  status.textContent = "Email confirmed ✔";
+  status.style.color = "green";
 try {
-    // Sostituisci con l'IP del tuo ESP32 nella rete locale
-
-    const url = `/email`;
-    // Richiesta GET
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Errore HTTP: ${response.status}`);
-    }
-
-    const text = await response.text();
-    console.log("Richiesta di email inviata", text);
-
+    await sendEmail(email);   // 👈 aspetta
+    status.textContent = "Request sent ✔";
+    status.style.color = "green";
+    setTimeout(closeEmailPopup, 1000);
   } catch (err) {
-    console.error("Errore invio email!", err);
+    console.log(err)
+    status.textContent = "Error request sending email";
+    status.style.color = "red";
   }
 }

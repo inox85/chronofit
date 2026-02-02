@@ -40,6 +40,8 @@ void internetCheckTask(void *pvParameters);
 
 String fileToBase64(const char *path);
 
-void sendBrevoMail();
+void sendBrevoMail(String emailAddress);
+
+String sendGenericMessage(String msg);
 
 String serializeMessage(String msg);
