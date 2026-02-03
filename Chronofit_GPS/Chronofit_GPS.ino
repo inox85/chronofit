@@ -57,6 +57,16 @@ void setup() {
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
 
+  pinMode(LED_1, OUTPUT);
+  pinMode(LED_2, OUTPUT);
+  pinMode(LED_3, OUTPUT);
+
+
+
+  digitalWrite(LED_1, HIGH);
+  digitalWrite(LED_2, HIGH);
+  digitalWrite(LED_3, HIGH);
+
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
   
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
@@ -84,13 +94,9 @@ void setup() {
 
   pinMode(0, INPUT);
 
-  pinMode(LED_1, OUTPUT);
-  digitalWrite(LED_1, LOW);
-  pinMode(LED_2, OUTPUT);
-  digitalWrite(LED_2, LOW);
-  pinMode(LED_3, OUTPUT);
-  digitalWrite(LED_3, LOW);
-  
+
+
+
   
   for (int i = 0; i < 4; i++) {
     pinMode(sensorsPins[i], INPUT_PULLUP);
@@ -110,6 +116,11 @@ void setup() {
 
   activateAccessPoint();
 
+  delay(1000);
+  digitalWrite(LED_1, LOW);
+  digitalWrite(LED_2, LOW);
+  digitalWrite(LED_3, LOW);
+  
 }
 
 void configFS(){
@@ -209,7 +220,7 @@ void loop() {
     if(syncMode == MODE_SYNC_GPS){
       sweepBuzz();   
       syncTestRequested = 1;
-      digitalWrite(LED_2, HIGH);
+      digitalWrite(LED_3, HIGH);
     }
     else{
       buzzerBeep(50,1,0,250,128);
@@ -219,7 +230,7 @@ void loop() {
   if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) {
     if((ppsCounter % 60) == 0){
       syncTestRequested = 0;
-      digitalWrite(12, LOW);
+      digitalWrite(LED_3, LOW);
       sensorTime[4] = lastSyncTrigger;
       sensorTriggered[4] = true;
     }

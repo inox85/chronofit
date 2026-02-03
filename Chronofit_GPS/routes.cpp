@@ -114,10 +114,7 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
       ws.textAll(msgJson);
     }
     if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
-      Serial.println("Disconnesso");
-        
-      String msgJson = serializeMessage("WiFi disconnected");
-      ws.textAll(msgJson);
+
     }
   });
 

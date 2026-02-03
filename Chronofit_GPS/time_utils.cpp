@@ -246,11 +246,12 @@ void broadcastTime() {
 
   if(WiFi.status() == WL_CONNECTED)
   {  
-    if(internetOK)
-      doc["w"] = 3;
-    else
+    if(internetOK){
+      doc["w"] = 3;    
+    }
+    else{
       doc["w"] = 2;
-
+    }
   }else{
     if(millis() - startAttemptTime < wifiTimeout) {
       doc["w"] = 1;
@@ -258,6 +259,11 @@ void broadcastTime() {
       doc["w"] = 0;
     }
   }
+
+  if(doc["w"] == 3)
+    digitalWrite(LED_2, HIGH);
+  else
+    digitalWrite(LED_2, LOW);
 
   String json;
   serializeJson(doc, json);
