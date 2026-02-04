@@ -45,3 +45,7 @@ void sendBrevoMail(String emailAddress);
 String sendGenericMessage(String msg);
 
 String serializeMessage(String msg);
+
+void sendBrevoMailTask(void* param);
+
+void sendBrevoMailAsync(String email);

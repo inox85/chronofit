@@ -344,7 +344,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       String emailAddress = request->getParam("address")->value();
       Serial.println("Richiesta invio mail da:");
       Serial.println(emailAddress);
-      sendBrevoMail(emailAddress);
+      sendBrevoMailAsync(emailAddress);
     }
 
     request->send(200, "text/plain", "Email sended!");
@@ -938,7 +938,17 @@ void sendBrevoMail(String emailAddress) {
   
 }
 
+void sendBrevoMailTask(void* param) {
+    String email = *(String*)param;
+    sendBrevoMail(email); // il tuo metodo attuale
+    delete (String*)param;        // pulizia
+    vTaskDelete(NULL);             // termina il task
+}
 
-
+void sendBrevoMailAsync(String email) {
+    // copia la stringa perché il task lavora su puntatore
+    String* emailCopy = new String(email);
+    xTaskCreate(sendBrevoMailTask, "SendBrevoMail", 8192, emailCopy, 1, NULL);
+}
 
 
