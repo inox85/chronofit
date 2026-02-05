@@ -157,11 +157,13 @@ hr {
 
 #pos, #sync-msg {
   text-align: center;
+  cursor: pointer;
 }
 
 .card #time {
   font-size: 40px;
   text-align: center;
+  cursor: pointer;
 }
 
 .checkpoint-settings td{
@@ -710,4 +712,5 @@ input:checked + .slider:before {
 .status-icon {
   font-weight: bold;
   font-size: 15px;
+  cursor: pointer;
 }
