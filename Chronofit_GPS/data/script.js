@@ -609,11 +609,13 @@ function updateClockFromData(data) {
     btn.disabled = true;
     btn.classList.add("disabled");
 
+    const hasRows = document.querySelectorAll('#event-table tbody tr').length > 0;
+
     if(wifiStatus == WIFI_STATUS_CONNECTED){
       wifiNavBar.innerText =  "🟡";
     }else if(wifiStatus == WIFI_STATUS_CONNECING){
       wifiNavBar.innerText =  "🔄";
-    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK){
+    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK && hasRows){
       wifiNavBar.innerText =  "🟢";
       btn.disabled = false;
       btn.classList.remove("disabled");
