@@ -823,6 +823,7 @@ void broadCastRowEdited(const DynamicJsonDocument& entry){
   doc[MINUTE_FIELD] = entry[MINUTE_FIELD];
   doc[SECOND_FIELD] = entry[SECOND_FIELD];
   doc[MILLIS_FIELD] = entry[MILLIS_FIELD];
+  doc[PENALITY_FIELD] = entry[PENALITY_FIELD];
 
   String message;
   serializeJson(doc, message);

@@ -480,7 +480,7 @@ function startWatchdog() {
   watchdogTimer = setInterval(() => {
     const now = Date.now();
     // se non ricevi messaggi da più di 5s, considera la connessione persa
-    if (now - lastMessageTime > 5000) {
+    if (now - lastMessageTime > 6000) {
       if (!connectionLost) {
         console.warn("⏱️ Watchdog: connessione inattiva, riavvio socket...");
         connectionLost = true;
@@ -1699,6 +1699,11 @@ function updateRowFromBroadcas(data) {
       data.s,
       data.ms
     );
+  }
+
+  const penalityBtn = row.querySelector(".penality");
+  if (penalityBtn) {
+    penalityBtn.textContent = data.x;
   }
 
   showGeneralPopup(`Row ${index} has been updated`,  lineColors[data.ln]);
