@@ -684,14 +684,14 @@ function updateClockFromData(data) {
 
     gpsNavBar.innerText = "🟢 Lt: " + data.lt.toFixed(6) + ", Ln: " + data.ln.toFixed(6);
       //timezoneElem.innerText = "Estimated timezone: UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
-  } else if(syncEnabled && (!timeValid || !locationValid)){
-      // GPS in attesa segnale
-      document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
-      gpsNavBar.innerText = "🟡";
+  } else if((!timeValid || !locationValid) && data.st  > 0 ){
+    // GPS in attesa segnale
+    document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
+    gpsNavBar.innerText = "🟡";
   } else {
-      // GPS disabilitato
-      document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
-      gpsNavBar.innerText = "🔴";
+    // GPS disabilitato
+    document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
+    gpsNavBar.innerText = "🔴";
   }
 }
 
