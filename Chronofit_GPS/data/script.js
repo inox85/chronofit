@@ -480,7 +480,7 @@ function startWatchdog() {
   watchdogTimer = setInterval(() => {
     const now = Date.now();
     // se non ricevi messaggi da più di 5s, considera la connessione persa
-    if (now - lastMessageTime > 5000) {
+    if (now - lastMessageTime > 6000) {
       if (!connectionLost) {
         console.warn("⏱️ Watchdog: connessione inattiva, riavvio socket...");
         connectionLost = true;
@@ -609,11 +609,13 @@ function updateClockFromData(data) {
     btn.disabled = true;
     btn.classList.add("disabled");
 
+    const hasRows = document.querySelectorAll('#event-table tbody tr').length > 0;
+
     if(wifiStatus == WIFI_STATUS_CONNECTED){
       wifiNavBar.innerText =  "🟡";
     }else if(wifiStatus == WIFI_STATUS_CONNECING){
       wifiNavBar.innerText =  "🔄";
-    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK){
+    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK && hasRows){
       wifiNavBar.innerText =  "🟢";
       btn.disabled = false;
       btn.classList.remove("disabled");
@@ -682,14 +684,14 @@ function updateClockFromData(data) {
 
     gpsNavBar.innerText = "🟢 Lt: " + data.lt.toFixed(6) + ", Ln: " + data.ln.toFixed(6);
       //timezoneElem.innerText = "Estimated timezone: UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
-  } else if(syncEnabled && (!timeValid || !locationValid)){
-      // GPS in attesa segnale
-      document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
-      gpsNavBar.innerText = "🟡";
+  } else if((!timeValid || !locationValid) && data.st  > 0 ){
+    // GPS in attesa segnale
+    document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
+    gpsNavBar.innerText = "🟡";
   } else {
-      // GPS disabilitato
-      document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
-      gpsNavBar.innerText = "🔴";
+    // GPS disabilitato
+    document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
+    gpsNavBar.innerText = "🔴";
   }
 }
 
@@ -1697,6 +1699,11 @@ function updateRowFromBroadcas(data) {
       data.s,
       data.ms
     );
+  }
+
+  const penalityBtn = row.querySelector(".penality");
+  if (penalityBtn) {
+    penalityBtn.textContent = data.x;
   }
 
   showGeneralPopup(`Row ${index} has been updated`,  lineColors[data.ln]);

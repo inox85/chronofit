@@ -61,8 +61,6 @@ void setup() {
   pinMode(LED_2, OUTPUT);
   pinMode(LED_3, OUTPUT);
 
-
-
   digitalWrite(LED_1, HIGH);
   digitalWrite(LED_2, HIGH);
   digitalWrite(LED_3, HIGH);
@@ -88,14 +86,9 @@ void setup() {
 
   printerInit();
 
-  printOnPrinter("Avvio sistema", 2);
-
   sweepBuzz();
 
   pinMode(0, INPUT);
-
-
-
 
   
   for (int i = 0; i < 4; i++) {
@@ -216,11 +209,12 @@ void loop() {
     ppsCounter = 0;
   }
 
+  digitalWrite(LED_3, syncTestRequested);
+
   if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
     if(syncMode == MODE_SYNC_GPS){
       sweepBuzz();   
-      syncTestRequested = 1;
-      digitalWrite(LED_3, HIGH);
+      syncTestRequested = 1;  
     }
     else{
       buzzerBeep(50,1,0,250,128);
@@ -230,7 +224,6 @@ void loop() {
   if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) {
     if((ppsCounter % 60) == 0){
       syncTestRequested = 0;
-      digitalWrite(LED_3, LOW);
       sensorTime[4] = lastSyncTrigger;
       sensorTriggered[4] = true;
     }
