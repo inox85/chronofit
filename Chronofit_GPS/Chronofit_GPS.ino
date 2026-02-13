@@ -221,12 +221,20 @@ void loop() {
     }
   }
 
-  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) {
-    if((ppsCounter % 60) == 0){
+  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
+    PreciseTime time = getPreciseTime();
+
+    int pNum = 60;
+    if (time.ms < 500){
+        pNum = 61;
+    }
+
+    if((ppsCounter % pNum) == 0){
       syncTestRequested = 0;
       sensorTime[4] = lastSyncTrigger;
       sensorTriggered[4] = true;
     }
+    
   }
 
   checkPowerSource();
@@ -258,11 +266,11 @@ void handleSensorTrigger(){
         handleLineSync();
         checkPointRoutine(i);
       }else{
-        if(i == 4){
+        if(i == 4 && printEnabled){
           printOnPrinter("---GPS SYNC TEST START---", 1);
         }
         checkPointRoutine(i);
-        if(i == 4){
+        if(i == 4 && printEnabled){
           printOnPrinter("---GPS SYNC TEST END---", 1);
         }
       }
