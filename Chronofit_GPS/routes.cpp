@@ -16,6 +16,7 @@
 #include <HTTPClient.h>
 #include "FS.h"
 #include <WiFiClientSecure.h>
+#include <NetworkClientSecure.h>
 #include <base64.h>
 #include "secrets.h"
 

@@ -229,7 +229,7 @@ void loop() {
         pNum = 61;
     }
 
-    if((ppsCounter % pNum) == 0){
+    if((ppsCounter % pNum) == 0 && gps.time.isUpdated()){
       syncTestRequested = 0;
       sensorTime[4] = lastSyncTrigger;
       sensorTriggered[4] = true;

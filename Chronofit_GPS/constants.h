@@ -10,10 +10,15 @@ constexpr int PRINTER_TX  = 16;
 
 // --- Pin sensori ---
 
-constexpr int SENSOR_IN1 = 26;
-constexpr int SENSOR_IN2 = 27;
-constexpr int SENSOR_IN3 = 25;
-constexpr int SENSOR_IN4 = 13;
+// constexpr int SENSOR_IN1 = 26;
+// constexpr int SENSOR_IN2 = 27;
+// constexpr int SENSOR_IN3 = 25;
+// constexpr int SENSOR_IN4 = 13;
+
+constexpr int SENSOR_IN1 = 13;
+constexpr int SENSOR_IN2 = 25;
+constexpr int SENSOR_IN3 = 27;
+constexpr int SENSOR_IN4 = 26;
 
 constexpr int LED_1 = 12;
 constexpr int LED_2 = 2;
