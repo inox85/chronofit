@@ -57,6 +57,14 @@ void setup() {
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
 
+  pinMode(LED_1, OUTPUT);
+  pinMode(LED_2, OUTPUT);
+  pinMode(LED_3, OUTPUT);
+
+  digitalWrite(LED_1, HIGH);
+  digitalWrite(LED_2, HIGH);
+  digitalWrite(LED_3, HIGH);
+
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
   
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
@@ -78,19 +86,10 @@ void setup() {
 
   printerInit();
 
-  printOnPrinter("Avvio sistema", 2);
-
   sweepBuzz();
 
   pinMode(0, INPUT);
 
-  pinMode(LED_1, OUTPUT);
-  digitalWrite(LED_1, LOW);
-  pinMode(LED_2, OUTPUT);
-  digitalWrite(LED_2, LOW);
-  pinMode(LED_3, OUTPUT);
-  digitalWrite(LED_3, LOW);
-  
   
   for (int i = 0; i < 4; i++) {
     pinMode(sensorsPins[i], INPUT_PULLUP);
@@ -107,36 +106,14 @@ void setup() {
   configFS();
 
   sessionRowIndex = getLastSessionRowIndex();
+
+  activateAccessPoint();
+
+  delay(1000);
+  digitalWrite(LED_1, LOW);
+  digitalWrite(LED_2, LOW);
+  digitalWrite(LED_3, LOW);
   
-  // Imposta un IP statico per l’AP
-  IPAddress local_IP(192, 168, 1, 1);
-  IPAddress gateway(192, 168, 1, 1);
-  IPAddress subnet(255, 255, 255, 0);
-
-  if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
-    debug("❌ Errore nella configurazione dell'IP statico");
-  }
-
-  uint64_t chipId = ESP.getEfuseMac();
-  // Converti il chipId in una stringa esadecimale
-  String chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
-
-  // Crea l'SSID con il chipId
-  String ssid_sn = String(ssid) + "_" + chipIdStr; 
-
-  WiFi.softAP(ssid_sn);
-  #ifdef DEBUG
-    Serial.println("Access Point avviato");
-    Serial.print("IP: ");
-    Serial.println(WiFi.softAPIP());
-  #endif
-
-  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
-
-  registerRoutes(server, ws);
-
-  server.begin();
-
 }
 
 void configFS(){
@@ -146,6 +123,8 @@ void configFS(){
   }
 
   server.serveStatic("/", LittleFS, "/");
+
+
 }
 
 
@@ -230,24 +209,32 @@ void loop() {
     ppsCounter = 0;
   }
 
+  digitalWrite(LED_3, syncTestRequested);
+
   if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
     if(syncMode == MODE_SYNC_GPS){
       sweepBuzz();   
-      syncTestRequested = 1;
-      digitalWrite(LED_2, HIGH);
+      syncTestRequested = 1;  
     }
     else{
       buzzerBeep(50,1,0,250,128);
     }
   }
 
-  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) {
-    if((ppsCounter % 60) == 0){
+  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
+    PreciseTime time = getPreciseTime();
+
+    int pNum = 60;
+    if (time.ms < 500){
+        pNum = 61;
+    }
+
+    if((ppsCounter % pNum) == 0){
       syncTestRequested = 0;
-      digitalWrite(12, LOW);
       sensorTime[4] = lastSyncTrigger;
       sensorTriggered[4] = true;
     }
+    
   }
 
   checkPowerSource();
@@ -279,11 +266,11 @@ void handleSensorTrigger(){
         handleLineSync();
         checkPointRoutine(i);
       }else{
-        if(i == 4){
+        if(i == 4 && printEnabled){
           printOnPrinter("---GPS SYNC TEST START---", 1);
         }
         checkPointRoutine(i);
-        if(i == 4){
+        if(i == 4 && printEnabled){
           printOnPrinter("---GPS SYNC TEST END---", 1);
         }
       }

@@ -16,6 +16,11 @@ const ELAPSED_TIME_STARTED = 8;   // In attesa di un segnale si inizio cronometr
 const GPS_TEST_REQESTED = 1;
 const GPS_TEST_DONE = 0;
 
+const WIFI_STATUS_DISCONNECTED = 0;
+const WIFI_STATUS_CONNECING = 1;
+const WIFI_STATUS_CONNECTED = 2;
+const WIFI_STATUS_INTERNET_OK = 3;
+
 const POWER_MODE_NONE = 0;   // Alimentatore esterno non collegato
 const POWER_MODE_USB = 1;   // Dispositivo alimentato da POWER BANK
 const POWER_MODE_BATTERY = 2;   // Dispositivo alimentato a 12V
@@ -268,7 +273,7 @@ function sendCheckPoint(lineNumber) {
       //  output.innerText = "";
       //}, 3000);
     })
-    .catch(err => console.error("Error fetching JSON:", err));
+    .catch(err => console.error("Error fetching JSON:", err)); 
 }
 
 
@@ -412,6 +417,8 @@ const TYPE_TIME_UPDATE = 1;
 const TYPE_SESSION_CLEARED = 2;
 const TYPE_PARAMS_UPDATED = 3;
 const TYPE_ROW_UPDATED = 4;
+const TYPE_GENERIC_MESSAGE = 5;
+const TYPE_EMAIL_SENT = 6;
 
 function handleMessage(data) {
   switch (data.t) {
@@ -447,6 +454,15 @@ function handleMessage(data) {
       console.log("⚙️ Row update!");
       updateRowFromBroadcas(data);
       break;
+
+    case TYPE_GENERIC_MESSAGE:
+      console.log("⚙️ Generic message received:", data);
+      showGeneralPopup(data.msg, "#3b55ffff", 3000 );
+      break;
+
+    case TYPE_EMAIL_SENT:
+      console.log("📧 Email sent confirmation:", data)
+      showGeneralPopup("Email sent successfully!", "rgb(9, 139, 0)", 3000 );
   }
 }
 
@@ -464,7 +480,7 @@ function startWatchdog() {
   watchdogTimer = setInterval(() => {
     const now = Date.now();
     // se non ricevi messaggi da più di 5s, considera la connessione persa
-    if (now - lastMessageTime > 5000) {
+    if (now - lastMessageTime > 6000) {
       if (!connectionLost) {
         console.warn("⏱️ Watchdog: connessione inattiva, riavvio socket...");
         connectionLost = true;
@@ -560,6 +576,8 @@ function updateClockFromData(data) {
 
 
     let statusElem = document.getElementById("status");
+    let wifiNavBar = document.getElementById("wifiStatus");
+    let gpsNavBar = document.getElementById("gpsStatus");
     //let timezoneElem = document.getElementById("timezone");
 
     const fixFlags = data.f; // esempio: 7
@@ -574,6 +592,7 @@ function updateClockFromData(data) {
     } 
 
     const syncStatus = data.sy; 
+    const wifiStatus = data.w; // 0=disconnected, 1=connecting, 2=connected
 
     handlePowerUpdate(data);
 
@@ -583,7 +602,26 @@ function updateClockFromData(data) {
 
     const elapsedTimeControls = document.getElementById("elapsedTimeControls");
     elapsedTimeControls.classList.add("hidden");
+    
+    //document.getElementById("sendEmailBtn").disabled = true;
 
+    const btn = document.getElementById("sendEmailBtn");
+    btn.disabled = true;
+    btn.classList.add("disabled");
+
+    const hasRows = document.querySelectorAll('#event-table tbody tr').length > 0;
+
+    if(wifiStatus == WIFI_STATUS_CONNECTED){
+      wifiNavBar.innerText =  "🟡";
+    }else if(wifiStatus == WIFI_STATUS_CONNECING){
+      wifiNavBar.innerText =  "🔄";
+    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK && hasRows){
+      wifiNavBar.innerText =  "🟢";
+      btn.disabled = false;
+      btn.classList.remove("disabled");
+    }else if(wifiStatus == WIFI_STATUS_DISCONNECTED){
+      wifiNavBar.innerText =  "🔴";
+    }
 
     if(syncStatus === SYNC_NONE){
       document.getElementById("time").innerText = "00:00:00.000";
@@ -643,14 +681,17 @@ function updateClockFromData(data) {
     let offsetString =  "UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
     document.getElementById("pos").innerText = "🟢 " + "Lat: " 
       + data.lt.toFixed(6) + ", Lng: " + data.ln.toFixed(6) + ", Sat: " + data.st + " [" + offsetString +"]";
-  
+
+    gpsNavBar.innerText = "🟢 Lt: " + data.lt.toFixed(6) + ", Ln: " + data.ln.toFixed(6);
       //timezoneElem.innerText = "Estimated timezone: UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
-  } else if(syncEnabled && (!timeValid || !locationValid)){
-      // GPS in attesa segnale
-      document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
+  } else if((!timeValid || !locationValid) && data.st  > 0 ){
+    // GPS in attesa segnale
+    document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
+    gpsNavBar.innerText = "🟡";
   } else {
-      // GPS disabilitato
-      document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
+    // GPS disabilitato
+    document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
+    gpsNavBar.innerText = "🔴";
   }
 }
 
@@ -1390,6 +1431,8 @@ document.getElementById("time").addEventListener("click", () => {
   document.getElementById("timeChoiceOverlay").style.display = "flex";
 });
 
+
+
 function onTimeSettingsAction(){
   updateParams();
   document.getElementById("timeChoiceOverlay").style.display = "none"
@@ -1658,6 +1701,11 @@ function updateRowFromBroadcas(data) {
     );
   }
 
+  const penalityBtn = row.querySelector(".penality");
+  if (penalityBtn) {
+    penalityBtn.textContent = data.x;
+  }
+
   showGeneralPopup(`Row ${index} has been updated`,  lineColors[data.ln]);
   recalcDeltaTimes();
   recalcElapsedTimes();
@@ -1794,4 +1842,107 @@ function downloadActualView() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function connectWiFi() {
+  const ssid = document.getElementById("wifi-ssid").value;
+  const pw   = document.getElementById("wifi-password").value;
+
+  const url = `/wifiConnect?ssid=${encodeURIComponent(ssid)}&pw=${encodeURIComponent(pw)}`;
+
+  fetch(url)
+    .then(r => r.text())
+    .then(t => console.log(t))
+    .catch(e => console.error(e));
+
+  document.getElementById("wifiOverlay").style.display = "none";
+}
+
+// Apri popup premendo sull'orario
+document.getElementById("wifi-notify").addEventListener("click", () => {
+
+  fetch('/wifiCredential')
+    .then(res => {
+      if (!res.ok) throw new Error("Errore nella fetch");
+      return res.json();
+    })
+    .then(data => {
+      console.log("Credenziali ricevute:");
+      console.log(data);
+      document.getElementById("wifi-ssid").value = data.ssid;
+      document.getElementById("wifi-password").value = data.pw;
+    })
+  .catch(err => console.error("Errore:", err));
+
+  document.getElementById("wifiOverlay").style.display = "flex";
+});
+
+function closeWiFiPopup(){
+  document.getElementById("wifiOverlay").style.display = "none";
+}
+
+function togglePassword() {
+  const pwInput = document.getElementById("wifi-password");
+  const toggle  = document.getElementById("show-password");
+
+  pwInput.type = toggle.checked ? "text" : "password";
+}
+
+// Apri popup premendo sull'orario
+document.getElementById("gps-notify").addEventListener("click", () => {
+  document.getElementById("settingsOverlay").style.display = "flex";
+});
+
+function sendActualView(){
+  openEmailPopup();
+}
+
+
+function openEmailPopup() {
+  document.getElementById("emailOverlay").style.display = "flex";
+}
+
+function closeEmailPopup() {
+  document.getElementById("emailOverlay").style.display = "none";
+}
+
+async function sendEmail(emailAddress) {
+
+  const url = `/email?address=${encodeURIComponent(emailAddress)}`;
+
+  console.log(url);
+  // Richiesta GET
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+    throw new Error(`Errore HTTP: ${response.status}`);
+  }
+
+  const text = await response.text();
+  console.log("Richiesta di email inviata", text);
+
+}
+
+async function confirmEmail() {
+  const email = document.getElementById("user-email").value.trim();
+  const status = document.getElementById("email-status-field");
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    status.textContent = "Invalid email format";
+    status.style.color = "red";
+    return;
+  }
+
+  status.textContent = "Email confirmed ✔";
+  status.style.color = "green";
+try {
+    await sendEmail(email);   // 👈 aspetta
+    status.textContent = "Request sent ✔";
+    status.style.color = "green";
+    setTimeout(closeEmailPopup, 1000);
+  } catch (err) {
+    status.textContent = "Error request sending email";
+    status.style.color = "red";
+  }
 }

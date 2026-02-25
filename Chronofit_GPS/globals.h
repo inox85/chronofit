@@ -20,6 +20,12 @@ extern TinyGPSPlus gps;
 // --- Variabili generali ---
 extern String stationName;
 
+// WiFi Connection
+
+extern unsigned long startAttemptTime;
+extern const unsigned long wifiTimeout; // 10 secondi
+extern volatile bool internetOK;
+
 // --- PPS ---
 extern volatile uint8_t ppsH, ppsM, ppsS;
 extern uint64_t ppsEpochSec;

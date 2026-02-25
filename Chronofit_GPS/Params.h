@@ -27,4 +27,6 @@
 #define TYPE_SESSION_CLEARED          2
 #define TYPE_PARAMS_UPDATED           3
 #define TYPE_ROW_UPDATED              4
+#define TYPE_GENERIC_MESSAGE          5
+
 

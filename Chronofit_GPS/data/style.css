@@ -81,11 +81,15 @@ span{
   color: white;
 }
 
-
 .big-button{
   color: white;
   min-height: 50px;
   font-size: 20px;
+}
+
+.big-button.disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .small-button{
@@ -153,11 +157,13 @@ hr {
 
 #pos, #sync-msg {
   text-align: center;
+  cursor: pointer;
 }
 
 .card #time {
-  font-size: 32px;
+  font-size: 40px;
   text-align: center;
+  cursor: pointer;
 }
 
 .checkpoint-settings td{
@@ -169,7 +175,9 @@ hr {
 
 input[type="text"],
 input[type="number"],
-input[type="numeric"] {
+input[type="numeric"],
+input[type="password"], 
+input[type="email"] {
   font-family: 'Nunito';
   width: 100%;
   padding: 0px;
@@ -685,4 +693,24 @@ input:checked + .slider:before {
 
 #event-table tbody tr.negative-row td {
   background-color: #888;
+}
+
+.card-navbar {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+}
+
+.card-status-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-icon {
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
 }

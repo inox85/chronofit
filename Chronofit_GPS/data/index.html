@@ -229,6 +229,62 @@
     </div>
   </div>
 
+    <!-- Overlay e popup per la connessione Wi-Fi -->
+  <div id="wifiOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Connect to Wi-Fi for internet access</h2>
+
+      <div class="input-row">
+        <label for="wifi-ssid">SSID</label>
+        <input type="text" id="wifi-ssid" placeholder="Enter Wi-Fi SSID">
+      </div>
+
+      <div class="input-row">
+        <label for="wifi-password">Password</label>
+
+        <div class="password-row">
+          <input type="password" id="wifi-password" placeholder="Enter Wi-Fi password">
+
+          <div class="toggle-row">
+            <span>Show</span>
+            <label class="switch">
+              <input type="checkbox" id="show-password" onchange="togglePassword()">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button class="big-button" id="connectWiFiBtn" onclick="connectWiFi()">Connect</button>
+        <button class="big-button" id="closeWifiPopup" onclick="closeWiFiPopup()">Cancel</button>
+      </div>
+
+      <p id="wifi-status-field"></p>
+    </div>
+  </div>
+
+  <!-- Overlay e popup per inserimento Email -->
+  <div id="emailOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>Insert your email</h2>
+
+      <div class="input-row">
+        <label for="user-email">Email</label>
+        <input type="email" id="user-email" placeholder="Enter email">
+      </div>
+
+      <div class="button-row">
+        <button class="big-button" onclick="confirmEmail()">Confirm</button>
+        <button class="big-button" onclick="closeEmailPopup()">Cancel</button>
+      </div>
+
+      <p id="email-status-field"></p>
+    </div>
+  </div>
+
+
   <div id="fullscreenOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
       <h2>Fullscreen Mode</h2>
@@ -254,7 +310,18 @@
   </div>
 
   <div class="card left">
-
+  <!-- Navbar interna della card -->
+    <div class="card-navbar">
+      <div class="card-status-item" id="wifi-notify">
+        <span class="status-icon">Internet:</span>
+        <span id="wifiStatus" class="status-icon">❌</span>
+      </div>
+      <div class="card-status-item" id="gps-notify">
+        <span class="status-icon">GPS:</span>
+        <span id="gpsStatus" class="status-icon">❌</span>
+      </div>
+    </div>
+    
     <p id="time">--:--:--</p>
     <p id="status" class="status nosync">Device ot synchronized</p>
     <p id="sync-msg"></p>
@@ -368,8 +435,9 @@
     </div>
 
     <div class="button-row">
-      <button class="big-button" onclick="downloadSession()">Download raw session</button>
-      <button class="big-button" onclick="downloadActualView()">Download actual view</button>
+      <button class="big-button" onclick="downloadSession()">Download session</button>
+      <button class="big-button" onclick="downloadActualView()">Download view</button>
+      <button class="big-button" id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
       <button class="big-button" onclick="clearSession()">Clear session</button>
     </div>
 

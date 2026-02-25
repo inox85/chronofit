@@ -96,3 +96,19 @@ uint64_t readULong64FromSettings(const char* key, uint64_t def) {
     return val;
 }
 
+String writeStringToSettings(const char* key, const String& val) {
+    settingsBegin();
+    settings.putString(key, val);
+    settingsEnd();
+    delay(100);
+    return readStringFromSettings(key, "");
+}
+
+String readStringFromSettings(const char* key, const String& def) {
+    settingsBegin();
+    String val = settings.getString(key, def);
+    settingsEnd();
+    delay(100);
+    return val;
+}
+

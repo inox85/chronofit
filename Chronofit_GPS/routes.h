@@ -5,6 +5,19 @@
 #include <ArduinoJson.h>
 
 void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws);
+
+void activateAccessPoint();
+
+bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs);
+
+// POST del file session.json a Hooklistener
+// postSessionJson(
+//   "https://app.hooklistener.com/w/my-first-endpoint-lwi8/esp32",
+//   "/session.json"
+// );
+
+bool postSessionJson(const char* url, const char* filePath);
+
 // 👇 aggiungi questo:
 void onWsEvent(AsyncWebSocket *server,
                AsyncWebSocketClient *client,
@@ -22,3 +35,17 @@ void broadCastRowEdited(const DynamicJsonDocument& entry);
 
 extern AsyncWebServer server;
 extern AsyncWebSocket ws;
+
+void internetCheckTask(void *pvParameters);
+
+String fileToBase64(const char *path);
+
+void sendBrevoMail(String emailAddress);
+
+String sendGenericMessage(String msg);
+
+String serializeMessage(String msg);
+
+void sendBrevoMailTask(void* param);
+
+void sendBrevoMailAsync(String email);

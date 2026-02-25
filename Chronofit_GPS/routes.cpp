@@ -12,9 +12,143 @@
 #include "buzzer.h"
 #include "settings.h"
 #include "diagnostic.h"
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include "FS.h"
+#include <WiFiClientSecure.h>
+#include <base64.h>
+#include "secrets.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
+
+void activateAccessPoint(){
+   // Imposta un IP statico per l’AP
+  IPAddress local_IP(192, 168, 1, 1);
+  IPAddress gateway(192, 168, 1, 1);
+  IPAddress subnet(255, 255, 255, 0);
+
+  if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
+    debug("❌ Errore nella configurazione dell'IP statico");
+  }
+
+  uint64_t chipId = ESP.getEfuseMac();
+  // Converti il chipId in una stringa esadecimale
+  String chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
+
+  // Crea l'SSID con il chipId
+  String ssid_sn = String(ssid) + "_" + chipIdStr; 
+
+  WiFi.softAP(ssid_sn);
+  #ifdef DEBUG
+    Serial.println("Access Point avviato");
+    Serial.print("IP: ");
+    Serial.println(WiFi.softAPIP());
+  #endif
+
+  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+
+  registerRoutes(server, ws);
+
+  server.begin();
+}
+
+bool postSessionJson(const char* url, const char* filePath) {
+
+  // Controllo esistenza file
+  if (!LittleFS.exists(filePath)) {
+    Serial.println("❌ File non trovato: " + String(filePath));
+    return false;
+  }
+
+  // Apro il file in lettura
+  File file = LittleFS.open(filePath, "r");
+  if (!file) {
+    Serial.println("❌ Errore apertura file");
+    return false;
+  }
+
+  // Creo HTTP client
+  HTTPClient http;
+  http.begin(url);
+  http.addHeader("Content-Type", "application/json"); // JSON
+
+  // POST leggendo il file direttamente come payload
+  int httpResponseCode = http.sendRequest("POST", &file, file.size());
+
+  file.close(); // chiudo file
+
+  if (httpResponseCode > 0) {
+    Serial.print("✅ POST OK, HTTP code: ");
+    Serial.println(httpResponseCode);
+    Serial.println(http.getString()); // risposta server
+    http.end();
+    return true;
+  } else {
+    Serial.print("❌ POST fallita: ");
+    Serial.println(http.errorToString(httpResponseCode));
+    http.end();
+    return false;
+  }
+}
+
+
+bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
+
+  String msgJson = serializeMessage("Connecting to WiFi for internet access...");
+  ws.textAll(msgJson);
+
+  WiFi.begin(ssid, password);
+
+  unsigned long start = millis();
+
+  Serial.print("Connessione a ");
+  Serial.print(ssid);
+
+
+  WiFi.onEvent([](WiFiEvent_t event) {
+    if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
+      Serial.println("Connesso con IP");
+        
+      String msgJson = serializeMessage("WiFi connected with IP address");
+      ws.textAll(msgJson);
+    }
+    if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+
+    }
+  });
+
+  
+  xTaskCreatePinnedToCore(
+    internetCheckTask,
+    "InternetCheck",
+    4096,
+    NULL,
+    1,
+    NULL,
+    0   // core 0 (WiFi sta su core 0/1 senza problemi)
+  );
+
+  return true;
+
+}
+
+void internetCheckTask(void *pvParameters) {
+  for (;;) {
+    if (WiFi.status() == WL_CONNECTED) {
+      WiFiClient client;
+      client.setTimeout(2000);
+      //Serial.println("Tentativo di accesso internet...");
+      internetOK = client.connect("8.8.8.8", 53);
+      client.stop();
+    } else {
+      internetOK = false;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(5000)); // ogni 30 s
+  }
+}
+
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
                AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -159,6 +293,31 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     request->send(200, "text/plain", "CheckPoint received!");
   });
 
+  server.on("/wifiConnect", HTTP_GET, [](AsyncWebServerRequest *request) {
+    Serial.println("Richiesta connessione wifi...");
+
+    String ssid = request->hasParam("ssid") ? request->getParam("ssid")->value() : "";
+    String pw   = request->hasParam("pw")   ? request->getParam("pw")->value()   : "";
+
+    Serial.println("Salvo credenziali...");
+    writeStringToSettings("ssid", ssid);
+    writeStringToSettings("pw", pw);
+
+    Serial.println("Richieste connessione:");
+    Serial.println(ssid);
+    Serial.println(pw);
+
+    // Copia in buffer temporaneo sicuro
+    char ssidBuf[64];
+    char pwBuf[64];
+    ssid.toCharArray(ssidBuf, sizeof(ssidBuf));
+    pw.toCharArray(pwBuf, sizeof(pwBuf));
+
+    connectToWiFi(ssidBuf, pwBuf, 10000);
+  
+    request->send(200, "text/plain", "Wifi connecting...");
+});
+
     // --- JSON completo ---
   server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
 
@@ -179,6 +338,36 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
     // --- JSON completo ---
+  server.on("/email", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+    if(internetOK && request->hasParam("address")){
+      String emailAddress = request->getParam("address")->value();
+      Serial.println("Richiesta invio mail da:");
+      Serial.println(emailAddress);
+      sendBrevoMailAsync(emailAddress);
+    }
+
+    request->send(200, "text/plain", "Email sended!");
+
+  });
+
+    // --- JSON completo ---
+  server.on("/wifiCredential", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+    StaticJsonDocument<256> doc;
+    
+    doc["ssid"] = readStringFromSettings("ssid", "");
+    doc["pw"] = readStringFromSettings("pw", "");
+
+    String json;
+    serializeJson(doc, json);
+
+    request->send(200, "application/json", json);
+
+  });
+
+
+    // --- JSON completo ---
   server.on("/allSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
 
     String message = serializeSettings();
@@ -188,6 +377,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     debug(message);
 
   });
+
+
 
   server.on("/getCheckpoints", HTTP_GET, [](AsyncWebServerRequest *request) {
     debug("Sending data from json...");
@@ -604,6 +795,17 @@ String serializeSettings(){
   return message;
 }
 
+String serializeMessage(String msg){
+  StaticJsonDocument<512> doc;
+  doc["t"] = TYPE_GENERIC_MESSAGE;
+  doc["msg"] = msg;
+
+  String message;
+  serializeJson(doc, message);
+
+  return message;
+}
+
 void broadCastSettings(){
   String message = serializeSettings();
   ws.textAll(message);
@@ -621,10 +823,133 @@ void broadCastRowEdited(const DynamicJsonDocument& entry){
   doc[MINUTE_FIELD] = entry[MINUTE_FIELD];
   doc[SECOND_FIELD] = entry[SECOND_FIELD];
   doc[MILLIS_FIELD] = entry[MILLIS_FIELD];
+  doc[PENALITY_FIELD] = entry[PENALITY_FIELD];
 
   String message;
   serializeJson(doc, message);
 
   ws.textAll(message);
 }
+
+String fileToBase64(const char *path) {
+  File file = LittleFS.open(path, "r");
+  if (!file) return "";
+
+  String encoded;
+  uint8_t buf[96];  // multiplo di 3
+
+  while (file.available()) {
+    int len = file.read(buf, sizeof(buf));
+    encoded += base64::encode(buf, len);
+  }
+
+  file.close();
+  return encoded;
+}
+
+
+void sendBrevoMail(String emailAddress) {
+  Serial.println("Inizio invio mail!");
+
+  WiFiClientSecure client;
+  client.setInsecure();  // semplifica TLS
+
+  Serial.println("Verifico connessione...");
+  if (!client.connect(BREVO_HOST, BREVO_PORT)) {
+    Serial.println("Connessione Brevo fallita");
+    return;
+  }
+  Serial.println("OK");
+
+  // Leggo il JSON ma lo invio come .txt
+  String attachmentBase64 = fileToBase64("/session.json");
+
+  Serial.println("Carico allegato...");
+
+  if (attachmentBase64.length() == 0) {
+    Serial.println("Allegato vuoto");
+    return;
+  }
+
+  Serial.println("OK");
+
+  float latitude = gps.location.isValid() ? gps.location.lat() : 0;
+  float longitude = gps.location.isValid() ? gps.location.lng() : 0;
+
+  String mapsLink = "https://www.google.com/maps/search/?api=1&query=" + String(latitude, 6) + "," + String(longitude, 6);
+  Serial.println("Link creato!");
+
+  String body =
+    "{"
+      "\"sender\":{"
+        "\"name\":\"Chronofit\","
+        "\"email\":\"inox85@gmail.com\""
+      "},"
+      "\"to\":[{"
+        "\"email\":\"" + emailAddress + "\","
+        "\"name\":\"Admin\""
+      "}],"
+      "\"subject\":\"File sessione di gara da Chronofit [ " 
+          + String(latitude, 6) + ", " + String(longitude, 6) + "]\","
+      "\"htmlContent\":\"<p>In allegato trovi il file di sessione.</p>"
+        "<p>Visualizza la posizione su Google Maps: "
+        "<a href=\\\"" + mapsLink + "\\\" target=\\\"_blank\\\">Apri Google Maps</a></p>\","
+      "\"attachment\":[{"
+        "\"content\":\"" + attachmentBase64 + "\","
+        "\"name\":\"session.txt\""
+      "}]"
+    "}";
+
+  Serial.println("Mail costruita!");
+  client.print(
+    "POST /v3/smtp/email HTTP/1.1\r\n"
+    "Host: " BREVO_HOST "\r\n"
+    "api-key: " BREVO_API_KEY "\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: " + String(body.length()) + "\r\n"
+    "Connection: close\r\n\r\n" +
+    body
+  );
+
+  Serial.println("Richiesta inviata a Brevo");
+
+  // Lettura intestazioni HTTP
+  while (client.connected()) {
+    String line = client.readStringUntil('\n');
+    if (line == "\r") break; // fine headers
+  }
+
+  // Leggi tutto il corpo (JSON di Brevo)
+  String response = "";
+  while (client.available()) {
+    response += client.readString();
+  }
+
+  Serial.println("=== Risposta Brevo ===");
+  Serial.println(response);
+
+  // Analisi semplice: verifica se contiene "messageId"
+  if (response.indexOf("messageId") >= 0) {
+    Serial.println("Mail accettata");
+    String msgJson = serializeMessage("Mail sent successfully!");
+    ws.textAll(msgJson);
+  } else {
+    Serial.println("Errore invio mail!");
+  }
+  
+}
+
+void sendBrevoMailTask(void* param) {
+    String email = *(String*)param;
+    sendBrevoMail(email); // il tuo metodo attuale
+    delete (String*)param;        // pulizia
+    vTaskDelete(NULL);             // termina il task
+}
+
+void sendBrevoMailAsync(String email) {
+    // copia la stringa perché il task lavora su puntatore
+    String* emailCopy = new String(email);
+    xTaskCreate(sendBrevoMailTask, "SendBrevoMail", 8192, emailCopy, 1, NULL);
+}
+
 
