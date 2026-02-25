@@ -5,7 +5,11 @@ REM ===================== CONFIG =====================
 set MKLITTLEFS=mklittlefs.exe
 set ESPTOOL=esptool.exe
 
+<<<<<<< Updated upstream
 set PORT=COM5
+=======
+set PORT=COM2
+>>>>>>> Stashed changes
 set BAUD=921600
 set CHIP=esp32
 REM set CHIP=esp32c3

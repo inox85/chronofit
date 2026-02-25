@@ -1,2 +1,6 @@
 Chronofit_GPS/littlefs.bin
+<<<<<<< Updated upstream
 *.bin
+=======
+Chronofit_GPS/secrets.h
+>>>>>>> Stashed changes
