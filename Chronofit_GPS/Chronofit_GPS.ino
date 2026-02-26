@@ -53,9 +53,9 @@ void IRAM_ATTR onPpsInterrupt() {
   ppsCounter++;
 }
 
-void IRAM_ATTR onSecondTick()
-{
-    secondTick = true;
+void IRAM_ATTR onSecondTick(){
+  lastRTCTrigger = micros64();
+  RTCTriggered = true;
 }
 
 void setup() {
@@ -63,7 +63,7 @@ void setup() {
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
 
-  rtc_init(21, 22, 400000);
+  rtc_init(SDA_PIN, SCL_PIN, 400000);
   rtc_enable_1hz();
 
   pinMode(SQW_PIN, INPUT_PULLUP);
@@ -138,7 +138,6 @@ void configFS(){
 
   server.serveStatic("/", LittleFS, "/");
 
-
 }
 
 
@@ -150,16 +149,9 @@ void loop() {
 
   validNmea = processServicesSerial();
 
-  if (secondTick)
-  {
-      secondTick = false;
-
-      DateTime now = rtc_now();
-
-      Serial.printf("%02d:%02d:%02d\n",
-                    now.hour(),
-                    now.minute(),
-                    now.second());
+  if(RTCTriggered){
+    RTCTriggered = false;
+    handleRTCSync();
   }
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
@@ -249,7 +241,7 @@ void loop() {
 
   if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
     PreciseTime time = getPreciseTime();
-
+    
     int pNum = 60;
     if (time.ms < 500){
         pNum = 61;

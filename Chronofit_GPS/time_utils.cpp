@@ -135,6 +135,9 @@ void checkPointRoutine(int i) {
 void handlePpsSync() {
 
   // PPS = inizio del secondo successivo
+  uint32_t yy = 2025;
+  uint32_t MM = 1;
+  uint32_t dd = 1;
   uint32_t hh = gps.time.hour() + utcOffset;
   uint32_t mm = gps.time.minute();
   uint32_t ss = gps.time.second() + 1;
@@ -142,6 +145,8 @@ void handlePpsSync() {
   // rollover
   if (ss >= 60) { ss = 0; mm++; }
   if (mm >= 60) { mm = 0; hh = (hh + 1) % 24; }
+
+  rtc_set_datetime(yy, MM, dd, hh, mm, ss);
 
   // 🔒 ancora assoluta (epoch-like, giornaliera)
   ppsEpochSec = (uint64_t)hh * 3600ULL +
@@ -154,6 +159,28 @@ void handlePpsSync() {
   lastBroadcast = millis();
 }
 
+void handleRTCSync()
+{
+  DateTime dTime = rtc_now();
+
+  uint32_t hh = dTime.hour();
+  uint32_t mm = dTime.minute();
+  uint32_t ss = dTime.second();
+
+  // 🔒 ancora assoluta (epoch-like, giornaliera)
+  ppsEpochSec = (uint64_t)hh * 3600ULL +
+                (uint64_t)mm * 60ULL +
+                (uint64_t)ss;
+
+  syncReference = lastRTCTrigger;
+
+  lastBroadcast = millis();
+
+  Serial.printf("%02d:%02d:%02d\n",
+                     dTime.hour(),
+                     dTime.minute(),
+                     dTime.second());
+}
 
 // Funzione di supporto: gestione sincronizzazione Line
 void handleLineSync() {

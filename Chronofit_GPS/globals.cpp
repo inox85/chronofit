@@ -26,6 +26,8 @@ volatile bool ppsTriggered = false;
 volatile bool lineTriggered = false;
 volatile uint32_t ppsCounter = 0;
 
+volatile bool RTCTriggered = false;
+
 bool testOnSync = true;
 int calRunning = 0;
 int calPpsCount = 0;
@@ -39,6 +41,8 @@ volatile uint64_t lastNmeaValid = 0;
 volatile uint64_t syncReference = 0;
 unsigned long gpsTimeOffsetUs = 0;
 int utcOffset = 0;
+
+volatile uint64_t lastRTCTrigger = 0;
 
 double calibrationFactor = 1.0;
 double calTemp = 50;

@@ -23,6 +23,8 @@ void handlePpsSync();
 
 void handleLineSync();
 
+void handleRTCSync();
+
 void broadcastTime();
 
 int getLastSessionRowIndex();
@@ -40,3 +42,5 @@ double setTimeBaseCalibration(double deltaUs, double minutes);
 double readInternalTemp();
 
 double termFactor(double T);
+
+
