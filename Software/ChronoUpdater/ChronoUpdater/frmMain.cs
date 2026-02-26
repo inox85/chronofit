@@ -23,14 +23,29 @@ namespace ChronoUpdater
             InitializeComponent();
         }
 
-        private void btnDownload_Click(object sender, EventArgs e)
+        private async void btnDownload_Click(object sender, EventArgs e)
         {
-            
+            try
+            {
+                btnDownload.Enabled = false;
+
+                await DownloadFiles();
+
+                MessageBox.Show("Download completato!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Errore: " + ex.Message);
+            }
+            finally
+            {
+                btnDownload.Enabled = true;
+            }
         }
 
-        static async Task Main()
+        static async Task DownloadFiles()
         {
-            string token = "";
+            string token = "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";
             string repo = "inox85/chronofit";
 
             using HttpClient client = new HttpClient();
@@ -38,7 +53,7 @@ namespace ChronoUpdater
             client.DefaultRequestHeaders.Add("User-Agent", "FW-Updater");
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
 
-            string apiUrl = $"https://api.github.com/repos/{repo}/releases/latest";
+            string apiUrl = $"https://api.github.com/repos/{repo}";
 
             Console.WriteLine("Lettura release...");
 
@@ -55,7 +70,7 @@ namespace ChronoUpdater
 
                 var data = await client.GetByteArrayAsync(url);
 
-                await File.WriteAllBytesAsync(name, data);
+                File.WriteAllBytes(name, data);
             }
 
             Console.WriteLine("Download completato");
