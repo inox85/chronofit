@@ -45,7 +45,7 @@ namespace ChronoUpdater
 
         static async Task DownloadFiles()
         {
-            string token = "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";
+            string token = "";
             string repo = "inox85/chronofit";
 
             using HttpClient client = new HttpClient();
@@ -53,7 +53,7 @@ namespace ChronoUpdater
             client.DefaultRequestHeaders.Add("User-Agent", "FW-Updater");
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
 
-            string apiUrl = $"https://api.github.com/repos/{repo}";
+            string apiUrl = $"https://api.github.com/repos/{repo}/releases/latest";
 
             Console.WriteLine("Lettura release...");
 
