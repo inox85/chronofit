@@ -19,6 +19,7 @@
 #include "diagnostic.h"
 #include "printer.h"
 #include "settings.h"
+#include "RTC.h"
 
 #define DEBUG
 #define PROTOTYPE
@@ -52,10 +53,23 @@ void IRAM_ATTR onPpsInterrupt() {
   ppsCounter++;
 }
 
+void IRAM_ATTR onSecondTick()
+{
+    secondTick = true;
+}
+
 void setup() {
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+
+  rtc_init(21, 22, 400000);
+  rtc_enable_1hz();
+
+  pinMode(SQW_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, FALLING);
+
+  rtc_set_datetime(2026, 2, 25, 12, 0, 0); // solo una volta
 
   pinMode(LED_1, OUTPUT);
   pinMode(LED_2, OUTPUT);
@@ -135,6 +149,18 @@ void loop() {
   bool validNmea = false;
 
   validNmea = processServicesSerial();
+
+  if (secondTick)
+  {
+      secondTick = false;
+
+      DateTime now = rtc_now();
+
+      Serial.printf("%02d:%02d:%02d\n",
+                    now.hour(),
+                    now.minute(),
+                    now.second());
+  }
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();

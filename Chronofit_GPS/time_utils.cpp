@@ -13,6 +13,7 @@
 #include "diagnostic.h"
 #include "settings.h"
 #include <WiFi.h>
+#include "RTC.h"
 
 PreciseTime getPreciseTime() {
   PreciseTime t;
