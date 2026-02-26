@@ -40,7 +40,7 @@ PreciseTime getPreciseTime() {
 }
 
 PreciseTime getPreciseSensorTime(int i) {
-   PreciseTime t;
+  PreciseTime t;
 
   uint64_t rawUs = sensorTime[i] - syncReference;
   uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
@@ -186,6 +186,9 @@ void handleRTCSync()
 void handleLineSync() {
 
   // PPS = inizio del secondo successivo
+  uint32_t yy = 2025;
+  uint32_t MM = 1;
+  uint32_t dd = 1;
   uint32_t hh = temp_hh;
   uint32_t mm = temp_mm;
   uint32_t ss = temp_ss;
@@ -193,6 +196,8 @@ void handleLineSync() {
   // rollover
   if (ss >= 60) { ss = 0; mm++; }
   if (mm >= 60) { mm = 0; hh = (hh + 1) % 24; }
+
+  rtc_set_datetime(yy, MM, dd, hh, mm, ss);
 
   // 🔒 ancora assoluta (epoch-like, giornaliera)
   ppsEpochSec = (uint64_t)hh * 3600ULL +

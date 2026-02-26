@@ -213,7 +213,7 @@ void loop() {
       }
   }
 
-  handleSensorTrigger();
+
 
   PreciseTime t = getPreciseTime();
   actualSecond = t.ss;
@@ -223,21 +223,21 @@ void loop() {
     broadcastTime();  
   }
   
+  digitalWrite(LED_3, syncTestRequested);
+  
   if(actualSecond == 0){
     ppsCounter = 0;
   }
 
-  digitalWrite(LED_3, syncTestRequested);
-
-  if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
-    if(syncMode == MODE_SYNC_GPS){
-      sweepBuzz();   
-      syncTestRequested = 1;  
-    }
-    else{
-      buzzerBeep(50,1,0,250,128);
-    }
-  }
+  // if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
+  //   if(syncMode == MODE_SYNC_GPS){
+  //     sweepBuzz();   
+  //     syncTestRequested = 1;  
+  //   }
+  //   else{
+  //     buzzerBeep(50,1,0,250,128);
+  //   }
+  // }
 
   if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
     PreciseTime time = getPreciseTime();
@@ -249,12 +249,15 @@ void loop() {
 
     if((ppsCounter % pNum) == 0 && gps.time.isUpdated()){
       syncTestRequested = 0;
+      
       sensorTime[4] = lastSyncTrigger;
       sensorTriggered[4] = true;
     }
     
   }
 
+  handleSensorTrigger();
+  
   checkPowerSource();
 
 }
