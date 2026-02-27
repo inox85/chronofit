@@ -28,6 +28,26 @@ void IRAM_ATTR sensorISR(void *arg) {
 
   int i = (int)arg;
 
+  signalMenagement(i);
+
+}
+
+
+// --- ISR PPS ---
+void IRAM_ATTR onPpsInterrupt() {
+
+  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
+    signalMenagement(4);
+  }else{
+    lastSyncTrigger = micros64();
+    ppsTriggered = true;
+    ppsCounter++;
+  }
+
+}
+
+void signalMenagement(int i){
+  
   bool current = digitalRead(sensorsPins[i]);
 
   // fronte HIGH -> LOW
@@ -43,20 +63,15 @@ void IRAM_ATTR sensorISR(void *arg) {
   }
 
   lastSensorState[i] = current;
-  
-}
 
-// --- ISR PPS ---
-void IRAM_ATTR onPpsInterrupt() {
-  lastSyncTrigger = micros64();
-  ppsTriggered = true;
-  ppsCounter++;
 }
 
 void IRAM_ATTR onSecondTick(){
   lastRTCTrigger = micros64();
   RTCTriggered = true;
 }
+
+
 
 void setup() {
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
