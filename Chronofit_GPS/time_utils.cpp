@@ -133,7 +133,7 @@ void checkPointRoutine(int i) {
 
 // ----------------------------------------
 void handlePpsSync() {
-
+  syncReference = lastSyncTrigger;
   // PPS = inizio del secondo successivo
   uint32_t yy = 2025;
   uint32_t MM = 1;
@@ -154,7 +154,7 @@ void handlePpsSync() {
                 (uint64_t)ss;
 
   // riferimento temporale
-  syncReference = lastSyncTrigger;
+
 
   lastBroadcast = millis();
 }
@@ -176,10 +176,10 @@ void handleRTCSync()
 
   lastBroadcast = millis();
 
-  Serial.printf("%02d:%02d:%02d\n",
-                     dTime.hour(),
-                     dTime.minute(),
-                     dTime.second());
+  // Serial.printf("%02d:%02d:%02d\n",
+  //                    dTime.hour(),
+  //                    dTime.minute(),
+  //                    dTime.second());
 }
 
 // Funzione di supporto: gestione sincronizzazione Line

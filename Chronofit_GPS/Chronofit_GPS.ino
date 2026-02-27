@@ -35,11 +35,14 @@ void IRAM_ATTR sensorISR(void *arg) {
 
 // --- ISR PPS ---
 void IRAM_ATTR onPpsInterrupt() {
+    
+  lastSyncTrigger = micros64();
 
   if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
-    signalMenagement(4);
+    syncTestRequested = 0;
+    sensorTime[4] = lastSyncTrigger;
+    sensorTriggered[4] = true;
   }else{
-    lastSyncTrigger = micros64();
     ppsTriggered = true;
     ppsCounter++;
   }
@@ -166,7 +169,11 @@ void loop() {
 
   if(RTCTriggered){
     RTCTriggered = false;
-    handleRTCSync();
+
+    if(syncMode != MODE_SYNC_GPS){
+        handleRTCSync();
+        Serial.println("RTC Sync");
+    }
   }
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
@@ -228,8 +235,6 @@ void loop() {
       }
   }
 
-
-
   PreciseTime t = getPreciseTime();
   actualSecond = t.ss;
 
@@ -240,9 +245,9 @@ void loop() {
   
   digitalWrite(LED_3, syncTestRequested);
   
-  if(actualSecond == 0){
-    ppsCounter = 0;
-  }
+  // if(actualSecond == 0){
+  //   ppsCounter = 0;
+  // }
 
   // if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
   //   if(syncMode == MODE_SYNC_GPS){
@@ -254,22 +259,22 @@ void loop() {
   //   }
   // }
 
-  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
-    PreciseTime time = getPreciseTime();
+  // if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
+  //   PreciseTime time = getPreciseTime();
     
-    int pNum = 60;
-    if (time.ms < 500){
-        pNum = 61;
-    }
+  //   int pNum = 60;
+  //   if (time.ms < 500){
+  //       pNum = 61;
+  //   }
 
-    if((ppsCounter % pNum) == 0 && gps.time.isUpdated()){
-      syncTestRequested = 0;
+  //   if((ppsCounter % pNum) == 0 && gps.time.isUpdated()){
+  //     syncTestRequested = 0;
       
-      sensorTime[4] = lastSyncTrigger;
-      sensorTriggered[4] = true;
-    }
+  //     sensorTime[4] = lastSyncTrigger;
+  //     sensorTriggered[4] = true;
+  //   }
     
-  }
+  // }
 
   handleSensorTrigger();
   
@@ -289,6 +294,9 @@ bool checkConnectedClient(){
 void handleSensorTrigger(){
   for (int i = 0; i < 5; i++) {
     if (sensorTriggered[i]) {
+      Serial.print("Line");
+      Serial.println(i);
+
       sensorTriggered[i] = false;           // reset del flag
       playBinary(i+1);
       if (syncMode == MODE_SYNC_LINE && syncStatus == SYNC_WAIT_LINE_SIGNAL){
