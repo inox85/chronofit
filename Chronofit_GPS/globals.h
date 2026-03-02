@@ -93,6 +93,7 @@ extern unsigned long lastClientCheck;
 
 extern "C" uint8_t temprature_sens_read();
 
-
+extern uint32_t RTCTtriggerCount;
+extern uint64_t startRTC;
 
 #endif

@@ -91,3 +91,6 @@ int lastBroadCastSecond = 0;
 int sessionRowIndex = 0;
 
 unsigned long lastClientCheck = 0;
+
+uint32_t RTCTtriggerCount = 0;
+uint64_t startRTC = 0;

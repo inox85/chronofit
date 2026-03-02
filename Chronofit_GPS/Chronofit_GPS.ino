@@ -72,6 +72,7 @@ void signalMenagement(int i){
 void IRAM_ATTR onSecondTick(){
   lastRTCTrigger = micros64();
   RTCTriggered = true;
+  RTCTtriggerCount++;
 }
 
 
@@ -170,10 +171,20 @@ void loop() {
   if(RTCTriggered){
     RTCTriggered = false;
 
-    if(syncMode != MODE_SYNC_GPS){
-        handleRTCSync();
-        Serial.println("RTC Sync");
+    if(RTCTtriggerCount == 1){
+      startRTC = lastRTCTrigger;
+      Serial.print("startRTC: ");
+      Serial.println(startRTC);
     }
+
+    if((RTCTtriggerCount - 1) % 60  == 0){
+      double driftPPM = computePpm(lastRTCTrigger, (RTCTtriggerCount - 1));
+      Serial.print("RTCTriggerCount: ");
+      Serial.println(RTCTtriggerCount);
+      Serial.print("driftPPM: ");
+      Serial.println(driftPPM);
+    }
+
   }
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){

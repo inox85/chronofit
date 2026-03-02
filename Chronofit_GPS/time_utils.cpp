@@ -387,3 +387,10 @@ double setTimeBaseCalibration(double deltaUs, double minutes) {
     return calFactorSaved;
 }
 
+
+double computePpm(uint64_t measuredUs, uint32_t expectedSeconds)
+{
+    double expectedUs = (double)expectedSeconds * 1e6;
+
+    return ((double)measuredUs / expectedUs - 1.0) * 1e6;
+}
