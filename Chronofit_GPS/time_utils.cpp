@@ -307,46 +307,46 @@ void broadcastTime() {
 
 
 
-void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms) {
+// void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms) {
 
-  StaticJsonDocument<256> doc;
-  doc["t"] = TYPE_TIME_UPDATE;
-  doc["h"] = hh;
-  doc["m"] = mm;
-  doc["s"] = ss;
-  doc["ms"] = ms;
+//   StaticJsonDocument<256> doc;
+//   doc["t"] = TYPE_TIME_UPDATE;
+//   doc["h"] = hh;
+//   doc["m"] = mm;
+//   doc["s"] = ss;
+//   doc["ms"] = ms;
 
-  doc["lt"] = gps.location.isValid() ? gps.location.lat() : 0;
-  doc["ln"] = gps.location.isValid() ? gps.location.lng() : 0;
-  doc["st"] = gps.satellites.value();
-  doc["sy"] = syncStatus;
-  doc["ls"] = (millis() - lastGPSSync) / 1000;
-  doc["lg"] = GPSRefreshInterval * 60;
-  doc["pw"] = powerSource;
-  doc["ts"] = syncTestRequested;
+//   doc["lt"] = gps.location.isValid() ? gps.location.lat() : 0;
+//   doc["ln"] = gps.location.isValid() ? gps.location.lng() : 0;
+//   doc["st"] = gps.satellites.value();
+//   doc["sy"] = syncStatus;
+//   doc["ls"] = (millis() - lastGPSSync) / 1000;
+//   doc["lg"] = GPSRefreshInterval * 60;
+//   doc["pw"] = powerSource;
+//   doc["ts"] = syncTestRequested;
   
 
-  fixStatus = syncMode == MODE_SYNC_GPS;
+//   fixStatus = syncMode == MODE_SYNC_GPS;
 
-  if (gps.time.isValid())
-    fixStatus += 2;
+//   if (gps.time.isValid())
+//     fixStatus += 2;
 
-  if (gps.location.isValid())
-    fixStatus += 4;
+//   if (gps.location.isValid())
+//     fixStatus += 4;
   
-  if(calRunning)
-    fixStatus += 8;
+//   if(calRunning)
+//     fixStatus += 8;
 
-  doc["f"] = fixStatus;
+//   doc["f"] = fixStatus;
 
-  String json;
-  serializeJson(doc, json);
-  ws.cleanupClients(); // rimuove client chiusi
-  ws.textAll(json);  // 🔹 invia a tutti i client connessi
+//   String json;
+//   serializeJson(doc, json);
+//   ws.cleanupClients(); // rimuove client chiusi
+//   ws.textAll(json);  // 🔹 invia a tutti i client connessi
 
-  //Serial.println(json);
+//   //Serial.println(json);
 
-}
+// }
 
 double readInternalTemp() {
   double t =  (double)(temprature_sens_read() - 32) / 1.8;
@@ -393,4 +393,13 @@ double computePpm(uint64_t measuredUs, uint32_t expectedSeconds)
     double expectedUs = (double)expectedSeconds * 1e6;
 
     return ((double)measuredUs / expectedUs - 1.0) * 1e6;
+}
+
+void updateCalibrationFactor(double driftPPM)
+{
+    calibrationFactor =
+        1.0 / (1.0 + driftPPM * 1e-6);
+
+    Serial.print("calibrationFactor: ");
+    Serial.println(calibrationFactor);
 }

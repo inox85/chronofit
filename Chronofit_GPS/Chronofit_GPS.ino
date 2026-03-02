@@ -6,7 +6,6 @@
 #include <LittleFS.h>
 #include <DNSServer.h>
 #include <Update.h>
-#include <SoftwareSerial.h>
 #include "params.h"
 #include "esp_wifi.h"
 #include "routes.h"
@@ -34,19 +33,10 @@ void IRAM_ATTR sensorISR(void *arg) {
 
 
 // --- ISR PPS ---
-void IRAM_ATTR onPpsInterrupt() {
-    
+void IRAM_ATTR onPpsInterrupt() {   
   lastSyncTrigger = micros64();
-
-  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
-    syncTestRequested = 0;
-    sensorTime[4] = lastSyncTrigger;
-    sensorTriggered[4] = true;
-  }else{
-    ppsTriggered = true;
-    ppsCounter++;
-  }
-
+  ppsTriggered = true;
+  ppsCounter++;
 }
 
 void signalMenagement(int i){
@@ -175,14 +165,19 @@ void loop() {
       startRTC = lastRTCTrigger;
       Serial.print("startRTC: ");
       Serial.println(startRTC);
-    }
-
-    if((RTCTtriggerCount - 1) % 60  == 0){
-      double driftPPM = computePpm(lastRTCTrigger, (RTCTtriggerCount - 1));
+    }else if((RTCTtriggerCount - 1) % 60  == 0 && startRTC != 0){
+      double driftPPM = computePpm(lastRTCTrigger - startRTC, (RTCTtriggerCount - 1));
+      Serial.println("===========================");
       Serial.print("RTCTriggerCount: ");
-      Serial.println(RTCTtriggerCount);
+      Serial.println(RTCTtriggerCount - 1);
+      Serial.print("Extimated uS: ");
+      Serial.println((RTCTtriggerCount - 1) * 1000000ULL);
+      Serial.print("Internal uS: ");
+      Serial.println(lastRTCTrigger - startRTC);
       Serial.print("driftPPM: ");
       Serial.println(driftPPM);
+      Serial.println("===========================");
+      updateCalibrationFactor(driftPPM);
     }
 
   }
@@ -211,6 +206,8 @@ void loop() {
         syncReference = thisPpsUs;
         syncStatus = SYNC_GPS_SYNCED;
         handlePpsSync();          // NON deve più toccare ppsTriggered
+        RTCTtriggerCount = 0;
+        startRTC = 0;
         lastGPSSync = millis();
       }
 
@@ -256,36 +253,36 @@ void loop() {
   
   digitalWrite(LED_3, syncTestRequested);
   
-  // if(actualSecond == 0){
-  //   ppsCounter = 0;
-  // }
+  if(actualSecond == 0){
+    ppsCounter = 0;
+  }
 
-  // if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
-  //   if(syncMode == MODE_SYNC_GPS){
-  //     sweepBuzz();   
-  //     syncTestRequested = 1;  
-  //   }
-  //   else{
-  //     buzzerBeep(50,1,0,250,128);
-  //   }
-  // }
+  if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
+    if(syncMode == MODE_SYNC_GPS){
+      sweepBuzz();   
+      syncTestRequested = 1;  
+    }
+    else{
+      buzzerBeep(50,1,0,250,128);
+    }
+  }
 
-  // if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
-  //   PreciseTime time = getPreciseTime();
+  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
+    PreciseTime time = getPreciseTime();
     
-  //   int pNum = 60;
-  //   if (time.ms < 500){
-  //       pNum = 61;
-  //   }
+    int pNum = 60;
+    if (time.ms < 500){
+        pNum = 61;
+    }
 
-  //   if((ppsCounter % pNum) == 0 && gps.time.isUpdated()){
-  //     syncTestRequested = 0;
+    if((ppsCounter % pNum) == 0 && gps.time.isUpdated()){
+      syncTestRequested = 0;
       
-  //     sensorTime[4] = lastSyncTrigger;
-  //     sensorTriggered[4] = true;
-  //   }
+      sensorTime[4] = lastSyncTrigger;
+      sensorTriggered[4] = true;
+    }
     
-  // }
+  }
 
   handleSensorTrigger();
   

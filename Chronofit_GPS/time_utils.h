@@ -29,7 +29,7 @@ void broadcastTime();
 
 int getLastSessionRowIndex();
 
-void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms);
+//void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms);
 
 void broadcastAsync(const String& message);
 
@@ -45,4 +45,5 @@ double termFactor(double T);
 
 double computePpm(uint64_t measuredUs, uint32_t expectedSeconds);
 
+void updateCalibrationFactor(double driftPPM);
 
