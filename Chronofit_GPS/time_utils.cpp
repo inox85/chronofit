@@ -19,7 +19,7 @@ PreciseTime getPreciseTime() {
   PreciseTime t;
 
   uint64_t rawUs = micros64() - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs);
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs     = elapsedUs % 1000000ULL;

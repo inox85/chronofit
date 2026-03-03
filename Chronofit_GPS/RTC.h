@@ -15,4 +15,8 @@ void rtc_set_datetime(uint16_t year, uint8_t month, uint8_t day,
 
 DateTime rtc_now(void);
 
+bool writeAgingOffset(int8_t offset);
+
+int8_t readAgingOffset();
+
 #endif

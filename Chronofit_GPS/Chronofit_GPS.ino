@@ -78,6 +78,8 @@ void setup() {
   pinMode(SQW_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, FALLING);
 
+
+
   rtc_set_datetime(2026, 2, 25, 12, 0, 0); // solo una volta
 
   pinMode(LED_1, OUTPUT);
@@ -136,7 +138,13 @@ void setup() {
   digitalWrite(LED_1, LOW);
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
-  
+
+  writeAgingOffset(-41);
+
+  int8_t agingRegVal = readAgingOffset();
+
+  Serial.println(agingRegVal);
+
 }
 
 void configFS(){
