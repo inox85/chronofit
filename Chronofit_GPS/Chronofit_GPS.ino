@@ -77,6 +77,11 @@ void setup() {
 
   pinMode(SQW_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, FALLING);
+
+  pinMode(PPS_PIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPpsInterrupt, RISING);
+
+  gpio_install_isr_service(ESP_INTR_FLAG_LEVEL5);
   
   rtc_set_datetime(2026, 2, 25, 12, 0, 0); // solo una volta
 
@@ -101,9 +106,6 @@ void setup() {
   Serial.println();
   Serial.print("Time cal factor: ");
   Serial.println(calibrationFactor, 10);
-
-  pinMode(PPS_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPpsInterrupt, RISING);
 
   buzzerInit(BUZZER);
 
@@ -137,7 +139,7 @@ void setup() {
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
 
-  writeAgingOffset(0);
+  writeAgingOffset(-28);
 
   int8_t agingRegVal = readAgingOffset();
 
@@ -158,11 +160,81 @@ void configFS(){
 
 void loop() {
 
-  dnsServer.processNextRequest();
+  if(calRTC){
 
-  bool validNmea = false;
+    if(RTCTriggered){
+      RTCTriggered = false;
 
-  validNmea = processServicesSerial();
+      if (RTCTtriggerCount > 10){
+        rtcDiff = lastRTCTrigger - prevRTCTrigger;
+        prevRTCTrigger = lastRTCTrigger;
+
+
+        if(rtcDiffCount == 11)
+        {
+            rtcDiffMean = rtcDiff;
+        }
+        else
+        {
+            rtcDiffMean += (rtcDiff - rtcDiffMean) / rtcDiffCount;
+        }
+
+        rtcDiffCount++;
+
+      }
+        Serial.print("rtcDiff: ");
+        Serial.print(rtcDiff);
+
+        Serial.print(" -> rtcDiffMean: ");
+        Serial.println(rtcDiffMean);
+    }
+
+
+    if(ppsTriggered){
+      ppsTriggered = false;
+
+      if(ppsCounter > 10){
+          ppsDiff = lastSyncTrigger - prevPPSTrigger;
+
+
+          if(ppsDiffCount == 11)
+          {
+              ppsDiffMean = ppsDiff;
+          }
+          else
+          {   
+              ppsDiffMean += (double)(ppsDiff - ppsDiffMean) / ppsDiffCount;
+          }
+          ppsDiffCount++;
+
+
+          ppmAdjRTC = (rtcDiffMean / ppsDiffMean - 1.0) * 1e6;
+
+        }
+
+        prevPPSTrigger = lastSyncTrigger;
+
+        Serial.print("ppsDiff: ");
+        Serial.print(ppsDiff);
+
+        Serial.print(" -> ppsDiffMean: ");
+        Serial.print(ppsDiffMean); 
+
+        Serial.print(" => ppmAdjRTC: ");
+        Serial.println(ppmAdjRTC);
+
+        int8_t newAging = computeSlowAgingFromPpm(ppmAdjRTC);
+
+        if (newAging != readAgingOffset())
+        {
+            writeAgingOffset(newAging);
+            Serial.print("Aging -> ");
+            Serial.println(newAging);
+        }
+        
+    }
+
+  }
 
   if(RTCTriggered){
     RTCTriggered = false;
@@ -184,27 +256,17 @@ void loop() {
     //   Serial.println(driftPPM);
     //   Serial.println("===========================");
     //   updateCalibrationFactor(driftPPM);
-    }else if (RTCTtriggerCount != 0){
-      rtcDiff = lastRTCTrigger - prevRTCTrigger;
-      prevRTCTrigger = lastRTCTrigger;
-      Serial.print("rtcDiff: ");
-      Serial.println(rtcDiff);
-
-      if(rtcDiffCount == 0)
-      {
-          rtcDiffMean = rtcDiff;
-      }
-      else
-      {
-          rtcDiffMean += (rtcDiff - rtcDiffMean) / rtcDiffCount;
-      }
-
-      rtcDiffCount++;
-      Serial.print("rtcDiffMean: ");
-      Serial.println(rtcDiffMean);
     }
 
   }
+
+
+  dnsServer.processNextRequest();
+
+  bool validNmea = false;
+
+  validNmea = processServicesSerial();
+
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
@@ -232,28 +294,7 @@ void loop() {
         lastGPSSync = millis();
       }
 
-      if(ppsCounter > 1 && syncStatus == SYNC_GPS_SYNCED && prevPPSTrigger != 0 ){
-        ppsDiff = thisPpsUs - prevPPSTrigger;
-        prevPPSTrigger = thisPpsUs;
-        Serial.print("ppsDiff: ");
-        Serial.println(ppsDiff);
-
-        if(ppsDiffCount == 0)
-        {
-            ppsDiffMean = ppsDiff;
-        }
-        else
-        {   
-            ppsDiffMean += (double)ppsDiffSum / ppsDiffCount;
-        }
-        ppsDiffCount++;
-        Serial.print("ppsDiffMean: ");
-        Serial.println(ppsDiffMean); 
-
-        ppmAdjRTC = (rtcDiffMean / ppsDiffMean - 1.0) * 1e6;
-      }
       
-
   }
 
   PreciseTime t = getPreciseTime();

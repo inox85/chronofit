@@ -110,10 +110,6 @@ extern double ppsDiffMean;
 
 extern double ppmAdjRTC;
 
-#define RTC_WINDOW_SIZE 60
-
-extern uint64_t rtcWindowStartUs;
-extern uint32_t rtcWindowCount;
-extern uint64_t rtcWindowSumUs;
+extern bool calRTC;
 
 #endif

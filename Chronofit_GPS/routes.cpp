@@ -20,6 +20,7 @@
 #include <base64.h>
 #include "secrets.h"
 #include "RTC.h"
+#include "esp_wifi.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -541,8 +542,21 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   });
 
-   server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
-    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+  server.on("/calRTC", HTTP_GET, [](AsyncWebServerRequest *request){
+
+    esp_wifi_stop();
+    esp_wifi_deinit();
+
+    calRTC = true;
+
+    request->send(200, "text/plain", "Sync test started");
+
+  });
+
+  
+
+  server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
+  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
 
     String body;
     for (size_t i = 0; i < len; i++) body += (char)data[i];
@@ -561,11 +575,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     #ifdef DEBUG
     Serial.printf("Ricevuti: %d, %d, %d, %d\n",
-                   line, lineIds[idx], competitors[idx], delays[idx]);
+                    line, lineIds[idx], competitors[idx], delays[idx]);
     #endif
     // E qui elabori o invii via seriale, BLE, ecc.
     request->send(200, "text/plain", "Saved sucessfully"); 
-    
+      
   });
 
   server.on("/sendCheckPointRow", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,

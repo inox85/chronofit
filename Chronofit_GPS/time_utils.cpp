@@ -406,3 +406,39 @@ void updateCalibrationFactor(double driftPPM)
     Serial.print("calibrationFactor: ");
     Serial.println(calibrationFactor, 12);
 }
+
+int8_t computeSlowAgingFromPpm(double ppmError)
+{
+    static double filteredError = 0.0;
+    static double accumLSB = 0.0;
+
+    const double lsb_ppm = 0.1;     // 1 aging step ≈ 0.1 ppm
+    const double filterAlpha = 0.00001; // lentissimo (1% nuovo dato)
+
+    // 1️⃣ filtro IIR per togliere rumore
+    filteredError = filteredError * (1.0 - filterAlpha) + ppmError * filterAlpha;
+
+    // 2️⃣ zona morta
+    if (abs(filteredError) < 1.0)
+        return readAgingOffset();
+
+    // 3️⃣ accumuliamo lentamente in unità LSB
+    accumLSB += filteredError / lsb_ppm * 0.0002; 
+    // 0.02 = velocità di convergenza (più piccolo = più lento)
+
+    int8_t step = (int8_t) accumLSB;
+
+    if (step == 0)
+        return readAgingOffset();
+
+    accumLSB -= step;  // togliamo parte intera
+
+    int8_t current = readAgingOffset();
+    int8_t newVal = current - step;
+
+    // clamp sicurezza
+    if (newVal > 127) newVal = 127;
+    if (newVal < -128) newVal = -128;
+
+    return newVal;
+}

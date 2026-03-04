@@ -117,3 +117,5 @@ double ppmAdjRTC = 0.0;
 uint64_t rtcWindowStartUs = 0;
 uint32_t rtcWindowCount = 0;
 uint64_t rtcWindowSumUs = 0;
+
+bool calRTC = false;

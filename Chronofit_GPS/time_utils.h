@@ -47,3 +47,5 @@ double computePpm(uint64_t measuredUs, uint32_t expectedSeconds);
 
 void updateCalibrationFactor(double driftPPM);
 
+int8_t computeSlowAgingFromPpm(double ppmError);
+
