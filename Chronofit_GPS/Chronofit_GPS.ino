@@ -77,9 +77,7 @@ void setup() {
 
   pinMode(SQW_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, FALLING);
-
-
-
+  
   rtc_set_datetime(2026, 2, 25, 12, 0, 0); // solo una volta
 
   pinMode(LED_1, OUTPUT);
@@ -139,7 +137,7 @@ void setup() {
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
 
-  writeAgingOffset(-41);
+  writeAgingOffset(0);
 
   int8_t agingRegVal = readAgingOffset();
 
@@ -173,19 +171,37 @@ void loop() {
       startRTC = lastRTCTrigger;
       Serial.print("startRTC: ");
       Serial.println(startRTC);
-    }else if((RTCTtriggerCount - 1) % 60  == 0 && startRTC != 0){
-      double driftPPM = computePpm(lastRTCTrigger - startRTC, (RTCTtriggerCount - 1));
-      Serial.println("===========================");
-      Serial.print("RTCTriggerCount: ");
-      Serial.println(RTCTtriggerCount - 1);
-      Serial.print("Extimated uS: ");
-      Serial.println((RTCTtriggerCount - 1) * 1000000ULL);
-      Serial.print("Internal uS: ");
-      Serial.println(lastRTCTrigger - startRTC);
-      Serial.print("driftPPM: ");
-      Serial.println(driftPPM);
-      Serial.println("===========================");
-      updateCalibrationFactor(driftPPM);
+    //}else if((RTCTtriggerCount - 1) % 60  == 0 && startRTC != 0){
+    //   double driftPPM = computePpm(lastRTCTrigger - startRTC, RTCTtriggerCount - 1);
+    //   Serial.println("===========================");
+    //   Serial.print("RTCTriggerCount: ");
+    //   Serial.println(RTCTtriggerCount - 1);
+    //   Serial.print("Extimated uS: ");
+    //   Serial.println((RTCTtriggerCount - 1) * 1000000ULL);
+    //   Serial.print("Internal uS: ");
+    //   Serial.println(lastRTCTrigger - startRTC);
+    //   Serial.print("driftPPM: ");
+    //   Serial.println(driftPPM);
+    //   Serial.println("===========================");
+    //   updateCalibrationFactor(driftPPM);
+    }else if (RTCTtriggerCount != 0){
+      rtcDiff = lastRTCTrigger - prevRTCTrigger;
+      prevRTCTrigger = lastRTCTrigger;
+      Serial.print("rtcDiff: ");
+      Serial.println(rtcDiff);
+
+      if(rtcDiffCount == 0)
+      {
+          rtcDiffMean = rtcDiff;
+      }
+      else
+      {
+          rtcDiffMean += (rtcDiff - rtcDiffMean) / rtcDiffCount;
+      }
+
+      rtcDiffCount++;
+      Serial.print("rtcDiffMean: ");
+      Serial.println(rtcDiffMean);
     }
 
   }
@@ -206,49 +222,38 @@ void loop() {
   uint64_t delta = lastNmeaValid - lastSyncTrigger;
 
   if (ppsTriggered && (delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
-      
-      uint64_t thisPpsUs = lastSyncTrigger;
       ppsTriggered = false;   // consumato QUI, una sola volta
+      uint64_t thisPpsUs = lastSyncTrigger;
 
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
         syncReference = thisPpsUs;
         syncStatus = SYNC_GPS_SYNCED;
         handlePpsSync();          // NON deve più toccare ppsTriggered
-        RTCTtriggerCount = 0;
-        startRTC = 0;
         lastGPSSync = millis();
       }
 
-      if (calRunning) {
+      if(ppsCounter > 1 && syncStatus == SYNC_GPS_SYNCED && prevPPSTrigger != 0 ){
+        ppsDiff = thisPpsUs - prevPPSTrigger;
+        prevPPSTrigger = thisPpsUs;
+        Serial.print("ppsDiff: ");
+        Serial.println(ppsDiff);
 
-          calPpsCount++;
-          Serial.print("CAL PPS: ");
-          Serial.println(calPpsCount);
+        if(ppsDiffCount == 0)
+        {
+            ppsDiffMean = ppsDiff;
+        }
+        else
+        {   
+            ppsDiffMean += (double)ppsDiffSum / ppsDiffCount;
+        }
+        ppsDiffCount++;
+        Serial.print("ppsDiffMean: ");
+        Serial.println(ppsDiffMean); 
 
-          if (calPpsCount >= CAL_WINDOW_SEC) {   // 600 PPS = 10 minuti
-            calRunning = false;
-
-            int32_t errorUs = (int32_t)CAL_WINDOW_US - (int32_t)(thisPpsUs - calStartUs);
-
-            Serial.print("Cal start us: ");
-            Serial.println(calStartUs);
-            Serial.print("Cal end us: ");
-            Serial.println(thisPpsUs);
-            Serial.print("Calibration error (us): ");
-            Serial.println(errorUs);
-
-            writeDoubleToSettings("calTempRef", readInternalTemp());
-
-            setTimeBaseCalibration(errorUs, calPpsCount / 60);
-
-            sweepBuzz();
-          }
-
-      } else {
-          // avvio nuova finestra di calibrazione
-          calStartUs = thisPpsUs;
-          calPpsCount = 0;
+        ppmAdjRTC = (rtcDiffMean / ppsDiffMean - 1.0) * 1e6;
       }
+      
+
   }
 
   PreciseTime t = getPreciseTime();
@@ -294,7 +299,6 @@ void loop() {
 
   handleSensorTrigger();
   
-  checkPowerSource();
 
 }
 

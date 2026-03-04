@@ -96,4 +96,24 @@ extern "C" uint8_t temprature_sens_read();
 extern uint32_t RTCTtriggerCount;
 extern uint64_t startRTC;
 
+extern uint64_t prevRTCTrigger;
+extern uint64_t prevPPSTrigger;
+extern uint32_t ppsDiff;
+extern uint32_t rtcDiff;
+extern uint64_t rtcDiffSum;
+extern uint32_t rtcDiffCount;
+extern double rtcDiffMean;
+
+extern uint64_t ppsDiffSum;
+extern uint32_t ppsDiffCount;
+extern double ppsDiffMean;
+
+extern double ppmAdjRTC;
+
+#define RTC_WINDOW_SIZE 60
+
+extern uint64_t rtcWindowStartUs;
+extern uint32_t rtcWindowCount;
+extern uint64_t rtcWindowSumUs;
+
 #endif

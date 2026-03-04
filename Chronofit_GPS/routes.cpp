@@ -19,6 +19,7 @@
 #include <NetworkClientSecure.h>
 #include <base64.h>
 #include "secrets.h"
+#include "RTC.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -724,6 +725,12 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["calPpsCount"] = calPpsCount;
     doc["calPpsTotal"] = CAL_WINDOW_SEC;
     doc["intTemp"] = readInternalTemp();
+    doc["ppsDiff"] = ppsDiff;
+    doc["rtcDiff"] = rtcDiff;
+    doc["ppsDiffMean"] = ppsDiffMean;
+    doc["rtcDiffMean"] = rtcDiffMean;
+    doc["ppmAdjRTC"] = ppmAdjRTC;
+    
 
     String json;
     serializeJson(doc, json);
@@ -756,10 +763,24 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         request->send(200, "text/plain",
             "Cal running: " + String(calRunning));
 
-      } 
-      else {
-          request->send(400, "text/plain", "Missing parameters");
-      }
+    }
+    else if (request->hasParam("agingFactor")) {
+
+      int8_t agingFactor = request->getParam("agingFactor")->value().toInt();
+
+      writeAgingOffset(agingFactor);
+
+      int8_t agingRegVal = readAgingOffset();
+
+      Serial.println(agingRegVal);
+
+      request->send(200, "text/plain",
+          "Aging factor: " + String(calRunning));
+
+    }  
+    else {
+        request->send(400, "text/plain", "Missing parameters");
+    }
   });
 
 }

@@ -94,3 +94,26 @@ unsigned long lastClientCheck = 0;
 
 uint32_t RTCTtriggerCount = 0;
 uint64_t startRTC = 0;
+
+uint64_t prevRTCTrigger = 0;
+uint64_t prevPPSTrigger= 0;
+double meanRTCAdjFactor = 1;
+uint32_t ppsDiff = 0;
+uint32_t rtcDiff = 0;
+
+uint32_t rtcMeanCount = 0;
+uint32_t ppsMeanCount = 0;
+
+uint64_t rtcDiffSum = 0;
+uint32_t rtcDiffCount = 0;
+double rtcDiffMean = 0;
+
+uint64_t ppsDiffSum = 0;
+uint32_t ppsDiffCount = 0;
+double ppsDiffMean = 0;
+
+double ppmAdjRTC = 0.0;
+
+uint64_t rtcWindowStartUs = 0;
+uint32_t rtcWindowCount = 0;
+uint64_t rtcWindowSumUs = 0;

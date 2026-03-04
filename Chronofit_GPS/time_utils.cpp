@@ -391,7 +391,10 @@ double setTimeBaseCalibration(double deltaUs, double minutes) {
 double computePpm(uint64_t measuredUs, uint32_t expectedSeconds)
 {
     double expectedUs = (double)expectedSeconds * 1e6;
-
+    Serial.print("expectedUs: ");
+    Serial.println(expectedUs);
+    Serial.print("measuredUs: ");
+    Serial.println(measuredUs);
     return ((double)measuredUs / expectedUs - 1.0) * 1e6;
 }
 
@@ -401,5 +404,5 @@ void updateCalibrationFactor(double driftPPM)
         1.0 / (1.0 + driftPPM * 1e-6);
 
     Serial.print("calibrationFactor: ");
-    Serial.println(calibrationFactor);
+    Serial.println(calibrationFactor, 12);
 }
