@@ -440,5 +440,5 @@ int8_t computeSlowAgingFromPpm(double ppmError)
     if (newVal > 127) newVal = 127;
     if (newVal < -128) newVal = -128;
 
-    return newVal;
+    return -newVal;
 }
