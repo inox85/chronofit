@@ -34,7 +34,7 @@ void IRAM_ATTR sensorISR(void *arg) {
 
 // --- ISR PPS ---
 void IRAM_ATTR onPpsInterrupt() {   
-  lastSyncTrigger = micros64();
+  lastSyncTrigger = esp_timer_get_time();
   ppsTriggered = true;
   ppsCounter++;
 }
@@ -60,9 +60,11 @@ void signalMenagement(int i){
 }
 
 void IRAM_ATTR onSecondTick(){
-  lastRTCTrigger = micros64();
+  portENTER_CRITICAL_ISR(&rtcMux);
+  lastRTCTrigger = esp_timer_get_time();
   RTCTriggered = true;
   RTCTtriggerCount++;
+  portEXIT_CRITICAL_ISR(&rtcMux);
 }
 
 
@@ -80,8 +82,6 @@ void setup() {
 
   pinMode(PPS_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPpsInterrupt, RISING);
-
-  gpio_install_isr_service(ESP_INTR_FLAG_LEVEL5);
   
   rtc_set_datetime(2026, 2, 25, 12, 0, 0); // solo una volta
 
@@ -139,7 +139,7 @@ void setup() {
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
 
-  writeAgingOffset(-28);
+  writeAgingOffset(0);
 
   int8_t agingRegVal = readAgingOffset();
 
@@ -157,107 +157,132 @@ void configFS(){
 
 }
 
+// bool calcAgingRCT = false;
+// bool calcAgingPPS = false;
+
+// static double ppmMean = 0.0;
+// static uint32_t ppmCount = 0;
 
 void loop() {
 
-  if(calRTC){
+  // if(calRTC){
+  //   bool calcAging = false;
 
-    if(RTCTriggered){
-      RTCTriggered = false;
+  //   if(RTCTriggered){
+  //     RTCTriggered = false;
 
-      if (RTCTtriggerCount > 10){
-        rtcDiff = lastRTCTrigger - prevRTCTrigger;
-        prevRTCTrigger = lastRTCTrigger;
+  //     if (RTCTtriggerCount > 10){
+  //       rtcDiff = lastRTCTrigger - prevRTCTrigger;
+  //       prevRTCTrigger = lastRTCTrigger;
+  //       calcAgingRCT = true;
 
+  //       if(rtcDiffCount == 11)
+  //       {
+  //           rtcDiffMean = rtcDiff;
+  //       }
+  //       else
+  //       {
+  //           rtcDiffMean += (rtcDiff - rtcDiffMean) / rtcDiffCount;
+  //       }
 
-        if(rtcDiffCount == 11)
-        {
-            rtcDiffMean = rtcDiff;
-        }
-        else
-        {
-            rtcDiffMean += (rtcDiff - rtcDiffMean) / rtcDiffCount;
-        }
+  //       rtcDiffCount++;
 
-        rtcDiffCount++;
+  //     }
+  //       Serial.print("rtcDiff: ");
+  //       Serial.print(rtcDiff);
 
-      }
-        Serial.print("rtcDiff: ");
-        Serial.print(rtcDiff);
-
-        Serial.print(" -> rtcDiffMean: ");
-        Serial.println(rtcDiffMean);
-    }
-
-
-    if(ppsTriggered){
-      ppsTriggered = false;
-
-      if(ppsCounter > 10){
-          ppsDiff = lastSyncTrigger - prevPPSTrigger;
+  //       Serial.print(" -> rtcDiffMean: ");
+  //       Serial.println(rtcDiffMean);
+  //   }
 
 
-          if(ppsDiffCount == 11)
-          {
-              ppsDiffMean = ppsDiff;
-          }
-          else
-          {   
-              ppsDiffMean += (double)(ppsDiff - ppsDiffMean) / ppsDiffCount;
-          }
-          ppsDiffCount++;
+  //   if(ppsTriggered){
+  //     ppsTriggered = false;
+      
+  //     if(ppsCounter > 10){
+  //         ppsDiff = lastSyncTrigger - prevPPSTrigger;
+  //         calcAgingPPS = true;
 
+  //         if(ppsDiffCount == 11)
+  //         {
+  //             ppsDiffMean = ppsDiff;
+  //         }
+  //         else
+  //         {   
+  //             ppsDiffMean += (double)(ppsDiff - ppsDiffMean) / ppsDiffCount;
+  //         }
+  //         ppsDiffCount++;
 
-          ppmAdjRTC = (rtcDiffMean / ppsDiffMean - 1.0) * 1e6;
+  
+  //       }
 
-        }
+  //       prevPPSTrigger = lastSyncTrigger;
 
-        prevPPSTrigger = lastSyncTrigger;
+  //       Serial.print("ppsDiff: ");
+  //       Serial.print(ppsDiff);
 
-        Serial.print("ppsDiff: ");
-        Serial.print(ppsDiff);
+  //       Serial.print(" -> ppsDiffMean: ");
+  //       Serial.println(ppsDiffMean); 
 
-        Serial.print(" -> ppsDiffMean: ");
-        Serial.print(ppsDiffMean); 
+  //   }
+    
+  //   if(calcAgingRCT && calcAgingPPS){
+  //     calcAgingRCT = false;
+  //     calcAgingPPS = false;
 
-        Serial.print(" => ppmAdjRTC: ");
-        Serial.println(ppmAdjRTC);
+  //     double ppmInstant = (rtcDiffMean / ppsDiffMean - 1.0) * 1e6;
 
-        int8_t newAging = computeSlowAgingFromPpm(ppmAdjRTC);
+  //     Serial.print("ppmInstant: "); 
+  //     Serial.println(ppmInstant);
 
-        if (newAging != readAgingOffset())
-        {
-            writeAgingOffset(newAging);
-            Serial.print("Aging -> ");
-            Serial.println(newAging);
-        }
-        
-    }
+  //     // Protezione fondamentale
+  //     if (!isnan(ppmInstant) && isfinite(ppmInstant))
+  //     {
+  //         if (ppmCount == 0)
+  //         {
+  //             ppmMean = ppmInstant;
+  //         }
+  //         else
+  //         {
+  //             ppmMean += (ppmInstant - ppmMean) / (ppmCount + 1);
+  //         }
 
-  }
+  //         ppmCount++;
+
+  //         Serial.print("ppmMean: ");
+  //         Serial.println(ppmMean);
+  //     }
+
+  //   }
+  //  return;
+  // }
 
   if(RTCTriggered){
     RTCTriggered = false;
 
     if(RTCTtriggerCount == 1){
+
       startRTC = lastRTCTrigger;
+
       Serial.print("startRTC: ");
       Serial.println(startRTC);
-    //}else if((RTCTtriggerCount - 1) % 60  == 0 && startRTC != 0){
-    //   double driftPPM = computePpm(lastRTCTrigger - startRTC, RTCTtriggerCount - 1);
-    //   Serial.println("===========================");
-    //   Serial.print("RTCTriggerCount: ");
-    //   Serial.println(RTCTtriggerCount - 1);
-    //   Serial.print("Extimated uS: ");
-    //   Serial.println((RTCTtriggerCount - 1) * 1000000ULL);
-    //   Serial.print("Internal uS: ");
-    //   Serial.println(lastRTCTrigger - startRTC);
-    //   Serial.print("driftPPM: ");
-    //   Serial.println(driftPPM);
-    //   Serial.println("===========================");
-    //   updateCalibrationFactor(driftPPM);
-    }
+    }else if((RTCTtriggerCount - 1) % 60  == 0 && startRTC != 0){
+   
+      double driftPPM = computePpm(lastRTCTrigger - startRTC, RTCTtriggerCount - 1);
 
+      Serial.println("===========================");
+      Serial.print("RTCTriggerCount: ");
+      Serial.println(RTCTtriggerCount - 1);
+      Serial.print("Extimated uS: ");
+      Serial.println((RTCTtriggerCount - 1) * 1000000ULL);
+      Serial.print("Internal uS: ");
+      Serial.println(lastRTCTrigger - startRTC);
+      Serial.print("driftPPM: ");
+      Serial.println(driftPPM);
+      Serial.println("===========================");
+      updateCalibrationFactor(driftPPM);
+    }
+    
   }
 
 

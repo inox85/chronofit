@@ -119,3 +119,6 @@ uint32_t rtcWindowCount = 0;
 uint64_t rtcWindowSumUs = 0;
 
 bool calRTC = false;
+
+portMUX_TYPE ppsMux = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE rtcMux = portMUX_INITIALIZER_UNLOCKED;

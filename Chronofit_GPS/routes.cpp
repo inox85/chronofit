@@ -211,6 +211,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     }
   });
 
+  server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(400, "text/plain", "Board reboot!");
+    esp_restart();
+  });
+
   // --- Set Time Manuale --
   server.on("/setTime", HTTP_GET, [](AsyncWebServerRequest *request) {
 
@@ -553,7 +558,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   });
 
-  
+
 
   server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
   [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
@@ -789,7 +794,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       Serial.println(agingRegVal);
 
       request->send(200, "text/plain",
-          "Aging factor: " + String(calRunning));
+          "Aging factor: " + String(agingFactor));
 
     }  
     else {

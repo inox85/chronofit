@@ -112,4 +112,7 @@ extern double ppmAdjRTC;
 
 extern bool calRTC;
 
+extern portMUX_TYPE ppsMux;
+extern portMUX_TYPE rtcMux;
+
 #endif

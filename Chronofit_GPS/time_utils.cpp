@@ -407,38 +407,39 @@ void updateCalibrationFactor(double driftPPM)
     Serial.println(calibrationFactor, 12);
 }
 
+
+double Kp = 0.1;
+double Ki = 0.01;
+double integral = 0;
+
 int8_t computeSlowAgingFromPpm(double ppmError)
 {
-    static double filteredError = 0.0;
-    static double accumLSB = 0.0;
+    // ⭐ segno fisico corretto
+    double error = ppmError;
 
-    const double lsb_ppm = 0.1;     // 1 aging step ≈ 0.1 ppm
-    const double filterAlpha = 0.00001; // lentissimo (1% nuovo dato)
+    Serial.print("Error: ");
+    Serial.println(error);
 
-    // 1️⃣ filtro IIR per togliere rumore
-    filteredError = filteredError * (1.0 - filterAlpha) + ppmError * filterAlpha;
+    integral += error * Ki;
 
-    // 2️⃣ zona morta
-    if (abs(filteredError) < 1.0)
-        return readAgingOffset();
+    Serial.print("Integral: ");
+    Serial.println(startRTC);
 
-    // 3️⃣ accumuliamo lentamente in unità LSB
-    accumLSB += filteredError / lsb_ppm * 0.0002; 
-    // 0.02 = velocità di convergenza (più piccolo = più lento)
+    if(integral > 20) integral = 20;
+    if(integral < -20) integral = -20;
 
-    int8_t step = (int8_t) accumLSB;
+    double control = Kp * error + integral;
 
-    if (step == 0)
-        return readAgingOffset();
+    Serial.print("Control: ");
+    Serial.println(control); 
 
-    accumLSB -= step;  // togliamo parte intera
+    int8_t newVal = readAgingOffset() + (int8_t)round(control);
 
-    int8_t current = readAgingOffset();
-    int8_t newVal = current - step;
+    if(newVal > 120) newVal = 120;
+    if(newVal < -120) newVal = -120;
 
-    // clamp sicurezza
-    if (newVal > 127) newVal = 127;
-    if (newVal < -128) newVal = -128;
+    Serial.print("newVal: ");
+    Serial.println(newVal); 
 
-    return -newVal;
+    return newVal;
 }
