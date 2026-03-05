@@ -157,105 +157,105 @@ void configFS(){
 
 }
 
-// bool calcAgingRCT = false;
-// bool calcAgingPPS = false;
+bool calcAgingRCT = false;
+bool calcAgingPPS = false;
 
-// static double ppmMean = 0.0;
-// static uint32_t ppmCount = 0;
+static double ppmMean = 0.0;
+static uint32_t ppmCount = 0;
 
 void loop() {
 
-  // if(calRTC){
-  //   bool calcAging = false;
+  if(calRTC){
+    bool calcAging = false;
 
-  //   if(RTCTriggered){
-  //     RTCTriggered = false;
+    if(RTCTriggered){
+      RTCTriggered = false;
 
-  //     if (RTCTtriggerCount > 10){
-  //       rtcDiff = lastRTCTrigger - prevRTCTrigger;
-  //       prevRTCTrigger = lastRTCTrigger;
-  //       calcAgingRCT = true;
+      if (RTCTtriggerCount > 10){
+        rtcDiff = lastRTCTrigger - prevRTCTrigger;
+        prevRTCTrigger = lastRTCTrigger;
+        calcAgingRCT = true;
 
-  //       if(rtcDiffCount == 11)
-  //       {
-  //           rtcDiffMean = rtcDiff;
-  //       }
-  //       else
-  //       {
-  //           rtcDiffMean += (rtcDiff - rtcDiffMean) / rtcDiffCount;
-  //       }
+        if(rtcDiffCount == 11)
+        {
+            rtcDiffMean = rtcDiff;
+        }
+        else
+        {
+            rtcDiffMean += (rtcDiff - rtcDiffMean) / rtcDiffCount;
+        }
 
-  //       rtcDiffCount++;
+        rtcDiffCount++;
 
-  //     }
-  //       Serial.print("rtcDiff: ");
-  //       Serial.print(rtcDiff);
+      }
+        Serial.print("rtcDiff: ");
+        Serial.print(rtcDiff);
 
-  //       Serial.print(" -> rtcDiffMean: ");
-  //       Serial.println(rtcDiffMean);
-  //   }
+        Serial.print(" -> rtcDiffMean: ");
+        Serial.println(rtcDiffMean);
+    }
 
 
-  //   if(ppsTriggered){
-  //     ppsTriggered = false;
+    if(ppsTriggered){
+      ppsTriggered = false;
       
-  //     if(ppsCounter > 10){
-  //         ppsDiff = lastSyncTrigger - prevPPSTrigger;
-  //         calcAgingPPS = true;
+      if(ppsCounter > 10){
+          ppsDiff = lastSyncTrigger - prevPPSTrigger;
+          calcAgingPPS = true;
 
-  //         if(ppsDiffCount == 11)
-  //         {
-  //             ppsDiffMean = ppsDiff;
-  //         }
-  //         else
-  //         {   
-  //             ppsDiffMean += (double)(ppsDiff - ppsDiffMean) / ppsDiffCount;
-  //         }
-  //         ppsDiffCount++;
+          if(ppsDiffCount == 11)
+          {
+              ppsDiffMean = ppsDiff;
+          }
+          else
+          {   
+              ppsDiffMean += (double)(ppsDiff - ppsDiffMean) / ppsDiffCount;
+          }
+          ppsDiffCount++;
 
   
-  //       }
+        }
 
-  //       prevPPSTrigger = lastSyncTrigger;
+        prevPPSTrigger = lastSyncTrigger;
 
-  //       Serial.print("ppsDiff: ");
-  //       Serial.print(ppsDiff);
+        Serial.print("ppsDiff: ");
+        Serial.print(ppsDiff);
 
-  //       Serial.print(" -> ppsDiffMean: ");
-  //       Serial.println(ppsDiffMean); 
+        Serial.print(" -> ppsDiffMean: ");
+        Serial.println(ppsDiffMean); 
 
-  //   }
+    }
     
-  //   if(calcAgingRCT && calcAgingPPS){
-  //     calcAgingRCT = false;
-  //     calcAgingPPS = false;
+    if(calcAgingRCT && calcAgingPPS){
+      calcAgingRCT = false;
+      calcAgingPPS = false;
 
-  //     double ppmInstant = (rtcDiffMean / ppsDiffMean - 1.0) * 1e6;
+      double ppmInstant = (rtcDiffMean / ppsDiffMean - 1.0) * 1e6;
 
-  //     Serial.print("ppmInstant: "); 
-  //     Serial.println(ppmInstant);
+      Serial.print("ppmInstant: "); 
+      Serial.println(ppmInstant);
 
-  //     // Protezione fondamentale
-  //     if (!isnan(ppmInstant) && isfinite(ppmInstant))
-  //     {
-  //         if (ppmCount == 0)
-  //         {
-  //             ppmMean = ppmInstant;
-  //         }
-  //         else
-  //         {
-  //             ppmMean += (ppmInstant - ppmMean) / (ppmCount + 1);
-  //         }
+      // Protezione fondamentale
+      if (!isnan(ppmInstant) && isfinite(ppmInstant))
+      {
+          if (ppmCount == 0)
+          {
+              ppmMean = ppmInstant;
+          }
+          else
+          {
+              ppmMean += (ppmInstant - ppmMean) / (ppmCount + 1);
+          }
 
-  //         ppmCount++;
+          ppmCount++;
 
-  //         Serial.print("ppmMean: ");
-  //         Serial.println(ppmMean);
-  //     }
+          Serial.print("ppmMean: ");
+          Serial.println(ppmMean);
+      }
 
-  //   }
-  //  return;
-  // }
+    }
+   return;
+  }
 
   if(RTCTriggered){
     RTCTriggered = false;
