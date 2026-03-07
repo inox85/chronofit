@@ -19,10 +19,10 @@ PreciseTime getPreciseTime() {
   PreciseTime t;
 
   uint64_t rawUs = micros64() - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs);
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
-  uint64_t remUs     = elapsedUs % 1000000ULL;
+  uint64_t remUs = elapsedUs % 1000000ULL;
 
   // millisecondi arrotondati
   uint32_t ms = (remUs) / 1000;
@@ -46,7 +46,7 @@ PreciseTime getPreciseSensorTime(int i) {
   uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
-  uint64_t remUs     = elapsedUs % 1000000ULL;
+  uint64_t remUs = elapsedUs % 1000000ULL;
 
   // millisecondi arrotondati
   uint32_t ms = (remUs) / 1000;
@@ -64,6 +64,30 @@ PreciseTime getPreciseSensorTime(int i) {
 }
 
 
+PreciseTime getPreciseSensorTime(uint64_t us) {
+  PreciseTime t;
+
+  uint64_t rawUs = us - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
+
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs = elapsedUs % 1000000ULL;
+
+  // millisecondi arrotondati
+  uint32_t ms = (remUs) / 1000;
+  if (ms >= 1000) ms = 999;
+  t.ms = ms;
+
+  // ⏱️ tempo assoluto
+  uint64_t absSec = ppsEpochSec + elapsedSec;
+
+  t.ss = absSec % 60;
+  t.mm = (absSec / 60) % 60;
+  t.hh = (absSec / 3600) % 24;
+
+  return t;
+}
+
 void checkPointRoutine(int i) {
 
   PreciseTime t = getPreciseSensorTime(i);
@@ -75,7 +99,7 @@ void checkPointRoutine(int i) {
 
   // 🔹 Crea il JSON base
   StaticJsonDocument<256> checkpoint;
-  checkpoint[LINE_NUMBER_FIELD] = i+1;
+  checkpoint[LINE_NUMBER_FIELD] = i + 1;
   checkpoint[LINE_ID_FIELD] = lineIds[i];
   checkpoint[COMPETITOR_FIELD] = competitors[i];
   checkpoint[HOUR_FIELD] = hh;
@@ -88,7 +112,7 @@ void checkPointRoutine(int i) {
   sessionRowIndex = sessionRowIndex + 1;
   checkpoint[INDEX_FIELD] = sessionRowIndex;
 
-  if(printEnabled){
+  if (printEnabled) {
     printFormatted(sessionRowIndex, lineIds[i], competitors[i], hh, mm, ss, ms, 1);
   }
 
@@ -109,16 +133,16 @@ void checkPointRoutine(int i) {
   // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
   File file = LittleFS.open("/session.json", "a");
   if (!file) {
-      debug("Errore apertura file per scrittura!");
-      return;
+    debug("Errore apertura file per scrittura!");
+    return;
   }
   serializeJson(ordered, file);  // no indentazione
   file.println();                // nuova riga
   file.close();
 
-  #ifdef DEBUG
-    Serial.printf("Checkpoint #%d salvato su LittleFS (in append)\n", sessionRowIndex);
-  #endif
+#ifdef DEBUG
+  Serial.printf("Checkpoint #%d salvato su LittleFS (in append)\n", sessionRowIndex);
+#endif
 
   // 🔹 Invia sul WebSocket
   StaticJsonDocument<256> wsDoc = ordered;
@@ -143,15 +167,19 @@ void handlePpsSync() {
   uint32_t ss = gps.time.second() + 1;
 
   // rollover
-  if (ss >= 60) { ss = 0; mm++; }
-  if (mm >= 60) { mm = 0; hh = (hh + 1) % 24; }
+  if (ss >= 60) {
+    ss = 0;
+    mm++;
+  }
+  if (mm >= 60) {
+    mm = 0;
+    hh = (hh + 1) % 24;
+  }
 
   rtc_set_datetime(yy, MM, dd, hh, mm, ss);
 
   // 🔒 ancora assoluta (epoch-like, giornaliera)
-  ppsEpochSec = (uint64_t)hh * 3600ULL +
-                (uint64_t)mm * 60ULL +
-                (uint64_t)ss;
+  ppsEpochSec = (uint64_t)hh * 3600ULL + (uint64_t)mm * 60ULL + (uint64_t)ss;
 
   // riferimento temporale
 
@@ -159,8 +187,7 @@ void handlePpsSync() {
   lastBroadcast = millis();
 }
 
-void handleRTCSync()
-{
+void handleRTCSync() {
   DateTime dTime = rtc_now();
 
   uint32_t hh = dTime.hour();
@@ -168,9 +195,7 @@ void handleRTCSync()
   uint32_t ss = dTime.second();
 
   // 🔒 ancora assoluta (epoch-like, giornaliera)
-  ppsEpochSec = (uint64_t)hh * 3600ULL +
-                (uint64_t)mm * 60ULL +
-                (uint64_t)ss;
+  ppsEpochSec = (uint64_t)hh * 3600ULL + (uint64_t)mm * 60ULL + (uint64_t)ss;
 
   syncReference = lastRTCTrigger;
 
@@ -194,15 +219,19 @@ void handleLineSync() {
   uint32_t ss = temp_ss;
 
   // rollover
-  if (ss >= 60) { ss = 0; mm++; }
-  if (mm >= 60) { mm = 0; hh = (hh + 1) % 24; }
+  if (ss >= 60) {
+    ss = 0;
+    mm++;
+  }
+  if (mm >= 60) {
+    mm = 0;
+    hh = (hh + 1) % 24;
+  }
 
   rtc_set_datetime(yy, MM, dd, hh, mm, ss);
 
   // 🔒 ancora assoluta (epoch-like, giornaliera)
-  ppsEpochSec = (uint64_t)hh * 3600ULL +
-                (uint64_t)mm * 60ULL +
-                (uint64_t)ss;
+  ppsEpochSec = (uint64_t)hh * 3600ULL + (uint64_t)mm * 60ULL + (uint64_t)ss;
 
   // riferimento temporale
   syncReference = lastSyncTrigger;
@@ -210,37 +239,36 @@ void handleLineSync() {
   lastBroadcast = millis();
 
   // 🔹 Aggiorna stato
-  if(syncMode == MODE_SYNC_LINE)
+  if (syncMode == MODE_SYNC_LINE)
     syncStatus = SYNC_SET_BY_LINE_SIGNAL;
-    // 🔹 Aggiorna stato
-  if(syncMode == MODE_ELAPSED_TIME)
+  // 🔹 Aggiorna stato
+  if (syncMode == MODE_ELAPSED_TIME)
     syncStatus = ELAPSED_TIME_STARTED;
-
 }
 
 void broadcastAsync(const String& message) {
-  ws.cleanupClients(); // rimuove client chiusi
+  ws.cleanupClients();  // rimuove client chiusi
 
-  for (auto& client : ws.getClients()) { 
-      client.text(message); // invio asincrono, non blocca
+  for (auto& client : ws.getClients()) {
+    client.text(message);  // invio asincrono, non blocca
   }
 }
 
 
-int getLastSessionRowIndex(){
+int getLastSessionRowIndex() {
   int lastIdx = 0;
   File file = LittleFS.open("/session.json", "r");
   if (file) {
-      while (file.available()) {
-          String line = file.readStringUntil('\n');
-          DynamicJsonDocument tmp(256);
-          DeserializationError err = deserializeJson(tmp, line);
-          if (!err) {
-              int idx = tmp[INDEX_FIELD] | 0;
-              if (idx > lastIdx) lastIdx = idx;
-          }
+    while (file.available()) {
+      String line = file.readStringUntil('\n');
+      DynamicJsonDocument tmp(256);
+      DeserializationError err = deserializeJson(tmp, line);
+      if (!err) {
+        int idx = tmp[INDEX_FIELD] | 0;
+        if (idx > lastIdx) lastIdx = idx;
       }
-      file.close();
+    }
+    file.close();
   }
   return lastIdx;
 }
@@ -263,7 +291,7 @@ void broadcastTime() {
   doc["lg"] = GPSRefreshInterval * 60;
   doc["pw"] = powerSource;
   doc["ts"] = syncTestRequested;
-  
+
   fixStatus = syncMode == MODE_SYNC_GPS;
 
   if (gps.time.isValid())
@@ -271,38 +299,35 @@ void broadcastTime() {
 
   if (gps.location.isValid())
     fixStatus += 4;
-  
-  if(calRunning)
+
+  if (calRunning)
     fixStatus += 8;
 
   doc["f"] = fixStatus;
 
-  if(WiFi.status() == WL_CONNECTED)
-  {  
-    if(internetOK){
-      doc["w"] = 3;    
-    }
-    else{
+  if (WiFi.status() == WL_CONNECTED) {
+    if (internetOK) {
+      doc["w"] = 3;
+    } else {
       doc["w"] = 2;
     }
-  }else{
-    if(millis() - startAttemptTime < wifiTimeout) {
+  } else {
+    if (millis() - startAttemptTime < wifiTimeout) {
       doc["w"] = 1;
-    }else{
+    } else {
       doc["w"] = 0;
     }
   }
 
-  if(doc["w"] == 3)
+  if (doc["w"] == 3)
     digitalWrite(LED_2, HIGH);
   else
     digitalWrite(LED_2, LOW);
 
   String json;
   serializeJson(doc, json);
-  ws.cleanupClients(); // rimuove client chiusi
-  ws.textAll(json);  // 🔹 invia a tutti i client connessi
-
+  ws.cleanupClients();  // rimuove client chiusi
+  ws.textAll(json);     // 🔹 invia a tutti i client connessi
 }
 
 
@@ -324,7 +349,7 @@ void broadcastTime() {
 //   doc["lg"] = GPSRefreshInterval * 60;
 //   doc["pw"] = powerSource;
 //   doc["ts"] = syncTestRequested;
-  
+
 
 //   fixStatus = syncMode == MODE_SYNC_GPS;
 
@@ -333,7 +358,7 @@ void broadcastTime() {
 
 //   if (gps.location.isValid())
 //     fixStatus += 4;
-  
+
 //   if(calRunning)
 //     fixStatus += 8;
 
@@ -349,97 +374,122 @@ void broadcastTime() {
 // }
 
 double readInternalTemp() {
-  double t =  (double)(temprature_sens_read() - 32) / 1.8;
-  return round(t * 10.0) / 10.0;   // 1 decimale
+  double t = (double)(temprature_sens_read() - 32) / 1.8;
+  return round(t * 10.0) / 10.0;  // 1 decimale
 }
 
 uint64_t correctedElapsedUs(uint64_t rawUs) {
   //double T =  readInternalTemp();
-  return (uint64_t)(rawUs * calibrationFactor);
+  return (uint64_t)((double)rawUs * (double)calibrationFactor);
   //return (uint64_t)(rawUs * calibrationFactor * termFactor(T));
 }
 
 uint64_t micros64() {
-  return esp_timer_get_time();  
+  return esp_timer_get_time();
 }
 
 double setTimeBaseCalibration(double deltaUs, double minutes) {
-    if (minutes <= 0.0) {
-        Serial.println("Invalid minutes for calibration");
-        return -1.0;  // valore di errore
-    }
+  if (minutes <= 0.0) {
+    Serial.println("Invalid minutes for calibration");
+    return -1.0;  // valore di errore
+  }
 
-    // Tempo atteso in microsecondi
-    double T_us = minutes * 60.0 * 1e6;
+  // Tempo atteso in microsecondi
+  double T_us = minutes * 60.0 * 1e6;
 
-    // Calcolo fattore di calibrazione
-    calibrationFactor = 1.0 + (deltaUs / T_us);
+  // Calcolo fattore di calibrazione
+  calibrationFactor = 1.0 + (deltaUs / T_us);
 
-    // Scrittura nel settings
-    double calFactorSaved = writeDoubleToSettings("timeCal", calibrationFactor);
+  // Scrittura nel settings
+  double calFactorSaved = writeDoubleToSettings("timeCal", calibrationFactor);
 
-    // Log seriale
-    Serial.println("Calibrazione aggiornata:");
-    Serial.println(String("delta_us=") + deltaUs);
-    Serial.println(String("minutes=") + minutes);
-    Serial.println(String("factor=") + String(calFactorSaved, 10));
+  // Log seriale
+  Serial.println("Calibrazione aggiornata:");
+  Serial.println(String("delta_us=") + deltaUs);
+  Serial.println(String("minutes=") + minutes);
+  Serial.println(String("factor=") + String(calFactorSaved, 10));
 
-    return calFactorSaved;
+  return calFactorSaved;
 }
 
 
-double computePpm(uint64_t measuredUs, uint32_t expectedSeconds)
-{
-    double expectedUs = (double)expectedSeconds * 1e6;
-    Serial.print("expectedUs: ");
-    Serial.println(expectedUs);
-    Serial.print("measuredUs: ");
-    Serial.println(measuredUs);
-    return ((double)measuredUs / expectedUs - 1.0) * 1e6;
+double computePpm(uint64_t measuredUs, uint32_t expectedSeconds) {
+  double expectedUs = (double)expectedSeconds * 1e6;
+  Serial.print("expectedUs: ");
+  Serial.println(expectedUs);
+  Serial.print("measuredUs: ");
+  Serial.println(measuredUs);
+  return ((double)measuredUs / expectedUs - 1.0) * 1e6;
 }
 
 void updateCalibrationFactor(double driftPPM)
 {
-    calibrationFactor =
-        1.0 / (1.0 + driftPPM * 1e-6);
+    const double gain = 0.3;
+
+    double correction = 1.0 / (1.0 + driftPPM * 1e-6);
+
+    calibrationFactor *= 1.0 + (correction - 1.0) * gain;
 
     Serial.print("calibrationFactor: ");
     Serial.println(calibrationFactor, 12);
 }
+
+// void updateCalibrationFactor(double driftPPM)
+// {
+//     double prevCalFactor = calibrationFactor;
+//     double newCalibrationFactor =
+//         1.0 / (1.0 + driftPPM * 1e-6);
+    
+//     double diff = newCalibrationFactor - prevCalFactor;
+    
+//     Serial.print("prevCalFactor: ");
+//     Serial.println(prevCalFactor, 12);
+
+    
+//     Serial.print("newCalibrationFactor: ");
+//     Serial.println(newCalibrationFactor, 12);
+
+//     Serial.print("diff: ");
+//     Serial.println(diff, 12);
+
+//     double calibrationFactor = prevCalFactor + (diff * 1.5);
+
+//     Serial.print("calibrationFactor: ");
+//     Serial.println(calibrationFactor, 12);
+// }
 
 
 double Kp = 0.1;
 double Ki = 0.01;
 double integral = 0;
 
-int8_t computeSlowAgingFromPpm(double ppmError)
-{
-    // ⭐ segno fisico corretto
-    double error = ppmError;
+int8_t computeSlowAgingFromPpm(double ppmError) {
+  // ⭐ segno fisico corretto
+  double error = ppmError;
 
-    Serial.print("Error: ");
-    Serial.println(error);
+  Serial.print("Error: ");
+  Serial.println(error);
 
-    integral += error * Ki;
+  integral += error * Ki;
 
-    Serial.print("Integral: ");
-    Serial.println(startRTC);
+  Serial.print("Integral: ");
+  Serial.println(startRTC);
 
-    if(integral > 20) integral = 20;
-    if(integral < -20) integral = -20;
+  if (integral > 20) integral = 20;
+  if (integral < -20) integral = -20;
 
-    double control = Kp * error + integral;
+  double control = Kp * error + integral;
 
-    Serial.print("Control: ");
-    Serial.println(control); 
+  Serial.print("Control: ");
+  Serial.println(control);
 
-    int8_t newVal = readAgingOffset() + (int8_t)round(control);
+  int8_t newVal = readAgingOffset() + (int8_t)round(control);
 
-    if(newVal > 120) newVal = 120;
-    if(newVal < -120) newVal = -120;
+  if (newVal > 120) newVal = 120;
+  if (newVal < -120) newVal = -120;
 
-    Serial.print("newVal: ");
-    Serial.println(newVal); 
+  Serial.print("newVal: ");
+  Serial.println(newVal);
 
-    return newVal;
+  return newVal;
 }

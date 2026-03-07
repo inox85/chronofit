@@ -19,4 +19,6 @@ bool writeAgingOffset(int8_t offset);
 
 int8_t readAgingOffset();
 
+float rtc_get_temperature();
+
 #endif

@@ -85,3 +85,8 @@ int8_t readAgingOffset()
 
     return 0; // fallback
 }
+
+float rtc_get_temperature()
+{
+    return rtc.getTemperature();
+}

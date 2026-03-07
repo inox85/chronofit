@@ -21,7 +21,7 @@
 #include "RTC.h"
 
 #define DEBUG
-#define PROTOTYPE
+#define PROTOTYPEamazon
 
 void IRAM_ATTR sensorISR(void *arg) {
 
@@ -46,7 +46,7 @@ void signalMenagement(int i){
   // fronte HIGH -> LOW
   if (lastSensorState[i] == HIGH && current == LOW) {
       unsigned long now = millis();
-      uint64_t nowMicros = micros64();
+      uint64_t nowMicros = esp_timer_get_time();
 
       if ((unsigned long)(now - lastSensorsSignal[i]) > delays[i]) {
           sensorTime[i] = nowMicros;
@@ -60,11 +60,10 @@ void signalMenagement(int i){
 }
 
 void IRAM_ATTR onSecondTick(){
-  portENTER_CRITICAL_ISR(&rtcMux);
   lastRTCTrigger = esp_timer_get_time();
   RTCTriggered = true;
   RTCTtriggerCount++;
-  portEXIT_CRITICAL_ISR(&rtcMux);
+
 }
 
 
@@ -78,7 +77,7 @@ void setup() {
   rtc_enable_1hz();
 
   pinMode(SQW_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, FALLING);
+  attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, RISING);
 
   pinMode(PPS_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPpsInterrupt, RISING);
@@ -165,100 +164,9 @@ static uint32_t ppmCount = 0;
 
 void loop() {
 
-  if(calRTC){
-    bool calcAging = false;
-
-    if(RTCTriggered){
-      RTCTriggered = false;
-
-      if (RTCTtriggerCount > 10){
-        rtcDiff = lastRTCTrigger - prevRTCTrigger;
-        prevRTCTrigger = lastRTCTrigger;
-        calcAgingRCT = true;
-
-        if(rtcDiffCount == 11)
-        {
-            rtcDiffMean = rtcDiff;
-        }
-        else
-        {
-            rtcDiffMean += (rtcDiff - rtcDiffMean) / rtcDiffCount;
-        }
-
-        rtcDiffCount++;
-
-      }
-        Serial.print("rtcDiff: ");
-        Serial.print(rtcDiff);
-
-        Serial.print(" -> rtcDiffMean: ");
-        Serial.println(rtcDiffMean);
-    }
-
-
-    if(ppsTriggered){
-      ppsTriggered = false;
-      
-      if(ppsCounter > 10){
-          ppsDiff = lastSyncTrigger - prevPPSTrigger;
-          calcAgingPPS = true;
-
-          if(ppsDiffCount == 11)
-          {
-              ppsDiffMean = ppsDiff;
-          }
-          else
-          {   
-              ppsDiffMean += (double)(ppsDiff - ppsDiffMean) / ppsDiffCount;
-          }
-          ppsDiffCount++;
-
-  
-        }
-
-        prevPPSTrigger = lastSyncTrigger;
-
-        Serial.print("ppsDiff: ");
-        Serial.print(ppsDiff);
-
-        Serial.print(" -> ppsDiffMean: ");
-        Serial.println(ppsDiffMean); 
-
-    }
-    
-    if(calcAgingRCT && calcAgingPPS){
-      calcAgingRCT = false;
-      calcAgingPPS = false;
-
-      double ppmInstant = (rtcDiffMean / ppsDiffMean - 1.0) * 1e6;
-
-      Serial.print("ppmInstant: "); 
-      Serial.println(ppmInstant);
-
-      // Protezione fondamentale
-      if (!isnan(ppmInstant) && isfinite(ppmInstant))
-      {
-          if (ppmCount == 0)
-          {
-              ppmMean = ppmInstant;
-          }
-          else
-          {
-              ppmMean += (ppmInstant - ppmMean) / (ppmCount + 1);
-          }
-
-          ppmCount++;
-
-          Serial.print("ppmMean: ");
-          Serial.println(ppmMean);
-      }
-
-    }
-   return;
-  }
-
   if(RTCTriggered){
     RTCTriggered = false;
+
 
     if(RTCTtriggerCount == 1){
 
@@ -266,21 +174,23 @@ void loop() {
 
       Serial.print("startRTC: ");
       Serial.println(startRTC);
-    }else if((RTCTtriggerCount - 1) % 60  == 0 && startRTC != 0){
-   
-      double driftPPM = computePpm(lastRTCTrigger - startRTC, RTCTtriggerCount - 1);
 
-      Serial.println("===========================");
-      Serial.print("RTCTriggerCount: ");
-      Serial.println(RTCTtriggerCount - 1);
-      Serial.print("Extimated uS: ");
-      Serial.println((RTCTtriggerCount - 1) * 1000000ULL);
-      Serial.print("Internal uS: ");
-      Serial.println(lastRTCTrigger - startRTC);
-      Serial.print("driftPPM: ");
+    }else if(RTCTtriggerCount > 30){
+      double extimated = ((double)(RTCTtriggerCount - 1) * 1000000.0)/1000.0;
+      double elapsed = (double)(((double)lastRTCTrigger - (double)startRTC)* calibrationFactor )/1000.0;
+      double delta = (double)elapsed - (double)extimated;
+
+      Serial.print(" Delta: ");
+      Serial.print(delta);
+      Serial.print(" in ");
+      Serial.print(RTCTtriggerCount - 1);
+      double driftPPM = (delta / (double)(RTCTtriggerCount - 1)) * 1000.0;
+      Serial.print(" DriftPPM: ");
       Serial.println(driftPPM);
-      Serial.println("===========================");
-      updateCalibrationFactor(driftPPM);
+      if(fabs(driftPPM)> 0.5){
+        updateCalibrationFactor(driftPPM * 2.0);
+      }
+
     }
     
   }
@@ -315,6 +225,7 @@ void loop() {
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
         syncReference = thisPpsUs;
         syncStatus = SYNC_GPS_SYNCED;
+        RTCTtriggerCount = 0;
         handlePpsSync();          // NON deve più toccare ppsTriggered
         lastGPSSync = millis();
       }
