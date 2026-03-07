@@ -186,7 +186,13 @@ void loop() {
       Serial.print(RTCTtriggerCount - 1);
       double driftPPM = (delta / (double)(RTCTtriggerCount - 1)) * 1000.0;
       Serial.print(" DriftPPM: ");
-      Serial.println(driftPPM);
+      Serial.print(driftPPM);
+
+
+      float temperature = rtc_get_temperature();
+      Serial.print(" temperature: ");
+      Serial.println(temperature);
+
       if(fabs(driftPPM)> 0.5){
         updateCalibrationFactor(driftPPM * 2.0);
       }
