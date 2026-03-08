@@ -413,15 +413,6 @@ double setTimeBaseCalibration(double deltaUs, double minutes) {
 }
 
 
-double computePpm(uint64_t measuredUs, uint32_t expectedSeconds) {
-  double expectedUs = (double)expectedSeconds * 1e6;
-  Serial.print("expectedUs: ");
-  Serial.println(expectedUs);
-  Serial.print("measuredUs: ");
-  Serial.println(measuredUs);
-  return ((double)measuredUs / expectedUs - 1.0) * 1e6;
-}
-
 void updateCalibrationFactor(double driftPPM)
 {
     const double gain = 0.3;
@@ -432,64 +423,4 @@ void updateCalibrationFactor(double driftPPM)
 
     Serial.print("calibrationFactor: ");
     Serial.println(calibrationFactor, 12);
-}
-
-// void updateCalibrationFactor(double driftPPM)
-// {
-//     double prevCalFactor = calibrationFactor;
-//     double newCalibrationFactor =
-//         1.0 / (1.0 + driftPPM * 1e-6);
-    
-//     double diff = newCalibrationFactor - prevCalFactor;
-    
-//     Serial.print("prevCalFactor: ");
-//     Serial.println(prevCalFactor, 12);
-
-    
-//     Serial.print("newCalibrationFactor: ");
-//     Serial.println(newCalibrationFactor, 12);
-
-//     Serial.print("diff: ");
-//     Serial.println(diff, 12);
-
-//     double calibrationFactor = prevCalFactor + (diff * 1.5);
-
-//     Serial.print("calibrationFactor: ");
-//     Serial.println(calibrationFactor, 12);
-// }
-
-
-double Kp = 0.1;
-double Ki = 0.01;
-double integral = 0;
-
-int8_t computeSlowAgingFromPpm(double ppmError) {
-  // ⭐ segno fisico corretto
-  double error = ppmError;
-
-  Serial.print("Error: ");
-  Serial.println(error);
-
-  integral += error * Ki;
-
-  Serial.print("Integral: ");
-  Serial.println(startRTC);
-
-  if (integral > 20) integral = 20;
-  if (integral < -20) integral = -20;
-
-  double control = Kp * error + integral;
-
-  Serial.print("Control: ");
-  Serial.println(control);
-
-  int8_t newVal = readAgingOffset() + (int8_t)round(control);
-
-  if (newVal > 120) newVal = 120;
-  if (newVal < -120) newVal = -120;
-
-  Serial.print("newVal: ");
-  Serial.println(newVal);
-
-  return newVal;
 }

@@ -21,7 +21,7 @@
 #include "RTC.h"
 
 #define DEBUG
-#define PROTOTYPEamazon
+#define PROTOTYPE
 
 void IRAM_ATTR sensorISR(void *arg) {
 
