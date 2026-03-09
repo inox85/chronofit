@@ -92,7 +92,7 @@ void setup() {
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
-  agingFactor = readIntFromSettings("agingFactor", 0);
+  agingFactor = (uint8_t)readIntFromSettings("agingFactor", 0);
 
   if(syncMode == MODE_SYNC_GPS)
     syncStatus = SYNC_FIRST_GPS_SYNC;
@@ -136,7 +136,7 @@ void setup() {
   writeAgingOffset(agingFactor);
 
   int8_t agingRegVal = readAgingOffset();
-
+  Serial.println("agingRegVal");
   Serial.println(agingRegVal);
 
 }
@@ -225,7 +225,7 @@ void loop() {
         handlePpsSync();          // NON deve più toccare ppsTriggered
         lastGPSSync = millis();
       }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
-        if( gps.time.isValid() && gps.time.second() == 0){
+        if( gps.time.isValid() && (gps.time.second() == 0 || gps.time.second() == 59)){
           syncTestRequested = 0;   
           sensorTime[4] = lastSyncTrigger;
           sensorTriggered[4] = true;
@@ -249,7 +249,7 @@ void loop() {
   
 }
 
-void checkConnectedClient(){
+bool checkConnectedClient(){
   int n = WiFi.softAPgetStationNum();
   if(n > 0)
   {
