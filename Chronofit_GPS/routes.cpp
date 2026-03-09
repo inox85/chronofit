@@ -757,14 +757,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         request->send(200, "text/plain",
             "Calibration set: " + String(calFactor, 10));
 
-    } 
-    else if (request->hasParam("auto")) {
-
-        calRunning = request->getParam("auto")->value().toInt();
-
-        request->send(200, "text/plain",
-            "Cal running: " + String(calRunning));
-
     }
     else if (request->hasParam("agingFactor")) {
 
