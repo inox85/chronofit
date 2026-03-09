@@ -4,7 +4,7 @@ import subprocess
 # CONFIG - adatta ai tuoi percorsi
 MKLITTLEFS = "mklittlefs.exe"
 ESPTOOL = "esptool.py"   # esptool lo richiama da Python
-PORT = "COM7"            # cambia con la tua porta ESP32
+PORT = "COM2"            # cambia con la tua porta ESP32
 BAUD = "921600"
 FOLDER = "data"          # cartella locale con i file
 SIZE = "0x160000"        # dimensione partizione (es. 1MB)

@@ -19,6 +19,8 @@
 #include <NetworkClientSecure.h>
 #include <base64.h>
 #include "secrets.h"
+#include "RTC.h"
+#include "esp_wifi.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -207,6 +209,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     } else {
       request->send(400, "text/plain", "Missing offset parameter.");
     }
+  });
+
+  server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(400, "text/plain", "Board reboot!");
+    esp_restart();
   });
 
   // --- Set Time Manuale --
@@ -540,8 +547,9 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   });
 
-   server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
-    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+
+  server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
+  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
 
     String body;
     for (size_t i = 0; i < len; i++) body += (char)data[i];
@@ -560,11 +568,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     #ifdef DEBUG
     Serial.printf("Ricevuti: %d, %d, %d, %d\n",
-                   line, lineIds[idx], competitors[idx], delays[idx]);
+                    line, lineIds[idx], competitors[idx], delays[idx]);
     #endif
     // E qui elabori o invii via seriale, BLE, ecc.
     request->send(200, "text/plain", "Saved sucessfully"); 
-    
+      
   });
 
   server.on("/sendCheckPointRow", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
@@ -720,15 +728,16 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     StaticJsonDocument<512> doc;
     
-    doc["timeBaseCal"] = calibrationFactor;
+    doc["tibeBaseCalCoeff"] = calibrationFactor;
     doc["calPpsCount"] = calPpsCount;
     doc["calPpsTotal"] = CAL_WINDOW_SEC;
-    doc["intTemp"] = readInternalTemp();
-
+    doc["cpuTemperature"] = readInternalTemp();
+    
     String json;
     serializeJson(doc, json);
 
     request->send(200, "application/json", json);
+
   });
 
   server.on("/timeBaseCal", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -756,10 +765,24 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         request->send(200, "text/plain",
             "Cal running: " + String(calRunning));
 
-      } 
-      else {
-          request->send(400, "text/plain", "Missing parameters");
-      }
+    }
+    else if (request->hasParam("agingFactor")) {
+
+      int8_t agingFactor = request->getParam("agingFactor")->value().toInt();
+
+      writeAgingOffset(agingFactor);
+
+      int8_t agingRegVal = readAgingOffset();
+
+      Serial.println(agingRegVal);
+
+      request->send(200, "text/plain",
+          "Aging factor: " + String(agingFactor));
+
+    }  
+    else {
+        request->send(400, "text/plain", "Missing parameters");
+    }
   });
 
 }

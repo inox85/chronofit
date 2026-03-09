@@ -6,7 +6,6 @@
 #include <LittleFS.h>
 #include <DNSServer.h>
 #include <Update.h>
-#include <SoftwareSerial.h>
 #include "params.h"
 #include "esp_wifi.h"
 #include "routes.h"
@@ -19,20 +18,32 @@
 #include "diagnostic.h"
 #include "printer.h"
 #include "settings.h"
+#include "RTC.h"
 
 #define DEBUG
 #define PROTOTYPE
 
 void IRAM_ATTR sensorISR(void *arg) {
-
   int i = (int)arg;
+  signalMenagement(i);
+}
 
+
+// --- ISR PPS ---
+void IRAM_ATTR onPpsInterrupt() {   
+  lastSyncTrigger = esp_timer_get_time();
+  ppsTriggered = true;
+  ppsCounter++;
+}
+
+void signalMenagement(int i){
+  
   bool current = digitalRead(sensorsPins[i]);
 
   // fronte HIGH -> LOW
   if (lastSensorState[i] == HIGH && current == LOW) {
       unsigned long now = millis();
-      uint64_t nowMicros = micros64();
+      uint64_t nowMicros = esp_timer_get_time();
 
       if ((unsigned long)(now - lastSensorsSignal[i]) > delays[i]) {
           sensorTime[i] = nowMicros;
@@ -42,20 +53,31 @@ void IRAM_ATTR sensorISR(void *arg) {
   }
 
   lastSensorState[i] = current;
-  
+
 }
 
-// --- ISR PPS ---
-void IRAM_ATTR onPpsInterrupt() {
-  lastSyncTrigger = micros64();
-  ppsTriggered = true;
-  ppsCounter++;
+void IRAM_ATTR onSecondTick(){
+  lastRTCTrigger = esp_timer_get_time();
+  RTCTriggered = true;
+  RTCTtriggerCount++;
+
 }
 
 void setup() {
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+
+  rtc_init(SDA_PIN, SCL_PIN, 400000);
+  rtc_enable_1hz();
+
+  pinMode(SQW_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, RISING);
+
+  pinMode(PPS_PIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPpsInterrupt, RISING);
+  
+  rtc_set_datetime(2026, 2, 25, 12, 0, 0); // solo una volta
 
   pinMode(LED_1, OUTPUT);
   pinMode(LED_2, OUTPUT);
@@ -68,19 +90,16 @@ void setup() {
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
   
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
+  GPSRefreshInterval = readIntFromSettings("refInt", 0);
+  utcOffset = readIntFromSettings("utcOffset", 0);
+  agingFactor = readIntFromSettings("agingFactor", 0);
 
   if(syncMode == MODE_SYNC_GPS)
     syncStatus = SYNC_FIRST_GPS_SYNC;
 
-  GPSRefreshInterval = readIntFromSettings("refInt", 0);
-  utcOffset = readIntFromSettings("utcOffset", 0);
-
   Serial.println();
   Serial.print("Time cal factor: ");
   Serial.println(calibrationFactor, 10);
-
-  pinMode(PPS_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPpsInterrupt, RISING);
 
   buzzerInit(BUZZER);
 
@@ -113,7 +132,13 @@ void setup() {
   digitalWrite(LED_1, LOW);
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
-  
+
+  writeAgingOffset(agingFactor);
+
+  int8_t agingRegVal = readAgingOffset();
+
+  Serial.println(agingRegVal);
+
 }
 
 void configFS(){
@@ -124,11 +149,47 @@ void configFS(){
 
   server.serveStatic("/", LittleFS, "/");
 
-
 }
 
-
 void loop() {
+
+  if(RTCTriggered){
+    RTCTriggered = false;
+
+
+    if(RTCTtriggerCount == 1){
+
+      startRTC = lastRTCTrigger;
+
+      Serial.print("startRTC: ");
+      Serial.println(startRTC);
+
+    }else if(RTCTtriggerCount > 60){
+      double extimated = ((double)(RTCTtriggerCount - 1) * 1000000.0)/1000.0;
+      double elapsed = (double)(((double)lastRTCTrigger - (double)startRTC)* calibrationFactor )/1000.0;
+      double delta = (double)elapsed - (double)extimated;
+
+      Serial.print(" Delta: ");
+      Serial.print(delta);
+      Serial.print(" in ");
+      Serial.print(RTCTtriggerCount - 1);
+      double driftPPM = (delta / (double)(RTCTtriggerCount - 1)) * 1000.0;
+      Serial.print(" DriftPPM: ");
+      Serial.print(driftPPM);
+
+
+      float temperature = rtc_get_temperature();
+      Serial.print(" temperature: ");
+      Serial.println(temperature);
+
+      if(fabs(driftPPM)> 0.5){
+        updateCalibrationFactor(driftPPM * 2.0);
+      }
+
+    }
+    
+  }
+
 
   dnsServer.processNextRequest();
 
@@ -151,51 +212,28 @@ void loop() {
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
   uint64_t delta = lastNmeaValid - lastSyncTrigger;
 
-  if (ppsTriggered && (delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
-      
-      uint64_t thisPpsUs = lastSyncTrigger;
+  if (ppsTriggered){
+
+    if ((delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;   // consumato QUI, una sola volta
+      uint64_t thisPpsUs = lastSyncTrigger;
 
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
         syncReference = thisPpsUs;
         syncStatus = SYNC_GPS_SYNCED;
+        RTCTtriggerCount = 0;
         handlePpsSync();          // NON deve più toccare ppsTriggered
         lastGPSSync = millis();
+      }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
+        if( gps.time.isValid() && gps.time.second() == 0){
+          syncTestRequested = 0;   
+          sensorTime[4] = lastSyncTrigger;
+          sensorTriggered[4] = true;
+        }
       }
 
-      if (calRunning) {
-
-          calPpsCount++;
-          Serial.print("CAL PPS: ");
-          Serial.println(calPpsCount);
-
-          if (calPpsCount >= CAL_WINDOW_SEC) {   // 600 PPS = 10 minuti
-            calRunning = false;
-
-            int32_t errorUs = (int32_t)CAL_WINDOW_US - (int32_t)(thisPpsUs - calStartUs);
-
-            Serial.print("Cal start us: ");
-            Serial.println(calStartUs);
-            Serial.print("Cal end us: ");
-            Serial.println(thisPpsUs);
-            Serial.print("Calibration error (us): ");
-            Serial.println(errorUs);
-
-            writeDoubleToSettings("calTempRef", readInternalTemp());
-
-            setTimeBaseCalibration(errorUs, calPpsCount / 60);
-
-            sweepBuzz();
-          }
-
-      } else {
-          // avvio nuova finestra di calibrazione
-          calStartUs = thisPpsUs;
-          calPpsCount = 0;
-      }
+    }
   }
-
-  handleSensorTrigger();
 
   PreciseTime t = getPreciseTime();
   actualSecond = t.ss;
@@ -205,43 +243,13 @@ void loop() {
     broadcastTime();  
   }
   
-  if(actualSecond == 0){
-    ppsCounter = 0;
-  }
-
   digitalWrite(LED_3, syncTestRequested);
 
-  if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
-    if(syncMode == MODE_SYNC_GPS){
-      sweepBuzz();   
-      syncTestRequested = 1;  
-    }
-    else{
-      buzzerBeep(50,1,0,250,128);
-    }
-  }
-
-  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
-    PreciseTime time = getPreciseTime();
-
-    int pNum = 60;
-    if (time.ms < 500){
-        pNum = 61;
-    }
-
-    if((ppsCounter % pNum) == 0 && gps.time.isUpdated()){
-      syncTestRequested = 0;
-      sensorTime[4] = lastSyncTrigger;
-      sensorTriggered[4] = true;
-    }
-    
-  }
-
-  checkPowerSource();
-
+  handleSensorTrigger();
+  
 }
 
-bool checkConnectedClient(){
+void checkConnectedClient(){
   int n = WiFi.softAPgetStationNum();
   if(n > 0)
   {
@@ -250,9 +258,13 @@ bool checkConnectedClient(){
   return false;
 }
 
+
 void handleSensorTrigger(){
   for (int i = 0; i < 5; i++) {
     if (sensorTriggered[i]) {
+      Serial.print("Line");
+      Serial.println(i);
+
       sensorTriggered[i] = false;           // reset del flag
       playBinary(i+1);
       if (syncMode == MODE_SYNC_LINE && syncStatus == SYNC_WAIT_LINE_SIGNAL){

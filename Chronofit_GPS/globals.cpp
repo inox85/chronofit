@@ -26,6 +26,8 @@ volatile bool ppsTriggered = false;
 volatile bool lineTriggered = false;
 volatile uint32_t ppsCounter = 0;
 
+volatile bool RTCTriggered = false;
+
 bool testOnSync = true;
 int calRunning = 0;
 int calPpsCount = 0;
@@ -39,6 +41,8 @@ volatile uint64_t lastNmeaValid = 0;
 volatile uint64_t syncReference = 0;
 unsigned long gpsTimeOffsetUs = 0;
 int utcOffset = 0;
+
+volatile uint64_t lastRTCTrigger = 0;
 
 double calibrationFactor = 1.0;
 double calTemp = 50;
@@ -87,3 +91,36 @@ int lastBroadCastSecond = 0;
 int sessionRowIndex = 0;
 
 unsigned long lastClientCheck = 0;
+
+uint32_t RTCTtriggerCount = 0;
+uint64_t startRTC = 0;
+
+uint64_t prevRTCTrigger = 0;
+uint64_t prevPPSTrigger= 0;
+double meanRTCAdjFactor = 1;
+uint32_t ppsDiff = 0;
+uint32_t rtcDiff = 0;
+
+uint32_t rtcMeanCount = 0;
+uint32_t ppsMeanCount = 0;
+
+uint64_t rtcDiffSum = 0;
+uint32_t rtcDiffCount = 0;
+double rtcDiffMean = 0;
+
+uint64_t ppsDiffSum = 0;
+uint32_t ppsDiffCount = 0;
+double ppsDiffMean = 0;
+
+double ppmAdjRTC = 0.0;
+
+uint64_t rtcWindowStartUs = 0;
+uint32_t rtcWindowCount = 0;
+uint64_t rtcWindowSumUs = 0;
+
+bool calRTC = false;
+
+int agingFactor = 0;
+
+portMUX_TYPE ppsMux = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE rtcMux = portMUX_INITIALIZER_UNLOCKED;

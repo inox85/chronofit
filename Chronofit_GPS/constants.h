@@ -24,6 +24,10 @@ constexpr int LED_1 = 12;
 constexpr int LED_2 = 2;
 constexpr int LED_3 = 14;
 
+constexpr int SDA_PIN = 21;
+constexpr int SCL_PIN = 22;
+constexpr int SQW_PIN = 23;
+
 // --- Altri pin ---
 
 constexpr int PPS_PIN = 34;

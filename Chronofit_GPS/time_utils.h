@@ -23,11 +23,13 @@ void handlePpsSync();
 
 void handleLineSync();
 
+void handleRTCSync();
+
 void broadcastTime();
 
 int getLastSessionRowIndex();
 
-void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms);
+//void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms);
 
 void broadcastAsync(const String& message);
 
@@ -40,3 +42,6 @@ double setTimeBaseCalibration(double deltaUs, double minutes);
 double readInternalTemp();
 
 double termFactor(double T);
+
+void updateCalibrationFactor(double driftPPM);
+

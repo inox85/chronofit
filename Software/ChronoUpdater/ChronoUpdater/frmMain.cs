@@ -23,12 +23,27 @@ namespace ChronoUpdater
             InitializeComponent();
         }
 
-        private void btnDownload_Click(object sender, EventArgs e)
+        private async void btnDownload_Click(object sender, EventArgs e)
         {
-            
+            try
+            {
+                btnDownload.Enabled = false;
+
+                await DownloadFiles();
+
+                MessageBox.Show("Download completato!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Errore: " + ex.Message);
+            }
+            finally
+            {
+                btnDownload.Enabled = true;
+            }
         }
 
-        static async Task Main()
+        static async Task DownloadFiles()
         {
             string token = "";
             string repo = "inox85/chronofit";
@@ -55,7 +70,7 @@ namespace ChronoUpdater
 
                 var data = await client.GetByteArrayAsync(url);
 
-                await File.WriteAllBytesAsync(name, data);
+                File.WriteAllBytes(name, data);
             }
 
             Console.WriteLine("Download completato");

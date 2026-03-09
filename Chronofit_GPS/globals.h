@@ -32,6 +32,8 @@ extern uint64_t ppsEpochSec;
 extern volatile bool ppsTriggered;
 extern volatile bool lineTriggered;
 
+extern volatile bool RTCTriggered;
+
 extern double calibrationFactor;
 extern double calTempRef;
 
@@ -49,6 +51,8 @@ extern unsigned long gpsTimeOffsetUs;
 extern int utcOffset;
 
 extern int syncEnabled;
+
+extern volatile uint64_t lastRTCTrigger;
 
 // --- Sensori ---
 extern int lineIds[5];
@@ -89,6 +93,8 @@ extern unsigned long lastClientCheck;
 
 extern "C" uint8_t temprature_sens_read();
 
+extern uint32_t RTCTtriggerCount;
+extern uint64_t startRTC;
 
-
+extern int agingFactor;
 #endif
