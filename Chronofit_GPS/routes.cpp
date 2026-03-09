@@ -547,18 +547,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   });
 
-  server.on("/calRTC", HTTP_GET, [](AsyncWebServerRequest *request){
-
-    esp_wifi_stop();
-    esp_wifi_deinit();
-
-    calRTC = true;
-
-    request->send(200, "text/plain", "Sync test started");
-
-  });
-
-
 
   server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
   [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
@@ -740,21 +728,16 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     StaticJsonDocument<512> doc;
     
-    doc["timeBaseCal"] = calibrationFactor;
+    doc["tibeBaseCalCoeff"] = calibrationFactor;
     doc["calPpsCount"] = calPpsCount;
     doc["calPpsTotal"] = CAL_WINDOW_SEC;
-    doc["intTemp"] = readInternalTemp();
-    doc["ppsDiff"] = ppsDiff;
-    doc["rtcDiff"] = rtcDiff;
-    doc["ppsDiffMean"] = ppsDiffMean;
-    doc["rtcDiffMean"] = rtcDiffMean;
-    doc["ppmAdjRTC"] = ppmAdjRTC;
+    doc["cpuTemperature"] = readInternalTemp();
     
-
     String json;
     serializeJson(doc, json);
 
     request->send(200, "application/json", json);
+
   });
 
   server.on("/timeBaseCal", HTTP_GET, [](AsyncWebServerRequest *request) {

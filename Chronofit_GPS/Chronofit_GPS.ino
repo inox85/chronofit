@@ -24,11 +24,8 @@
 #define PROTOTYPE
 
 void IRAM_ATTR sensorISR(void *arg) {
-
   int i = (int)arg;
-
   signalMenagement(i);
-
 }
 
 
@@ -66,8 +63,6 @@ void IRAM_ATTR onSecondTick(){
 
 }
 
-
-
 void setup() {
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
   Serial.begin(9600, SERIAL_8N1);
@@ -95,12 +90,12 @@ void setup() {
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
   
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
+  GPSRefreshInterval = readIntFromSettings("refInt", 0);
+  utcOffset = readIntFromSettings("utcOffset", 0);
+  agingFactor = readIntFromSettings("agingFactor", 0);
 
   if(syncMode == MODE_SYNC_GPS)
     syncStatus = SYNC_FIRST_GPS_SYNC;
-
-  GPSRefreshInterval = readIntFromSettings("refInt", 0);
-  utcOffset = readIntFromSettings("utcOffset", 0);
 
   Serial.println();
   Serial.print("Time cal factor: ");
@@ -138,7 +133,7 @@ void setup() {
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
 
-  writeAgingOffset(0);
+  writeAgingOffset(agingFactor);
 
   int8_t agingRegVal = readAgingOffset();
 
@@ -156,12 +151,6 @@ void configFS(){
 
 }
 
-bool calcAgingRCT = false;
-bool calcAgingPPS = false;
-
-static double ppmMean = 0.0;
-static uint32_t ppmCount = 0;
-
 void loop() {
 
   if(RTCTriggered){
@@ -175,7 +164,7 @@ void loop() {
       Serial.print("startRTC: ");
       Serial.println(startRTC);
 
-    }else if(RTCTtriggerCount > 30){
+    }else if(RTCTtriggerCount > 60){
       double extimated = ((double)(RTCTtriggerCount - 1) * 1000000.0)/1000.0;
       double elapsed = (double)(((double)lastRTCTrigger - (double)startRTC)* calibrationFactor )/1000.0;
       double delta = (double)elapsed - (double)extimated;
@@ -208,7 +197,6 @@ void loop() {
 
   validNmea = processServicesSerial();
 
-
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
     digitalWrite(LED_1, checkConnectedClient());
@@ -224,7 +212,9 @@ void loop() {
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
   uint64_t delta = lastNmeaValid - lastSyncTrigger;
 
-  if (ppsTriggered && (delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+  if (ppsTriggered){
+
+    if ((delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;   // consumato QUI, una sola volta
       uint64_t thisPpsUs = lastSyncTrigger;
 
@@ -234,9 +224,15 @@ void loop() {
         RTCTtriggerCount = 0;
         handlePpsSync();          // NON deve più toccare ppsTriggered
         lastGPSSync = millis();
+      }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
+        if( gps.time.isValid() && gps.time.second() == 0){
+          syncTestRequested = 0;   
+          sensorTime[4] = lastSyncTrigger;
+          sensorTriggered[4] = true;
+        }
       }
 
-      
+    }
   }
 
   PreciseTime t = getPreciseTime();
@@ -248,44 +244,12 @@ void loop() {
   }
   
   digitalWrite(LED_3, syncTestRequested);
-  
-  if(actualSecond == 0){
-    ppsCounter = 0;
-  }
-
-  if(!syncTestRequested && (!digitalRead(0) || analogRead(35) > 500)){
-    if(syncMode == MODE_SYNC_GPS){
-      sweepBuzz();   
-      syncTestRequested = 1;  
-    }
-    else{
-      buzzerBeep(50,1,0,250,128);
-    }
-  }
-
-  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED) { 
-    PreciseTime time = getPreciseTime();
-    
-    int pNum = 60;
-    if (time.ms < 500){
-        pNum = 61;
-    }
-
-    if((ppsCounter % pNum) == 0 && gps.time.isUpdated()){
-      syncTestRequested = 0;
-      
-      sensorTime[4] = lastSyncTrigger;
-      sensorTriggered[4] = true;
-    }
-    
-  }
 
   handleSensorTrigger();
   
-
 }
 
-bool checkConnectedClient(){
+void checkConnectedClient(){
   int n = WiFi.softAPgetStationNum();
   if(n > 0)
   {
@@ -293,6 +257,7 @@ bool checkConnectedClient(){
   }
   return false;
 }
+
 
 void handleSensorTrigger(){
   for (int i = 0; i < 5; i++) {

@@ -96,23 +96,5 @@ extern "C" uint8_t temprature_sens_read();
 extern uint32_t RTCTtriggerCount;
 extern uint64_t startRTC;
 
-extern uint64_t prevRTCTrigger;
-extern uint64_t prevPPSTrigger;
-extern uint32_t ppsDiff;
-extern uint32_t rtcDiff;
-extern uint64_t rtcDiffSum;
-extern uint32_t rtcDiffCount;
-extern double rtcDiffMean;
-
-extern uint64_t ppsDiffSum;
-extern uint32_t ppsDiffCount;
-extern double ppsDiffMean;
-
-extern double ppmAdjRTC;
-
-extern bool calRTC;
-
-extern portMUX_TYPE ppsMux;
-extern portMUX_TYPE rtcMux;
-
+extern int agingFactor;
 #endif

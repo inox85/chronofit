@@ -120,5 +120,7 @@ uint64_t rtcWindowSumUs = 0;
 
 bool calRTC = false;
 
+int agingFactor = 0;
+
 portMUX_TYPE ppsMux = portMUX_INITIALIZER_UNLOCKED;
 portMUX_TYPE rtcMux = portMUX_INITIALIZER_UNLOCKED;
