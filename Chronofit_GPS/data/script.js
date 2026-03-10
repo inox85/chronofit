@@ -192,6 +192,7 @@ fetch('/allSettings')
 
 function fillSettingsFields(data){
   console.log("Aggiorno settings...")
+  console.log(data);
   document.getElementById("c1").value = data.c1 ?? "";
   document.getElementById("c2").value = data.c2 ?? "";
   document.getElementById("c3").value = data.c3 ?? "";
@@ -1318,7 +1319,7 @@ function handleInputUpdate(e) {
 
   const data = {
     l: Number(lineNumber),
-    ld: Number(document.querySelector(`#l${lineNumber}`).value),
+    ld: String(document.querySelector(`#l${lineNumber}`).value),
     c: Number(document.querySelector(`#c${lineNumber}`).value),
     d: Number(document.querySelector(`#d${lineNumber}`).value) || 0
   };

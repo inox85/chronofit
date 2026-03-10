@@ -18,7 +18,7 @@ static QueueHandle_t printerQueue = NULL;
 
 
 
-void printFormatted(int index, int line, int competitor, int hh, int mm, int ss, int ms, int cr){
+void printFormatted(int index, String line, int competitor, int hh, int mm, int ss, int ms, int cr){
 
   char buffer[40];
 

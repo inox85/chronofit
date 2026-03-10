@@ -20,7 +20,6 @@
 #include "settings.h"
 #include "RTC.h"
 
-#define DEBUG
 #define PROTOTYPE
 
 void IRAM_ATTR sensorISR(void *arg) {

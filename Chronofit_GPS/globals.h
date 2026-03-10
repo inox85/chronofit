@@ -55,7 +55,7 @@ extern int syncEnabled;
 extern volatile uint64_t lastRTCTrigger;
 
 // --- Sensori ---
-extern int lineIds[5];
+extern String lineIds[5];
 extern int competitors[5];
 extern unsigned long delays[5];
 extern volatile unsigned long lastSensorsSignal[5];

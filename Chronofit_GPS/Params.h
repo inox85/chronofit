@@ -33,3 +33,4 @@
 
 #define AGING_REG                     0x10
 #define DS3231_ADDR                   0x68
+#define DEBUG

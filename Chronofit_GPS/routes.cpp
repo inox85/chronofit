@@ -560,14 +560,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     deserializeJson(doc, body);
     int line = doc["l"].as<int>();
     int idx = line - 1;
-    lineIds[idx] = doc["ld"].as<int>();
+    lineIds[idx] = doc["ld"].as<String>();
     competitors[idx] = doc["c"].as<int>();
     delays[idx] = doc["d"].as<int>();
 
     broadCastSettings();
 
     #ifdef DEBUG
-    Serial.printf("Ricevuti: %d, %d, %d, %d\n",
+    Serial.printf("Ricevuti: %d, %s, %d, %d\n",
                     line, lineIds[idx], competitors[idx], delays[idx]);
     #endif
     // E qui elabori o invii via seriale, BLE, ecc.
@@ -587,7 +587,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     deserializeJson(doc, body);
 
     int id  = doc["index"];
-    int lineId = doc["lineId"];
+    String lineId = doc["lineId"];
     int competitor = doc["competitor"];
     int hour = doc["hour"];
     int minute = doc["minute"];
@@ -622,7 +622,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
         int entryIndex = doc["index"].as<int>();
         int lineNumber = doc["lineNumber"].as<int>();
-        int lineId = doc["lineId"].as<int>();
+        String lineId = doc["lineId"].as<String>();
         int competitor = doc["competitor"].as<int>();
         int hour = doc["hour"].as<int>();
         int minute = doc["minute"].as<int>();

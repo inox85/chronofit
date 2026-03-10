@@ -1,34 +1,50 @@
 import os
 import subprocess
+import sys
 
-# CONFIG - adatta ai tuoi percorsi
-MKLITTLEFS = "mklittlefs.exe"
-ESPTOOL = "esptool.py"   # esptool lo richiama da Python
-PORT = "COM2"            # cambia con la tua porta ESP32
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# CONFIG
+MKLITTLEFS = os.path.join(BASE_DIR, "mklittlefs.exe")
+FOLDER = os.path.join(BASE_DIR, "data")
+BIN = os.path.join(BASE_DIR, "littlefs.bin")
+
+PORT = "COM2"
 BAUD = "921600"
-FOLDER = "data"          # cartella locale con i file
-SIZE = "0x160000"        # dimensione partizione (es. 1MB)
-OFFSET = "0x290000"      # offset partizione LittleFS (dipende dal partitions.csv)
-BIN = "littlefs.bin"
+SIZE = "0x160000"
+OFFSET = "0x290000"
 CHIP = "esp32"
-#CHIP = "esp32c3"
+# CHIP = "esp32c3"
+
 
 def run_cmd(cmd):
     print(">>>", " ".join(cmd))
     subprocess.run(cmd, check=True)
 
-def main():
-    # 1. Genera immagine
-    run_cmd([MKLITTLEFS, "-c", FOLDER, "-p", "256", "-b", "4096", "-s", SIZE, BIN])
 
-    # 2. Flash immagine
+def main():
+
+    # 1. Genera immagine LittleFS
     run_cmd([
-        "python", "-m", "esptool",
+        MKLITTLEFS,
+        "-c", FOLDER,
+        "-p", "256",
+        "-b", "4096",
+        "-s", SIZE,
+        BIN
+    ])
+
+    # 2. Flash immagine su ESP32
+    run_cmd([
+        sys.executable, "-m", "esptool",
         "--chip", CHIP,
         "--port", PORT,
         "--baud", BAUD,
-        "write_flash", OFFSET, BIN
+        "write_flash",
+        OFFSET,
+        BIN
     ])
+
 
 if __name__ == "__main__":
     main()

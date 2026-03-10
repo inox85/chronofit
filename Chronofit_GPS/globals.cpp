@@ -51,7 +51,7 @@ double compFactor = 0.03;
 int syncEnabled = 1;
 
 // --- Sensori ---
-int lineIds[5] = {1, 2, 3, 4, -1};
+String lineIds[5] = {"1", "2", "3", "4", "test"};
 int competitors[5] = {0, 0, 0, 0, 0};
 unsigned long delays[5] = {0, 0, 0, 0, 0};
 volatile unsigned long lastSensorsSignal[5] = {0, 0, 0, 0, 0};
