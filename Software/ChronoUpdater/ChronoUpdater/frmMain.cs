@@ -45,7 +45,7 @@ namespace ChronoUpdater
 
         static async Task DownloadFiles()
         {
-            string token = "";
+            string token = Secrets.gitApiKey;
             string repo = "inox85/chronofit";
 
             using HttpClient client = new HttpClient();
@@ -69,8 +69,15 @@ namespace ChronoUpdater
                 Console.WriteLine($"Download {name}");
 
                 var data = await client.GetByteArrayAsync(url);
+                
+                string downloadPath = Path.Combine(Directory.GetCurrentDirectory(), AppConstants.DownloadPath);
 
-                File.WriteAllBytes(name, data);
+                if (!Directory.Exists(downloadPath))
+                {
+                    Directory.CreateDirectory(downloadPath);
+                }
+
+                File.WriteAllBytes(Path.Combine(downloadPath, name), data);
             }
 
             Console.WriteLine("Download completato");

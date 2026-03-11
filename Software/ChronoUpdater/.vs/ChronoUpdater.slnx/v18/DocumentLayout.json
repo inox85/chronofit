@@ -3,7 +3,7 @@
   "WorkspaceRootPath": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -11,10 +11,12 @@
       "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000000}|\u003CSolution\u003E|ChronoUpdater||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\appconstants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\appconstants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\||{B270807C-D8C6-49EB-8EBE-8E8D566637A1}|5e9a8ac2-4f34-4521-858f-4c248ba31532"
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\secrets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\secrets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -24,18 +26,32 @@
       "DocumentGroups": [
         {
           "DockedHeight": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "ChronoUpdater",
-              "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\ChronoUpdater.csproj",
-              "RelativeDocumentMoniker": "ChronoUpdater\\ChronoUpdater.csproj",
-              "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\ChronoUpdater.csproj",
-              "RelativeToolTip": "ChronoUpdater\\ChronoUpdater.csproj",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-02-25T11:25:21.552Z",
+              "Title": "AppConstants.cs",
+              "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\AppConstants.cs",
+              "RelativeDocumentMoniker": "ChronoUpdater\\AppConstants.cs",
+              "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\AppConstants.cs",
+              "RelativeToolTip": "ChronoUpdater\\AppConstants.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-11T21:37:52.286Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Secrets.cs",
+              "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
+              "RelativeDocumentMoniker": "ChronoUpdater\\Secrets.cs",
+              "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
+              "RelativeToolTip": "ChronoUpdater\\Secrets.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-11T21:17:23.326Z",
               "EditorCaption": ""
             },
             {
@@ -44,9 +60,9 @@
               "Title": "frmMain.cs",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
-              "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
-              "RelativeToolTip": "ChronoUpdater\\frmMain.cs",
-              "ViewState": "AgIAAC4AAAAAAAAAAAAowEgAAAAvAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs*",
+              "RelativeToolTip": "ChronoUpdater\\frmMain.cs*",
+              "ViewState": "AgIAAC0AAAAAAAAAAAA9wEUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-25T11:25:22.11Z",
               "EditorCaption": ""
@@ -57,8 +73,8 @@
               "Title": "frmMain.cs [Progettazione]",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
-              "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs [Progettazione]",
-              "RelativeToolTip": "ChronoUpdater\\frmMain.cs [Progettazione]",
+              "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs [Progettazione]*",
+              "RelativeToolTip": "ChronoUpdater\\frmMain.cs [Progettazione]*",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-25T11:25:22.112Z",
               "EditorCaption": " [Progettazione]"
