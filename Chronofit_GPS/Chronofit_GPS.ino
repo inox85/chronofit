@@ -274,6 +274,7 @@ void handleSensorTrigger(){
       {
         lastSyncTrigger = sensorTime[i];    //lineTriggered = true;
         syncReference = lastSyncTrigger;
+        RTCTtriggerCount = 0;
         handleLineSync();
         checkPointRoutine(i);
       }else{

@@ -51,7 +51,7 @@ double compFactor = 0.03;
 int syncEnabled = 1;
 
 // --- Sensori ---
-String lineIds[5] = {"1", "2", "3", "4", "test"};
+String lineIds[5] = {"1", "2", "3", "4", "Sync-test"};
 int competitors[5] = {0, 0, 0, 0, 0};
 unsigned long delays[5] = {0, 0, 0, 0, 0};
 volatile unsigned long lastSensorsSignal[5] = {0, 0, 0, 0, 0};
@@ -70,7 +70,6 @@ volatile int8_t actualSecondForTest = 0;
 unsigned long startAttemptTime = 0;
 const unsigned long wifiTimeout = 10000; // 10 secondi
 volatile bool internetOK = false;
-
 
 // --- Varie ---
 unsigned long lastBroadcast = 0;
