@@ -11,3 +11,6 @@ Software/ChronoUpdater/ChronoUpdater/Secrets.cs
 /Software/ChronoUpdater/ChronoUpdater/obj
 /Chronofit_GPS/build
 /Software/ChronoUpdater/ChronoUpdater/obj
+*.bin
+*.bin
+Chronofit_GPS/littlefs.bin
