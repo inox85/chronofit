@@ -11,8 +11,8 @@ BIN = os.path.join(BASE_DIR, "littlefs.bin")
 
 PORT = "COM2"
 BAUD = "921600"
-SIZE = "0x160000"
-OFFSET = "0x290000"
+SIZE = "0x1E0000"
+OFFSET = "0x210000"
 CHIP = "esp32"
 # CHIP = "esp32c3"
 

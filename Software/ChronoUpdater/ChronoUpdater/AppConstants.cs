@@ -10,6 +10,7 @@ namespace ChronoUpdater
     public static class AppConstants
     {
         public const string DownloadPath = "downloads";
+        public const string UpdateFiles = "updateFiles";
         public const string ApiBaseUrl = "https://api.github.com";
         public const int TimeoutSeconds = 10;
     }
