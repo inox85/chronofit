@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Diagnostics;
-
+using System.Management;
+using System.Text.RegularExpressions;
+using System.IO;
+using System.Windows.Forms;
 
 
 namespace ChronoUpdater
@@ -14,24 +19,37 @@ namespace ChronoUpdater
 
         public static bool checkDriver()
         {
-            ProcessStartInfo psi = new ProcessStartInfo
+
+            string pnpUtilPath = Path.Combine(AppConstants.Tools, "pnputil.exe");
+            try
             {
-                FileName = "pnputil.exe",
-                Arguments = "/enum-drivers",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
 
-            using (Process process = Process.Start(psi))
-            {
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = pnpUtilPath,
+                    Arguments = "/enum-drivers",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-                bool present = output.ToLower().Contains("cp210x") || output.ToLower().Contains("silabs");
+                using (Process process = Process.Start(psi))
+                {
+                    string output = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit();
 
-                return present;
+                    bool present = output.ToLower().Contains("cp210x") || output.ToLower().Contains("silabs");
+
+                    return present;
+                }
             }
+            catch (Exception ex) { 
+            
+                MessageBox.Show("Error checking driver: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Application.Exit();
+                return false;
+            }
+
         }
 
         public static void install()
@@ -45,6 +63,38 @@ namespace ChronoUpdater
             };
 
             Process.Start(psi);
+        }
+
+        public static DataTable GetCP210xPorts()
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("Text");   // quello che vede l'utente
+            table.Columns.Add("Value");  // numero COM
+
+            using (var searcher = new ManagementObjectSearcher(
+                "SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%(COM%'"))
+            {
+                foreach (ManagementObject obj in searcher.Get())
+                {
+                    string name = obj["Name"]?.ToString();
+                    string deviceId = obj["DeviceID"]?.ToString();
+
+                    if (deviceId != null &&
+                        deviceId.Contains("VID_10C4") &&
+                        deviceId.Contains("PID_EA60"))
+                    {
+                        Match m = Regex.Match(name, @"\(COM\d+\)");
+
+                        if (m.Success)
+                        {
+                            string com = m.Value.Replace("(", "").Replace(")", "");
+                            table.Rows.Add(name, com);
+                        }
+                    }
+                }
+            }
+
+            return table;
         }
     }
 }

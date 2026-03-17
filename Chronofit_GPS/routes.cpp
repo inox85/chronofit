@@ -101,13 +101,20 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   String msgJson = serializeMessage("Connecting to WiFi for internet access...");
   ws.textAll(msgJson);
 
+  // if (WiFi.status() != WL_CONNECTED && WiFi.status() != WL_CONNECT_FAILED) {
+  //   WiFi.disconnect(true);
+  //   delay(1000);cula
+  //   WiFi.begin(ssid, password);
+  // }
+  
+  WiFi.disconnect(true);
+  delay(1000);
   WiFi.begin(ssid, password);
 
   unsigned long start = millis();
 
   Serial.print("Connessione a ");
-  Serial.print(ssid);
-
+  Serial.println(ssid);
 
   WiFi.onEvent([](WiFiEvent_t event) {
     if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
@@ -728,11 +735,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     StaticJsonDocument<512> doc;
     
-    doc["tibeBaseCalCoeff"] = calibrationFactor;
-    doc["calPpsCount"] = calPpsCount;
-    doc["calPpsTotal"] = CAL_WINDOW_SEC;
-    doc["cpuTemperature"] = readInternalTemp();
-    
+    doc["timeCalCoeff"] = calibrationFactor;
+    doc["cpuTemp"] = readInternalTemp();
+    doc["agingCoeff"] = readAgingOffset();
+    doc["rtcTemp"] = rtc_get_temperature();
+
     String json;
     serializeJson(doc, json);
 

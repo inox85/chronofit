@@ -376,7 +376,7 @@ input:checked + .slider:before {
 /* ======= TABLE ======= */
 
 .card.table-card {
-  min-height: 519px;
+  min-height: 512px;
   display: flex;
   flex-direction: column;
   flex: 1 1 350px;

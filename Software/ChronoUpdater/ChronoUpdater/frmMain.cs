@@ -5,6 +5,9 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
+using System.IO;
+using System.IO.Compression;
+using System.IO.Ports;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http;
@@ -14,9 +17,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
-using System.IO;
-using System.IO.Compression;
-using System.IO.Ports;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 
 
@@ -42,11 +43,15 @@ namespace ChronoUpdater
 
                 if (res.Success)
                 {
-                    lblDownloadResult.Text = "New version available: " + res.Version;
-                    cbPorts.DataSource = SerialPort.GetPortNames();
+                    lblDownloadResult.Text = "Version available: " + res.Version;
+                    lblDownloadResult.Visible = true;
+                    lblDownloadResult.BackColor = Color.LightGreen;
+
                 }
                 else
                 {
+                    lblDownloadResult.Text = "Error checking for updates.";
+                    lblDownloadResult.Visible = true;
                     MessageBox.Show(res.ErrorMessage);
                 }                 
 
@@ -123,9 +128,6 @@ namespace ChronoUpdater
 
                 btnDownload.Text = "Download latest version";
                 btnDownload.BackColor = Color.LightGreen;
-
-
-
             }
             catch (Exception ex)
             {
@@ -138,6 +140,7 @@ namespace ChronoUpdater
             //    string url = asset.GetProperty("browser_download_url").GetString();
             //    Console.WriteLine($"Trovato {name}");
             //}
+
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -148,11 +151,34 @@ namespace ChronoUpdater
             {
                 MessageBox.Show("Driver not found. Please install the driver before using the application.", "Driver Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+
+            Updater.LogReceived += AppendLog;
+
+
+            cbPorts.DataSource = DriverInstaller.GetCP210xPorts();
+            cbPorts.DisplayMember = "Text";
+            cbPorts.ValueMember = "Value";
+
+            cbPorts.Enabled = true;
+            btnFlash.Enabled = true;
         }
 
-        private void cbPorts_SelectedIndexChanged(object sender, EventArgs e)
+
+        private async void btnFlash_Click(object sender, EventArgs e)
         {
-
+            await Task.Run(() => Updater.Flash("COM2"));
         }
+        void AppendLog(string text)
+        {
+            if (tbLog.InvokeRequired)
+            {
+                tbLog.Invoke(new Action<string>(AppendLog), text);
+                return;
+            }
+
+            tbLog.AppendText(text + Environment.NewLine);
+        }
+
+
     }
 }
