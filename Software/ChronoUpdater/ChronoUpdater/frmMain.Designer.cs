@@ -50,7 +50,6 @@
             this.cbPorts.Name = "cbPorts";
             this.cbPorts.Size = new System.Drawing.Size(645, 37);
             this.cbPorts.TabIndex = 3;
-            this.cbPorts.SelectedIndexChanged += new System.EventHandler(this.cbPorts_SelectedIndexChanged);
             // 
             // label1
             // 
@@ -119,7 +118,6 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 300F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(857, 847);
             this.tableLayoutPanel1.TabIndex = 8;
-            this.tableLayoutPanel1.Paint += new System.Windows.Forms.PaintEventHandler(this.tableLayoutPanel1_Paint);
             // 
             // tableLayoutPanel2
             // 

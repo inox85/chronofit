@@ -128,9 +128,6 @@ namespace ChronoUpdater
 
                 btnDownload.Text = "Download latest version";
                 btnDownload.BackColor = Color.LightGreen;
-
-
-
             }
             catch (Exception ex)
             {
@@ -143,6 +140,7 @@ namespace ChronoUpdater
             //    string url = asset.GetProperty("browser_download_url").GetString();
             //    Console.WriteLine($"Trovato {name}");
             //}
+
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -165,10 +163,6 @@ namespace ChronoUpdater
             btnFlash.Enabled = true;
         }
 
-        private void cbPorts_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
 
         private async void btnFlash_Click(object sender, EventArgs e)
         {
@@ -185,9 +179,6 @@ namespace ChronoUpdater
             tbLog.AppendText(text + Environment.NewLine);
         }
 
-        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
-        {
 
-        }
     }
 }
