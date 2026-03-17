@@ -865,6 +865,114 @@ String fileToBase64(const char *path) {
   return encoded;
 }
 
+void sendMailgunMail(String emailAddress) {
+  Serial.println("Invio mail con Mailgun...");
+
+  WiFiClientSecure client;
+  client.setInsecure();
+
+  if (!client.connect(MAILGUN_HOST, MAILGUN_PORT)) {
+    Serial.println("Connessione Mailgun fallita");
+    return;
+  }
+
+  // Leggi file (QUI NON serve base64!)
+  File file = LittleFS.open("/session.json", "r");
+  if (!file) {
+    Serial.println("Errore apertura file");
+    return;
+  }
+
+  float latitude = gps.location.isValid() ? gps.location.lat() : 0;
+  float longitude = gps.location.isValid() ? gps.location.lng() : 0;
+
+  String mapsLink = "https://www.google.com/maps/search/?api=1&query=" 
+                    + String(latitude, 6) + "," + String(longitude, 6);
+
+  String boundary = "----ESP32FormBoundary";
+
+  // ===== AUTH BASE64 =====
+  String auth = "api:" + String(MAILGUN_API_KEY);
+  String authBase64 = base64::encode(auth);
+
+  // ===== BODY =====
+  String body = "";
+
+  // from
+  body += "--" + boundary + "\r\n";
+  body += "Content-Disposition: form-data; name=\"from\"\r\n\r\n";
+  body += "Chronofit <mailgun@" MAILGUN_DOMAIN ">\r\n";
+
+  // to
+  body += "--" + boundary + "\r\n";
+  body += "Content-Disposition: form-data; name=\"to\"\r\n\r\n";
+  body += emailAddress + "\r\n";
+
+  // subject
+  body += "--" + boundary + "\r\n";
+  body += "Content-Disposition: form-data; name=\"subject\"\r\n\r\n";
+  body += "Sessione [" + String(latitude, 6) + ", " + String(longitude, 6) + "]\r\n";
+
+  // html
+  body += "--" + boundary + "\r\n";
+  body += "Content-Disposition: form-data; name=\"html\"\r\n\r\n";
+  body += "<p>File sessione in allegato</p>";
+  body += "<p><a href=\"" + mapsLink + "\">Apri Google Maps</a></p>\r\n";
+
+  // attachment header
+  body += "--" + boundary + "\r\n";
+  body += "Content-Disposition: form-data; name=\"attachment\"; filename=\"session.txt\"\r\n";
+  body += "Content-Type: text/plain\r\n\r\n";
+
+  // ===== HEADER HTTP =====
+  client.print(
+    "POST /v3/" MAILGUN_DOMAIN "/messages HTTP/1.1\r\n"
+    "Host: " MAILGUN_HOST "\r\n"
+    "Authorization: Basic " + authBase64 + "\r\n"
+    "Content-Type: multipart/form-data; boundary=" + boundary + "\r\n"
+    "Connection: close\r\n"
+  );
+
+  // Content-Length lo calcoliamo dopo
+  int contentLength = body.length() + file.size() + boundary.length() + 8;
+  client.print("Content-Length: " + String(contentLength) + "\r\n\r\n");
+
+  // body iniziale
+  client.print(body);
+
+  // ===== FILE STREAM =====
+  uint8_t buffer[512];
+  while (file.available()) {
+    size_t len = file.read(buffer, sizeof(buffer));
+    client.write(buffer, len);
+  }
+  file.close();
+
+  // chiusura multipart
+  client.print("\r\n--" + boundary + "--\r\n");
+
+  Serial.println("Richiesta inviata");
+
+  // ===== RISPOSTA =====
+  while (client.connected()) {
+    String line = client.readStringUntil('\n');
+    if (line == "\r") break;
+  }
+
+  String response = "";
+  while (client.available()) {
+    response += client.readString();
+  }
+
+  Serial.println("=== Risposta Mailgun ===");
+  Serial.println(response);
+
+  if (response.indexOf("Queued") >= 0) {
+    Serial.println("Mail inviata!");
+  } else {
+    Serial.println("Errore invio!");
+  }
+}
 
 void sendBrevoMail(String emailAddress) {
   Serial.println("Inizio invio mail!");
