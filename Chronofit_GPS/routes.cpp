@@ -102,9 +102,9 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   String msgJson = serializeMessage("Connecting to WiFi for internet access...");
   ws.textAll(msgJson);
 
+  startAttemptTime = millis();
+  
   WiFi.begin(ssid, password);
-
-  unsigned long start = millis();
 
   Serial.print("Connessione a ");
   Serial.print(ssid);
