@@ -21,6 +21,7 @@
 #include "secrets.h"
 #include "RTC.h"
 #include "esp_wifi.h"
+#include <time.h>
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -101,20 +102,13 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   String msgJson = serializeMessage("Connecting to WiFi for internet access...");
   ws.textAll(msgJson);
 
-  // if (WiFi.status() != WL_CONNECTED && WiFi.status() != WL_CONNECT_FAILED) {
-  //   WiFi.disconnect(true);
-  //   delay(1000);cula
-  //   WiFi.begin(ssid, password);
-  // }
-  
-  WiFi.disconnect(true);
-  delay(1000);
   WiFi.begin(ssid, password);
 
   unsigned long start = millis();
 
   Serial.print("Connessione a ");
-  Serial.println(ssid);
+  Serial.print(ssid);
+
 
   WiFi.onEvent([](WiFiEvent_t event) {
     if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
@@ -735,11 +729,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     StaticJsonDocument<512> doc;
     
-    doc["timeCalCoeff"] = calibrationFactor;
-    doc["cpuTemp"] = readInternalTemp();
-    doc["agingCoeff"] = readAgingOffset();
-    doc["rtcTemp"] = rtc_get_temperature();
-
+    doc["tibeBaseCalCoeff"] = calibrationFactor;
+    doc["calPpsCount"] = calPpsCount;
+    doc["calPpsTotal"] = CAL_WINDOW_SEC;
+    doc["cpuTemperature"] = readInternalTemp();
+    
     String json;
     serializeJson(doc, json);
 
@@ -872,113 +866,115 @@ String fileToBase64(const char *path) {
   return encoded;
 }
 
-void sendMailgunMail(String emailAddress) {
-  Serial.println("Invio mail con Mailgun...");
+#include <ESP_Mail_Client.h>
 
-  WiFiClientSecure client;
-  client.setInsecure();
+SMTPSession smtp;
 
-  if (!client.connect(MAILGUN_HOST, MAILGUN_PORT)) {
-    Serial.println("Connessione Mailgun fallita");
-    return;
+void smtpCallback(SMTP_Status status) {
+  Serial.println(status.info());
+  if (status.success()) {
+    Serial.println("────────────────────────");
+    Serial.printf("Messaggi inviati: %d\n", status.completedCount());
+    Serial.printf("Messaggi falliti: %d\n", status.failedCount());
+    Serial.println("────────────────────────");
+  }
+}
+
+void syncTime() {
+  Serial.println("[TIME] Sincronizzazione NTP...");
+
+  // Prova più server in ordine
+  configTime(0, 0, "time.google.com", "time.cloudflare.com", "time.windows.com");
+  setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+  tzset();
+
+  struct tm timeinfo;
+  int retry = 0;
+  while (!getLocalTime(&timeinfo) && retry < 40) {
+    Serial.print(".");
+    delay(1000);
+    retry++;
   }
 
-  // Leggi file (QUI NON serve base64!)
-  File file = LittleFS.open("/session.json", "r");
-  if (!file) {
-    Serial.println("Errore apertura file");
-    return;
-  }
-
-  float latitude = gps.location.isValid() ? gps.location.lat() : 0;
-  float longitude = gps.location.isValid() ? gps.location.lng() : 0;
-
-  String mapsLink = "https://www.google.com/maps/search/?api=1&query=" 
-                    + String(latitude, 6) + "," + String(longitude, 6);
-
-  String boundary = "----ESP32FormBoundary";
-
-  // ===== AUTH BASE64 =====
-  String auth = "api:" + String(MAILGUN_API_KEY);
-  String authBase64 = base64::encode(auth);
-
-  // ===== BODY =====
-  String body = "";
-
-  // from
-  body += "--" + boundary + "\r\n";
-  body += "Content-Disposition: form-data; name=\"from\"\r\n\r\n";
-  body += "Chronofit <mailgun@" MAILGUN_DOMAIN ">\r\n";
-
-  // to
-  body += "--" + boundary + "\r\n";
-  body += "Content-Disposition: form-data; name=\"to\"\r\n\r\n";
-  body += emailAddress + "\r\n";
-
-  // subject
-  body += "--" + boundary + "\r\n";
-  body += "Content-Disposition: form-data; name=\"subject\"\r\n\r\n";
-  body += "Sessione [" + String(latitude, 6) + ", " + String(longitude, 6) + "]\r\n";
-
-  // html
-  body += "--" + boundary + "\r\n";
-  body += "Content-Disposition: form-data; name=\"html\"\r\n\r\n";
-  body += "<p>File sessione in allegato</p>";
-  body += "<p><a href=\"" + mapsLink + "\">Apri Google Maps</a></p>\r\n";
-
-  // attachment header
-  body += "--" + boundary + "\r\n";
-  body += "Content-Disposition: form-data; name=\"attachment\"; filename=\"session.txt\"\r\n";
-  body += "Content-Type: text/plain\r\n\r\n";
-
-  // ===== HEADER HTTP =====
-  client.print(
-    "POST /v3/" MAILGUN_DOMAIN "/messages HTTP/1.1\r\n"
-    "Host: " MAILGUN_HOST "\r\n"
-    "Authorization: Basic " + authBase64 + "\r\n"
-    "Content-Type: multipart/form-data; boundary=" + boundary + "\r\n"
-    "Connection: close\r\n"
-  );
-
-  // Content-Length lo calcoliamo dopo
-  int contentLength = body.length() + file.size() + boundary.length() + 8;
-  client.print("Content-Length: " + String(contentLength) + "\r\n\r\n");
-
-  // body iniziale
-  client.print(body);
-
-  // ===== FILE STREAM =====
-  uint8_t buffer[512];
-  while (file.available()) {
-    size_t len = file.read(buffer, sizeof(buffer));
-    client.write(buffer, len);
-  }
-  file.close();
-
-  // chiusura multipart
-  client.print("\r\n--" + boundary + "--\r\n");
-
-  Serial.println("Richiesta inviata");
-
-  // ===== RISPOSTA =====
-  while (client.connected()) {
-    String line = client.readStringUntil('\n');
-    if (line == "\r") break;
-  }
-
-  String response = "";
-  while (client.available()) {
-    response += client.readString();
-  }
-
-  Serial.println("=== Risposta Mailgun ===");
-  Serial.println(response);
-
-  if (response.indexOf("Queued") >= 0) {
-    Serial.println("Mail inviata!");
+  if (retry >= 40) {
+    // Fallback: ora manuale aggiornata
+    Serial.println("\n[TIME] NTP non raggiungibile, uso ora manuale...");
+    struct tm t = {0};
+    t.tm_year = 2026 - 1900;
+    t.tm_mon  = 2;   // marzo
+    t.tm_mday = 18;
+    t.tm_hour = 15;
+    t.tm_min  = 0;
+    t.tm_sec  = 0;
+    time_t epoch = mktime(&t);
+    struct timeval tv = { epoch, 0 };
+    settimeofday(&tv, nullptr);
+    Serial.println("[TIME] ✅ Ora impostata manualmente (fallback)");
   } else {
-    Serial.println("Errore invio!");
+    Serial.printf("\n[TIME] ✅ Ora: %02d/%02d/%04d %02d:%02d:%02d\n",
+      timeinfo.tm_mday, timeinfo.tm_mon + 1, timeinfo.tm_year + 1900,
+      timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
   }
+}
+
+void sendEmail(const char* subject, const char* body,
+               const char* attachPath = nullptr,
+               const char* attachName = nullptr,
+               const char* attachMime = nullptr) {
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[MAIL] WiFi non connesso!");
+    return;
+  }
+
+  // Sessione SMTP
+  ESP_Mail_Session session;
+  session.server.host_name = GMAIL_SMTP_HOST;
+  session.server.port      = GMAIL_SMTP_PORT;
+  session.login.email      = GMAIL_SMTP_USER;
+  session.login.password   = GMAIL_SMTP_PASSWORD;
+  session.login.user_domain = "";
+
+  SMTP_Message message;
+  message.sender.name  = "ESP32";
+  message.sender.email = GMAIL_SMTP_USER;
+  message.subject      = subject;
+  message.addRecipient(GMAIL_MAIL_TO_NAME, GMAIL_MAIL_TO);
+  message.text.content = body;
+  message.text.charSet = "utf-8";
+
+  // Allegato (opzionale)
+  if (attachPath != nullptr && LittleFS.exists(attachPath)) {
+
+    SMTP_Attachment attachment;
+    attachment.descr.filename       = attachName;
+    attachment.descr.mime           = attachMime;
+    attachment.file.path            = attachPath;
+    attachment.file.storage_type    = esp_mail_file_storage_type_flash;
+    attachment.descr.transfer_encoding = Content_Transfer_Encoding::enc_base64;
+    message.addAttachment(attachment);
+    Serial.printf("[MAIL] Allegato: %s\n", attachPath);
+
+  } else if (attachPath != nullptr) {
+    Serial.printf("[MAIL] ⚠️ File non trovato: %s, invio senza allegato\n", attachPath);
+  }
+
+  smtp.debug(1);
+  smtp.callback(smtpCallback);
+
+  Serial.println("[MAIL] Connessione a Gmail...");
+  if (!smtp.connect(&session)) {
+    Serial.printf("[MAIL] ❌ Connessione fallita: %s\n", smtp.errorReason().c_str());
+    return;
+  }
+
+  if (!MailClient.sendMail(&smtp, &message)) {
+    Serial.printf("[MAIL] ❌ Invio fallito: %s\n", smtp.errorReason().c_str());
+  } else {
+    Serial.println("[MAIL] ✅ Mail inviata con successo!");
+  }
+
+  smtp.closeSession();
 }
 
 void sendBrevoMail(String emailAddress) {
@@ -1062,11 +1058,13 @@ void sendBrevoMail(String emailAddress) {
   Serial.println(response);
 
   // Analisi semplice: verifica se contiene "messageId"
-  if (response.indexOf("messageId") >= 0) {
+  if (response.indexOf("messageId") >= 0) {    
     Serial.println("Mail accettata");
     String msgJson = serializeMessage("Mail sent successfully!");
     ws.textAll(msgJson);
-  } else {
+  } 
+  else 
+  {
     Serial.println("Errore invio mail!");
   }
   
@@ -1074,7 +1072,14 @@ void sendBrevoMail(String emailAddress) {
 
 void sendBrevoMailTask(void* param) {
     String email = *(String*)param;
-    sendBrevoMail(email); // il tuo metodo attuale
+    //sendBrevoMail(email); // il tuo metodo attuale
+      // 2) Con allegato JSON
+
+    syncTime();
+
+    sendEmail("Report ESP32",
+              "In allegato il file session.json.",
+              "/session.json", "session.json", "application/json");
     delete (String*)param;        // pulizia
     vTaskDelete(NULL);             // termina il task
 }
