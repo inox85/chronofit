@@ -26,7 +26,7 @@ namespace ChronoUpdater
 
     public partial class frmMain : Form
     {
-
+        DownloadResult res;
         public frmMain()
         {
             InitializeComponent();
@@ -39,14 +39,14 @@ namespace ChronoUpdater
 
                 btnDownload.Enabled = false;
 
-                var res = await DownloadFiles();
+                res = await DownloadFiles();
 
                 if (res.Success)
                 {
                     lblDownloadResult.Text = "Version available: " + res.Version;
                     lblDownloadResult.Visible = true;
                     lblDownloadResult.BackColor = Color.LightGreen;
-
+                    updateFlashableStatus();
                 }
                 else
                 {
@@ -180,5 +180,23 @@ namespace ChronoUpdater
         }
 
 
+        private void updateFlashableStatus()    
+        {
+            if (cbPorts.SelectedIndex != -1 && res != null)
+            {
+                btnFlash.Enabled = true;
+                btnFlash.Text = "Flash firmware [" + res.Version + "]";
+            }
+            else
+            {
+                btnFlash.Text = "Flash firmware";
+                btnFlash.Enabled = false;
+            }
+        }
+
+        private void cbPorts_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            updateFlashableStatus();
+        }
     }
 }

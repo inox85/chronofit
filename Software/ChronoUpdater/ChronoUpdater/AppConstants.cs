@@ -14,6 +14,7 @@ namespace ChronoUpdater
         public const string Tools = "tools";
         public const string ApiBaseUrl = "https://api.github.com";
         public const int TimeoutSeconds = 10;
+        public const string System32 = "C:\\Windows\\System32\\";
     }
     
 }

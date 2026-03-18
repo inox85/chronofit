@@ -50,6 +50,7 @@
             this.cbPorts.Name = "cbPorts";
             this.cbPorts.Size = new System.Drawing.Size(645, 37);
             this.cbPorts.TabIndex = 3;
+            this.cbPorts.SelectedIndexChanged += new System.EventHandler(this.cbPorts_SelectedIndexChanged);
             // 
             // label1
             // 
@@ -89,6 +90,7 @@
             // btnFlash
             // 
             this.btnFlash.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.btnFlash.Enabled = false;
             this.btnFlash.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnFlash.Location = new System.Drawing.Point(3, 213);
             this.btnFlash.Name = "btnFlash";

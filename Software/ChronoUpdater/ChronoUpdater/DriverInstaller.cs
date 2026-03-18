@@ -21,6 +21,27 @@ namespace ChronoUpdater
         {
 
             string pnpUtilPath = Path.Combine(AppConstants.Tools, "pnputil.exe");
+
+            string pnpUtilSystemPath = "";
+
+            if (Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess)
+            {
+                pnpUtilSystemPath = Path.Combine("C:\\", "Windows", "Sysnative", "pnputil.exe");
+            }
+            else
+            {
+                pnpUtilSystemPath = Path.Combine("C:\\", "Windows", "System32", "pnputil.exe");
+            }
+
+            if (File.Exists(pnpUtilSystemPath))
+            {
+                pnpUtilPath = pnpUtilSystemPath;
+            }
+            else if (!File.Exists(pnpUtilPath)) {
+                MessageBox.Show($"Cannot find {Path.Combine(AppConstants.Tools, "pnputil.exe")} or {Path.Combine(AppConstants.System32, "pnputil.exe")}"); 
+            }
+
+
             try
             {
 
