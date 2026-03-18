@@ -44,7 +44,6 @@ namespace ChronoUpdater
 
             try
             {
-
                 ProcessStartInfo psi = new ProcessStartInfo
                 {
                     FileName = pnpUtilPath,

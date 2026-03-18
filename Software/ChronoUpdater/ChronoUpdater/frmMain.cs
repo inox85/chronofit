@@ -82,10 +82,14 @@ namespace ChronoUpdater
                 string apiUrl = $"https://api.github.com/repos/{repo}/releases/latest";
 
                 string json = await client.GetStringAsync(apiUrl);
-
+                    
                 using JsonDocument doc = JsonDocument.Parse(json);
 
                 result.Version = doc.RootElement.GetProperty("tag_name").GetString();
+
+                result.Assets = doc.RootElement.GetProperty("assets").EnumerateArray()
+                    .Select(asset => asset.GetProperty("browser_download_url").GetString())
+                    .ToArray();
 
                 result.Success = true;
             }
@@ -98,50 +102,6 @@ namespace ChronoUpdater
             return result;
         }
 
-        private async void btnCheckUpdates_Click(object sender, EventArgs e)
-        {
-
-            string token = Secrets.gitApiKey;
-            string repo = "inox85/chronofit";
-
-            using HttpClient client = new HttpClient();
-
-            client.DefaultRequestHeaders.Add("User-Agent", "FW-Updater");
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
-
-            string apiUrl = $"https://api.github.com/repos/{repo}/releases";
-
-            Console.WriteLine("Lettura release...");
-
-            try
-            {
-
-                string json = await client.GetStringAsync(apiUrl);
-
-                using JsonDocument doc = JsonDocument.Parse(json);
-
-                foreach (var release in doc.RootElement.EnumerateArray())
-                {
-                    string tag = release.GetProperty("tag_name").GetString();
-                    Console.WriteLine(tag);
-                }
-
-                btnDownload.Text = "Download latest version";
-                btnDownload.BackColor = Color.LightGreen;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Server connection error: " + ex.Message);
-            }
-
-            //foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
-            //{
-            //    string name = asset.GetProperty("name").GetString();
-            //    string url = asset.GetProperty("browser_download_url").GetString();
-            //    Console.WriteLine($"Trovato {name}");
-            //}
-
-        }
 
         private void frmMain_Load(object sender, EventArgs e)
         {
