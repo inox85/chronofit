@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 
@@ -87,9 +88,43 @@ namespace ChronoUpdater
 
                 result.Version = doc.RootElement.GetProperty("tag_name").GetString();
 
-                result.Assets = doc.RootElement.GetProperty("assets").EnumerateArray()
-                    .Select(asset => asset.GetProperty("browser_download_url").GetString())
-                    .ToArray();
+                result.Assets = doc.RootElement.GetProperty("assets");
+
+                var asset = result.Assets[0];
+
+                string fileName = asset.GetProperty("name").GetString();
+
+                // 3. Crea cartella
+                if (!Directory.Exists(AppConstants.DownloadPath))
+                    Directory.CreateDirectory(AppConstants.DownloadPath);
+
+                string zipPath = Path.Combine(AppConstants.DownloadPath, fileName);
+
+                string downloadUrl = asset.GetProperty("browser_download_url").GetString();
+                // 4. Download file
+                using (var response = await client.GetAsync(downloadUrl))
+                {
+                    response.EnsureSuccessStatusCode();
+
+                    using var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write);
+                    await response.Content.CopyToAsync(fs);
+                }
+
+                Console.WriteLine("Download completato!");
+
+                // 5. Estrazione ZIP (solo se è zip)
+                if (Path.GetExtension(zipPath).ToLower() == ".zip")
+                {
+                    string extractPath = AppConstants.UpdateFiles;
+
+
+                    if (Directory.Exists(extractPath))
+                        Directory.Delete(extractPath, true);
+
+                    ZipFile.ExtractToDirectory(zipPath, extractPath);
+
+                    Console.WriteLine("Estrazione completata in: " + extractPath);
+                }
 
                 result.Success = true;
             }
@@ -126,8 +161,21 @@ namespace ChronoUpdater
 
         private async void btnFlash_Click(object sender, EventArgs e)
         {
-            await Task.Run(() => Updater.Flash("COM2"));
+
+            beginFlash(cbPorts.SelectedValue.ToString());
+
         }
+
+        async void beginFlash(string port)
+        {
+            if (cbPorts.InvokeRequired)
+            {
+                cbPorts.Invoke(new Action<string>(beginFlash), port);
+                return;
+            }
+            await Task.Run(() => Updater.Flash(port));
+        }
+
         void AppendLog(string text)
         {
             if (tbLog.InvokeRequired)
