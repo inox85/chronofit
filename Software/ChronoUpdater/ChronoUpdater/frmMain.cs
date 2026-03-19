@@ -163,7 +163,6 @@ namespace ChronoUpdater
         {
 
             beginFlash(cbPorts.SelectedValue.ToString());
-
         }
 
         async void beginFlash(string port)
