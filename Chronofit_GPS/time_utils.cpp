@@ -18,7 +18,7 @@
 PreciseTime getPreciseTime() {
   PreciseTime t;
 
-  uint64_t rawUs = micros64() - syncReference;
+  uint64_t rawUs = esp_timer_get_time() - syncReference;
   uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
@@ -384,9 +384,6 @@ uint64_t correctedElapsedUs(uint64_t rawUs) {
   //return (uint64_t)(rawUs * calibrationFactor * termFactor(T));
 }
 
-uint64_t micros64() {
-  return esp_timer_get_time();
-}
 
 double setTimeBaseCalibration(double deltaUs, double minutes) {
   if (minutes <= 0.0) {

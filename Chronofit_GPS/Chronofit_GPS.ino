@@ -296,7 +296,7 @@ bool processServicesSerial() {
     gps.encode(c);  // decodifica NMEA
     //Serial.print(c);
     if(gps.time.isValid()){
-      lastNmeaValid = micros64();
+      lastNmeaValid = esp_timer_get_time();
       return true;
     }
   }

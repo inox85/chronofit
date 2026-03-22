@@ -225,7 +225,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       int mode = request->getParam("mode")->value().toInt();
 
       if (mode == MODE_SYNC_MANUAL && request->hasParam("hour") && request->hasParam("minute") && request->hasParam("second")) {
-        lastSyncTrigger = micros64();
+        lastSyncTrigger = esp_timer_get_time();
         temp_hh = request->getParam("hour")->value().toInt();
         temp_mm = request->getParam("minute")->value().toInt();
         temp_ss = request->getParam("second")->value().toInt();
@@ -291,7 +291,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   server.on("/checkPoint", HTTP_GET, [](AsyncWebServerRequest *request) {
     int lineNumber = 0;
-    uint32_t mowMicros = micros64();
+    uint64_t mowMicros = esp_timer_get_time();
     if (request->hasParam("lineNumber")) {
         lineNumber = request->getParam("lineNumber")->value().toInt();
     }

@@ -35,8 +35,6 @@ void broadcastAsync(const String& message);
 
 uint64_t correctedElapsedUs(uint64_t rawUs);
 
-uint64_t micros64();
-
 double setTimeBaseCalibration(double deltaUs, double minutes);
 
 double readInternalTemp();
