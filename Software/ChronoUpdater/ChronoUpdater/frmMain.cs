@@ -117,13 +117,22 @@ namespace ChronoUpdater
                 {
                     string extractPath = AppConstants.UpdateFiles;
 
-
-                    if (Directory.Exists(extractPath))
-                        Directory.Delete(extractPath, true);
+                    try
+                    {
+                        if (Directory.Exists(extractPath))
+                            Directory.Delete(extractPath, true);
+                    }
+                    catch
+                    {
+                        int a = 10;
+                    }
 
                     ZipFile.ExtractToDirectory(zipPath, extractPath);
-
                     Console.WriteLine("Estrazione completata in: " + extractPath);
+                }
+                else
+                {
+                    MessageBox.Show("Cannot find an update file!");
                 }
 
                 result.Success = true;

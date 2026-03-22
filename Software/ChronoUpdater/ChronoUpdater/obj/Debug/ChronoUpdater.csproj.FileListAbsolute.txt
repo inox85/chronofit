@@ -38,6 +38,8 @@ C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpd
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUp.6FF23D3D.Up2Date
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.exe
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.pdb
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.csproj.Fody.CopyLocal.cache
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.csproj.Fody.RuntimeCopyLocal.cache
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Costura.dll
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Microsoft.Bcl.AsyncInterfaces.dll
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Buffers.dll
@@ -50,5 +52,3 @@ C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpd
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Threading.Tasks.Extensions.dll
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Costura.pdb
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Costura.xml
-C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.csproj.Fody.CopyLocal.cache
-C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.csproj.Fody.RuntimeCopyLocal.cache
