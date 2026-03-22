@@ -36,8 +36,14 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.tbLog = new System.Windows.Forms.TextBox();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.extrasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.flashFileSystemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.flashMergedFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ofdFlash = new System.Windows.Forms.OpenFileDialog();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // cbPorts
@@ -46,10 +52,9 @@
             this.cbPorts.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbPorts.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cbPorts.FormattingEnabled = true;
-            this.cbPorts.Location = new System.Drawing.Point(271, 4);
-            this.cbPorts.Margin = new System.Windows.Forms.Padding(4);
+            this.cbPorts.Location = new System.Drawing.Point(203, 3);
             this.cbPorts.Name = "cbPorts";
-            this.cbPorts.Size = new System.Drawing.Size(860, 44);
+            this.cbPorts.Size = new System.Drawing.Size(645, 37);
             this.cbPorts.TabIndex = 3;
             this.cbPorts.SelectedIndexChanged += new System.EventHandler(this.cbPorts_SelectedIndexChanged);
             // 
@@ -58,10 +63,9 @@
             this.label1.AutoSize = true;
             this.label1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(4, 0);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(3, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(259, 54);
+            this.label1.Size = new System.Drawing.Size(194, 44);
             this.label1.TabIndex = 4;
             this.label1.Text = "COM port:";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -70,10 +74,9 @@
             // 
             this.btnDownload.Dock = System.Windows.Forms.DockStyle.Fill;
             this.btnDownload.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnDownload.Location = new System.Drawing.Point(4, 4);
-            this.btnDownload.Margin = new System.Windows.Forms.Padding(4);
+            this.btnDownload.Location = new System.Drawing.Point(3, 3);
             this.btnDownload.Name = "btnDownload";
-            this.btnDownload.Size = new System.Drawing.Size(1135, 115);
+            this.btnDownload.Size = new System.Drawing.Size(851, 94);
             this.btnDownload.TabIndex = 1;
             this.btnDownload.Text = "Download latest firmware version";
             this.btnDownload.UseVisualStyleBackColor = true;
@@ -84,10 +87,9 @@
             this.lblDownloadResult.AutoSize = true;
             this.lblDownloadResult.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblDownloadResult.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDownloadResult.Location = new System.Drawing.Point(4, 123);
-            this.lblDownloadResult.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblDownloadResult.Location = new System.Drawing.Point(3, 100);
             this.lblDownloadResult.Name = "lblDownloadResult";
-            this.lblDownloadResult.Size = new System.Drawing.Size(1135, 74);
+            this.lblDownloadResult.Size = new System.Drawing.Size(851, 60);
             this.lblDownloadResult.TabIndex = 6;
             this.lblDownloadResult.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -96,10 +98,9 @@
             this.btnFlash.Dock = System.Windows.Forms.DockStyle.Fill;
             this.btnFlash.Enabled = false;
             this.btnFlash.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnFlash.Location = new System.Drawing.Point(4, 263);
-            this.btnFlash.Margin = new System.Windows.Forms.Padding(4);
+            this.btnFlash.Location = new System.Drawing.Point(3, 213);
             this.btnFlash.Name = "btnFlash";
-            this.btnFlash.Size = new System.Drawing.Size(1135, 115);
+            this.btnFlash.Size = new System.Drawing.Size(851, 94);
             this.btnFlash.TabIndex = 7;
             this.btnFlash.Text = "Flash firmware";
             this.btnFlash.UseVisualStyleBackColor = true;
@@ -115,53 +116,89 @@
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel2, 0, 2);
             this.tableLayoutPanel1.Controls.Add(this.tbLog, 0, 4);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(4);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 24);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 5;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 123F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 74F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 62F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 123F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 369F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(1143, 1042);
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 300F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(857, 823);
             this.tableLayoutPanel1.TabIndex = 8;
             // 
             // tableLayoutPanel2
             // 
             this.tableLayoutPanel2.ColumnCount = 2;
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 267F));
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 200F));
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel2.Controls.Add(this.label1, 0, 0);
             this.tableLayoutPanel2.Controls.Add(this.cbPorts, 1, 0);
             this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel2.Location = new System.Drawing.Point(4, 201);
-            this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(4);
+            this.tableLayoutPanel2.Location = new System.Drawing.Point(3, 163);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
             this.tableLayoutPanel2.RowCount = 1;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(1135, 54);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(851, 44);
             this.tableLayoutPanel2.TabIndex = 2;
             // 
             // tbLog
             // 
             this.tbLog.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tbLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbLog.Location = new System.Drawing.Point(4, 386);
-            this.tbLog.Margin = new System.Windows.Forms.Padding(4);
+            this.tbLog.Location = new System.Drawing.Point(3, 313);
             this.tbLog.Multiline = true;
             this.tbLog.Name = "tbLog";
             this.tbLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.tbLog.Size = new System.Drawing.Size(1135, 652);
+            this.tbLog.Size = new System.Drawing.Size(851, 507);
             this.tbLog.TabIndex = 8;
+            // 
+            // menuStrip1
+            // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.extrasToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(857, 24);
+            this.menuStrip1.TabIndex = 9;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // extrasToolStripMenuItem
+            // 
+            this.extrasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.flashFileSystemToolStripMenuItem,
+            this.flashMergedFileToolStripMenuItem});
+            this.extrasToolStripMenuItem.Name = "extrasToolStripMenuItem";
+            this.extrasToolStripMenuItem.Size = new System.Drawing.Size(49, 20);
+            this.extrasToolStripMenuItem.Text = "Extras";
+            this.extrasToolStripMenuItem.Click += new System.EventHandler(this.extrasToolStripMenuItem_Click);
+            // 
+            // flashFileSystemToolStripMenuItem
+            // 
+            this.flashFileSystemToolStripMenuItem.Name = "flashFileSystemToolStripMenuItem";
+            this.flashFileSystemToolStripMenuItem.Size = new System.Drawing.Size(239, 22);
+            this.flashFileSystemToolStripMenuItem.Text = "Flash fliesystem from single file";
+            this.flashFileSystemToolStripMenuItem.Click += new System.EventHandler(this.flashFileSystemToolStripMenuItem_Click);
+            // 
+            // flashMergedFileToolStripMenuItem
+            // 
+            this.flashMergedFileToolStripMenuItem.Name = "flashMergedFileToolStripMenuItem";
+            this.flashMergedFileToolStripMenuItem.Size = new System.Drawing.Size(239, 22);
+            this.flashMergedFileToolStripMenuItem.Text = "Flash merged from single file";
+            this.flashMergedFileToolStripMenuItem.Click += new System.EventHandler(this.flashMergedFileToolStripMenuItem_Click);
+            // 
+            // ofdFlash
+            // 
+            this.ofdFlash.Filter = "File .bin|*.bin";
             // 
             // frmMain
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1143, 1042);
+            this.ClientSize = new System.Drawing.Size(857, 847);
             this.Controls.Add(this.tableLayoutPanel1);
-            this.Margin = new System.Windows.Forms.Padding(4);
+            this.Controls.Add(this.menuStrip1);
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "frmMain";
             this.Text = "Chronofit - firmware updater";
             this.Load += new System.EventHandler(this.frmMain_Load);
@@ -169,7 +206,10 @@
             this.tableLayoutPanel1.PerformLayout();
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -182,6 +222,11 @@
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
         private System.Windows.Forms.TextBox tbLog;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem extrasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem flashFileSystemToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem flashMergedFileToolStripMenuItem;
+        private System.Windows.Forms.OpenFileDialog ofdFlash;
     }
 }
 

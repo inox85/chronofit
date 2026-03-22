@@ -9,48 +9,21 @@ using System.Configuration;
 
 namespace ChronoUpdater
 {
-    internal class Updater
+    class Updater
     {
-        public static  event Action<string> LogReceived;
+        public static event Action<string> LogReceived;
 
-        private static void Log(string text)
+        private static void Log(string text) => LogReceived?.Invoke(text);
+
+        private static bool RunEspTool(string args)
         {
-            LogReceived?.Invoke(text);
-        }
-
-        public static bool Flash(string comport)
-        {
-            string fw = "fw.bin";
-            string fs = "fs.bin";
-
-            string fwPath = Path.Combine(AppConstants.UpdateFiles, fw);
-            string fsPath = Path.Combine(AppConstants.UpdateFiles, fs);
             string espToolPath = Path.Combine(AppConstants.Tools, "esptool.exe");
-
-
-
-            if (!File.Exists(fwPath))
-            {
-                Console.WriteLine("Firmware non trovato!");
-                return false;
-            }
-
-            if (!File.Exists(fsPath))
-            {
-                Console.WriteLine("Filesystem non trovato!");
-                return false;
-            }
 
             if (!File.Exists(espToolPath))
             {
-                Console.WriteLine("Esptool non trovato!");
+                Log("Esptool non trovato!");
                 return false;
             }
-
-
-            string args =
-                $"--chip esp32 --port {comport} --baud 921600 " +
-                $"write_flash 0x10000 \"{fwPath}\" 0x210000 \"{fsPath}\"";
 
             ProcessStartInfo psi = new ProcessStartInfo
             {
@@ -65,29 +38,61 @@ namespace ChronoUpdater
             using (Process p = new Process())
             {
                 p.StartInfo = psi;
-
-                p.OutputDataReceived += (s, e) =>
-                {
-                    if (e.Data != null)
-                        Log(e.Data);
-                };
-
-                p.ErrorDataReceived += (s, e) =>
-                {
-                    if (e.Data != null)
-                        Log(e.Data);
-                };
+                p.OutputDataReceived += (s, e) => { if (e.Data != null) Log(e.Data); };
+                p.ErrorDataReceived += (s, e) => { if (e.Data != null) Log(e.Data); };
 
                 p.Start();
-
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
 
-                p.WaitForExit();
+                // Legge stdout/stderr su thread separati per evitare deadlock
+                Task outputTask = Task.Run(() => p.WaitForExit());
+                outputTask.Wait();
 
                 return p.ExitCode == 0;
             }
-
         }
-    }
+
+        public static Task<bool> FlashBinAsync(UInt32 address, string filePath, string comport)
+        {
+            return Task.Run(() =>
+            {
+                if (!File.Exists(filePath))
+                {
+                    Log("File non trovato!");
+                    return false;
+                }
+
+                string args = $"--chip esp32 --port {comport} --baud 921600 " +
+                              $"write_flash 0x{address:X} \"{filePath}\"";
+
+                return RunEspTool(args);
+            });
+        }
+
+        public static Task<bool> FlashMergedAndFS(string comport)
+        {
+            return Task.Run(() =>
+            {
+                string mergedPath = Path.Combine(AppConstants.UpdateFiles, "merged.bin");
+                string fsPath = Path.Combine(AppConstants.UpdateFiles, "fs.bin");
+
+                if (!File.Exists(mergedPath)) { Log("Merged non trovato!"); return false; }
+                if (!File.Exists(fsPath)) { Log("Filesystem non trovato!"); return false; }
+
+                string mergedArgs = $"--chip esp32 --port {comport} --baud 921600 " +
+                              $"write_flash 0x0 \"{mergedPath}\"";
+
+                bool mergedSuccess = RunEspTool(mergedArgs);
+
+                string fsArgs = $"--chip esp32 --port {comport} --baud 921600 " +
+                              $"write_flash 0x210000 \"{fsPath}\"";
+
+                bool fsSucess = RunEspTool(fsArgs);
+
+                return mergedSuccess && fsSucess;
+            });
+        }
+    
+}
 }

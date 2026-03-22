@@ -18,8 +18,6 @@ C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\
 C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.exe
 C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.pdb
 C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.frmMain.resources
-C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.csproj.Fody.CopyLocal.cache
-C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.csproj.Fody.RuntimeCopyLocal.cache
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\ChronoUpdater.exe.config
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\ChronoUpdater.exe
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\ChronoUpdater.pdb
@@ -52,3 +50,17 @@ C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpd
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Threading.Tasks.Extensions.dll
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Costura.pdb
 C:\Users\inox8\OneDrive\Documenti\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Costura.xml
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.csproj.Fody.CopyLocal.cache
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\obj\Debug\ChronoUpdater.csproj.Fody.RuntimeCopyLocal.cache
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Costura.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Buffers.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.IO.Pipelines.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Memory.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Numerics.Vectors.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Text.Encodings.Web.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Text.Json.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\System.Threading.Tasks.Extensions.dll
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Costura.pdb
+C:\Users\innocenti\Documents\src\chronofit\Software\ChronoUpdater\ChronoUpdater\bin\Debug\Costura.xml

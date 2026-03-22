@@ -729,10 +729,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     StaticJsonDocument<512> doc;
     
-    doc["tibeBaseCalCoeff"] = calibrationFactor;
-    doc["calPpsCount"] = calPpsCount;
-    doc["calPpsTotal"] = CAL_WINDOW_SEC;
-    doc["cpuTemperature"] = readInternalTemp();
+    doc["timeCal"] = calibrationFactor;
+    doc["cpuTemp"] = readInternalTemp();
+    doc["rtcAging"] = readAgingOffset();
+    doc["rtcTemp"] = rtc_get_temperature();
     
     String json;
     serializeJson(doc, json);

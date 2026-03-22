@@ -149,7 +149,6 @@ namespace ChronoUpdater
 
             Updater.LogReceived += AppendLog;
 
-
             cbPorts.DataSource = DriverInstaller.GetCP210xPorts();
             cbPorts.DisplayMember = "Text";
             cbPorts.ValueMember = "Value";
@@ -161,7 +160,6 @@ namespace ChronoUpdater
 
         private async void btnFlash_Click(object sender, EventArgs e)
         {
-
             beginFlash(cbPorts.SelectedValue.ToString());
         }
 
@@ -172,7 +170,8 @@ namespace ChronoUpdater
                 cbPorts.Invoke(new Action<string>(beginFlash), port);
                 return;
             }
-            await Task.Run(() => Updater.Flash(port));
+
+            await Task.Run(() => Updater.FlashMergedAndFS(port));
         }
 
         void AppendLog(string text)
@@ -204,6 +203,31 @@ namespace ChronoUpdater
         private void cbPorts_SelectedIndexChanged(object sender, EventArgs e)
         {
             updateFlashableStatus();
+        }
+
+        private void extrasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void flashMergedFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ofdFlash.ShowDialog() == DialogResult.OK)
+            {
+                string filePath = ofdFlash.FileName;
+                Updater.FlashBinAsync(0x0,filePath, cbPorts.SelectedValue.ToString());
+            }
+
+        }
+
+        private void flashFileSystemToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ofdFlash.ShowDialog() == DialogResult.OK)
+            {
+                string filePath = ofdFlash.FileName;
+                Updater.FlashBinAsync(0x290000, filePath, cbPorts.SelectedValue.ToString());        
+            }
+
         }
     }
 }
