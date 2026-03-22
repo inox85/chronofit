@@ -733,6 +733,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["cpuTemp"] = readInternalTemp();
     doc["rtcAging"] = readAgingOffset();
     doc["rtcTemp"] = rtc_get_temperature();
+    doc["fwVer"] = String(FW_VERSION);
+    doc["devName"] = String(DEV_NAME);
+    doc["hwName"] = String(HW_NAME);
+
+
     
     String json;
     serializeJson(doc, json);

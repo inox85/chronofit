@@ -29,6 +29,7 @@ set BUILD_APP=build\esp32.esp32.esp32\Chronofit_GPS.ino.bin
 set BUILD_MERGED=build\esp32.esp32.esp32\Chronofit_GPS.ino.merged.bin
 set BUILD_OTADATA=build\esp32.esp32.esp32\boot_app0.bin
 
+
 echo.
 
 echo ================================================

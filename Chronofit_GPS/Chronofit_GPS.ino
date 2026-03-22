@@ -91,7 +91,6 @@ void setup() {
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
-  agingFactor = (uint8_t)readIntFromSettings("agingFactor", 0);
 
   if(syncMode == MODE_SYNC_GPS)
     syncStatus = SYNC_FIRST_GPS_SYNC;
@@ -132,11 +131,7 @@ void setup() {
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
 
-  writeAgingOffset(agingFactor);
-
   int8_t agingRegVal = readAgingOffset();
-  Serial.println("agingRegVal");
-  Serial.println(agingRegVal);
 
 }
 

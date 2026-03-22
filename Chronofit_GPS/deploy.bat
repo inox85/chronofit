@@ -30,6 +30,7 @@ set BUILD_PARTITIONS=build\esp32.esp32.esp32\Chronofit_GPS.ino.partitions.bin
 set BUILD_APP=build\esp32.esp32.esp32\Chronofit_GPS.ino.bin
 set BUILD_MERGED=build\esp32.esp32.esp32\Chronofit_GPS.ino.merged.bin
 set BUILD_OTADATA=build\esp32.esp32.esp32\boot_app0.bin
+set BUILD_FS=build\esp32.esp32.esp32\fs.bin
 
 set SIZE=0x1E0000        
 set OFFSET=0x210000    
@@ -82,7 +83,7 @@ if not exist "%RELEASE_FOLDER%" (
 
 
 REM Genera littlefs.bin
-"%MKLITTLEFS%" -c "%FS_FOLDER%" -p 256 -b 4096 -s %SIZE% "%RELEASE_FS%"
+"%MKLITTLEFS%" -c "%FS_FOLDER%" -p 256 -b 4096 -s %SIZE% "%BUILD_FS%"
 if errorlevel 1 (
     echo ERRORE: creazione "%FS_FOLDER%" fallita
     pause
