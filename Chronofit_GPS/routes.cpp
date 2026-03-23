@@ -727,22 +727,67 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   server.on("/systemSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
 
-    StaticJsonDocument<512> doc;
-    
-    doc["timeCal"] = calibrationFactor;
-    doc["cpuTemp"] = readInternalTemp();
-    doc["rtcAging"] = readAgingOffset();
-    doc["rtcTemp"] = rtc_get_temperature();
-    doc["fwVer"] = String(FW_VERSION);
-    doc["devName"] = String(DEV_NAME);
-    doc["hwName"] = String(HW_NAME);
+      StaticJsonDocument<2048> doc;  // aumentato!
 
+      doc["timeCal"] = calibrationFactor;
+      doc["cpuTemp"] = readInternalTemp();
+      doc["rtcAging"] = readAgingOffset();
+      doc["rtcTemp"] = rtc_get_temperature();
+      doc["fwVer"] = String(FW_VERSION);
+      doc["devName"] = String(DEV_NAME);
+      doc["hwName"] = String(HW_NAME);
 
-    
-    String json;
-    serializeJson(doc, json);
+      size_t totalBytes = LittleFS.totalBytes();
+      size_t usedBytes  = LittleFS.usedBytes();
+      size_t freeBytes  = totalBytes - usedBytes;
 
-    request->send(200, "application/json", json);
+      doc["fsTotalBytes"] = totalBytes;
+      doc["fsUsedBytes"]  = usedBytes;
+      doc["fsFreeBytes"]  = freeBytes;
+
+      JsonArray files = doc.createNestedArray("files");
+
+      File root = LittleFS.open("/");
+      File file = root.openNextFile();
+
+      while (file) {
+        JsonObject obj = files.createNestedObject();
+        obj["name"] = file.name();
+        obj["size"] = file.size();
+        file = root.openNextFile();
+      }
+
+      String json;
+      serializeJson(doc, json);
+
+      request->send(200, "application/json", json);
+
+  });
+
+  server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+    if (!request->hasParam("file")) {
+        request->send(400, "text/plain", "Param 'file' missing");
+        return;
+    }
+
+    String filename = request->getParam("file")->value();
+
+    // Controllo sicurezza: evitare path traversal
+    if (!filename.startsWith("/")) filename = "/" + filename;
+    if (!LittleFS.exists(filename)) {
+        request->send(404, "text/plain", "File not found");
+        return;
+    }
+
+    File file = LittleFS.open(filename, "r");
+    if (!file) {
+        request->send(500, "text/plain", "Cannot open file");
+        return;
+    }
+
+    // Invia il file come download
+    request->send(file, filename, "application/octet-stream");
 
   });
 

@@ -150,7 +150,16 @@ namespace ChronoUpdater
 
         private void frmMain_Load(object sender, EventArgs e)
         {
-            bool driverInstalled = DriverInstaller.checkDriver();
+            bool driverInstalled = false;
+
+            try
+            {
+                driverInstalled = DriverInstaller.checkDriver();
+            }
+            catch (Exception ex) 
+            { 
+                MessageBox.Show("Error checking driver: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             if (!driverInstalled)
             {
@@ -229,18 +238,18 @@ namespace ChronoUpdater
 
         private void createFlashMenu() {
             
+            //ToolStripMenuItem voce1 = new ToolStripMenuItem("Opzione 1");
+            //ToolStripMenuItem voce2 = new ToolStripMenuItem("Opzione 2");
 
-            ToolStripMenuItem voce1 = new ToolStripMenuItem("Opzione 1");
-            ToolStripMenuItem voce2 = new ToolStripMenuItem("Opzione 2");
+            //voce1.Click += (s, e) => MessageBox.Show("Hai cliccato Opzione 1");
+            //voce2.Click += (s, e) => MessageBox.Show("Hai cliccato Opzione 2");
 
-            voce1.Click += (s, e) => MessageBox.Show("Hai cliccato Opzione 1");
-            voce2.Click += (s, e) => MessageBox.Show("Hai cliccato Opzione 2");
+            //menu.Items.Add(voce1);
+            //menu.Items.Add(voce2);
 
-            menu.Items.Add(voce1);
-            menu.Items.Add(voce2);
+            //// associa al bottone
+            //btnFlash.ContextMenuStrip = menu;
 
-            // associa al bottone
-            btnFlash.ContextMenuStrip = menu;
         }
     }
 }
