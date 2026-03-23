@@ -32,27 +32,26 @@ set BUILD_MERGED=build\esp32.esp32.esp32\Chronofit_GPS.ino.merged.bin
 set BUILD_OTADATA=build\esp32.esp32.esp32\boot_app0.bin
 set BUILD_FS=build\esp32.esp32.esp32\fs.bin
 
-set SIZE=0x1E0000        
-set OFFSET=0x210000    
+set SIZE=0x1E0000
 
-REM ==================================================
+@REM REM ==================================================
 
-@REM chcp 65001 >nul
-@REM type banner.txt                                                                                                                                                                                                                                                              
+chcp 65001 >nul
+type banner.txt                                                                                                                                                                                                                                                              
 
-@REM echo.
-@REM echo.
-@REM echo.
+echo.
+echo.
+echo.
 
-@REM set /p COMPILE="Vuoi compilare con Arduino CLI? (S/N) "
-@REM if /i "%COMPILE%"=="N" (
-@REM     echo Compilazione saltata
-@REM     goto :after_build
-@REM )
+set /p COMPILE="Vuoi compilare con Arduino CLI? (S/N) "
+if /i "%COMPILE%"=="N" (
+    echo Compilazione saltata
+    goto :after_build
+)
 
-@REM arduino-cli compile -b esp32:esp32:esp32:PartitionScheme=no_ota -v --build-property "upload.speed=921600" --build-property "cpu.frequency=240" --build-property "flash.frequency=80" --build-property "flash.mode=qio" --build-property "flash.size=4M" --build-property "debug.level=none" --build-property "psram=disabled" --build-property "loop.core=1" --build-property "events.core=1" --build-property "erase.flash=none" --build-path "%BUILD_OUTPUT%" "%INO_FILE%"
+arduino-cli compile -b esp32:esp32:esp32 -v --build-property "build.partitions=partitions" --build-property "upload.speed=921600" --build-property "cpu.frequency=240" --build-property "flash.frequency=80" --build-property "flash.mode=qio" --build-property "flash.size=4M" --build-property "debug.level=none" --build-property "psram=disabled" --build-property "loop.core=1" --build-property "events.core=1" --build-property "erase.flash=none" --build-path "%BUILD_OUTPUT%" "%INO_FILE%"
 
-@REM :after_build
+:after_build
 
 
 echo ================================================
@@ -119,10 +118,16 @@ copy /Y "%BUILD_MERGED%" "%RELEASE_MERGED%"
 echo  COPIA .BIN FS...
 copy /Y "%BUILD_FS%" "%RELEASE_FS%"
 
-echo MERGED=[%RELEASE_MERGED%]
+echo MERGED_FIRMWARE=[%RELEASE_MERGED%]
+echo FILESYSTEM=[%RELEASE_FS%]
 
 if exist "%RELEASE_MERGED%" (
     echo merged.bin rilasciato con successo
+    echo.
+)
+
+if exist "%RELEASE_FS%" (
+    echo fs.bin rilasciato con successo
     echo.
 )
 
