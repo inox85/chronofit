@@ -7,12 +7,12 @@
       "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\inox8\\onedrive\\documenti\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\inox8\\onedrive\\documenti\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\secrets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -56,7 +56,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 200,
-          "SelectedChildIndex": 9,
+          "SelectedChildIndex": 8,
           "Children": [
             {
               "$type": "Bookmark",
@@ -69,18 +69,6 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{56df62a4-05a3-4e5b-aa1a-99371ccfb997}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "packages.config",
-              "DocumentMoniker": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\packages.config",
-              "RelativeDocumentMoniker": "ChronoUpdater\\packages.config",
-              "ToolTip": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\packages.config",
-              "RelativeToolTip": "ChronoUpdater\\packages.config",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
-              "WhenOpened": "2026-03-18T15:59:53.333Z"
             },
             {
               "$type": "Document",
@@ -122,13 +110,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "Updater.cs",
               "DocumentMoniker": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Updater.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\Updater.cs",
               "ToolTip": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Updater.cs",
               "RelativeToolTip": "ChronoUpdater\\Updater.cs",
-              "ViewState": "AgIAAEIAAACAZmZmZmYLwFoAAAAzAAAAAAAAAA==",
+              "ViewState": "AgIAAEAAAACAZmZmZmYLwFgAAAAzAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-14T07:54:39.458Z",
               "EditorCaption": ""
@@ -153,14 +141,14 @@
               "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
               "ToolTip": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeToolTip": "ChronoUpdater\\frmMain.cs",
-              "ViewState": "AgIAAHEAAAAAAAAAAAAkwHsAAAATAAAAAAAAAA==",
+              "ViewState": "AgIAAOIAAAAAAAAAAAAAAOkAAABJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-25T11:25:22.11Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "frmMain.cs [Progettazione]",
               "DocumentMoniker": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
@@ -169,6 +157,18 @@
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-20T11:42:53.82Z",
               "EditorCaption": " [Progettazione]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "packages.config",
+              "DocumentMoniker": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\packages.config",
+              "RelativeDocumentMoniker": "ChronoUpdater\\packages.config",
+              "ToolTip": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\packages.config",
+              "RelativeToolTip": "ChronoUpdater\\packages.config",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
+              "WhenOpened": "2026-03-18T15:59:53.333Z"
             },
             {
               "$type": "Document",
