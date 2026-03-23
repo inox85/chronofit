@@ -12,9 +12,7 @@ namespace ChronoUpdater
     class Updater
     {
         public static event Action<string> LogReceived;
-
         private static void Log(string text) => LogReceived?.Invoke(text);
-
         private static bool RunEspTool(string args)
         {
             string espToolPath = Path.Combine(AppConstants.Tools, "esptool.exe");

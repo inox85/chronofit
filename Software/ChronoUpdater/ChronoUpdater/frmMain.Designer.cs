@@ -36,14 +36,9 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.tbLog = new System.Windows.Forms.TextBox();
-            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-            this.extrasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.flashFileSystemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.flashMergedFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ofdFlash = new System.Windows.Forms.OpenFileDialog();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
-            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // cbPorts
@@ -105,6 +100,7 @@
             this.btnFlash.Text = "Flash firmware";
             this.btnFlash.UseVisualStyleBackColor = true;
             this.btnFlash.Click += new System.EventHandler(this.btnFlash_Click);
+            this.btnFlash.MouseUp += new System.Windows.Forms.MouseEventHandler(this.btnFlash_MouseUp);
             // 
             // tableLayoutPanel1
             // 
@@ -116,7 +112,7 @@
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel2, 0, 2);
             this.tableLayoutPanel1.Controls.Add(this.tbLog, 0, 4);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 24);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 5;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
@@ -124,7 +120,7 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 300F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(857, 823);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(857, 847);
             this.tableLayoutPanel1.TabIndex = 8;
             // 
             // tableLayoutPanel2
@@ -150,42 +146,8 @@
             this.tbLog.Multiline = true;
             this.tbLog.Name = "tbLog";
             this.tbLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.tbLog.Size = new System.Drawing.Size(851, 507);
+            this.tbLog.Size = new System.Drawing.Size(851, 531);
             this.tbLog.TabIndex = 8;
-            // 
-            // menuStrip1
-            // 
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.extrasToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(857, 24);
-            this.menuStrip1.TabIndex = 9;
-            this.menuStrip1.Text = "menuStrip1";
-            // 
-            // extrasToolStripMenuItem
-            // 
-            this.extrasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.flashFileSystemToolStripMenuItem,
-            this.flashMergedFileToolStripMenuItem});
-            this.extrasToolStripMenuItem.Name = "extrasToolStripMenuItem";
-            this.extrasToolStripMenuItem.Size = new System.Drawing.Size(49, 20);
-            this.extrasToolStripMenuItem.Text = "Extras";
-            this.extrasToolStripMenuItem.Click += new System.EventHandler(this.extrasToolStripMenuItem_Click);
-            // 
-            // flashFileSystemToolStripMenuItem
-            // 
-            this.flashFileSystemToolStripMenuItem.Name = "flashFileSystemToolStripMenuItem";
-            this.flashFileSystemToolStripMenuItem.Size = new System.Drawing.Size(239, 22);
-            this.flashFileSystemToolStripMenuItem.Text = "Flash fliesystem from single file";
-            this.flashFileSystemToolStripMenuItem.Click += new System.EventHandler(this.flashFileSystemToolStripMenuItem_Click);
-            // 
-            // flashMergedFileToolStripMenuItem
-            // 
-            this.flashMergedFileToolStripMenuItem.Name = "flashMergedFileToolStripMenuItem";
-            this.flashMergedFileToolStripMenuItem.Size = new System.Drawing.Size(239, 22);
-            this.flashMergedFileToolStripMenuItem.Text = "Flash merged from single file";
-            this.flashMergedFileToolStripMenuItem.Click += new System.EventHandler(this.flashMergedFileToolStripMenuItem_Click);
             // 
             // ofdFlash
             // 
@@ -197,19 +159,14 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(857, 847);
             this.Controls.Add(this.tableLayoutPanel1);
-            this.Controls.Add(this.menuStrip1);
-            this.MainMenuStrip = this.menuStrip1;
             this.Name = "frmMain";
-            this.Text = "Chronofit - firmware updater";
+            this.Text = "Firmware updater";
             this.Load += new System.EventHandler(this.frmMain_Load);
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -222,10 +179,6 @@
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
         private System.Windows.Forms.TextBox tbLog;
-        private System.Windows.Forms.MenuStrip menuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem extrasToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem flashFileSystemToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem flashMergedFileToolStripMenuItem;
         private System.Windows.Forms.OpenFileDialog ofdFlash;
     }
 }

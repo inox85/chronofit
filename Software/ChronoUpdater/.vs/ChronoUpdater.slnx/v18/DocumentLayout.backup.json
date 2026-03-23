@@ -3,16 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\driverinstaller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\driverinstaller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\secrets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -21,10 +25,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\downloadresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\downloadresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\driverinstaller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\driverinstaller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\favicon.ico||{177559E0-D141-11D0-92DF-00A0C9138C45}",
@@ -56,7 +56,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 200,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -68,14 +68,14 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "frmMain.cs [Progettazione]",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
               "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs [Progettazione]",
               "RelativeToolTip": "ChronoUpdater\\frmMain.cs [Progettazione]",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-20T11:42:53.82Z",
+              "WhenOpened": "2026-03-23T07:15:12.752Z",
               "EditorCaption": " [Progettazione]"
             },
             {
@@ -92,7 +92,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "Secrets.cs",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\Secrets.cs",
@@ -100,8 +100,7 @@
               "RelativeToolTip": "ChronoUpdater\\Secrets.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-18T14:26:12.497Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-18T14:26:12.497Z"
             },
             {
               "$type": "Document",
@@ -131,26 +130,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "Updater.cs",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Updater.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\Updater.cs",
               "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Updater.cs",
               "RelativeToolTip": "ChronoUpdater\\Updater.cs",
-              "ViewState": "AgIAADEAAAAA3MzMzMzov0QAAAAoAAAAAAAAAA==",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAmwA8AAAAzAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-14T07:54:39.458Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 2,
               "Title": "DriverInstaller.cs",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\DriverInstaller.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\DriverInstaller.cs",
               "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\DriverInstaller.cs",
               "RelativeToolTip": "ChronoUpdater\\DriverInstaller.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAQwC8AAAARAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-13T11:06:24.26Z",
               "EditorCaption": ""
@@ -163,7 +162,7 @@
               "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
               "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeToolTip": "ChronoUpdater\\frmMain.cs",
-              "ViewState": "AgIAAIwAAAAAAAAAAAAkwK0AAAA5AAAAAAAAAA==",
+              "ViewState": "AgIAANgAAAAAAAAAAAAkwOgAAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-25T11:25:22.11Z",
               "EditorCaption": ""
@@ -204,7 +203,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "DownloadResult.cs",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\DownloadResult.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\DownloadResult.cs",
@@ -212,8 +211,7 @@
               "RelativeToolTip": "ChronoUpdater\\DownloadResult.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAqwBIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-13T10:57:31.452Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-13T10:57:31.452Z"
             }
           ]
         }

@@ -19,6 +19,7 @@ using System.Windows.Forms;
 using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar;
 
 
 
@@ -28,6 +29,7 @@ namespace ChronoUpdater
     public partial class frmMain : Form
     {
         DownloadResult res;
+        ContextMenuStrip menu = new ContextMenuStrip();
         public frmMain()
         {
             InitializeComponent();
@@ -37,7 +39,6 @@ namespace ChronoUpdater
         {
             try
             {
-
                 btnDownload.Enabled = false;
 
                 res = await DownloadFiles();
@@ -155,6 +156,8 @@ namespace ChronoUpdater
 
             cbPorts.Enabled = true;
             btnFlash.Enabled = true;
+
+            createFlashMenu();
         }
 
 
@@ -205,29 +208,30 @@ namespace ChronoUpdater
             updateFlashableStatus();
         }
 
-        private void extrasToolStripMenuItem_Click(object sender, EventArgs e)
-        {
 
+
+        private void btnFlash_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                menu.Show(btnFlash, e.Location);
+            }
         }
 
-        private void flashMergedFileToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (ofdFlash.ShowDialog() == DialogResult.OK)
-            {
-                string filePath = ofdFlash.FileName;
-                Updater.FlashBinAsync(0x0,filePath, cbPorts.SelectedValue.ToString());
-            }
+        private void createFlashMenu() {
+            
 
-        }
+            ToolStripMenuItem voce1 = new ToolStripMenuItem("Opzione 1");
+            ToolStripMenuItem voce2 = new ToolStripMenuItem("Opzione 2");
 
-        private void flashFileSystemToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (ofdFlash.ShowDialog() == DialogResult.OK)
-            {
-                string filePath = ofdFlash.FileName;
-                Updater.FlashBinAsync(0x290000, filePath, cbPorts.SelectedValue.ToString());        
-            }
+            voce1.Click += (s, e) => MessageBox.Show("Hai cliccato Opzione 1");
+            voce2.Click += (s, e) => MessageBox.Show("Hai cliccato Opzione 2");
 
+            menu.Items.Add(voce1);
+            menu.Items.Add(voce2);
+
+            // associa al bottone
+            btnFlash.ContextMenuStrip = menu;
         }
     }
 }
