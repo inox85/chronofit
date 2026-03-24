@@ -375,6 +375,18 @@ input:checked + .slider:before {
 
 /* ======= TABLE ======= */
 
+.sponsor2{
+  width: 100%;
+  padding: 15px;
+  max-height: 300px;
+}
+
+.sponsor2-img{
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 .card.table-card {
   min-height: 512px;
   display: flex;
