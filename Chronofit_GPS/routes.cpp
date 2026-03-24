@@ -967,7 +967,7 @@ void syncTime() {
   }
 }
 
-void sendEmail(const char* subject, const char* body,
+void sendEmail(String emailAddress, const char* subject, const char* body,
                const char* attachPath = nullptr,
                const char* attachName = nullptr,
                const char* attachMime = nullptr) {
@@ -986,10 +986,10 @@ void sendEmail(const char* subject, const char* body,
   session.login.user_domain = "";
 
   SMTP_Message message;
-  message.sender.name  = "ESP32";
+  message.sender.name  = "⏱️ Chronofit";
   message.sender.email = GMAIL_SMTP_USER;
   message.subject      = subject;
-  message.addRecipient(GMAIL_MAIL_TO_NAME, GMAIL_MAIL_TO);
+  message.addRecipient(GMAIL_MAIL_TO_NAME, emailAddress);
   message.text.content = body;
   message.text.charSet = "utf-8";
 
@@ -1015,6 +1015,8 @@ void sendEmail(const char* subject, const char* body,
   Serial.println("[MAIL] Connessione a Gmail...");
   if (!smtp.connect(&session)) {
     Serial.printf("[MAIL] ❌ Connessione fallita: %s\n", smtp.errorReason().c_str());
+    String msgJson = serializeMessage("❌ Mail sent failed!");
+    ws.textAll(msgJson);
     return;
   }
 
@@ -1022,6 +1024,8 @@ void sendEmail(const char* subject, const char* body,
     Serial.printf("[MAIL] ❌ Invio fallito: %s\n", smtp.errorReason().c_str());
   } else {
     Serial.println("[MAIL] ✅ Mail inviata con successo!");
+    String msgJson = serializeMessage("✅ Mail sent successfully!");
+    ws.textAll(msgJson);
   }
 
   smtp.closeSession();
@@ -1062,11 +1066,11 @@ void sendBrevoMail(String emailAddress) {
     "{"
       "\"sender\":{"
         "\"name\":\"Chronofit\","
-        "\"email\":\"inox85@gmail.com\""
+        "\"email\":\"chronofit.mail@gmail.com\""
       "},"
       "\"to\":[{"
         "\"email\":\"" + emailAddress + "\","
-        "\"name\":\"Admin\""
+        "\"name\":\"Chrono\""
       "}],"
       "\"subject\":\"File sessione di gara da Chronofit [ " 
           + String(latitude, 6) + ", " + String(longitude, 6) + "]\","
@@ -1127,8 +1131,8 @@ void sendBrevoMailTask(void* param) {
 
     syncTime();
 
-    sendEmail("Report ESP32",
-              "In allegato il file session.json.",
+    sendEmail("⏱️ Chronofit session report",
+              "In attachment session.json",
               "/session.json", "session.json", "application/json");
     delete (String*)param;        // pulizia
     vTaskDelete(NULL);             // termina il task
