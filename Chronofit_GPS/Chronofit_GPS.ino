@@ -140,7 +140,6 @@ void configFS(){
     Serial.println("Errore nel montaggio di LittleFS");
     return;
   }
-
   server.serveStatic("/", LittleFS, "/");
 
 }

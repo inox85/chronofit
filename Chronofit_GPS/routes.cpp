@@ -22,6 +22,9 @@
 #include "RTC.h"
 #include "esp_wifi.h"
 #include <time.h>
+#include <ESP_Mail_Client.h>
+
+SMTPSession smtp;
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -353,7 +356,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       String emailAddress = request->getParam("address")->value();
       Serial.println("Richiesta invio mail da:");
       Serial.println(emailAddress);
-      sendBrevoMailAsync(emailAddress);
+      sendMailAsync(emailAddress);
     }
 
     request->send(200, "text/plain", "Email sended!");
@@ -736,6 +739,9 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       doc["fwVer"] = String(FW_VERSION);
       doc["devName"] = String(DEV_NAME);
       doc["hwName"] = String(HW_NAME);
+      doc["freeRam"] = ESP.getFreeHeap();
+      doc["minFreeRam"] = ESP.getMinFreeHeap();
+
 
       size_t totalBytes = LittleFS.totalBytes();
       size_t usedBytes  = LittleFS.usedBytes();
@@ -916,9 +922,7 @@ String fileToBase64(const char *path) {
   return encoded;
 }
 
-#include <ESP_Mail_Client.h>
 
-SMTPSession smtp;
 
 void smtpCallback(SMTP_Status status) {
   Serial.println(status.info());
@@ -985,11 +989,13 @@ void sendEmail(String emailAddress, const char* subject, const char* body,
   session.login.password   = GMAIL_SMTP_PASSWORD;
   session.login.user_domain = "";
 
+  Serial.printf("EMAIL: [%s]\n", emailAddress.c_str());
+
   SMTP_Message message;
-  message.sender.name  = "⏱️ Chronofit";
+  message.sender.name  = "Chronofit";
   message.sender.email = GMAIL_SMTP_USER;
   message.subject      = subject;
-  message.addRecipient(GMAIL_MAIL_TO_NAME, emailAddress);
+  message.addRecipient("Chrono", emailAddress);
   message.text.content = body;
   message.text.charSet = "utf-8";
 
@@ -1031,117 +1037,68 @@ void sendEmail(String emailAddress, const char* subject, const char* body,
   smtp.closeSession();
 }
 
-void sendBrevoMail(String emailAddress) {
-  Serial.println("Inizio invio mail!");
 
-  WiFiClientSecure client;
-  client.setInsecure();  // semplifica TLS
-
-  Serial.println("Verifico connessione...");
-  if (!client.connect(BREVO_HOST, BREVO_PORT)) {
-    Serial.println("Connessione Brevo fallita");
-    return;
-  }
-  Serial.println("OK");
-
-  // Leggo il JSON ma lo invio come .txt
-  String attachmentBase64 = fileToBase64("/session.json");
-
-  Serial.println("Carico allegato...");
-
-  if (attachmentBase64.length() == 0) {
-    Serial.println("Allegato vuoto");
-    return;
-  }
-
-  Serial.println("OK");
-
-  float latitude = gps.location.isValid() ? gps.location.lat() : 0;
-  float longitude = gps.location.isValid() ? gps.location.lng() : 0;
-
-  String mapsLink = "https://www.google.com/maps/search/?api=1&query=" + String(latitude, 6) + "," + String(longitude, 6);
-  Serial.println("Link creato!");
-
-  String body =
-    "{"
-      "\"sender\":{"
-        "\"name\":\"Chronofit\","
-        "\"email\":\"chronofit.mail@gmail.com\""
-      "},"
-      "\"to\":[{"
-        "\"email\":\"" + emailAddress + "\","
-        "\"name\":\"Chrono\""
-      "}],"
-      "\"subject\":\"File sessione di gara da Chronofit [ " 
-          + String(latitude, 6) + ", " + String(longitude, 6) + "]\","
-      "\"htmlContent\":\"<p>In allegato trovi il file di sessione.</p>"
-        "<p>Visualizza la posizione su Google Maps: "
-        "<a href=\\\"" + mapsLink + "\\\" target=\\\"_blank\\\">Apri Google Maps</a></p>\","
-      "\"attachment\":[{"
-        "\"content\":\"" + attachmentBase64 + "\","
-        "\"name\":\"session.txt\""
-      "}]"
-    "}";
-
-  Serial.println("Mail costruita!");
-  client.print(
-    "POST /v3/smtp/email HTTP/1.1\r\n"
-    "Host: " BREVO_HOST "\r\n"
-    "api-key: " BREVO_API_KEY "\r\n"
-    "Content-Type: application/json\r\n"
-    "Content-Length: " + String(body.length()) + "\r\n"
-    "Connection: close\r\n\r\n" +
-    body
-  );
-
-  Serial.println("Richiesta inviata a Brevo");
-
-  // Lettura intestazioni HTTP
-  while (client.connected()) {
-    String line = client.readStringUntil('\n');
-    if (line == "\r") break; // fine headers
-  }
-
-  // Leggi tutto il corpo (JSON di Brevo)
-  String response = "";
-  while (client.available()) {
-    response += client.readString();
-  }
-
-  Serial.println("=== Risposta Brevo ===");
-  Serial.println(response);
-
-  // Analisi semplice: verifica se contiene "messageId"
-  if (response.indexOf("messageId") >= 0) {    
-    Serial.println("Mail accettata");
-    String msgJson = serializeMessage("Mail sent successfully!");
-    ws.textAll(msgJson);
-  } 
-  else 
-  {
-    Serial.println("Errore invio mail!");
-  }
-  
-}
-
-void sendBrevoMailTask(void* param) {
+void sendMailTask(void* param) {
     String email = *(String*)param;
-    //sendBrevoMail(email); // il tuo metodo attuale
-      // 2) Con allegato JSON
 
     syncTime();
 
-    sendEmail("⏱️ Chronofit session report",
-              "In attachment session.json",
-              "/session.json", "session.json", "application/json");
-    delete (String*)param;        // pulizia
-    vTaskDelete(NULL);             // termina il task
+    // Usa float, non String
+    float lat = gps.location.lat();
+    float lon = gps.location.lng();
+
+    // Buffer statici (stack, no heap)
+    char latitude[16];
+    char longitude[16];
+
+    snprintf(latitude, sizeof(latitude), "%.6f", lat);
+    snprintf(longitude, sizeof(longitude), "%.6f", lon);
+
+    // BODY su buffer statico
+    char body[512];
+
+    snprintf(body, sizeof(body),
+        "Gentile utente,\r\n"
+        "\r\n"
+        "la presente per trasmettere in allegato il file relativo alla sessione registrata.\r\n"
+        "\r\n"
+        "Coordinate geografiche della sessione:\r\n"
+        "• Latitudine: %s\r\n"
+        "• Longitudine: %s\r\n"
+        "\r\n"
+        "La posizione è consultabile anche tramite il seguente link:\r\n"
+        "https://www.google.com/maps/search/?api=1&query=%s,%s\r\n"
+        "\r\n"
+        "Per ulteriori informazioni o supporto, non esiti a contattarci.\r\n"
+        "\r\n"
+        "Cordiali saluti,\r\n"
+        "Chronofit",
+        latitude, longitude, latitude, longitude
+    );
+
+    // SUBJECT su buffer statico
+    char subject[128];
+
+    snprintf(subject, sizeof(subject),
+        "Chronofit - Session file [%s;%s]",
+        latitude, longitude
+    );
+
+    sendEmail(email,
+              subject,
+              body,
+              "/session.json",
+              "session.json",
+              "application/json");
+
+    delete (String*)param;
+    vTaskDelete(NULL);
 }
 
-void sendBrevoMailAsync(String email) {
+void sendMailAsync(String email) {
     // copia la stringa perché il task lavora su puntatore
-    String* emailCopy = new String(email);
-    xTaskCreate(sendBrevoMailTask, "SendBrevoMail", 8192, emailCopy, 1, NULL);
+    //String* emailCopy = new String(email);
+    xTaskCreate(sendMailTask, "sendMailTask", 8192, new String(email), 1, NULL);
 }
 
 
