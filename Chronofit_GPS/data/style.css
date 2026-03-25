@@ -56,6 +56,33 @@ span{
     justify-content: center;
 }
 
+.time-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centra il tempo */
+}
+
+/* immagini agli estremi */
+.sponsor-img {
+  max-height: 50px;
+  height: auto;
+  position: absolute;
+  right: 0;
+}
+
+.sponsor-logo {
+  max-height: 30px;
+  height: auto;
+  position: absolute;
+  left: 0;
+}
+
+.container#view_container {
+    margin-top: 0px;
+}
+
+
 /* Mantieni la card come sidebar “sticky” */
 .container .card:not(.table-card) {
   position: sticky;

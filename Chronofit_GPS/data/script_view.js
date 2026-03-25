@@ -575,94 +575,6 @@ function updateClockFromData(data) {
         + String(data.m).padStart(2,'0') + ":" 
         + String(data.s).padStart(2,'0') + ".000" //+ data.millis; 
 
-
-    let statusElem = document.getElementById("status");
-    let wifiNavBar = document.getElementById("wifiStatus");
-    let gpsNavBar = document.getElementById("gpsStatus");
-    //let timezoneElem = document.getElementById("timezone");
-
-    const fixFlags = data.f; // esempio: 7
-
-    const syncEnabled = (fixFlags & FLAG_SYNC_ENABLED) !== 0;
-    const timeValid = (fixFlags & FLAG_TIME_VALID) !== 0;
-    const locationValid = (fixFlags & FLAG_LOCATION_VALID) !== 0;
-    const calRunning = (fixFlags & FLAG_TIMEBASE_CALIBRATION) !== 0;
-
-    if (calRunning) {
-      showGeneralPopup("Timebase calibration running...", "#ff9800", 5000); // arancione per calibrazione
-    } 
-
-    const syncStatus = data.sy; 
-    const wifiStatus = data.w; // 0=disconnected, 1=connecting, 2=connected
-
-    handlePowerUpdate(data);
-
-    let syncTestIcon = document.getElementById("incon-sync-test");
-    //syncTestIcon.style.display = "none";
-    syncTestIcon.classList.add("disabled");
-
-    const elapsedTimeControls = document.getElementById("elapsedTimeControls");
-    elapsedTimeControls.classList.add("hidden");
-    
-    //document.getElementById("sendEmailBtn").disabled = true;
-
-    const btn = document.getElementById("sendEmailBtn");
-    btn.disabled = true;
-    btn.classList.add("disabled");
-
-    const hasRows = document.querySelectorAll('#event-table tbody tr').length > 0;
-
-    if(wifiStatus == WIFI_STATUS_CONNECTED){
-      wifiNavBar.innerText =  "🟡";
-    }else if(wifiStatus == WIFI_STATUS_CONNECING){
-      wifiNavBar.innerText =  "🔄";
-    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK && hasRows){
-      wifiNavBar.innerText =  "🟢";
-      btn.disabled = false;
-      btn.classList.remove("disabled");
-    }else if(wifiStatus == WIFI_STATUS_DISCONNECTED){
-      wifiNavBar.innerText =  "🔴";
-    }
-
-    if(syncStatus === SYNC_NONE){
-      document.getElementById("time").innerText = "00:00:00.000";
-      statusElem.innerText = "Sync mode: Manual — Status: 🔴 not set";
-    }
-    if(syncStatus === SYNC_MANUAL_SET){
-      statusElem.innerText = "Sync mode: Manual — Status: 🟢 OK"
-    }
-    if(syncStatus === SYNC_WAIT_LINE_SIGNAL){
-      document.getElementById("time").innerText = "00:00:00.000";
-      statusElem.innerText = "Sync mode: Line — Status: ⏳ waiting for trigger..."
-    }
-    if(syncStatus === SYNC_SET_BY_LINE_SIGNAL){
-      statusElem.innerText = "Sync mode: Line — Status: 🟢 synced";
-    }
-    if(syncStatus === SYNC_FIRST_GPS_SYNC || syncStatus === SYNC_WAIT_GPS){
-      statusElem.innerText = "Sync mode: GPS — Status: ⏳ waiting for signal..."
-    }if(syncStatus === SYNC_GPS_SYNCED){
-      const lastSync = data.ls;
-      const GPSRefreshInterval = data.lg;
-      const nextSync = data.lg - data.ls;
-      syncTestIcon.classList.remove("disabled");
-
-      if(data.ts == GPS_TEST_DONE)
-      {
-        if(data.lg != 0){
-          if(nextSync < 60)
-          {
-            statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync " + String(nextSync) + "s)";
-          }else{
-            statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync " + String(Math.trunc(nextSync/60)) + "m)";
-          }
-        }else{
-          statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync 1s)";
-        }
-      }else{
-        statusElem.innerText = "Sync test: ⏱️ Waiting for the next minute to start... ";
-      }
-
-    }
     if(syncStatus == ELAPSED_WAITING_START){
       elapsedTimeControls.classList.remove("hidden");
       const startButton = document.getElementById("startButton");
@@ -675,25 +587,7 @@ function updateClockFromData(data) {
       startButton.innerText = "Stop";
       statusElem.innerText = "⏱️ Timing started! ";
     }
-    
   
-  if(timeValid && locationValid){
-    let tzOffsetAuto = Math.round(data.ln / 15); 
-    let offsetString =  "UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
-    document.getElementById("pos").innerText = "🟢 " + "Lat: " 
-      + data.lt.toFixed(6) + ", Lng: " + data.ln.toFixed(6) + ", Sat: " + data.st + " [" + offsetString +"]";
-
-    gpsNavBar.innerText = "🟢 Lt: " + data.lt.toFixed(6) + ", Ln: " + data.ln.toFixed(6);
-      //timezoneElem.innerText = "Estimated timezone: UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
-  } else if(timeValid || locationValid){
-    // GPS in attesa segnale
-    document.getElementById("pos").innerText = "🟡 " +  "Lat:--, Lng:--, Sat: 0, Fix:--" ;   
-    gpsNavBar.innerText = "🟡";
-  } else {
-    // GPS disabilitato
-    document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
-    gpsNavBar.innerText = "🔴";
-  }
 }
 
 let eventRows = []; // esempio

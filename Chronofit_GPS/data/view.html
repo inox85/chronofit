@@ -83,6 +83,7 @@
   </div>
 
   <!-- Overlay e popup per Edit Time -->
+
   <div id="settingsOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
       <h2>Time settings</h2>
@@ -238,12 +239,8 @@
       </div>
     </div>
   </div>
-
-  <div class="navbar">
-    <img src="/sponsor.png" alt="Sponsor1" style="max-height: 300px;">
-  </div>
   
-  <div class="container">
+  <div id="view_container" class="container">
 
   <div id="popup" class="popup hidden">No connection to Chronofit device</div>
 
@@ -346,7 +343,13 @@
 </div>
 
   <div class="card table-card right">
-    <p id="time" style="font-size:4em">00:00:00.000</p>
+
+    <div class="time-header">
+      <img src="/logo-black.png" alt="Logo" class="sponsor-logo">    
+      <p id="time" style="font-size: 65px;">00:00:00.000</p>
+      <img src="/sponsor.png" alt="Sponsor1" class="sponsor-img">
+    </div>
+
     <div class="table-wrapper">
       <table id="event-table">
         <thead>
