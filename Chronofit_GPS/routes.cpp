@@ -60,44 +60,44 @@ void activateAccessPoint(){
   server.begin();
 }
 
-bool postSessionJson(const char* url, const char* filePath) {
+// bool postSessionJson(const char* url, const char* filePath) {
 
-  // Controllo esistenza file
-  if (!LittleFS.exists(filePath)) {
-    Serial.println("❌ File non trovato: " + String(filePath));
-    return false;
-  }
+//   // Controllo esistenza file
+//   if (!LittleFS.exists(filePath)) {
+//     Serial.println("❌ File non trovato: " + String(filePath));
+//     return false;
+//   }
 
-  // Apro il file in lettura
-  File file = LittleFS.open(filePath, "r");
-  if (!file) {
-    Serial.println("❌ Errore apertura file");
-    return false;
-  }
+//   // Apro il file in lettura
+//   File file = LittleFS.open(filePath, "r");
+//   if (!file) {
+//     Serial.println("❌ Errore apertura file");
+//     return false;
+//   }
 
-  // Creo HTTP client
-  HTTPClient http;
-  http.begin(url);
-  http.addHeader("Content-Type", "application/json"); // JSON
+//   // Creo HTTP client
+//   HTTPClient http;
+//   http.begin(url);
+//   http.addHeader("Content-Type", "application/json"); // JSON
 
-  // POST leggendo il file direttamente come payload
-  int httpResponseCode = http.sendRequest("POST", &file, file.size());
+//   // POST leggendo il file direttamente come payload
+//   int httpResponseCode = http.sendRequest("POST", &file, file.size());
 
-  file.close(); // chiudo file
+//   file.close(); // chiudo file
 
-  if (httpResponseCode > 0) {
-    Serial.print("✅ POST OK, HTTP code: ");
-    Serial.println(httpResponseCode);
-    Serial.println(http.getString()); // risposta server
-    http.end();
-    return true;
-  } else {
-    Serial.print("❌ POST fallita: ");
-    Serial.println(http.errorToString(httpResponseCode));
-    http.end();
-    return false;
-  }
-}
+//   if (httpResponseCode > 0) {
+//     Serial.print("✅ POST OK, HTTP code: ");
+//     Serial.println(httpResponseCode);
+//     Serial.println(http.getString()); // risposta server
+//     http.end();
+//     return true;
+//   } else {
+//     Serial.print("❌ POST fallita: ");
+//     Serial.println(http.errorToString(httpResponseCode));
+//     http.end();
+//     return false;
+//   }
+// }
 
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
@@ -992,7 +992,7 @@ void sendEmail(String emailAddress, const char* subject, const char* body,
   Serial.printf("EMAIL: [%s]\n", emailAddress.c_str());
 
   SMTP_Message message;
-  message.sender.name  = "Chronofit";
+  message.sender.name  = "⏱️Chronofit";
   message.sender.email = GMAIL_SMTP_USER;
   message.subject      = subject;
   message.addRecipient("Chrono", emailAddress);
@@ -1039,22 +1039,19 @@ void sendEmail(String emailAddress, const char* subject, const char* body,
 
 
 void sendMailTask(void* param) {
-    String email = *(String*)param;
+    char* email = (char*)param;
 
     syncTime();
 
-    // Usa float, non String
     float lat = gps.location.lat();
     float lon = gps.location.lng();
 
-    // Buffer statici (stack, no heap)
     char latitude[16];
     char longitude[16];
 
     snprintf(latitude, sizeof(latitude), "%.6f", lat);
     snprintf(longitude, sizeof(longitude), "%.6f", lon);
 
-    // BODY su buffer statico
     char body[512];
 
     snprintf(body, sizeof(body),
@@ -1066,17 +1063,13 @@ void sendMailTask(void* param) {
         "• Latitudine: %s\r\n"
         "• Longitudine: %s\r\n"
         "\r\n"
-        "La posizione è consultabile anche tramite il seguente link:\r\n"
         "https://www.google.com/maps/search/?api=1&query=%s,%s\r\n"
-        "\r\n"
-        "Per ulteriori informazioni o supporto, non esiti a contattarci.\r\n"
         "\r\n"
         "Cordiali saluti,\r\n"
         "Chronofit",
         latitude, longitude, latitude, longitude
     );
 
-    // SUBJECT su buffer statico
     char subject[128];
 
     snprintf(subject, sizeof(subject),
@@ -1084,21 +1077,17 @@ void sendMailTask(void* param) {
         latitude, longitude
     );
 
-    sendEmail(email,
-              subject,
-              body,
+    sendEmail(email, subject, body,
               "/session.json",
-              "session.json",
-              "application/json");
+              "session.txt",
+              "text/plain");
 
-    delete (String*)param;
+    free(email);   // ✅ corretto per strdup
     vTaskDelete(NULL);
 }
 
 void sendMailAsync(String email) {
-    // copia la stringa perché il task lavora su puntatore
-    //String* emailCopy = new String(email);
-    xTaskCreate(sendMailTask, "sendMailTask", 8192, new String(email), 1, NULL);
+    char* emailCopy = strdup(email.c_str());  // ✅ corretto
+    xTaskCreate(sendMailTask, "sendMailTask", 8192, emailCopy, 1, NULL);
 }
-
 
