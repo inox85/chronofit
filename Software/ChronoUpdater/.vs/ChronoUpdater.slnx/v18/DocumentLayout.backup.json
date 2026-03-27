@@ -3,16 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|c:\\users\\innocenti\\documents\\src\\chronofit\\software\\chronoupdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\frmmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|solutionrelative:chronoupdater\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{99A08B4F-15EB-4CB3-8368-76AC3DAAE3F4}|ChronoUpdater\\ChronoUpdater.csproj|C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\chronoupdater\\secrets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -56,7 +56,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 200,
-          "SelectedChildIndex": 8,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Bookmark",
@@ -118,15 +118,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "Updater.cs",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Updater.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\Updater.cs",
               "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Updater.cs",
               "RelativeToolTip": "ChronoUpdater\\Updater.cs",
-              "ViewState": "AgIAAEIAAACAZmZmZmYLwFoAAAAzAAAAAAAAAA==",
+              "ViewState": "AgIAAFQAAAAAAAAAAAAjwGEAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-14T07:54:39.458Z"
+              "WhenOpened": "2026-03-14T07:54:39.458Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -142,20 +143,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "frmMain.cs",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
               "ToolTip": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeToolTip": "ChronoUpdater\\frmMain.cs",
-              "ViewState": "AgIAAJQAAAAAYGZmZmYWwLIAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAKAAAAAAAAAAAAAWwMEAAAA2AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-25T11:25:22.11Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "frmMain.cs [Progettazione]",
               "DocumentMoniker": "C:\\Users\\innocenti\\Documents\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
               "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",

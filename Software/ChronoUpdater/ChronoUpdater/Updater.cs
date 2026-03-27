@@ -91,6 +91,30 @@ namespace ChronoUpdater
                 return mergedSuccess && fsSucess;
             });
         }
-    
-}
+
+        public static Task<bool> FlashAppAndFS(string comport)
+        {
+            return Task.Run(() =>
+            {
+                string appPath = Path.Combine(AppConstants.UpdateFiles, "fw.bin");
+                string fsPath = Path.Combine(AppConstants.UpdateFiles, "fs.bin");
+
+                if (!File.Exists(appPath)) { Log("App file non trovato!"); return false; }
+                if (!File.Exists(fsPath)) { Log("Filesystem non trovato!"); return false; }
+
+                string appArgs = $"--chip esp32 --port {comport} --baud 921600 " +
+                              $"write_flash 0x10000 \"{appPath}\"";
+
+                bool mergedSuccess = RunEspTool(appArgs);
+
+                string fsArgs = $"--chip esp32 --port {comport} --baud 921600 " +
+                              $"write_flash 0x210000 \"{fsPath}\"";
+
+                bool fsSucess = RunEspTool(fsArgs);
+
+                return mergedSuccess && fsSucess;
+            });
+        }
+
+    }
 }

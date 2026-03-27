@@ -191,8 +191,8 @@ namespace ChronoUpdater
                 cbPorts.Invoke(new Action<string>(beginFlash), port);
                 return;
             }
-
-            await Task.Run(() => Updater.FlashMergedAndFS(port));
+            await Task.Run(() => Updater.FlashAppAndFS(port));
+            //await Task.Run(() => Updater.FlashMergedAndFS(port));
         }
 
         void AppendLog(string text)
