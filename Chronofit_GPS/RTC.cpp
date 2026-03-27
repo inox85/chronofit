@@ -66,7 +66,7 @@ bool writeAgingOffset(int8_t offset)
     Wire.requestFrom(DS3231_ADDR, 1);
     if (Wire.available() != 1)
         return false;
-
+        
     int8_t readValue = (int8_t)Wire.read();
 
     return (readValue == offset);
@@ -88,5 +88,15 @@ int8_t readAgingOffset()
 
 float rtc_get_temperature()
 {
+    // Wire.beginTransmission(0x68);
+    // Wire.write(0x11);
+    // Wire.endTransmission();
+
+    // Wire.requestFrom(0x68, 2);
+    // int8_t msb = Wire.read();
+    // uint8_t lsb = Wire.read();
+    // float temperature = msb + ((lsb >> 6) * 0.25f);
+    // Serial.println(temperature, 2);
+    // return temperature;
     return rtc.getTemperature();
 }

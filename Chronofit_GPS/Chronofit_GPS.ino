@@ -68,7 +68,7 @@ void setup() {
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
 
   rtc_init(SDA_PIN, SCL_PIN, 400000);
-  rtc_enable_1hz();
+  
 
   pinMode(SQW_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, RISING);
@@ -91,6 +91,15 @@ void setup() {
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
+  int rtcAging = readIntFromSettings("rtcAging", 0);
+  Serial.print("Writing aging factor: ");
+  Serial.println(rtcAging);
+  writeAgingOffset(rtcAging);
+  Serial.print("Reading aging factor: ");
+  Serial.println(rtcAging);
+  writeAgingOffset(readAgingOffset());
+  rtc_enable_1hz();
+  //int8_t agingRegVal = readAgingOffset();
 
   if(syncMode == MODE_SYNC_GPS)
     syncStatus = SYNC_FIRST_GPS_SYNC;
@@ -131,7 +140,7 @@ void setup() {
   digitalWrite(LED_2, LOW);
   digitalWrite(LED_3, LOW);
 
-  int8_t agingRegVal = readAgingOffset();
+
 
 }
 
@@ -148,12 +157,8 @@ void loop() {
 
   if(RTCTriggered){
     RTCTriggered = false;
-
-
     if(RTCTtriggerCount == 1){
-
       startRTC = lastRTCTrigger;
-
       Serial.print("startRTC: ");
       Serial.println(startRTC);
 
@@ -218,7 +223,7 @@ void loop() {
         handlePpsSync();          // NON deve più toccare ppsTriggered
         lastGPSSync = millis();
       }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
-        if( gps.time.isValid() && (gps.time.second() == 0 || gps.time.second() == 59)){
+        if(gps.time.isValid() && (gps.time.second() == 0 || gps.time.second() == 59)){
           syncTestRequested = 0;   
           sensorTime[4] = lastSyncTrigger;
           sensorTriggered[4] = true;
@@ -233,7 +238,7 @@ void loop() {
 
   if(actualSecond != lastBroadCastSecond && t.ms < 10){
     lastBroadCastSecond = actualSecond;
-    broadcastTime();  
+    broadcastTime();   
   }
   
   digitalWrite(LED_3, syncTestRequested);

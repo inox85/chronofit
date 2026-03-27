@@ -14,7 +14,6 @@ extern const byte DNS_PORT;
 extern DNSServer dnsServer;
 
 // --- Hardware ---
-
 extern TinyGPSPlus gps;
 
 // --- Variabili generali ---

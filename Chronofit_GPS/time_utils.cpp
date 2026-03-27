@@ -418,6 +418,8 @@ void updateCalibrationFactor(double driftPPM)
 
     calibrationFactor *= 1.0 + (correction - 1.0) * gain;
 
+    calibrationFactor = writeDoubleToSettings("timeCal", calibrationFactor);
+
     Serial.print("calibrationFactor: ");
     Serial.println(calibrationFactor, 12);
 }

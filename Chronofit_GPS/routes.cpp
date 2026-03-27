@@ -819,7 +819,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
       int8_t agingFactor = request->getParam("agingFactor")->value().toInt();
 
-      writeIntToSettings("agingFactor", agingFactor);
+      writeIntToSettings("rtcAging", agingFactor);
 
       writeAgingOffset(agingFactor);
 
