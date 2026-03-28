@@ -223,7 +223,8 @@ void loop() {
         handlePpsSync();          // NON deve più toccare ppsTriggered
         lastGPSSync = millis();
       }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
-        if(gps.time.isValid() && (gps.time.second() == 0 || gps.time.second() == 59)){
+        int sec = gps.time.second();
+        if(gps.time.isValid() && (sec == 0 || sec == 59)){
           syncTestRequested = 0;   
           sensorTime[4] = lastSyncTrigger;
           sensorTriggered[4] = true;

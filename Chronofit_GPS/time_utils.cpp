@@ -39,6 +39,16 @@ PreciseTime getPreciseTime() {
   return t;
 }
 
+uint32_t getPreciseMillis(uint64_t lpps){
+  uint64_t rawUs = lpps - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
+
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs = elapsedUs % 1000000ULL;
+  uint32_t ms = (remUs) / 1000;
+  return ms;
+}
+
 PreciseTime getPreciseSensorTime(int i) {
   PreciseTime t;
 
