@@ -649,12 +649,20 @@ function updateClockFromData(data) {
       if(data.ts == GPS_TEST_DONE)
       {
         if(data.lg != 0){
-          if(nextSync < 60)
+          
+          if(nextSync > 86400)
+          {
+            statusElem.innerText = "Sync mode: GPS — Status: 🟢 One shot-sync";
+          }
+          else if(nextSync < 60)
           {
             statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync " + String(nextSync) + "s)";
-          }else{
+          }
+          else
+          {
             statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync " + String(Math.trunc(nextSync/60)) + "m)";
           }
+
         }else{
           statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync 1s)";
         }
