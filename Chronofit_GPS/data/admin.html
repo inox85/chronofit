@@ -475,6 +475,24 @@
         <div class="m-value" id="freeRam">—</div>
         <div class="m-sub" id="minFreeRam">min —</div>
       </div>
+ 
+      <div class="metric-card">
+        <div class="m-label">Ultimo sync</div>
+        <div class="m-value" id="lastDeltaPPSSync">—</div>
+        <div class="m-sub">microsecondi</div>
+      </div>
+     
+      <div class="metric-card">
+        <div class="m-label">Drift al PPS test</div>
+        <div class="m-value" id="usDriftAtPPS">—</div>
+        <div class="m-sub">microsecondi</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="m-label">Drift stimato</div>
+        <div class="m-value" id="extimatedDriftByPPS">—</div>
+        <div class="m-sub">ppm</div>
+      </div>
 
     </div>
 
@@ -627,6 +645,10 @@
       document.getElementById('fsUsed').textContent  = fmtBytes(data.fsUsedBytes);
       document.getElementById('fsFree').textContent  = fmtBytes(data.fsFreeBytes);
       document.getElementById('fsTotal').textContent = fmtBytes(data.fsTotalBytes);
+
+      document.getElementById('lastDeltaPPSSync').textContent = data.lastDeltaPPSSync;
+      document.getElementById('usDriftAtPPS').textContent = data.usDriftAtPPS;
+      document.getElementById('extimatedDriftByPPS').textContent = data.extimatedDriftByPPS;
 
       files = data.files.map(f => ({...f, ext: extOf(f.name)}));
       renderFiles();
@@ -818,7 +840,7 @@
         fd.append('file', file);
         xhr.send(fd);
       });
-      
+
     }
 
     function loop() {

@@ -19,10 +19,23 @@ PreciseTime getPreciseTime() {
   PreciseTime t;
 
   uint64_t rawUs = esp_timer_get_time() - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs = elapsedUs % 1000000ULL;
+  
+  // Calcolo
+  if (remUs > 500000) 
+  {
+    t.us_drift = -((int64_t)(1000000 - remUs));  // negativo = prima del secondo
+  } 
+  else 
+  {
+    t.us_drift = (int64_t)remUs;                  // positivo = dopo il secondo
+  }
+
+  // Printf corretta
+  //Serial.printf("us_drift=%lld  ms=%u\n", t.us_drift, ms);
 
   // millisecondi arrotondati
   uint32_t ms = (remUs) / 1000;
@@ -41,7 +54,7 @@ PreciseTime getPreciseTime() {
 
 uint32_t getPreciseMillis(uint64_t lpps){
   uint64_t rawUs = lpps - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs = elapsedUs % 1000000ULL;
@@ -53,15 +66,32 @@ PreciseTime getPreciseSensorTime(int i) {
   PreciseTime t;
 
   uint64_t rawUs = sensorTime[i] - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs = elapsedUs % 1000000ULL;
 
+  // Calcolo
+  if (remUs > 500000) 
+  {
+    t.us_drift = -((int64_t)(1000000 - remUs));  // negativo = prima del secondo
+  } 
+  else 
+  {
+    t.us_drift = (int64_t)remUs;                  // positivo = dopo il secondo
+  }
+
   // millisecondi arrotondati
   uint32_t ms = (remUs) / 1000;
   if (ms >= 1000) ms = 999;
+  
   t.ms = ms;
+
+  // Printf corretta
+  Serial.print("us_drift: ");
+  Serial.println(t.us_drift);
+  Serial.print("ms: ");
+  Serial.println(t.ms);
 
   // ⏱️ tempo assoluto
   uint64_t absSec = ppsEpochSec + elapsedSec;
@@ -78,10 +108,19 @@ PreciseTime getPreciseSensorTime(uint64_t us) {
   PreciseTime t;
 
   uint64_t rawUs = us - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs) + 500;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs = elapsedUs % 1000000ULL;
+  // Calcolo
+  if (remUs > 500000) 
+  {
+    t.us_drift = -((int64_t)(1000000 - remUs));  // negativo = prima del secondo
+  } 
+  else 
+  {
+    t.us_drift = (int64_t)remUs;                  // positivo = dopo il secondo
+  }
 
   // millisecondi arrotondati
   uint32_t ms = (remUs) / 1000;
@@ -98,15 +137,41 @@ PreciseTime getPreciseSensorTime(uint64_t us) {
   return t;
 }
 
+void setExtimatedDriftParams(int us){
+
+    // tempo dall'ultima sync in microsecondi
+    uint64_t deltaUs = sensorTime[4] - ((uint64_t)lastGPSSync * 1000ULL);
+    Serial.print("deltaus:");
+    Serial.println(deltaUs);
+    
+    lastDeltaPPSSync = deltaUs;
+    // Normalizzazione errore [-500000, +500000]
+    //int32_t driftUs = (us > 500000) ? (us - 1000000) : us;  
+
+    usDriftAtPPS = us;
+    Serial.print("usDriftAtPPS:");
+    Serial.println(usDriftAtPPS);
+
+    // Calcolo ppm
+    if (deltaUs > 0) {
+        extimatedDriftByPPS = ((double)us / (double)deltaUs) * 1e6;
+    } else {
+        extimatedDriftByPPS = 0;
+    }
+}
+
 void checkPointRoutine(int i) {
 
   PreciseTime t = getPreciseSensorTime(i);
-
+  int us_drift = t.us_drift;
   uint16_t ms = t.ms;
   uint8_t hh = t.hh;
   uint8_t mm = t.mm;
   uint8_t ss = t.ss;
 
+  if(i == 4){
+    setExtimatedDriftParams(us_drift);
+  }
   // 🔹 Crea il JSON base
   StaticJsonDocument<256> checkpoint;
   checkpoint[LINE_NUMBER_FIELD] = i + 1;
@@ -167,7 +232,7 @@ void checkPointRoutine(int i) {
 
 // ----------------------------------------
 void handlePpsSync() {
-  syncReference = lastSyncTrigger;
+  //syncReference = lastSyncTrigger;
   // PPS = inizio del secondo successivo
   uint32_t yy = 2025;
   uint32_t MM = 1;

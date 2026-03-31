@@ -741,7 +741,9 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       doc["hwName"] = String(HW_NAME);
       doc["freeRam"] = ESP.getFreeHeap();
       doc["minFreeRam"] = ESP.getMinFreeHeap();
-
+      doc["lastDeltaPPSSync"] = lastDeltaPPSSync;
+      doc["usDriftAtPPS"] = usDriftAtPPS;
+      doc["extimatedDriftByPPS"] = extimatedDriftByPPS;
 
       size_t totalBytes = LittleFS.totalBytes();
       size_t usedBytes  = LittleFS.usedBytes();

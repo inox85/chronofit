@@ -167,18 +167,18 @@ void loop() {
       double elapsed = (double)(((double)lastRTCTrigger - (double)startRTC)* calibrationFactor )/1000.0;
       double delta = (double)elapsed - (double)extimated;
 
-      Serial.print(" Delta: ");
-      Serial.print(delta);
-      Serial.print(" in ");
-      Serial.print(RTCTtriggerCount - 1);
+      // Serial.print(" Delta: ");
+      // Serial.print(delta);
+      // Serial.print(" in ");
+      // Serial.print(RTCTtriggerCount - 1);
       double driftPPM = (delta / (double)(RTCTtriggerCount - 1)) * 1000.0;
-      Serial.print(" DriftPPM: ");
-      Serial.print(driftPPM);
+      // Serial.print(" DriftPPM: ");
+      // Serial.print(driftPPM);
 
 
       float temperature = rtc_get_temperature();
-      Serial.print(" temperature: ");
-      Serial.println(temperature);
+      // Serial.print(" temperature: ");
+      // Serial.println(temperature);
 
       if(fabs(driftPPM)> 0.5){
         updateCalibrationFactor(driftPPM * 2.0);
@@ -218,16 +218,21 @@ void loop() {
 
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
         syncReference = thisPpsUs;
+        handlePpsSync();          // NON deve più toccare ppsTriggered
+        usDriftAtPPS = 0;
+        lastDeltaPPSSync = 0;
+        extimatedDriftByPPS = 0;
         syncStatus = SYNC_GPS_SYNCED;
         RTCTtriggerCount = 0;
-        handlePpsSync();          // NON deve più toccare ppsTriggered
         lastGPSSync = millis();
       }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
-        int sec = gps.time.second();
-        if(gps.time.isValid() && (sec == 0 || sec == 59)){
-          syncTestRequested = 0;   
-          sensorTime[4] = lastSyncTrigger;
+        PreciseTime pt = getPreciseTime();
+        //if(gps.time.isValid() && ((pt.ss == 0 && abs(pt.us_drift < 500))|| (pt.ss == 59 && abs(pt.us_drift < 500)))){
+        if((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)){
+          syncTestRequested = 0;
+          sensorTime[4] = thisPpsUs;
           sensorTriggered[4] = true;
+          handleSensorTrigger();
         }
       }
 
@@ -261,8 +266,6 @@ bool checkConnectedClient(){
 void handleSensorTrigger(){
   for (int i = 0; i < 5; i++) {
     if (sensorTriggered[i]) {
-      Serial.print("Line");
-      Serial.println(i);
 
       sensorTriggered[i] = false;           // reset del flag
       playBinary(i+1);

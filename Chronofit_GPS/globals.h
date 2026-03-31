@@ -96,4 +96,8 @@ extern uint32_t RTCTtriggerCount;
 extern uint64_t startRTC;
 
 extern int agingFactor;
+
+extern int32_t usDriftAtPPS;
+extern uint64_t lastDeltaPPSSync;
+extern double extimatedDriftByPPS;
 #endif

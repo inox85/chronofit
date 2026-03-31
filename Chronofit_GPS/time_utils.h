@@ -7,6 +7,7 @@ struct PreciseTime {
     int mm;  // minuti
     int ss;  // secondi
     int ms;  // millisecondi
+    int us_drift;
 };
 
 
@@ -45,3 +46,4 @@ double termFactor(double T);
 
 void updateCalibrationFactor(double driftPPM);
 
+void setExtimatedDriftParams(int us);

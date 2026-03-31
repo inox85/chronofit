@@ -121,5 +121,6 @@ bool calRTC = false;
 
 int agingFactor = 0;
 
-portMUX_TYPE ppsMux = portMUX_INITIALIZER_UNLOCKED;
-portMUX_TYPE rtcMux = portMUX_INITIALIZER_UNLOCKED;
+int32_t usDriftAtPPS = 0;
+uint64_t lastDeltaPPSSync = 0;
+double extimatedDriftByPPS = 0;
