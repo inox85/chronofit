@@ -215,7 +215,8 @@ void loop() {
     if ((delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;   // consumato QUI, una sola volta
       uint64_t thisPpsUs = lastSyncTrigger;
-
+      //Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
+      //              delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
         syncReference = thisPpsUs;
         handlePpsSync();          // NON deve più toccare ppsTriggered
@@ -227,15 +228,20 @@ void loop() {
         lastGPSSync = millis();
       }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
         PreciseTime pt = getPreciseTime();
-        //if(gps.time.isValid() && ((pt.ss == 0 && abs(pt.us_drift < 500))|| (pt.ss == 59 && abs(pt.us_drift < 500)))){
+        //Serial.printf("[SYNCTEST] ss=%d ms=%d us_drift=%d\n", pt.ss, pt.ms, pt.us_drift);
         if((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)){
           syncTestRequested = 0;
           sensorTime[4] = thisPpsUs;
           sensorTriggered[4] = true;
           handleSensorTrigger();
         }
+        //else {
+          //Serial.printf("[SYNCTEST] FALLITO: condizione temporale non soddisfatta\n");
+        //}
+      //}else {
+        //Serial.printf("[PPS] SCARTATO: condizione esterna non soddisfatta\n");
+      //}
       }
-
     }
   }
 

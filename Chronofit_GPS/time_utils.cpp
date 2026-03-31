@@ -69,25 +69,31 @@ PreciseTime getPreciseSensorTime(int i) {
   uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
-  uint64_t remUs = elapsedUs % 1000000ULL;
+  uint64_t remUs      = elapsedUs % 1000000ULL;
 
-  // Calcolo
-  if (remUs > 500000) 
+  uint64_t remUs_in_ms = remUs % 1000;   // µs dentro il millisecondo corrente
+  uint32_t ms          = remUs / 1000;   // millisecondo corrente
+
+  if (remUs_in_ms > 500)
   {
-    t.us_drift = -((int64_t)(1000000 - remUs));  // negativo = prima del secondo
-  } 
-  else 
+    // Appartiene al millisecondo successivo
+    t.us_drift = -((int64_t)(1000ULL - remUs_in_ms));  // negativo = prima del ms
+    ms += 1;
+
+    if (ms >= 1000)
+    {
+      // Overflow: appartiene al secondo successivo
+      ms = 0;
+      elapsedSec += 1;
+    }
+  }
+  else
   {
-    t.us_drift = (int64_t)remUs;                  // positivo = dopo il secondo
+    t.us_drift = (int64_t)remUs_in_ms;   // positivo = dopo il ms
   }
 
-  // millisecondi arrotondati
-  uint32_t ms = (remUs) / 1000;
-  if (ms >= 1000) ms = 999;
-  
   t.ms = ms;
 
-  // Printf corretta
   Serial.print("us_drift: ");
   Serial.println(t.us_drift);
   Serial.print("ms: ");
