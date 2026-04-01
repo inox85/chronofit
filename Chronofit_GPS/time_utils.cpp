@@ -71,25 +71,22 @@ PreciseTime getPreciseSensorTime(int i) {
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs      = elapsedUs % 1000000ULL;
 
-  uint64_t remUs_in_ms = remUs % 1000;   // µs dentro il millisecondo corrente
   uint32_t ms          = remUs / 1000;   // millisecondo corrente
 
-  if (remUs_in_ms > 500)
+  if (remUs > 500000LL)
   {
-    // Appartiene al millisecondo successivo
-    t.us_drift = -((int64_t)(1000ULL - remUs_in_ms));  // negativo = prima del ms
+    t.us_drift = -((int64_t)(1000000ULL - remUs));  // negativo = prima del ms
     ms += 1;
 
     if (ms >= 1000)
     {
-      // Overflow: appartiene al secondo successivo
       ms = 0;
       elapsedSec += 1;
     }
   }
   else
   {
-    t.us_drift = (int64_t)remUs_in_ms;   // positivo = dopo il ms
+    t.us_drift = (int64_t)remUs;   // positivo = dopo il ms
   }
 
   t.ms = ms;
