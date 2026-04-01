@@ -370,6 +370,7 @@ function connectWebSocket() {
   if (wsConnecting) return;
   wsConnecting = true;
 
+  try{
   ws = new WebSocket(`ws://${window.location.host}/ws`);
 
   ws.onopen = () => {
@@ -411,6 +412,11 @@ function connectWebSocket() {
       }, 1000);
     }
   };
+
+  }
+  catch(e){
+    console.log("❌ WebSocket connection error");
+  }
 }
 
 const TYPE_CHECKPOINT = 0;
