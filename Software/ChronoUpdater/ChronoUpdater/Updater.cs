@@ -105,14 +105,14 @@ namespace ChronoUpdater
                 string appArgs = $"--chip esp32 --port {comport} --baud 921600 " +
                               $"write_flash 0x10000 \"{appPath}\"";
 
-                bool mergedSuccess = RunEspTool(appArgs);
+                bool appSuccess = RunEspTool(appArgs);
 
                 string fsArgs = $"--chip esp32 --port {comport} --baud 921600 " +
                               $"write_flash 0x210000 \"{fsPath}\"";
 
                 bool fsSucess = RunEspTool(fsArgs);
 
-                return mergedSuccess && fsSucess;
+                return appSuccess && fsSucess;
             });
         }
 
