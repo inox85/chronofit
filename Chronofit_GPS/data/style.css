@@ -98,10 +98,12 @@ span{
 
 .edit-btn {
   color: white;
+  height: 100%;
 }
 
 .send-btn{
   color: white;
+  height: 100%;
 }
 
 .penality-btn {
@@ -172,7 +174,6 @@ hr {
 
 .button-row {
   display: flex;
-  justify-content: center;   /* li centra orizzontalmente */
   gap: 10px;                 /* spazio tra i bottoni */
   margin-top: 10px;
 }
@@ -467,13 +468,6 @@ input:checked + .slider:before {
   transition: background-color 0.2s;
 }
 
-/* Centra il bottone ➡ nella cella */
-#event-table td:last-child {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* ======= LINE FILTERS ======= */
 
 .line-filters {
@@ -485,7 +479,6 @@ input:checked + .slider:before {
 
 /* --- Pulsante nella tabella event-table --- */
 #event-table td:last-child {
-  display: flex;
   align-items: center;
   justify-content: center;
 }
@@ -732,6 +725,11 @@ input:checked + .slider:before {
 
 #event-table tbody tr.negative-row td {
   background-color: #888;
+}
+
+/* Assicurati che anche tr non abbia altezza fissa */
+#event-table tr {
+  vertical-align: middle;
 }
 
 .card-navbar {
