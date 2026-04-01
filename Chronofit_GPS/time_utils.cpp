@@ -24,16 +24,6 @@ PreciseTime getPreciseTime() {
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs = elapsedUs % 1000000ULL;
   
-  // Calcolo
-  if (remUs > 500000) 
-  {
-    t.us_drift = -((int64_t)(1000000 - remUs));  // negativo = prima del secondo
-  } 
-  else 
-  {
-    t.us_drift = (int64_t)remUs;                  // positivo = dopo il secondo
-  }
-
   // Printf corretta
   //Serial.printf("us_drift=%lld  ms=%u\n", t.us_drift, ms);
 
@@ -71,18 +61,11 @@ PreciseTime getPreciseSensorTime(int i) {
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs      = elapsedUs % 1000000ULL;
 
-  uint32_t ms          = remUs / 1000;   // millisecondo corrente
+  uint32_t ms          = (remUs + 500) / 1000;   // millisecondo corrente
 
   if (remUs > 500000LL)
   {
-    t.us_drift = -((int64_t)(1000000ULL - remUs));  // negativo = prima del ms
-    ms += 1;
-
-    if (ms >= 1000)
-    {
-      ms = 0;
-      elapsedSec += 1;
-    }
+    t.us_drift = (int64_t)(remUs - 1000000ULL);  // negativo = prima del ms
   }
   else
   {
@@ -126,7 +109,7 @@ PreciseTime getPreciseSensorTime(uint64_t us) {
   }
 
   // millisecondi arrotondati
-  uint32_t ms = (remUs) / 1000;
+  uint32_t ms = (remUs + 500) / 1000;
   if (ms >= 1000) ms = 999;
   t.ms = ms;
 
