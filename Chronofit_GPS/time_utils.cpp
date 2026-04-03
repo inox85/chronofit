@@ -66,7 +66,7 @@ PreciseTime getPreciseSensorTime(int i) {
   if (remUs > 500000LL)
   {
     t.us_drift = (int64_t)(remUs - 1000000ULL);  // negativo = prima del ms
-  }
+  }''
   else
   {
     t.us_drift = (int64_t)remUs;   // positivo = dopo il ms
