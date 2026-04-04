@@ -1,6 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#define VER2
 #include <Arduino.h>
 
 // --- Configurazione hardware condizionale ---
@@ -10,25 +11,35 @@ constexpr int PRINTER_TX  = 16;
 
 // --- Pin sensori ---
 
-// constexpr int SENSOR_IN1 = 26;
-// constexpr int SENSOR_IN2 = 27;
-// constexpr int SENSOR_IN3 = 25;
-// constexpr int SENSOR_IN4 = 13;
+#ifdef VER2
 
-constexpr int SENSOR_IN1 = 13;
-constexpr int SENSOR_IN2 = 25;
-constexpr int SENSOR_IN3 = 27;
-constexpr int SENSOR_IN4 = 26;
+  constexpr int SENSOR_IN1 = 26;
+  constexpr int SENSOR_IN2 = 27;
+  constexpr int SENSOR_IN3 = 25;
+  constexpr int SENSOR_IN4 = 0;
 
-constexpr int LED_1 = 12;
-constexpr int LED_2 = 2;
-constexpr int LED_3 = 14;
+  constexpr int SDA_PIN = 32;
+  constexpr int SCL_PIN = 32;
+  constexpr int SQW_PIN = 4;
 
-constexpr int SDA_PIN = 21;
-constexpr int SCL_PIN = 22;
-constexpr int SQW_PIN = 23;
+#else
 
-// --- Altri pin ---
+  constexpr int SENSOR_IN1 = 13;
+  constexpr int SENSOR_IN2 = 25;
+  constexpr int SENSOR_IN3 = 27;
+  constexpr int SENSOR_IN4 = 26;
+
+  constexpr int SDA_PIN = 21;
+  constexpr int SCL_PIN = 22;
+  constexpr int SQW_PIN = 23;
+
+  constexpr int LED_1 = 12;
+  constexpr int LED_2 = 2;
+  constexpr int LED_3 = 14;
+
+#endif
+
+// --- GPS PINs ---
 
 constexpr int PPS_PIN = 34;
 
@@ -55,6 +66,5 @@ constexpr const char MINUTE_FIELD[] = "m";
 constexpr const char SECOND_FIELD[] = "s";
 constexpr const char MILLIS_FIELD[] = "ms";
 constexpr const char PENALITY_FIELD[] = "x";
-
 
 #endif

@@ -6,6 +6,9 @@
 #include <ESPAsyncWebServer.h>
 #include <TinyGPSPlus.h>
 #include <DNSServer.h>
+#include "LedStrip.h"
+
+extern LedStrip RGBLeds;
 
 // --- Costanti ---
 extern const char *ssid;

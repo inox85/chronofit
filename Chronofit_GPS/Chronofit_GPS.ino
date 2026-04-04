@@ -20,13 +20,12 @@
 #include "settings.h"
 #include "RTC.h"
 
-#define PROTOTYPE
+
 
 void IRAM_ATTR sensorISR(void *arg) {
   int i = (int)arg;
   signalMenagement(i);
 }
-
 
 // --- ISR PPS ---
 void IRAM_ATTR onPpsInterrupt() {   
@@ -66,7 +65,7 @@ void setup() {
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
-
+  
   rtc_init(SDA_PIN, SCL_PIN, 400000);
   
 
@@ -78,13 +77,25 @@ void setup() {
   
   rtc_set_datetime(2026, 2, 25, 12, 0, 0); // solo una volta
 
-  pinMode(LED_1, OUTPUT);
-  pinMode(LED_2, OUTPUT);
-  pinMode(LED_3, OUTPUT);
+  #ifdef VER2
 
-  digitalWrite(LED_1, HIGH);
-  digitalWrite(LED_2, HIGH);
-  digitalWrite(LED_3, HIGH);
+    RGBLeds.begin();
+  
+  #else
+
+    digitalWrite(LED_1, LOW);
+    digitalWrite(LED_2, LOW);
+    digitalWrite(LED_3, LOW);
+
+    pinMode(LED_1, OUTPUT);
+    pinMode(LED_2, OUTPUT);
+    pinMode(LED_3, OUTPUT);
+
+    digitalWrite(LED_1, HIGH);
+    digitalWrite(LED_2, HIGH);
+    digitalWrite(LED_3, HIGH);
+
+  #endif
 
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
   
@@ -136,11 +147,6 @@ void setup() {
   activateAccessPoint();
 
   delay(1000);
-  digitalWrite(LED_1, LOW);
-  digitalWrite(LED_2, LOW);
-  digitalWrite(LED_3, LOW);
-
-
 
 }
 
@@ -176,10 +182,6 @@ void loop() {
       // Serial.print(driftPPM);
 
 
-      float temperature = rtc_get_temperature();
-      // Serial.print(" temperature: ");
-      // Serial.println(temperature);
-
       if(fabs(driftPPM)> 0.5){
         updateCalibrationFactor(driftPPM * 2.0);
       }
@@ -197,7 +199,13 @@ void loop() {
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
-    digitalWrite(LED_1, checkConnectedClient());
+
+    #ifdef VER2
+    
+    #else
+      digitalWrite(LED_1, checkConnectedClient());
+    #endif
+
   }
   
   if(syncStatus != SYNC_WAIT_LINE_SIGNAL){
@@ -252,8 +260,13 @@ void loop() {
     lastBroadCastSecond = actualSecond;
     broadcastTime();   
   }
+
+  #ifdef VER2
+    
+  #else 
+    digitalWrite(LED_3, syncTestRequested);
+  #endif
   
-  digitalWrite(LED_3, syncTestRequested);
 
   handleSensorTrigger();
   

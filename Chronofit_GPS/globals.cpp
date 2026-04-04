@@ -4,6 +4,8 @@
 #include <TinyGPSPlus.h>
 #include <DNSServer.h>
 
+
+LedStrip RGBLeds;
 // --- Costanti ---
 const char *ssid = "Chronofit";
 const byte DNS_PORT = 53;

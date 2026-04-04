@@ -66,7 +66,7 @@ PreciseTime getPreciseSensorTime(int i) {
   if (remUs > 500000LL)
   {
     t.us_drift = (int64_t)(remUs - 1000000ULL);  // negativo = prima del ms
-  }''
+  }
   else
   {
     t.us_drift = (int64_t)remUs;   // positivo = dopo il ms
@@ -261,11 +261,6 @@ void handleRTCSync() {
   syncReference = lastRTCTrigger;
 
   lastBroadcast = millis();
-
-  // Serial.printf("%02d:%02d:%02d\n",
-  //                    dTime.hour(),
-  //                    dTime.minute(),
-  //                    dTime.second());
 }
 
 // Funzione di supporto: gestione sincronizzazione Line
@@ -380,59 +375,26 @@ void broadcastTime() {
     }
   }
 
-  if (doc["w"] == 3)
-    digitalWrite(LED_2, HIGH);
-  else
-    digitalWrite(LED_2, LOW);
+  if (doc["w"] == 3){
+    #ifdef VER2
+      
+    #else
+      digitalWrite(LED_2, HIGH);
+    #endif
+  }
+  else{
+    #ifdef VER2
+      
+    #else
+      digitalWrite(LED_2, LOW);
+    #endif
+  }
 
   String json;
   serializeJson(doc, json);
   ws.cleanupClients();  // rimuove client chiusi
   ws.textAll(json);     // 🔹 invia a tutti i client connessi
 }
-
-
-
-// void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms) {
-
-//   StaticJsonDocument<256> doc;
-//   doc["t"] = TYPE_TIME_UPDATE;
-//   doc["h"] = hh;
-//   doc["m"] = mm;
-//   doc["s"] = ss;
-//   doc["ms"] = ms;
-
-//   doc["lt"] = gps.location.isValid() ? gps.location.lat() : 0;
-//   doc["ln"] = gps.location.isValid() ? gps.location.lng() : 0;
-//   doc["st"] = gps.satellites.value();
-//   doc["sy"] = syncStatus;
-//   doc["ls"] = (millis() - lastGPSSync) / 1000;
-//   doc["lg"] = GPSRefreshInterval * 60;
-//   doc["pw"] = powerSource;
-//   doc["ts"] = syncTestRequested;
-
-
-//   fixStatus = syncMode == MODE_SYNC_GPS;
-
-//   if (gps.time.isValid())
-//     fixStatus += 2;
-
-//   if (gps.location.isValid())
-//     fixStatus += 4;
-
-//   if(calRunning)
-//     fixStatus += 8;
-
-//   doc["f"] = fixStatus;
-
-//   String json;
-//   serializeJson(doc, json);
-//   ws.cleanupClients(); // rimuove client chiusi
-//   ws.textAll(json);  // 🔹 invia a tutti i client connessi
-
-//   //Serial.println(json);
-
-// }
 
 double readInternalTemp() {
   double t = (double)(temprature_sens_read() - 32) / 1.8;
