@@ -18,7 +18,7 @@ constexpr int PRINTER_TX  = 16;
   constexpr int SENSOR_IN3 = 25;
   constexpr int SENSOR_IN4 = 0;
 
-  constexpr int SDA_PIN = 32;
+  constexpr int SDA_PIN = 33;
   constexpr int SCL_PIN = 32;
   constexpr int SQW_PIN = 4;
 
