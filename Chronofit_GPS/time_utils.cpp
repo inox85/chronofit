@@ -63,10 +63,16 @@ PreciseTime getPreciseSensorTime(int i) {
 
   uint32_t ms          = (remUs + 500) / 1000;   // millisecondo corrente
 
+    // ── Rollback ms ──────────────────────────────
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec++;          // propaga il riporto ai secondi
+  }
+
   if (remUs > 500000LL)
   {
     t.us_drift = (int64_t)(remUs - 1000000ULL);  // negativo = prima del ms
-  }''
+  }
   else
   {
     t.us_drift = (int64_t)remUs;   // positivo = dopo il ms
@@ -90,38 +96,38 @@ PreciseTime getPreciseSensorTime(int i) {
 }
 
 
-PreciseTime getPreciseSensorTime(uint64_t us) {
-  PreciseTime t;
+// PreciseTime getPreciseSensorTime(uint64_t us) {
+//   PreciseTime t;
 
-  uint64_t rawUs = us - syncReference;
-  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
+//   uint64_t rawUs = us - syncReference;
+//   uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
-  uint64_t elapsedSec = elapsedUs / 1000000ULL;
-  uint64_t remUs = elapsedUs % 1000000ULL;
-  // Calcolo
-  if (remUs > 500000) 
-  {
-    t.us_drift = -((int64_t)(1000000 - remUs));  // negativo = prima del secondo
-  } 
-  else 
-  {
-    t.us_drift = (int64_t)remUs;                  // positivo = dopo il secondo
-  }
+//   uint64_t elapsedSec = elapsedUs / 1000000ULL;
+//   uint64_t remUs = elapsedUs % 1000000ULL;
+//   // Calcolo
+//   if (remUs > 500000) 
+//   {
+//     t.us_drift = -((int64_t)(1000000 - remUs));  // negativo = prima del secondo
+//   } 
+//   else 
+//   {
+//     t.us_drift = (int64_t)remUs;                  // positivo = dopo il secondo
+//   }
 
-  // millisecondi arrotondati
-  uint32_t ms = (remUs + 500) / 1000;
-  if (ms >= 1000) ms = 999;
-  t.ms = ms;
+//   // millisecondi arrotondati
+//   uint32_t ms = (remUs + 500) / 1000;
+//   if (ms >= 1000) ms = 999;
+//   t.ms = ms;
 
-  // ⏱️ tempo assoluto
-  uint64_t absSec = ppsEpochSec + elapsedSec;
+//   // ⏱️ tempo assoluto
+//   uint64_t absSec = ppsEpochSec + elapsedSec;
 
-  t.ss = absSec % 60;
-  t.mm = (absSec / 60) % 60;
-  t.hh = (absSec / 3600) % 24;
+//   t.ss = absSec % 60;
+//   t.mm = (absSec / 60) % 60;
+//   t.hh = (absSec / 3600) % 24;
 
-  return t;
-}
+//   return t;
+// }
 
 void setExtimatedDriftParams(int us){
 

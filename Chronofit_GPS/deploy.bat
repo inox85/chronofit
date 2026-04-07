@@ -43,15 +43,15 @@ echo.
 echo.
 echo.
 
-set /p COMPILE="Vuoi compilare con Arduino CLI? (S/N) "
-if /i "%COMPILE%"=="N" (
-    echo Compilazione saltata
-    goto :after_build
-)
+@REM set /p COMPILE="Vuoi compilare con Arduino CLI? (S/N) "
+@REM if /i "%COMPILE%"=="N" (
+@REM     echo Compilazione saltata
+@REM     goto :after_build
+@REM )
 
-arduino-cli compile -b esp32:esp32:esp32 -v --build-property "build.partitions=partitions" --build-property "upload.speed=921600" --build-property "cpu.frequency=240" --build-property "flash.frequency=80" --build-property "flash.mode=qio" --build-property "flash.size=4M" --build-property "debug.level=none" --build-property "psram=disabled" --build-property "loop.core=1" --build-property "events.core=1" --build-property "erase.flash=none" --build-path "%BUILD_OUTPUT%" "%INO_FILE%"
+@REM arduino-cli compile -b esp32:esp32:esp32 -v --build-property "build.partitions=partitions" --build-property "upload.speed=921600" --build-property "cpu.frequency=240" --build-property "flash.frequency=80" --build-property "flash.mode=qio" --build-property "flash.size=4M" --build-property "debug.level=none" --build-property "psram=disabled" --build-property "loop.core=1" --build-property "events.core=1" --build-property "erase.flash=none" --build-path "%BUILD_OUTPUT%" "%INO_FILE%"
 
-:after_build
+@REM :after_build
 
 
 echo ================================================
