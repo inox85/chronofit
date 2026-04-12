@@ -41,7 +41,7 @@ void activateAccessPoint(){
 
   uint64_t chipId = ESP.getEfuseMac();
   // Converti il chipId in una stringa esadecimale
-  String chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
+  chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
 
   // Crea l'SSID con il chipId
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
@@ -733,6 +733,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       StaticJsonDocument<2048> doc;  // aumentato!
 
       doc["timeCal"] = calibrationFactor;
+      doc["sn"] = chipIdStr;
       doc["cpuTemp"] = readInternalTemp();
       doc["rtcAging"] = readAgingOffset();
       doc["rtcTemp"] = rtc_get_temperature();
@@ -907,6 +908,50 @@ void broadCastRowEdited(const DynamicJsonDocument& entry){
 
   ws.textAll(message);
 }
+
+// Converte una stringa hex (es. "78a48cd6cdc0") in Base64
+String hexToBase64(const String& hex) {
+    // 1. Converti la stringa hex in array di byte
+    int byteLen = hex.length() / 2;
+    uint8_t bytes[byteLen];
+    
+    for (int i = 0; i < byteLen; i++) {
+        bytes[i] = (uint8_t) strtol(hex.substring(i * 2, i * 2 + 2).c_str(), nullptr, 16);
+    }
+
+    // 2. Codifica i byte in Base64
+    String result = "";
+    int i = 0;
+    uint8_t buf3[3], buf4[4];
+
+    int len = byteLen;
+    const uint8_t* data = bytes;
+
+    while (len--) {
+        buf3[i++] = *data++;
+        if (i == 3) {
+            buf4[0] = (buf3[0] & 0xfc) >> 2;
+            buf4[1] = ((buf3[0] & 0x03) << 4) + ((buf3[1] & 0xf0) >> 4);
+            buf4[2] = ((buf3[1] & 0x0f) << 2) + ((buf3[2] & 0xc0) >> 6);
+            buf4[3] = buf3[2] & 0x3f;
+            for (int j = 0; j < 4; j++) result += BASE64_CHARS[buf4[j]];
+            i = 0;
+        }
+    }
+
+    // Gestisci il padding
+    if (i > 0) {
+        for (int j = i; j < 3; j++) buf3[j] = 0;
+        buf4[0] = (buf3[0] & 0xfc) >> 2;
+        buf4[1] = ((buf3[0] & 0x03) << 4) + ((buf3[1] & 0xf0) >> 4);
+        buf4[2] = ((buf3[1] & 0x0f) << 2) + ((buf3[2] & 0xc0) >> 6);
+        for (int j = 0; j < i + 1; j++) result += BASE64_CHARS[buf4[j]];
+        while (i++ < 3) result += '=';
+    }
+
+    return result;
+}
+
 
 String fileToBase64(const char *path) {
   File file = LittleFS.open(path, "r");

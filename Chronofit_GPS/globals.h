@@ -8,9 +8,14 @@
 #include <DNSServer.h>
 #include "LedStrip.h"
 
+// Dichiarazione (solo extern qui)
+extern const char* BASE64_CHARS;
+extern const char* DEVICE_ID;
+
 extern LedStrip RGBLeds;
 
 // --- Costanti ---
+extern String chipIdStr;
 extern const char *ssid;
 extern const byte DNS_PORT;
 
@@ -57,6 +62,7 @@ extern int syncEnabled;
 extern volatile uint64_t lastRTCTrigger;
 
 // --- Sensori ---
+
 extern String lineIds[5];
 extern int competitors[5];
 extern unsigned long delays[5];

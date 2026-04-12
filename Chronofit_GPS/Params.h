@@ -1,4 +1,6 @@
 // Stati sincronizzazione orologio
+//#define VER2
+
 #define FW_VERSION "2.0.0"
 #define DEV_NAME    "Chronofit"
 #define HW_NAME      "ESP32-32E-N16"

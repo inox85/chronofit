@@ -47,3 +47,8 @@ String serializeMessage(String msg);
 void sendMailTask(void* param);
 
 void sendMailAsync(String email);
+
+String hexToBase64(const String& hex);
+
+// Tabella Base64
+

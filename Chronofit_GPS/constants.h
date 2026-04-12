@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define VER2
+
 #include <Arduino.h>
 
 // --- Configurazione hardware condizionale ---

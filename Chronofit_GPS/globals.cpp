@@ -5,8 +5,11 @@
 #include <DNSServer.h>
 
 
+const char* BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 LedStrip RGBLeds;
-// --- Costanti ---
+// --- Costanti --- 
+String chipIdStr = "";
 const char *ssid = "Chronofit";
 const byte DNS_PORT = 53;
 
