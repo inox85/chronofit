@@ -27,9 +27,14 @@ PreciseTime getPreciseTime() {
   // Printf corretta
   //Serial.printf("us_drift=%lld  ms=%u\n", t.us_drift, ms);
 
-  // millisecondi arrotondati
-  uint32_t ms = (remUs) / 1000;
-  if (ms >= 1000) ms = 999;
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
+
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec += 1;
+  }
+
   t.ms = ms;
 
   // ⏱️ tempo assoluto
@@ -55,29 +60,27 @@ uint32_t getPreciseMillis(uint64_t lpps){
 PreciseTime getPreciseSensorTime(int i) {
   PreciseTime t;
 
-  uint64_t rawUs = sensorTime[i] - syncReference;
+  uint64_t rawUs    = sensorTime[i] - syncReference;
   uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs      = elapsedUs % 1000000ULL;
 
-  uint32_t ms          = (remUs + 500) / 1000;   // millisecondo corrente
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
 
-  if (remUs > 500000LL)
-  {
-    t.us_drift = (int64_t)(remUs - 1000000ULL);  // negativo = prima del ms
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec += 1;
   }
-  else
-  {
-    t.us_drift = (int64_t)remUs;   // positivo = dopo il ms
+
+  if (remUs > 500000ULL) {
+    t.us_drift = (int64_t)(remUs - 1000000ULL);
+  } else {
+    t.us_drift = (int64_t)remUs;
   }
 
   t.ms = ms;
-
-  Serial.print("us_drift: ");
-  Serial.println(t.us_drift);
-  Serial.print("ms: ");
-  Serial.println(t.ms);
 
   // ⏱️ tempo assoluto
   uint64_t absSec = ppsEpochSec + elapsedSec;

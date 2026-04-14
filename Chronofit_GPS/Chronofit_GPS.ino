@@ -270,19 +270,18 @@ void loop() {
   }
 
   #ifdef VER2
-    
+    if(digitalRead(PPS_PIN)){
+      RGBLeds.setLed(PPS_LED, CRGB::Blue);
+    }else{
+      RGBLeds.turnOffLed(PPS_LED);
+    }
+
+    RGBLeds.setLed(LINE_LED, getStatusColor());
   #else 
     digitalWrite(LED_3, syncTestRequested);
   #endif
   
-
   handleSensorTrigger();
-
-  if(digitalRead(PPS_PIN)){
-    RGBLeds.setLed(PPS_LED, CRGB::Blue);
-  }else{
-    RGBLeds.turnOffLed(PPS_LED);
-  }
   
 }
 
@@ -324,6 +323,17 @@ void handleSensorTrigger(){
       }
     }
   }
+}
+
+CRGB getStatusColor() {
+  CRGB color = CRGB::Black;  // parte da spento
+
+  if (digitalRead(SENSOR_IN1) == LOW) color += CRGB::Red;
+  if (digitalRead(SENSOR_IN2) == LOW) color += CRGB::Green;
+  if (digitalRead(SENSOR_IN3) == LOW) color += CRGB::Blue;
+  if (digitalRead(SENSOR_IN4) == LOW) color += CRGB::Yellow;
+
+  return color;
 }
 
 bool processServicesSerial() {

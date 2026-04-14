@@ -13,10 +13,15 @@ constexpr int PRINTER_TX  = 16;
 
 #ifdef VER2
 
-  constexpr int SENSOR_IN1 = 26;
-  constexpr int SENSOR_IN2 = 27;
-  constexpr int SENSOR_IN3 = 25;
-  constexpr int SENSOR_IN4 = 0;
+  // constexpr int SENSOR_IN1 = 26;
+  // constexpr int SENSOR_IN2 = 27;
+  // constexpr int SENSOR_IN3 = 25;
+  // constexpr int SENSOR_IN4 = 0;
+
+  constexpr int SENSOR_IN1 = 0;
+  constexpr int SENSOR_IN2 = 25;
+  constexpr int SENSOR_IN3 = 27;
+  constexpr int SENSOR_IN4 = 26;
 
   constexpr int SDA_PIN = 33;
   constexpr int SCL_PIN = 32;
