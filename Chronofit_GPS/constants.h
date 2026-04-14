@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-
+#define VER2
 #include <Arduino.h>
 
 // --- Configurazione hardware condizionale ---
@@ -21,6 +21,12 @@ constexpr int PRINTER_TX  = 16;
   constexpr int SDA_PIN = 33;
   constexpr int SCL_PIN = 32;
   constexpr int SQW_PIN = 4;
+  constexpr int RST_PIN = 14;
+
+  constexpr int WIFI_LED = 0;
+  constexpr int TEST_LED = 1;
+  constexpr int LINE_LED = 2;
+  constexpr int PPS_LED = 3;
 
 #else
 

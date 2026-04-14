@@ -7,7 +7,21 @@ static RTC_DS3231 rtc;   // 👈 unica istanza privata al modulo
 
 void rtc_init(uint8_t sda, uint8_t scl, uint32_t freq)
 {
+    // Rilascia il reset PRIMA di inizializzare il bus
+    delay(100);  // Dai tempo al chip di stabilizzarsi
+
     Wire.begin(sda, scl, freq);
+
+    // Scan I2C per debug - utile per verificare se il chip risponde
+    Serial.println("Scanning I2C...");
+    Wire.beginTransmission(0x68);  // indirizzo DS3231
+    byte error = Wire.endTransmission();
+    if (error == 0) {
+        Serial.println("DS3231 trovato su 0x68!");
+    } else {
+        Serial.print("Errore I2C: ");
+        Serial.println(error);
+    }
 
     if (!rtc.begin()) {
         Serial.println("RTC non trovato");

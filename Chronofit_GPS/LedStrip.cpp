@@ -33,31 +33,47 @@ void LedStrip::turnOffAll() {
 // ─────────────────────────────────────────
 //  Effetti
 // ─────────────────────────────────────────
-
 void LedStrip::sweepEffect(CRGB color, uint16_t delayMs) {
-    // Accensione da sinistra a destra
-    for (uint8_t i = 0; i < NUM_LEDS; i++) {
+    for (int i = 0; i < NUM_LEDS; i++) {
+        // Fade out il LED precedente
+        if (i > 0) {
+            _leds[i - 1].fadeToBlackBy(120);
+        }
+        if (i > 1) {
+            _leds[i - 2].fadeToBlackBy(200);
+        }
         _leds[i] = color;
         FastLED.show();
         delay(delayMs);
     }
-
-    delay(300);
-
-    // Spegnimento da sinistra a destra
-    for (uint8_t i = 0; i < NUM_LEDS; i++) {
-        _leds[i] = CRGB::Black;
-        FastLED.show();
-        delay(delayMs);
-    }
-
-    delay(200);
+    // Spegni la "coda" rimasta
+    FastLED.clear();
+    FastLED.show();
 }
 
 void LedStrip::sweepSequence(CRGB* colors, uint8_t numColors, uint16_t delayMs) {
     for (uint8_t c = 0; c < numColors; c++) {
-        sweepEffect(colors[c], delayMs);
+        CRGB nextColor = colors[(c + 1) % numColors];
+        CRGB currColor = colors[c];
+
+        // Sweep con blend graduale verso il colore successivo
+        for (int i = 0; i < NUM_LEDS; i++) {
+            // Fade coda
+            if (i > 0) _leds[i - 1].fadeToBlackBy(60);
+            if (i > 1) _leds[i - 2].fadeToBlackBy(120);
+            if (i > 2) _leds[i - 3].fadeToBlackBy(180);  // aggiungi un 3° step
+
+            // Blend progressivo: il colore corrente vira verso il prossimo
+            // più avanziamo nello sweep, più il colore vira
+            uint8_t blendAmount = map(i, 0, NUM_LEDS - 1, 0, 128);
+            _leds[i] = blend(currColor, nextColor, blendAmount);
+
+            FastLED.show();
+            delay(delayMs);
+        }
     }
+    FastLED.clear();
+    FastLED.show();
 }
 
 void LedStrip::defaultSweepSequence() {
@@ -67,5 +83,5 @@ void LedStrip::defaultSweepSequence() {
         CRGB::Blue,
         CRGB::Yellow
     };
-    sweepSequence(seq, 4);
+    sweepSequence(seq, 4, 60);
 }

@@ -19,8 +19,7 @@
 #include "printer.h"
 #include "settings.h"
 #include "RTC.h"
-
-
+#include <FastLED.h>
 
 void IRAM_ATTR sensorISR(void *arg) {
   int i = (int)arg;
@@ -58,17 +57,18 @@ void IRAM_ATTR onSecondTick(){
   lastRTCTrigger = esp_timer_get_time();
   RTCTriggered = true;
   RTCTtriggerCount++;
-
 }
 
 void setup() {
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+
+  pinMode(RST_PIN, OUTPUT);
+  digitalWrite(RST_PIN, HIGH);
   
   rtc_init(SDA_PIN, SCL_PIN, 400000);
   
-
   pinMode(SQW_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, RISING);
 
@@ -146,7 +146,7 @@ void setup() {
 
   activateAccessPoint();
 
-  delay(1000);
+  RGBLeds.defaultSweepSequence();
 
 }
 
@@ -201,7 +201,15 @@ void loop() {
     lastClientCheck = millis();
 
     #ifdef VER2
-    
+      if(checkConnectedClient()){
+        if(internetOK){
+          RGBLeds.setLed(WIFI_LED, CRGB::Green);
+        }else{
+          RGBLeds.setLed(WIFI_LED, CRGB::Yellow);
+        }
+      }else{
+        RGBLeds.setLed(WIFI_LED, CRGB::Red);
+      }
     #else
       digitalWrite(LED_1, checkConnectedClient());
     #endif
@@ -269,6 +277,12 @@ void loop() {
   
 
   handleSensorTrigger();
+
+  if(digitalRead(PPS_PIN)){
+    RGBLeds.setLed(PPS_LED, CRGB::Blue);
+  }else{
+    RGBLeds.turnOffLed(PPS_LED);
+  }
   
 }
 
