@@ -129,3 +129,6 @@ int agingFactor = 0;
 int32_t usDriftAtPPS = 0;
 uint64_t lastDeltaPPSSync = 0;
 double extimatedDriftByPPS = 0;
+
+unsigned long lastRxTime = 0;
+unsigned long lastTxTime = 0;

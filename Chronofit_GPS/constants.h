@@ -29,7 +29,7 @@ constexpr int PRINTER_TX  = 16;
   constexpr int RST_PIN = 14;
 
   constexpr int WIFI_LED = 0;
-  constexpr int TEST_LED = 1;
+  constexpr int COM_LED = 1;
   constexpr int LINE_LED = 2;
   constexpr int PPS_LED = 3;
 

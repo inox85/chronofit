@@ -20,6 +20,9 @@
 #include "settings.h"
 #include "RTC.h"
 #include <FastLED.h>
+#include "esp_netif.h"
+#include "lwip/netif.h"
+#include "lwip/stats.h"
 
 void IRAM_ATTR sensorISR(void *arg) {
   int i = (int)arg;
@@ -159,6 +162,23 @@ void configFS(){
 
 }
 
+
+#define IDLE_TIMEOUT 200  // ms
+
+// ── Chiama queste nel tuo webserver ──────────────────────────
+
+
+// ── Nel loop() ───────────────────────────────────────────────
+void updateWifiLed(uint8_t ledIndex) {
+  unsigned long now = millis();
+  bool rxRecent = (now - lastRxTime) < IDLE_TIMEOUT;
+  bool txRecent = (now - lastTxTime) < IDLE_TIMEOUT;
+
+  if      (txRecent) RGBLeds.setLed(ledIndex, CRGB(0, 255, 0));
+  else if (rxRecent) RGBLeds.setLed(ledIndex, CRGB(255, 140, 0));
+  else               RGBLeds.setLed(ledIndex, CRGB::Black);
+}
+
 void loop() {
 
   if(RTCTriggered){
@@ -282,7 +302,9 @@ void loop() {
   #endif
   
   handleSensorTrigger();
-  
+
+  updateWifiLed(COM_LED);
+
 }
 
 bool checkConnectedClient(){

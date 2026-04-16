@@ -109,4 +109,7 @@ extern int agingFactor;
 extern int32_t usDriftAtPPS;
 extern uint64_t lastDeltaPPSSync;
 extern double extimatedDriftByPPS;
+
+extern unsigned long lastRxTime;
+extern unsigned long lastTxTime;
 #endif

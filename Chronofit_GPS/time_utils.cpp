@@ -364,6 +364,7 @@ void broadcastTime() {
   serializeJson(doc, json);
   ws.cleanupClients();  // rimuove client chiusi
   ws.textAll(json);     // 🔹 invia a tutti i client connessi
+  //wifiTxActivity();
 }
 
 double readInternalTemp() {

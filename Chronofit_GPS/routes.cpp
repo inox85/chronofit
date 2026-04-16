@@ -60,6 +60,10 @@ void activateAccessPoint(){
   server.begin();
 }
 
+void wifiRxActivity() { lastRxTime = millis(); }
+
+void wifiTxActivity() { lastTxTime = millis(); }
+
 // bool postSessionJson(const char* url, const char* filePath) {
 
 //   // Controllo esistenza file
@@ -301,7 +305,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
-
+    wifiRxActivity();
     request->send(200, "text/plain", "CheckPoint received!");
   });
 
@@ -717,6 +721,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         LittleFS.rename("/session_tmp.json", "/session.json");
         
         request->send(200, "text/plain", "Riga aggiornata con successo");
+        wifiRxActivity();
     });
 
 
@@ -770,7 +775,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       serializeJson(doc, json);
 
       request->send(200, "application/json", json);
-
+      wifiTxActivity();
   });
 
   server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -887,6 +892,7 @@ String serializeMessage(String msg){
 void broadCastSettings(){
   String message = serializeSettings();
   ws.textAll(message);
+  wifiTxActivity();
 }
 
 

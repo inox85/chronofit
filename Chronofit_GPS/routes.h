@@ -50,5 +50,8 @@ void sendMailAsync(String email);
 
 String hexToBase64(const String& hex);
 
+void wifiRxActivity();
+void wifiTxActivity(); 
+
 // Tabella Base64
 
