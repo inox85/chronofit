@@ -22,7 +22,7 @@ void printFormatted(int index, String line, int competitor, int hh, int mm, int 
 
   char buffer[40];
 
-  sprintf(buffer, "#%03d L%s C%05d T%02d:%02d:%02d.%03d", index, line, competitor, hh, mm, ss, ms);
+  sprintf(buffer, "#%03d L%03d C%05d T%02d:%02d:%02d.%03d", index, line, competitor, hh, mm, ss, ms);
 
   String text = String(buffer);
 
@@ -68,7 +68,6 @@ void printerInit() {
         NULL,
         1
     );
-    
 }
 
 void printOnPrinter(const String &text, int cr) {
