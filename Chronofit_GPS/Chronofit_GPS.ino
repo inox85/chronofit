@@ -247,7 +247,7 @@ void loop() {
   uint64_t delta = lastNmeaValid - lastSyncTrigger;
 
   if (ppsTriggered){
-
+    lastPPSDetected = lastSyncTrigger;
     if ((delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;   // consumato QUI, una sola volta
       uint64_t thisPpsUs = lastSyncTrigger;

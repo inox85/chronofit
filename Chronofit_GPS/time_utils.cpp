@@ -326,8 +326,9 @@ void broadcastTime() {
   if (gps.location.isValid())
     fixStatus += 4;
 
-  if (calRunning)
+  if(esp_timer_get_time() - lastPPSDetected < 5000000){
     fixStatus += 8;
+  }
 
   doc["f"] = fixStatus;
 

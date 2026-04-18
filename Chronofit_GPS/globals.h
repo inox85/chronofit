@@ -57,6 +57,8 @@ extern volatile uint64_t syncReference;
 extern unsigned long gpsTimeOffsetUs;
 extern int utcOffset;
 
+extern uint64_t lastPPSDetected;
+
 extern int syncEnabled;
 
 extern volatile uint64_t lastRTCTrigger;

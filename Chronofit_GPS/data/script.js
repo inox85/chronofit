@@ -1,7 +1,7 @@
 const FLAG_SYNC_ENABLED = 1; // 0001
 const FLAG_TIME_VALID = 2; // 0010
 const FLAG_LOCATION_VALID = 4; // 0100
-const FLAG_TIMEBASE_CALIBRATION = 8; // 1000
+const FLAG_PPS_DETECTED = 8; // 1000
 
 const SYNC_NONE = 0;
 const SYNC_MANUAL_SET = 1;  // Tempo settato manualmente
@@ -592,11 +592,8 @@ function updateClockFromData(data) {
     const syncEnabled = (fixFlags & FLAG_SYNC_ENABLED) !== 0;
     const timeValid = (fixFlags & FLAG_TIME_VALID) !== 0;
     const locationValid = (fixFlags & FLAG_LOCATION_VALID) !== 0;
-    const calRunning = (fixFlags & FLAG_TIMEBASE_CALIBRATION) !== 0;
+    const ppsDetected = (fixFlags & FLAG_PPS_DETECTED) !== 0;
 
-    if (calRunning) {
-      showGeneralPopup("Timebase calibration running...", "#ff9800", 5000); // arancione per calibrazione
-    } 
 
     const syncStatus = data.sy; 
     const wifiStatus = data.w; // 0=disconnected, 1=connecting, 2=connected
@@ -691,7 +688,7 @@ function updateClockFromData(data) {
     }
     
   
-  if(timeValid && locationValid){
+  if(timeValid && locationValid && ppsDetected){
     let tzOffsetAuto = Math.round(data.ln / 15); 
     let offsetString =  "UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
     document.getElementById("pos").innerText = "🟢 " + "Lat: " 
