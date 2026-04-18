@@ -293,7 +293,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     } else {
       request->send(400, "text/plain", "Missed params");
     }
-    
+    wifiRxActivity();
   });
 
   server.on("/checkPoint", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -305,8 +305,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
-    wifiRxActivity();
     request->send(200, "text/plain", "CheckPoint received!");
+    wifiRxActivity();
   });
 
   server.on("/wifiConnect", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -332,7 +332,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     connectToWiFi(ssidBuf, pwBuf, 10000);
   
     request->send(200, "text/plain", "Wifi connecting...");
-});
+    wifiRxActivity();
+  });
 
     // --- JSON completo ---
   server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -350,7 +351,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serializeJson(doc, json);
 
     request->send(200, "application/json", json);
-
+    wifiRxActivity();
   });
 
     // --- JSON completo ---
@@ -364,7 +365,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     }
 
     request->send(200, "text/plain", "Email sended!");
-
+    wifiRxActivity();
   });
 
     // --- JSON completo ---
@@ -379,7 +380,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serializeJson(doc, json);
 
     request->send(200, "application/json", json);
-
+    wifiRxActivity();
   });
 
 
@@ -392,6 +393,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     
     debug(message);
 
+    wifiRxActivity();
   });
 
 
@@ -424,6 +426,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     );
 
     request->send(response);
+    wifiRxActivity();
   });
 
 
@@ -465,7 +468,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         serializeJson(doc, message);
 
         ws.textAll(message);
-
+        wifiTxActivity();
       } else {
         request->send(500, "text/plain", "❌ Errore nella cancellazione del file!");
       }
@@ -484,6 +487,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         File f = LittleFS.open("/"+filename,"a");
         f.write(data,len);
         f.close();
+        wifiRxActivity();
     });
 
 
@@ -509,6 +513,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     printOnPrinter(text, cr);
 
     request->send(200, "text/plain", "Printed successfully");
+    wifiRxActivity();
   });
 
 
@@ -541,7 +546,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     #endif
 
     request->send(200, "text/plain", "Saved sucessfully");
-
+    wifiRxActivity();
   });
 
   server.on("/syncTest", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -552,7 +557,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     digitalWrite(12, HIGH);
 
     request->send(200, "text/plain", "Sync test started");
-
+    wifiRxActivity();
   });
 
 
@@ -580,7 +585,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     #endif
     // E qui elabori o invii via seriale, BLE, ecc.
     request->send(200, "text/plain", "Saved sucessfully"); 
-      
+    wifiRxActivity();
   });
 
   server.on("/sendCheckPointRow", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
@@ -614,7 +619,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     Serial.println(timeString);  // stampa "007-00042"
 
-    request->send(200, "text/plain", "JSON ricevuto con successo"); 
+    request->send(200, "text/plain", "JSON ricevuto con successo");
+    wifiRxActivity();
   });
 
   server.on("/updateCheckPointRow", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
@@ -731,6 +737,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     return;
   }
   request->send(LittleFS, "/session.json", "application/json");
+  wifiRxActivity();
   });
 
   server.on("/systemSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -802,7 +809,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     // Invia il file come download
     request->send(file, filename, "application/octet-stream");
-
+    wifiRxActivity();
   });
 
   server.on("/timeBaseCal", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -843,7 +850,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         request->send(400, "text/plain", "Missing parameters");
     }
   });
-
+  wifiRxActivity();
 }
 
 String serializeSettings(){
@@ -913,6 +920,7 @@ void broadCastRowEdited(const DynamicJsonDocument& entry){
   serializeJson(doc, message);
 
   ws.textAll(message);
+  wifiTxActivity();
 }
 
 // Converte una stringa hex (es. "78a48cd6cdc0") in Base64
@@ -1088,6 +1096,7 @@ void sendEmail(String emailAddress, const char* subject, const char* body,
   }
 
   smtp.closeSession();
+  wifiTxActivity();
 }
 
 
