@@ -23,6 +23,8 @@
 #include "esp_wifi.h"
 #include <time.h>
 #include <ESP_Mail_Client.h>
+#include "gps_custom.h"
+
 
 SMTPSession smtp;
 
@@ -741,49 +743,126 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/systemSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
-
-      StaticJsonDocument<2048> doc;  // aumentato!
-
-      doc["timeCal"] = calibrationFactor;
-      doc["sn"] = chipIdStr;
-      doc["cpuTemp"] = readInternalTemp();
-      doc["rtcAging"] = readAgingOffset();
-      doc["rtcTemp"] = rtc_get_temperature();
-      doc["fwVer"] = String(FW_VERSION);
-      doc["devName"] = String(DEV_NAME);
-      doc["hwName"] = String(HW_NAME);
-      doc["freeRam"] = ESP.getFreeHeap();
-      doc["minFreeRam"] = ESP.getMinFreeHeap();
-      doc["lastDeltaPPSSync"] = lastDeltaPPSSync;
-      doc["usDriftAtPPS"] = usDriftAtPPS;
-      doc["extimatedDriftByPPS"] = extimatedDriftByPPS;
-
-      size_t totalBytes = LittleFS.totalBytes();
-      size_t usedBytes  = LittleFS.usedBytes();
-      size_t freeBytes  = totalBytes - usedBytes;
-
-      doc["fsTotalBytes"] = totalBytes;
-      doc["fsUsedBytes"]  = usedBytes;
-      doc["fsFreeBytes"]  = freeBytes;
-
-      JsonArray files = doc.createNestedArray("files");
-
-      File root = LittleFS.open("/");
-      File file = root.openNextFile();
-
-      while (file) {
-        JsonObject obj = files.createNestedObject();
-        obj["name"] = file.name();
-        obj["size"] = file.size();
-        file = root.openNextFile();
-      }
-
-      String json;
-      serializeJson(doc, json);
-
-      request->send(200, "application/json", json);
-      wifiTxActivity();
-  });
+ 
+  // Aumenta il documento per contenere tutti i satelliti
+  // 48 sat * ~5 campi * ~10 byte + dati base = ~4KB
+  DynamicJsonDocument doc(6144);
+ 
+  // ── dati esistenti ──────────────────────────────────────
+  doc["timeCal"]             = calibrationFactor;
+  doc["sn"]                  = chipIdStr;
+  doc["cpuTemp"]             = readInternalTemp();
+  doc["rtcAging"]            = readAgingOffset();
+  doc["rtcTemp"]             = rtc_get_temperature();
+  doc["fwVer"]               = String(FW_VERSION);
+  doc["devName"]             = String(DEV_NAME);
+  doc["hwName"]              = String(HW_NAME);
+  doc["freeRam"]             = ESP.getFreeHeap();
+  doc["minFreeRam"]          = ESP.getMinFreeHeap();
+  doc["lastDeltaPPSSync"]    = lastDeltaPPSSync;
+  doc["usDriftAtPPS"]        = usDriftAtPPS;
+  doc["extimatedDriftByPPS"] = extimatedDriftByPPS;
+ 
+  size_t totalBytes = LittleFS.totalBytes();
+  size_t usedBytes  = LittleFS.usedBytes();
+  doc["fsTotalBytes"] = totalBytes;
+  doc["fsUsedBytes"]  = usedBytes;
+  doc["fsFreeBytes"]  = totalBytes - usedBytes;
+ 
+  JsonArray files = doc.createNestedArray("files");
+  File root = LittleFS.open("/");
+  File file = root.openNextFile();
+  while (file) {
+    JsonObject obj = files.createNestedObject();
+    obj["name"] = file.name();
+    obj["size"] = file.size();
+    file = root.openNextFile();
+  }
+ 
+  // ── dati GPS base ────────────────────────────────────────
+  JsonObject gpsObj = doc.createNestedObject("gps");
+ 
+  gpsObj["fixValid"]    = gps.location.isValid();
+  gpsObj["fixAge"]      = gps.location.age();        // ms dall'ultimo fix
+  gpsObj["lat"]         = gps.location.isValid() ? gps.location.lat() : 0.0;
+  gpsObj["lng"]         = gps.location.isValid() ? gps.location.lng() : 0.0;
+  gpsObj["altM"]        = gps.altitude.isValid()  ? gps.altitude.meters()  : 0.0;
+  gpsObj["speedKmh"]    = gps.speed.isValid()     ? gps.speed.kmph()       : 0.0;
+  gpsObj["courseDeg"]   = gps.course.isValid()    ? gps.course.deg()       : 0.0;
+  gpsObj["hdop"]        = gps.hdop.isValid()      ? gps.hdop.hdop()        : 99.99;
+  gpsObj["satsInUse"]   = gps.satellites.isValid() ? (int)gps.satellites.value() : 0;
+  gpsObj["charsProc"]   = gps.charsProcessed();
+  gpsObj["sentencesOk"] = gps.sentencesWithFix();
+  gpsObj["failedCksum"] = gps.failedChecksum();
+ 
+  // Data/ora GPS
+  if (gps.date.isValid() && gps.time.isValid()) {
+    char dtBuf[32];
+    snprintf(dtBuf, sizeof(dtBuf), "%04d-%02d-%02dT%02d:%02d:%02d",
+      gps.date.year(), gps.date.month(), gps.date.day(),
+      gps.time.hour(), gps.time.minute(), gps.time.second());
+    gpsObj["utcTime"] = dtBuf;
+  } else {
+    gpsObj["utcTime"] = "";
+  }
+ 
+  // ── satelliti per costellazione ─────────────────────────
+  SatInfo satBuf[GSV_MAX_SAT];
+ 
+  auto addConstellation = [&](const char* key, int count) {
+    // key già usata per creare l'array, count = num satelliti
+  };
+ 
+  // GPS
+  {
+    int n = gpsParser.getGPSSats(satBuf, GSV_MAX_SAT);
+    gpsObj["gpTotalVisible"] = atoi(gpsParser.gpTotalSats.value());
+    JsonArray arr = gpsObj.createNestedArray("gpSats");
+    for (int i = 0; i < n; i++) {
+      if (!satBuf[i].valid) continue;
+      JsonObject s = arr.createNestedObject();
+      s["prn"]  = satBuf[i].prn;
+      s["elev"] = satBuf[i].elevation;
+      s["az"]   = satBuf[i].azimuth;
+      s["snr"]  = satBuf[i].snr;
+    }
+  }
+ 
+  // GLONASS
+  {
+    int n = gpsParser.getGLONASSSats(satBuf, GSV_MAX_SAT);
+    gpsObj["glTotalVisible"] = atoi(gpsParser.glTotalSats.value());
+    JsonArray arr = gpsObj.createNestedArray("glSats");
+    for (int i = 0; i < n; i++) {
+      if (!satBuf[i].valid) continue;
+      JsonObject s = arr.createNestedObject();
+      s["prn"]  = satBuf[i].prn;
+      s["elev"] = satBuf[i].elevation;
+      s["az"]   = satBuf[i].azimuth;
+      s["snr"]  = satBuf[i].snr;
+    }
+  }
+ 
+  // BeiDou
+  {
+    int n = gpsParser.getBeiDouSats(satBuf, GSV_MAX_SAT);
+    gpsObj["gbTotalVisible"] = atoi(gpsParser.gbTotalSats.value());
+    JsonArray arr = gpsObj.createNestedArray("gbSats");
+    for (int i = 0; i < n; i++) {
+      if (!satBuf[i].valid) continue;
+      JsonObject s = arr.createNestedObject();
+      s["prn"]  = satBuf[i].prn;
+      s["elev"] = satBuf[i].elevation;
+      s["az"]   = satBuf[i].azimuth;
+      s["snr"]  = satBuf[i].snr;
+    }
+  }
+ 
+  String json;
+  serializeJson(doc, json);
+  request->send(200, "application/json", json);
+  wifiTxActivity();
+});
 
   server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request) {
 

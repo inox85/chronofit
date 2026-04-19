@@ -23,6 +23,7 @@
 #include "esp_netif.h"
 #include "lwip/netif.h"
 #include "lwip/stats.h"
+#include "gps_custom.h"
 
 void IRAM_ATTR sensorISR(void *arg) {
   int i = (int)arg;
@@ -63,6 +64,7 @@ void IRAM_ATTR onSecondTick(){
 }
 
 void setup() {
+  gpsParser.begin(gps);
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
@@ -362,7 +364,7 @@ bool processServicesSerial() {
   while (ServicesSerial.available()) {
     char c = ServicesSerial.read();
     gps.encode(c);  // decodifica NMEA
-    //Serial.print(c);
+    Serial.print(c);
     if(gps.time.isValid()){
       lastNmeaValid = esp_timer_get_time();
       return true;
