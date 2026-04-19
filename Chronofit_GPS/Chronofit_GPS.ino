@@ -62,8 +62,24 @@ void IRAM_ATTR onSecondTick(){
   RTCTtriggerCount++;
 }
 
+
+void setupWiFi() {
+  String ssid     = readStringFromSettings("wifi_ssid", "");
+  String password = readStringFromSettings("wifi_pass", "");
+
+  if (!ssid.isEmpty()) {
+    Serial.println("Rete salvata trovata: " + ssid);
+    connectToWiFi(ssid.c_str(), password.c_str());
+  } else {
+    Serial.println("Nessuna rete configurata. In attesa di credenziali...");
+  }
+}
+
 void setup() {
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
+
+  setupWiFi();
+
   Serial.begin(9600, SERIAL_8N1);
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
 

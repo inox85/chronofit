@@ -103,45 +103,43 @@ void wifiTxActivity() { lastTxTime = millis(); }
 //   }
 // }
 
+// ── Connessione WiFi con retry infinito ───────────────────────
+bool connectToWiFi(const char* ssid, const char* password) {
 
-bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
-
-  String msgJson = serializeMessage("Connecting to WiFi for internet access...");
-  ws.textAll(msgJson);
-
-  startAttemptTime = millis();
-  
-  WiFi.begin(ssid, password);
-
-  Serial.print("Connessione a ");
-  Serial.print(ssid);
-
+  // Salva le credenziali usando le tue funzioni
+  writeStringToSettings("wifi_ssid", String(ssid));
+  writeStringToSettings("wifi_pass", String(password));
 
   WiFi.onEvent([](WiFiEvent_t event) {
     if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
-      Serial.println("Connesso con IP");
-        
+      Serial.println("Connesso! IP: " + WiFi.localIP().toString());
       String msgJson = serializeMessage("WiFi connected with IP address");
       ws.textAll(msgJson);
     }
     if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
-
+      Serial.println("WiFi disconnesso, riconnessione...");
+      WiFi.reconnect();
     }
   });
 
-  
-  xTaskCreatePinnedToCore(
-    internetCheckTask,
-    "InternetCheck",
-    4096,
-    NULL,
-    1,
-    NULL,
-    0   // core 0 (WiFi sta su core 0/1 senza problemi)
-  );
+  WiFi.begin(ssid, password);
+  Serial.println("Connessione a " + String(ssid) + " in corso...");
+
+  static bool taskCreated = false;
+  if (!taskCreated) {
+    xTaskCreatePinnedToCore(
+      internetCheckTask,
+      "InternetCheck",
+      4096,
+      NULL,
+      1,
+      NULL,
+      0
+    );
+    taskCreated = true;
+  }
 
   return true;
-
 }
 
 void internetCheckTask(void *pvParameters) {
