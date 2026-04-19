@@ -15,8 +15,6 @@
       --text: #222222;
       --muted: #888888;
       --gp-color: #2e7d32;
-      --gl-color: #1565c0;
-      --gb-color: #e65100;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,7 +32,6 @@
       font-weight: bold;
     }
 
-    /* ── NAVBAR ── */
     .navbar {
       position: fixed;
       top: 0; left: 0;
@@ -74,14 +71,12 @@
       50%       { opacity: 0.3; transform: scale(0.6); }
     }
 
-    /* ── PAGE ── */
     .page {
       max-width: 1200px;
       margin: 0 auto;
       padding: 80px 16px 40px;
     }
 
-    /* ── SECTION TITLE ── */
     .section-title {
       font-size: 13px;
       font-weight: bold;
@@ -91,7 +86,6 @@
       margin: 28px 0 12px;
     }
 
-    /* ── STATUS BAR ── */
     .status-bar {
       background: var(--card-bg);
       border-radius: var(--card-radius);
@@ -109,7 +103,6 @@
     .status-value.fix-ok { color: #2e7d32; }
     .status-value.fix-no { color: #c62828; }
 
-    /* ── METRIC GRID ── */
     .metric-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -124,23 +117,9 @@
       border-left: 4px solid var(--primary);
     }
 
-    .m-label {
-      font-size: 11px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
+    .m-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
     .m-value { font-size: 20px; color: var(--text); }
     .m-sub   { font-size: 11px; color: #aaa; margin-top: 2px; }
-
-    /* ── CONSTELLATION GRID ── */
-    .constellation-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 16px;
-    }
 
     .const-card {
       background: var(--card-bg);
@@ -161,7 +140,6 @@
     .const-name { font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: var(--text); }
     .const-count { margin-left: auto; font-size: 12px; color: var(--muted); }
 
-    /* ── SKY VIEW ── */
     .skyview-wrap {
       display: flex;
       justify-content: center;
@@ -170,12 +148,7 @@
       background: #fafafa;
     }
 
-    /* ── SAT TABLE ── */
-    .sat-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
+    .sat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
     .sat-table th {
       padding: 8px 14px;
@@ -198,35 +171,13 @@
     .sat-table tr:nth-child(even) td { background: #fafafa; }
     .sat-table tr:hover td { background: #fff5f5; }
 
-    /* SNR bar */
     .snr-wrap { display: flex; align-items: center; gap: 8px; }
-
-    .snr-bar-track {
-      flex: 1;
-      height: 6px;
-      background: #e8e8e8;
-      border-radius: 3px;
-      overflow: hidden;
-      min-width: 60px;
-    }
-
-    .snr-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.5s ease;
-    }
-
+    .snr-bar-track { flex: 1; height: 6px; background: #e8e8e8; border-radius: 3px; overflow: hidden; min-width: 60px; }
+    .snr-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
     .snr-val { font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; }
 
-    /* ── EMPTY STATE ── */
-    .empty-state {
-      padding: 24px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
-    }
+    .empty-state { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
 
-    /* ── TOAST ── */
     #toast {
       position: fixed;
       bottom: 24px; left: 50%;
@@ -249,7 +200,6 @@
 
     @media (max-width: 600px) {
       .metric-grid { grid-template-columns: 1fr 1fr; }
-      .constellation-grid { grid-template-columns: 1fr; }
       .status-bar { gap: 16px; }
     }
   </style>
@@ -267,7 +217,6 @@
 
   <div class="page">
 
-    <!-- STATUS BAR -->
     <div class="section-title">Fix status</div>
     <div class="status-bar">
       <div class="status-item">
@@ -300,7 +249,6 @@
       </div>
     </div>
 
-    <!-- METRICS -->
     <div class="section-title">Qualità segnale</div>
     <div class="metric-grid">
       <div class="metric-card">
@@ -316,17 +264,7 @@
       <div class="metric-card">
         <div class="m-label">GPS visibili</div>
         <div class="m-value" id="gpTotal">—</div>
-        <div class="m-sub">GPS (GP)</div>
-      </div>
-      <div class="metric-card">
-        <div class="m-label">GLONASS visibili</div>
-        <div class="m-value" id="glTotal">—</div>
-        <div class="m-sub">GLONASS (GL)</div>
-      </div>
-      <div class="metric-card">
-        <div class="m-label">BeiDou visibili</div>
-        <div class="m-value" id="gbTotal">—</div>
-        <div class="m-sub">BeiDou (GB)</div>
+        <div class="m-sub">satelliti rilevati</div>
       </div>
       <div class="metric-card">
         <div class="m-label">Fix age</div>
@@ -345,47 +283,19 @@
       </div>
     </div>
 
-    <!-- COSTELLAZIONI -->
-    <div class="section-title">Satelliti per costellazione</div>
-    <div class="constellation-grid">
-
-      <div class="const-card">
-        <div class="const-header">
-          <div class="const-dot" style="background:var(--gp-color)"></div>
-          <span class="const-name">GPS</span>
-          <span class="const-count" id="gp-count">0 satelliti</span>
-        </div>
-        <div class="skyview-wrap">
-          <canvas id="sky-gp" width="180" height="180"></canvas>
-        </div>
-        <div id="gp-table-wrap"></div>
+    <div class="section-title">Satelliti GPS</div>
+    <div class="const-card">
+      <div class="const-header">
+        <div class="const-dot" style="background:var(--gp-color)"></div>
+        <span class="const-name">GPS</span>
+        <span class="const-count" id="gp-count">0 satelliti</span>
       </div>
-
-      <div class="const-card">
-        <div class="const-header">
-          <div class="const-dot" style="background:var(--gl-color)"></div>
-          <span class="const-name">GLONASS</span>
-          <span class="const-count" id="gl-count">0 satelliti</span>
-        </div>
-        <div class="skyview-wrap">
-          <canvas id="sky-gl" width="180" height="180"></canvas>
-        </div>
-        <div id="gl-table-wrap"></div>
+      <div class="skyview-wrap">
+        <canvas id="sky-gp" width="220" height="220"></canvas>
       </div>
-
-      <div class="const-card">
-        <div class="const-header">
-          <div class="const-dot" style="background:var(--gb-color)"></div>
-          <span class="const-name">BeiDou</span>
-          <span class="const-count" id="gb-count">0 satelliti</span>
-        </div>
-        <div class="skyview-wrap">
-          <canvas id="sky-gb" width="180" height="180"></canvas>
-        </div>
-        <div id="gb-table-wrap"></div>
-      </div>
-
+      <div id="gp-table-wrap"></div>
     </div>
+
   </div>
 
   <div id="toast"></div>
@@ -397,22 +307,20 @@
       return '#c62828';
     }
 
-    function drawSkyView(canvasId, sats, color) {
+    function drawSkyView(canvasId, sats) {
       const canvas = document.getElementById(canvasId);
       const ctx = canvas.getContext('2d');
       const W = canvas.width, H = canvas.height;
       const cx = W / 2, cy = H / 2;
-      const R = (W / 2) - 12;
+      const R = (W / 2) - 14;
 
       ctx.clearRect(0, 0, W, H);
 
-      // sfondo
       ctx.fillStyle = '#f0f0f0';
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.fill();
 
-      // cerchi elevazione
       [1, 2/3, 1/3].forEach(f => {
         ctx.strokeStyle = '#ddd';
         ctx.lineWidth = 1;
@@ -421,7 +329,6 @@
         ctx.stroke();
       });
 
-      // linee cardinali + etichette
       ['N','E','S','O'].forEach((dir, i) => {
         const a = (i * Math.PI / 2) - Math.PI / 2;
         ctx.strokeStyle = '#ccc';
@@ -434,10 +341,9 @@
         ctx.font = 'bold 9px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(dir, cx + Math.cos(a) * (R + 9), cy + Math.sin(a) * (R + 9));
+        ctx.fillText(dir, cx + Math.cos(a) * (R + 10), cy + Math.sin(a) * (R + 10));
       });
 
-      // bordo
       ctx.strokeStyle = '#ccc';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -454,25 +360,22 @@
       }
 
       sats.forEach(sat => {
-        const azRad  = (sat.az  * Math.PI) / 180 - Math.PI / 2;
-        const dist   = R * (1 - sat.elev / 90);
+        const azRad = (sat.az  * Math.PI) / 180 - Math.PI / 2;
+        const dist  = R * (1 - sat.elev / 90);
         const x = cx + Math.cos(azRad) * dist;
         const y = cy + Math.sin(azRad) * dist;
         const col = snrColor(sat.snr);
 
-        // alone
         ctx.beginPath();
         ctx.arc(x, y, 9, 0, Math.PI * 2);
         ctx.fillStyle = col + '22';
         ctx.fill();
 
-        // punto
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.fillStyle = col;
         ctx.fill();
 
-        // PRN
         ctx.fillStyle = '#333';
         ctx.font = 'bold 8px sans-serif';
         ctx.textAlign = 'center';
@@ -535,37 +438,24 @@
       fixEl.textContent = g.fixValid ? 'FIX OK' : 'NO FIX';
       fixEl.className   = 'status-value ' + (g.fixValid ? 'fix-ok' : 'fix-no');
 
-      document.getElementById('utcTime').textContent = g.utcTime  || '—';
+      document.getElementById('utcTime').textContent = g.utcTime || '—';
       document.getElementById('lat').textContent     = g.fixValid ? g.lat.toFixed(6) + '°' : '—';
       document.getElementById('lng').textContent     = g.fixValid ? g.lng.toFixed(6) + '°' : '—';
       document.getElementById('alt').textContent     = g.fixValid ? g.altM.toFixed(1) + ' m' : '—';
       document.getElementById('speed').textContent   = g.fixValid ? g.speedKmh.toFixed(1) + ' km/h' : '—';
       document.getElementById('course').textContent  = g.fixValid ? g.courseDeg.toFixed(1) + '°' : '—';
 
-      document.getElementById('hdop').textContent      = g.hdop      !== undefined ? g.hdop.toFixed(2)  : '—';
-      document.getElementById('satsInUse').textContent = g.satsInUse !== undefined ? g.satsInUse        : '—';
+      document.getElementById('hdop').textContent      = g.hdop      !== undefined ? g.hdop.toFixed(2) : '—';
+      document.getElementById('satsInUse').textContent = g.satsInUse !== undefined ? g.satsInUse       : '—';
       document.getElementById('gpTotal').textContent   = g.gpTotalVisible || '—';
-      document.getElementById('glTotal').textContent   = g.glTotalVisible || '—';
-      document.getElementById('gbTotal').textContent   = g.gbTotalVisible || '—';
-      document.getElementById('fixAge').textContent    = g.fixAge    !== undefined ? g.fixAge + ' ms'   : '—';
-      document.getElementById('sentOk').textContent    = g.sentencesOk !== undefined ? g.sentencesOk    : '—';
-      document.getElementById('ckFail').textContent    = g.failedCksum !== undefined ? g.failedCksum     : '—';
+      document.getElementById('fixAge').textContent    = g.fixAge    !== undefined ? g.fixAge + ' ms'  : '—';
+      document.getElementById('sentOk').textContent    = g.sentencesOk !== undefined ? g.sentencesOk   : '—';
+      document.getElementById('ckFail').textContent    = g.failedCksum !== undefined ? g.failedCksum    : '—';
 
       const gpSats = dedupSats(g.gpSats || []);
-      const glSats = dedupSats(g.glSats || []);
-      const gbSats = dedupSats(g.gbSats || []);
-
       document.getElementById('gp-count').textContent = gpSats.length + ' satelliti';
-      document.getElementById('gl-count').textContent = glSats.length + ' satelliti';
-      document.getElementById('gb-count').textContent = gbSats.length + ' satelliti';
-
-      drawSkyView('sky-gp', gpSats, '#2e7d32');
-      drawSkyView('sky-gl', glSats, '#1565c0');
-      drawSkyView('sky-gb', gbSats, '#e65100');
-
+      drawSkyView('sky-gp', gpSats);
       renderSatTable('gp-table-wrap', gpSats);
-      renderSatTable('gl-table-wrap', glSats);
-      renderSatTable('gb-table-wrap', gbSats);
     }
 
     let toastTimer;

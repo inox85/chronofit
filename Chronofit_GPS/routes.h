@@ -8,7 +8,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws);
 
 void activateAccessPoint();
 
-bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs);
+bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs = 10000);
 
 // POST del file session.json a Hooklistener
 // postSessionJson(
