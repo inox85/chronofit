@@ -24,6 +24,8 @@
 #include "lwip/netif.h"
 #include "lwip/stats.h"
 #include "gps_custom.h"
+#include <SoftwareSerial.h>
+
 
 void IRAM_ATTR sensorISR(void *arg) {
   int i = (int)arg;
