@@ -942,6 +942,75 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     wifiRxActivity();
   });
 
+  // ── DELETE ──────────────────────────────────────────────────
+server.on("/delete", HTTP_DELETE, [](AsyncWebServerRequest *request) {
+  if (!request->hasParam("file")) {
+    request->send(400, "text/plain", "Param 'file' missing");
+    return;
+  }
+
+  String filename = request->getParam("file")->value();
+  if (!filename.startsWith("/")) filename = "/" + filename;
+
+  // Sicurezza: blocca path traversal
+  if (filename.indexOf("..") >= 0) {
+    request->send(403, "text/plain", "Forbidden");
+    return;
+  }
+
+  if (!LittleFS.exists(filename)) {
+    request->send(404, "text/plain", "File not found");
+    return;
+  }
+
+  if (LittleFS.remove(filename)) {
+    request->send(200, "text/plain", "File deleted: " + filename);
+  } else {
+    request->send(500, "text/plain", "Delete failed");
+  }
+  wifiRxActivity();
+});
+
+// ── UPLOAD ───────────────────────────────────────────────────
+server.on("/upload", HTTP_POST,
+  [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Upload done");
+  },
+  [](AsyncWebServerRequest *request, String filename, size_t index,
+     uint8_t *data, size_t len, bool final) {
+
+    if (!filename.startsWith("/")) filename = "/" + filename;
+
+    // Sicurezza: blocca path traversal
+    if (filename.indexOf("..") >= 0) {
+      request->send(403, "text/plain", "Forbidden");
+      return;
+    }
+
+    if (index == 0) {
+      Serial.printf("Upload start: %s\n", filename.c_str());
+      File f = LittleFS.open(filename, "w");
+      if (!f) {
+        request->send(500, "text/plain", "Cannot create file");
+        return;
+      }
+      f.close();
+    }
+
+    File f = LittleFS.open(filename, "a");
+    if (f) {
+      f.write(data, len);
+      f.close();
+    }
+
+    if (final) {
+      Serial.printf("Upload done: %s (%u bytes)\n", filename.c_str(), index + len);
+    }
+
+    wifiRxActivity();
+  }
+);
+
   server.on("/timeBaseCal", HTTP_GET, [](AsyncWebServerRequest *request) {
 
     if (request->hasParam("delta_us") && request->hasParam("minutes")) {

@@ -301,6 +301,65 @@
   <div id="toast"></div>
 
   <script>
+    // ── Configurazione stabilizzazione ───────────────────────
+    const SMOOTH_WINDOW   = 5;   // campioni per media mobile (SNR, HDOP, speed, alt)
+    const SAT_PERSIST_TTL = 8;   // secondi prima che un satellite sparisca
+    const POS_ALPHA       = 0.3; // EMA per lat/lng (0=immobile, 1=no smoothing)
+
+    // ── Buffer per media mobile ───────────────────────────────
+    const buffers = { hdop: [], speed: [], alt: [], course: [] };
+
+    function pushBuffer(key, val) {
+      if (val === undefined || val === null || isNaN(val)) return undefined;
+      buffers[key].push(val);
+      if (buffers[key].length > SMOOTH_WINDOW) buffers[key].shift();
+      return buffers[key].reduce((a, b) => a + b, 0) / buffers[key].length;
+    }
+
+    // ── EMA per posizione ─────────────────────────────────────
+    let smoothLat = null, smoothLng = null;
+
+    function smoothPos(lat, lng) {
+      if (smoothLat === null) { smoothLat = lat; smoothLng = lng; }
+      else {
+        smoothLat = smoothLat + POS_ALPHA * (lat - smoothLat);
+        smoothLng = smoothLng + POS_ALPHA * (lng - smoothLng);
+      }
+      return { lat: smoothLat, lng: smoothLng };
+    }
+
+    // ── Persistenza satelliti ─────────────────────────────────
+    // Map: prn → { ...satData, lastSeen: timestamp, snrHistory: [] }
+    const satCache = new Map();
+
+    function updateSatCache(freshSats) {
+      const now = Date.now();
+
+      // Aggiorna o aggiunge satelliti freschi
+      for (const s of freshSats) {
+        if (!s.prn || s.prn === 0) continue;
+        const existing = satCache.get(s.prn);
+        const snrHistory = existing ? existing.snrHistory : [];
+        snrHistory.push(s.snr);
+        if (snrHistory.length > SMOOTH_WINDOW) snrHistory.shift();
+        const smoothSnr = Math.round(snrHistory.reduce((a, b) => a + b, 0) / snrHistory.length);
+        satCache.set(s.prn, { ...s, snr: smoothSnr, lastSeen: now, snrHistory, stale: false });
+      }
+
+      // Marca come stale i satelliti non visti di recente
+      for (const [prn, sat] of satCache) {
+        const age = (now - sat.lastSeen) / 1000;
+        if (age > SAT_PERSIST_TTL) {
+          satCache.delete(prn);
+        } else if (age > 2) {
+          satCache.set(prn, { ...sat, stale: true });
+        }
+      }
+
+      return Array.from(satCache.values());
+    }
+
+    // ── Colori SNR ────────────────────────────────────────────
     function snrColor(snr) {
       if (snr >= 35) return '#2e7d32';
       if (snr >= 20) return '#e65100';
@@ -365,6 +424,10 @@
         const x = cx + Math.cos(azRad) * dist;
         const y = cy + Math.sin(azRad) * dist;
         const col = snrColor(sat.snr);
+        // Satelliti stale più trasparenti
+        const alpha = sat.stale ? 0.35 : 1.0;
+
+        ctx.globalAlpha = alpha;
 
         ctx.beginPath();
         ctx.arc(x, y, 9, 0, Math.PI * 2);
@@ -381,6 +444,8 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText(sat.prn, x, y + 6);
+
+        ctx.globalAlpha = 1.0;
       });
     }
 
@@ -394,8 +459,9 @@
       const rows = sorted.map(s => {
         const pct = Math.min(s.snr / 50 * 100, 100);
         const col = snrColor(s.snr);
-        return `<tr>
-          <td>PRN ${s.prn}</td>
+        const staleStyle = s.stale ? 'opacity:0.45' : '';
+        return `<tr style="${staleStyle}">
+          <td>PRN ${s.prn}${s.stale ? ' <span style="font-size:10px;color:#aaa">(cached)</span>' : ''}</td>
           <td>${s.elev}°</td>
           <td>${s.az}°</td>
           <td>
@@ -439,23 +505,41 @@
       fixEl.className   = 'status-value ' + (g.fixValid ? 'fix-ok' : 'fix-no');
 
       document.getElementById('utcTime').textContent = g.utcTime || '—';
-      document.getElementById('lat').textContent     = g.fixValid ? g.lat.toFixed(6) + '°' : '—';
-      document.getElementById('lng').textContent     = g.fixValid ? g.lng.toFixed(6) + '°' : '—';
-      document.getElementById('alt').textContent     = g.fixValid ? g.altM.toFixed(1) + ' m' : '—';
-      document.getElementById('speed').textContent   = g.fixValid ? g.speedKmh.toFixed(1) + ' km/h' : '—';
-      document.getElementById('course').textContent  = g.fixValid ? g.courseDeg.toFixed(1) + '°' : '—';
 
-      document.getElementById('hdop').textContent      = g.hdop      !== undefined ? g.hdop.toFixed(2) : '—';
+      // Posizione con EMA smoothing
+      if (g.fixValid && g.lat !== undefined && g.lng !== undefined) {
+        const pos = smoothPos(g.lat, g.lng);
+        document.getElementById('lat').textContent = pos.lat.toFixed(6) + '°';
+        document.getElementById('lng').textContent = pos.lng.toFixed(6) + '°';
+      } else {
+        document.getElementById('lat').textContent = '—';
+        document.getElementById('lng').textContent = '—';
+      }
+
+      // Valori con media mobile
+      const smoothAlt    = pushBuffer('alt',    g.fixValid ? g.altM      : undefined);
+      const smoothSpeed  = pushBuffer('speed',  g.fixValid ? g.speedKmh  : undefined);
+      const smoothCourse = pushBuffer('course', g.fixValid ? g.courseDeg : undefined);
+      const smoothHdop   = pushBuffer('hdop',   g.hdop);
+
+      document.getElementById('alt').textContent    = smoothAlt    !== undefined ? smoothAlt.toFixed(1)    + ' m'    : '—';
+      document.getElementById('speed').textContent  = smoothSpeed  !== undefined ? smoothSpeed.toFixed(1)  + ' km/h' : '—';
+      document.getElementById('course').textContent = smoothCourse !== undefined ? smoothCourse.toFixed(1) + '°'     : '—';
+      document.getElementById('hdop').textContent   = smoothHdop   !== undefined ? smoothHdop.toFixed(2)             : '—';
+
       document.getElementById('satsInUse').textContent = g.satsInUse !== undefined ? g.satsInUse       : '—';
       document.getElementById('gpTotal').textContent   = g.gpTotalVisible || '—';
       document.getElementById('fixAge').textContent    = g.fixAge    !== undefined ? g.fixAge + ' ms'  : '—';
       document.getElementById('sentOk').textContent    = g.sentencesOk !== undefined ? g.sentencesOk   : '—';
       document.getElementById('ckFail').textContent    = g.failedCksum !== undefined ? g.failedCksum    : '—';
 
-      const gpSats = dedupSats(g.gpSats || []);
-      document.getElementById('gp-count').textContent = gpSats.length + ' satelliti';
-      drawSkyView('sky-gp', gpSats);
-      renderSatTable('gp-table-wrap', gpSats);
+      // Satelliti con cache persistente + SNR smoothed
+      const freshGpSats = dedupSats(g.gpSats || []);
+      const stableGpSats = updateSatCache(freshGpSats);
+
+      document.getElementById('gp-count').textContent = stableGpSats.length + ' satelliti';
+      drawSkyView('sky-gp', stableGpSats);
+      renderSatTable('gp-table-wrap', stableGpSats);
     }
 
     let toastTimer;
