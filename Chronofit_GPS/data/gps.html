@@ -276,11 +276,11 @@
         <div class="m-value" id="sentOk">—</div>
         <div class="m-sub">con fix</div>
       </div>
-      <div class="metric-card">
+      <!-- <div class="metric-card">
         <div class="m-label">Checksum fail</div>
         <div class="m-value" id="ckFail">—</div>
         <div class="m-sub">errori NMEA</div>
-      </div>
+      </div> -->
     </div>
 
     <div class="section-title">Satelliti GPS</div>
@@ -531,7 +531,7 @@
       document.getElementById('gpTotal').textContent   = g.gpTotalVisible || '—';
       document.getElementById('fixAge').textContent    = g.fixAge    !== undefined ? g.fixAge + ' ms'  : '—';
       document.getElementById('sentOk').textContent    = g.sentencesOk !== undefined ? g.sentencesOk   : '—';
-      document.getElementById('ckFail').textContent    = g.failedCksum !== undefined ? g.failedCksum    : '—';
+      // document.getElementById('ckFail').textContent    = g.failedCksum !== undefined ? g.failedCksum    : '—';
 
       // Satelliti con cache persistente + SNR smoothed
       const freshGpSats = dedupSats(g.gpSats || []);
