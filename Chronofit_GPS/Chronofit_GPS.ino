@@ -24,8 +24,9 @@
 #include "lwip/netif.h"
 #include "lwip/stats.h"
 #include "gps_custom.h"
-//#include <SoftwareSerial.h>
+#include <SoftwareSerial.h>
 
+SoftwareSerial gpsCmd(-1, 13);
 
 void IRAM_ATTR sensorISR(void *arg) {
   int i = (int)arg;
@@ -78,14 +79,80 @@ void IRAM_ATTR onSecondTick(){
 //   }
 // }
 
+// Calcola e invia comando NMEA con checksum automatico
+void sendGPSCommand(const char* cmd) {
+  uint8_t checksum = 0;
+  // Calcola XOR di tutti i caratteri tra $ e *
+  for (int i = 0; cmd[i] != '\0'; i++) {
+    checksum ^= (uint8_t)cmd[i];
+  }
+  char buf[128];
+  snprintf(buf, sizeof(buf), "$%s*%02X\r\n", cmd, checksum);
+  Serial.print("Invio: ");
+  Serial.print(buf);
+  gpsCmd.print(buf);
+  gpsCmd.flush();
+  delay(200);
+}
+
+void initGPS(){
+
+  Serial.begin(115200);
+  delay(500); // aspetta che il monitor seriale si connetta
+
+  gpsCmd.begin(9600);
+  delay(100);
+
+  sendGPSCommand("PCAS04,1");           // GPS only
+  sendGPSCommand("PCAS02,1000");        // 1Hz
+  sendGPSCommand("PCAS03,1,0,1,1,1,0,0,0,0,0,,,0,0");
+
+  gpsCmd.end();
+  delay(100);
+
+  ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+  delay(100);
+  while (ServicesSerial.available()) ServicesSerial.read();
+
+  // Leggi ACK
+  unsigned long start = millis();
+  String line = "";
+  bool success = false;
+
+  while (millis() - start < 3000) {
+    while (ServicesSerial.available()) {
+      char c = ServicesSerial.read();
+      line += c;
+      if (c == '\n') {
+        Serial.print("GPS risponde: ");
+        Serial.print(line);
+        if (line.indexOf("PCAS001") >= 0) {
+          success = line.indexOf(",0") >= 0;
+          Serial.println(success ? "✅ ACK OK" : "❌ ACK errore");
+        }
+        line = "";
+      }
+    }
+  }
+
+  if (!success) {
+    Serial.println("⚠️ Nessun ACK ricevuto dal GPS");
+  }
+
+  Serial.println("GPS init completato @ 9600 baud");
+}
+
 void setup() {
   gpsParser.begin(gps);
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
 
   //setupWiFi();
 
+  initGPS();
+
   Serial.begin(9600, SERIAL_8N1);
-  ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+  //ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+  ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX, false, 2048);
 
   pinMode(RST_PIN, OUTPUT);
   digitalWrite(RST_PIN, HIGH);
@@ -382,7 +449,7 @@ bool processServicesSerial() {
   while (ServicesSerial.available()) {
     char c = ServicesSerial.read();
     gps.encode(c);  // decodifica NMEA
-    //Serial.print(c);
+    Serial.print(c);
     if(gps.time.isValid()){
       lastNmeaValid = esp_timer_get_time();
       return true;
