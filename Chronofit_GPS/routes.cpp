@@ -286,6 +286,31 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
 
+  server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "/update.html", "text/html");
+  });
+
+  server.on("/update", HTTP_POST,
+    [](AsyncWebServerRequest *request){
+      bool ok = !Update.hasError();
+      AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", ok ? "OK - Riavvio..." : "ERRORE");
+      response->addHeader("Connection", "close");
+      request->send(response);
+      if(ok) shouldRestart = true;
+    },
+    [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+      if(!index){
+        Serial.printf("Update start: %s\n", filename.c_str());
+        Update.begin();
+      }
+      Update.write(data, len);
+      if(final){
+        Update.end(true);
+        Serial.println("Update completato");
+      }
+    }
+  );
+
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
      request->send(LittleFS, "/index.html", "text/html");
   });
