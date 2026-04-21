@@ -340,6 +340,10 @@ void loop() {
 
   if (ppsTriggered){
     lastPPSDetected = lastSyncTrigger;
+
+    // Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
+    //           delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
+
     if ((delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;   // consumato QUI, una sola volta
       uint64_t thisPpsUs = lastSyncTrigger;
@@ -356,7 +360,11 @@ void loop() {
         lastGPSSync = millis();
       }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
         PreciseTime pt = getPreciseTime();
-        //Serial.printf("[SYNCTEST] ss=%d ms=%d us_drift=%d\n", pt.ss, pt.ms, pt.us_drift);
+
+        // Serial.printf("[SYNCTEST] ss=%d ms=%d — condizione: %d\n",
+        //             pt.ss, pt.ms,
+        //             (pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500));
+
         if((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)){
           syncTestRequested = 0;
           sensorTime[4] = thisPpsUs;
@@ -370,13 +378,17 @@ void loop() {
         //Serial.printf("[PPS] SCARTATO: condizione esterna non soddisfatta\n");
       //}
       }
-    }
+    } else {
+    // Serial.printf("[PPS] SCARTATO — delta ok=%d validNmea=%d isUpdated=%d syncMode=%d\n",
+    //               (delta >= 20000 && delta <= 100000), validNmea, gps.time.isUpdated(), syncMode);
+    ppsTriggered = false; // consuma comunque per evitare loop
+  }
   }
 
   PreciseTime t = getPreciseTime();
   actualSecond = t.ss;
 
-  if(actualSecond != lastBroadCastSecond && t.ms < 10){
+  if(actualSecond != lastBroadCastSecond && t.ms < 100){
     lastBroadCastSecond = actualSecond;
     broadcastTime();   
   }
@@ -454,7 +466,7 @@ bool processServicesSerial() {
   while (ServicesSerial.available()) {
     char c = ServicesSerial.read();
     gps.encode(c);  // decodifica NMEA
-    Serial.print(c);
+    //Serial.print(c);
     if(gps.time.isValid()){
       lastNmeaValid = esp_timer_get_time();
       return true;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chronofit — Aggiornamento Firmware</title>
+  <title>Chronofit — Aggiornamento</title>
   <style>
     :root {
       --primary-color: #800020;
@@ -290,6 +290,33 @@
     .btn-ok-confirm { background: var(--primary-color); color: #fff; }
     .btn-ok-confirm:hover { opacity: 0.85; }
 
+    /* ─── tabs ─── */
+    .tab-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #ddd;
+      background: #fff;
+      color: #888;
+      font-family: 'Nunito', sans-serif;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      background: #fff5f6;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
     @media (max-width: 600px) {
       .metric-grid { grid-template-columns: 1fr 1fr; }
     }
@@ -300,7 +327,7 @@
   <!-- NAVBAR -->
   <div class="navbar">
     <img src="/logo.png" alt="Chronofit" style="height:32px;" onerror="this.style.display='none'"/>
-    <span class="navbar-title">Aggiornamento Firmware</span>
+    <span class="navbar-title">Aggiornamento</span>
     <span class="navbar-badge" id="fw-badge">fw —</span>
   </div>
 
@@ -321,44 +348,77 @@
       </div>
     </div>
 
-    <!-- Upload firmware -->
-    <div class="section-title">Carica nuovo firmware</div>
-
-    <div class="upload-zone" id="upload-zone"
-         onclick="document.getElementById('file-input').click()"
-         ondragover="onDragOver(event)"
-         ondragleave="onDragLeave(event)"
-         ondrop="onDrop(event)">
-      <input type="file" id="file-input" accept=".bin" onchange="onFileSelected(this.files[0])"/>
-      <span class="up-icon">&#8679;</span>
-      Trascina il file <strong>.bin</strong> qui oppure <strong>clicca per selezionare</strong>
+    <!-- Tabs -->
+    <div class="section-title">Tipo di aggiornamento</div>
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-fw" onclick="switchTab('fw')">&#128268; Firmware</button>
+      <button class="tab-btn" id="tab-fs" onclick="switchTab('fs')">&#128193; Filesystem</button>
     </div>
 
-    <div class="file-info-wrap" id="file-info">
-      <div class="file-icon-big" id="file-icon-label">BIN</div>
-      <div class="file-meta">
-        <div class="fname" id="file-name">—</div>
-        <div class="fsize" id="file-size">—</div>
+    <!-- Tab Firmware -->
+    <div class="tab-panel active" id="panel-fw">
+      <div class="upload-zone" id="upload-zone-fw"
+           onclick="document.getElementById('file-input-fw').click()"
+           ondragover="onDragOver(event,'fw')"
+           ondragleave="onDragLeave('fw')"
+           ondrop="onDrop(event,'fw')">
+        <input type="file" id="file-input-fw" accept=".bin" onchange="onFileSelected(this.files[0],'fw')"/>
+        <span class="up-icon">&#8679;</span>
+        Trascina il file <strong>.bin</strong> del firmware qui oppure <strong>clicca per selezionare</strong>
       </div>
-      <button class="btn-clear" title="Rimuovi" onclick="clearFile()">&#10005;</button>
+      <div class="file-info-wrap" id="file-info-fw">
+        <div class="file-icon-big">BIN</div>
+        <div class="file-meta">
+          <div class="fname" id="file-name-fw">—</div>
+          <div class="fsize" id="file-size-fw">—</div>
+        </div>
+        <button class="btn-clear" title="Rimuovi" onclick="clearFile('fw')">&#10005;</button>
+      </div>
+      <div class="upload-progress-wrap" id="upload-progress-fw">
+        <div class="up-filename" id="up-filename-fw">—</div>
+        <div class="up-bar-track"><div class="up-bar-fill" id="up-bar-fw"></div></div>
+        <div class="up-status" id="up-status-fw"></div>
+      </div>
+      <button class="btn-upload" id="btn-upload-fw" disabled onclick="askConfirm('fw')">
+        Aggiorna firmware
+      </button>
     </div>
 
-    <div class="upload-progress-wrap" id="upload-progress">
-      <div class="up-filename" id="up-filename">—</div>
-      <div class="up-bar-track"><div class="up-bar-fill" id="up-bar"></div></div>
-      <div class="up-status" id="up-status"></div>
+    <!-- Tab Filesystem -->
+    <div class="tab-panel" id="panel-fs">
+      <div class="upload-zone" id="upload-zone-fs"
+           onclick="document.getElementById('file-input-fs').click()"
+           ondragover="onDragOver(event,'fs')"
+           ondragleave="onDragLeave('fs')"
+           ondrop="onDrop(event,'fs')">
+        <input type="file" id="file-input-fs" accept=".bin" onchange="onFileSelected(this.files[0],'fs')"/>
+        <span class="up-icon">&#8679;</span>
+        Trascina il file <strong>.bin</strong> del filesystem qui oppure <strong>clicca per selezionare</strong>
+      </div>
+      <div class="file-info-wrap" id="file-info-fs">
+        <div class="file-icon-big">BIN</div>
+        <div class="file-meta">
+          <div class="fname" id="file-name-fs">—</div>
+          <div class="fsize" id="file-size-fs">—</div>
+        </div>
+        <button class="btn-clear" title="Rimuovi" onclick="clearFile('fs')">&#10005;</button>
+      </div>
+      <div class="upload-progress-wrap" id="upload-progress-fs">
+        <div class="up-filename" id="up-filename-fs">—</div>
+        <div class="up-bar-track"><div class="up-bar-fill" id="up-bar-fs"></div></div>
+        <div class="up-status" id="up-status-fs"></div>
+      </div>
+      <button class="btn-upload" id="btn-upload-fs" disabled onclick="askConfirm('fs')">
+        Aggiorna filesystem
+      </button>
     </div>
-
-    <button class="btn-upload" id="btn-upload" disabled onclick="askConfirm()">
-      Aggiorna firmware
-    </button>
 
   </div>
 
   <!-- Confirm dialog -->
   <div id="confirm-overlay">
     <div class="confirm-box">
-      <h3>Conferma aggiornamento</h3>
+      <h3 id="confirm-title">Conferma aggiornamento</h3>
       <p id="confirm-filename">—</p>
       <p class="confirm-sub">Il dispositivo si riavvierà al termine dell'aggiornamento.</p>
       <div class="confirm-actions">
@@ -372,7 +432,18 @@
   <div id="toast"></div>
 
   <script>
-    let selectedFile = null;
+    let selectedFile = { fw: null, fs: null };
+    let activeTab = 'fw';
+    let pendingType = null;
+
+    /* ── tabs ── */
+    function switchTab(type) {
+      activeTab = type;
+      ['fw','fs'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('active', t === type);
+        document.getElementById('panel-' + t).classList.toggle('active', t === type);
+      });
+    }
 
     /* ── Carica info dispositivo ── */
     async function loadData() {
@@ -383,11 +454,8 @@
         document.getElementById('hwName').textContent   = data.hwName  || '—';
         document.getElementById('fwVer').textContent    = 'v' + (data.fwVer || '—');
         document.getElementById('fw-badge').textContent = 'fw v' + (data.fwVer || '—');
-      } catch (e) {
-        // silenzioso se offline
-      }
+      } catch (e) {}
     }
-
     loadData();
 
     /* ── helpers ── */
@@ -398,47 +466,51 @@
     }
 
     /* ── drag & drop ── */
-    function onDragOver(e) {
+    function onDragOver(e, type) {
       e.preventDefault();
-      document.getElementById('upload-zone').classList.add('drag-over');
+      document.getElementById('upload-zone-' + type).classList.add('drag-over');
     }
-    function onDragLeave() {
-      document.getElementById('upload-zone').classList.remove('drag-over');
+    function onDragLeave(type) {
+      document.getElementById('upload-zone-' + type).classList.remove('drag-over');
     }
-    function onDrop(e) {
+    function onDrop(e, type) {
       e.preventDefault();
-      document.getElementById('upload-zone').classList.remove('drag-over');
+      document.getElementById('upload-zone-' + type).classList.remove('drag-over');
       const f = e.dataTransfer.files[0];
-      if (f) onFileSelected(f);
+      if (f) onFileSelected(f, type);
     }
 
     /* ── selezione file ── */
-    function onFileSelected(file) {
+    function onFileSelected(file, type) {
       if (!file || !file.name.endsWith('.bin')) {
         showToast('Seleziona un file .bin valido', 'err');
         return;
       }
-      selectedFile = file;
-      document.getElementById('file-name').textContent  = file.name;
-      document.getElementById('file-size').textContent  = fmtBytes(file.size);
-      document.getElementById('file-info').classList.add('visible');
-      document.getElementById('upload-zone').classList.add('has-file');
-      document.getElementById('btn-upload').disabled = false;
-      document.getElementById('upload-progress').classList.remove('visible');
+      selectedFile[type] = file;
+      document.getElementById('file-name-' + type).textContent = file.name;
+      document.getElementById('file-size-' + type).textContent = fmtBytes(file.size);
+      document.getElementById('file-info-' + type).classList.add('visible');
+      document.getElementById('upload-zone-' + type).classList.add('has-file');
+      document.getElementById('btn-upload-' + type).disabled = false;
+      document.getElementById('upload-progress-' + type).classList.remove('visible');
     }
 
-    function clearFile() {
-      selectedFile = null;
-      document.getElementById('file-input').value = '';
-      document.getElementById('file-info').classList.remove('visible');
-      document.getElementById('upload-zone').classList.remove('has-file');
-      document.getElementById('btn-upload').disabled = true;
+    function clearFile(type) {
+      selectedFile[type] = null;
+      document.getElementById('file-input-' + type).value = '';
+      document.getElementById('file-info-' + type).classList.remove('visible');
+      document.getElementById('upload-zone-' + type).classList.remove('has-file');
+      document.getElementById('btn-upload-' + type).disabled = true;
     }
 
     /* ── confirm ── */
-    function askConfirm() {
-      if (!selectedFile) return;
-      document.getElementById('confirm-filename').textContent = selectedFile.name + ' (' + fmtBytes(selectedFile.size) + ')';
+    function askConfirm(type) {
+      if (!selectedFile[type]) return;
+      pendingType = type;
+      document.getElementById('confirm-title').textContent =
+        type === 'fw' ? 'Conferma aggiornamento firmware' : 'Conferma aggiornamento filesystem';
+      document.getElementById('confirm-filename').textContent =
+        selectedFile[type].name + ' (' + fmtBytes(selectedFile[type].size) + ')';
       document.getElementById('confirm-overlay').classList.add('open');
     }
     function closeConfirm() {
@@ -448,23 +520,25 @@
     /* ── upload ── */
     function startUpload() {
       closeConfirm();
-      if (!selectedFile) return;
+      const type = pendingType;
+      if (!selectedFile[type]) return;
 
-      const prog    = document.getElementById('upload-progress');
-      const bar     = document.getElementById('up-bar');
-      const fname   = document.getElementById('up-filename');
-      const status  = document.getElementById('up-status');
-      const btnUpd  = document.getElementById('btn-upload');
+      const prog   = document.getElementById('upload-progress-' + type);
+      const bar    = document.getElementById('up-bar-' + type);
+      const fname  = document.getElementById('up-filename-' + type);
+      const status = document.getElementById('up-status-' + type);
+      const btn    = document.getElementById('btn-upload-' + type);
+      const endpoint = type === 'fw' ? '/update' : '/updatefs';
 
       prog.classList.add('visible');
-      fname.textContent  = selectedFile.name;
+      fname.textContent  = selectedFile[type].name;
       status.textContent = 'Caricamento...';
       bar.style.width    = '0%';
-      btnUpd.disabled    = true;
+      btn.disabled       = true;
 
       const xhr = new XMLHttpRequest();
       const fd  = new FormData();
-      fd.append('firmware', selectedFile);
+      fd.append(type === 'fw' ? 'firmware' : 'filesystem', selectedFile[type]);
 
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
@@ -475,25 +549,25 @@
       };
 
       xhr.onload = () => {
-        if (xhr.status === 200 && xhr.responseText.indexOf('OK') >= 0) {
+        if (xhr.status === 200) {
           bar.style.width    = '100%';
           status.textContent = 'Completato ✓  —  Il dispositivo si sta riavviando...';
           showToast('Aggiornamento completato', 'ok');
-          clearFile();
+          clearFile(type);
         } else {
           status.textContent = 'Errore: ' + xhr.status;
           showToast('Errore durante l\'aggiornamento', 'err');
-          btnUpd.disabled = false;
+          btn.disabled = false;
         }
       };
 
       xhr.onerror = () => {
         status.textContent = 'Errore di connessione';
         showToast('Errore di rete', 'err');
-        btnUpd.disabled = false;
+        btn.disabled = false;
       };
 
-      xhr.open('POST', '/update');
+      xhr.open('POST', endpoint);
       xhr.send(fd);
     }
 
