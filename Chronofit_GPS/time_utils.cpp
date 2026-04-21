@@ -195,7 +195,7 @@ void handlePpsSync() {
   uint32_t dd = 1;
   uint32_t hh = gps.time.hour() + utcOffset;
   uint32_t mm = gps.time.minute();
-  uint32_t ss = gps.time.second() + 1;
+  uint32_t ss = gps.time.second();
 
   // rollover
   if (ss >= 60) {

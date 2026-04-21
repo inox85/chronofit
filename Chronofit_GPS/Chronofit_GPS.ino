@@ -27,6 +27,7 @@
 #include <SoftwareSerial.h>
 
 SoftwareSerial gpsCmd(-1, 13);
+uint64_t ppsNmeaAge;
 
 void IRAM_ATTR sensorISR(void *arg) {
   int i = (int)arg;
@@ -36,8 +37,61 @@ void IRAM_ATTR sensorISR(void *arg) {
 // --- ISR PPS ---
 void IRAM_ATTR onPpsInterrupt() {   
   lastSyncTrigger = esp_timer_get_time();
+  ppsNmeaAge = lastSyncTrigger - lastNmeaValid;
   ppsTriggered = true;
   ppsCounter++;
+}
+
+// Variabili condivise
+SemaphoreHandle_t gpsMutex = NULL;
+volatile bool gpsTimeUpdated = false;
+volatile uint64_t gpsLastNmeaValid = 0;
+
+// Task GPS — salva isUpdated() subito dopo encode
+void gpsTask(void* pvParameters) {
+  static String nmea = "";
+  for (;;) {
+    while (ServicesSerial.available()) {
+      char c = ServicesSerial.read();
+      nmea += c;
+      if (c == '\n') {
+        if (nmea.startsWith("$GPRMC") || nmea.startsWith("$GNRMC") ||
+            nmea.startsWith("$GPGGA") || nmea.startsWith("$GNGGA") ||
+            nmea.startsWith("$GPGSV") || nmea.startsWith("$GNGSV") ||
+            nmea.startsWith("$GPGSA") || nmea.startsWith("$GNGSA") ||
+            nmea.startsWith("$BDGSV") || nmea.startsWith("$GBGSV")) {
+
+          for (char ch : nmea) gps.encode(ch);
+
+          // Cattura isUpdated() SUBITO dopo encode — prima che si azzeri
+          bool updated = gps.time.isUpdated();
+          bool valid   = gps.time.isValid();
+
+          if (valid) {
+            if (xSemaphoreTake(gpsMutex, pdMS_TO_TICKS(2)) == pdTRUE) {
+              gpsLastNmeaValid = esp_timer_get_time();
+              if (updated) gpsTimeUpdated = true; // set solo se fresca
+              xSemaphoreGive(gpsMutex);
+            }
+          }
+        }
+        nmea = "";
+      }
+      if (nmea.length() > 120) nmea = "";
+    }
+    vTaskDelay(pdMS_TO_TICKS(1));
+  }
+}
+
+bool processServicesSerial() {
+  if (xSemaphoreTake(gpsMutex, pdMS_TO_TICKS(5)) == pdTRUE) {
+    bool updated = gpsTimeUpdated;
+    lastNmeaValid = gpsLastNmeaValid; // ← aggiorna SEMPRE
+    if (updated) gpsTimeUpdated = false;
+    xSemaphoreGive(gpsMutex);
+    return updated;
+  }
+  return false;
 }
 
 void signalMenagement(int i){
@@ -148,11 +202,19 @@ void setup() {
 
   //setupWiFi();
 
-  initGPS();
+  //initGPS();
 
   Serial.begin(9600, SERIAL_8N1);
-  //ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+
+  gpsMutex = xSemaphoreCreateMutex();
+
   ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX, false, 2048);
+
+  delay(100);
+
+  while (ServicesSerial.available()) ServicesSerial.read();
+
+  xTaskCreatePinnedToCore(gpsTask, "GPSTask", 4096, NULL, 2, NULL, 1);
 
   pinMode(RST_PIN, OUTPUT);
   digitalWrite(RST_PIN, HIGH);
@@ -331,13 +393,18 @@ void loop() {
   }
 
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
-  uint64_t delta = lastNmeaValid - lastSyncTrigger;
+  uint64_t delta = ppsNmeaAge;
 
   if (ppsTriggered){
     lastPPSDetected = lastSyncTrigger;
-    if ((delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+
+    Serial.printf("[PPS] delta=%llu validNmea=%d syncMode=%d syncStatus=%d\n",
+                delta, validNmea, syncMode, syncStatus);
+    if ((delta >= 300000 && delta <= 500000) && validNmea && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;   // consumato QUI, una sola volta
       uint64_t thisPpsUs = lastSyncTrigger;
+
+
       //Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
       //              delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
@@ -445,16 +512,16 @@ CRGB getStatusColor() {
   return color;
 }
 
-bool processServicesSerial() {
-  while (ServicesSerial.available()) {
-    char c = ServicesSerial.read();
-    gps.encode(c);  // decodifica NMEA
-    Serial.print(c);
-    if(gps.time.isValid()){
-      lastNmeaValid = esp_timer_get_time();
-      return true;
-    }
-  }
-  return false;
-}
+// bool processServicesSerial() {
+//   while (ServicesSerial.available()) {
+//     char c = ServicesSerial.read();
+//     gps.encode(c);  // decodifica NMEA
+//     Serial.print(c);
+//     if(gps.time.isValid()){
+//       lastNmeaValid = esp_timer_get_time();
+//       return true;
+//     }
+//   }
+//   return false;
+// }
 
