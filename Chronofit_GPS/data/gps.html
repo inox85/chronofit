@@ -291,7 +291,7 @@
         <span class="const-count" id="gp-count">0 satelliti</span>
       </div>
       <div class="skyview-wrap">
-        <canvas id="sky-gp" width="220" height="220"></canvas>
+        <canvas id="sky-gp" width="360" height="360"></canvas>
       </div>
       <div id="gp-table-wrap"></div>
     </div>
@@ -302,8 +302,8 @@
 
   <script>
     // ── Configurazione stabilizzazione ───────────────────────
-    const SMOOTH_WINDOW   = 5;   // campioni per media mobile (SNR, HDOP, speed, alt)
-    const SAT_PERSIST_TTL = 8;   // secondi prima che un satellite sparisca
+    const SMOOTH_WINDOW   = 20;   // campioni per media mobile (SNR, HDOP, speed, alt)
+    const SAT_PERSIST_TTL = 20;   // secondi prima che un satellite sparisca
     const POS_ALPHA       = 0.3; // EMA per lat/lng (0=immobile, 1=no smoothing)
 
     // ── Buffer per media mobile ───────────────────────────────
