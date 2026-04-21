@@ -135,3 +135,5 @@ double extimatedDriftByPPS = 0;
 
 unsigned long lastRxTime = 0;
 unsigned long lastTxTime = 0;
+
+volatile bool shouldRestart = false;

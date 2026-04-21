@@ -114,4 +114,6 @@ extern double extimatedDriftByPPS;
 
 extern unsigned long lastRxTime;
 extern unsigned long lastTxTime;
+
+extern volatile bool shouldRestart;
 #endif

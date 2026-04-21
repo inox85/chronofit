@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chronofit — Aggiornamento Firmware</title>
+  <style>
+    :root {
+      --primary-color: #800020;
+      --secondary-color: #333333;
+      --background-color: #f4f4f4;
+      --card-border-color: #800020;
+    }
+
+    @font-face {
+      font-family: 'Nunito';
+      src: url('/Nunito-Bold.woff2') format('woff2');
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      font-weight: bold;
+    }
+
+    .navbar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 56px;
+      background-color: #111;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 1000;
+      box-sizing: border-box;
+      gap: 12px;
+    }
+
+    .navbar-title {
+      color: #fff;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    .navbar-badge {
+      margin-left: auto;
+      background: var(--primary-color);
+      color: #fff;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    .page {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 76px 16px 32px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #888;
+      margin: 24px 0 10px;
+    }
+
+    /* ─── metric cards ─── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .metric-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--primary-color);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .metric-card .m-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .metric-card .m-value {
+      font-size: 22px;
+      color: #111;
+      line-height: 1.1;
+    }
+
+    .metric-card .m-sub {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .metric-card.highlight {
+      background: var(--primary-color);
+      border-left-color: transparent;
+    }
+    .metric-card.highlight .m-label,
+    .metric-card.highlight .m-value,
+    .metric-card.highlight .m-sub {
+      color: #fff;
+    }
+
+    /* ─── drop zone ─── */
+    .upload-zone {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 32px 16px;
+      text-align: center;
+      color: #999;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .upload-zone.drag-over {
+      border-color: var(--primary-color);
+      background: #fff5f6;
+      color: var(--primary-color);
+    }
+    .upload-zone.has-file {
+      border-color: var(--primary-color);
+      border-style: solid;
+    }
+    .upload-zone .up-icon {
+      font-size: 36px;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .upload-zone input[type=file] { display: none; }
+
+    /* ─── file info ─── */
+    .file-info-wrap {
+      display: none;
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-top: 10px;
+      align-items: center;
+      gap: 12px;
+    }
+    .file-info-wrap.visible { display: flex; }
+
+    .file-icon-big {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      background: #f0f0f0;
+      color: #555;
+      font-size: 11px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .file-meta { flex: 1; min-width: 0; }
+    .file-meta .fname {
+      font-size: 15px;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-meta .fsize {
+      font-size: 12px;
+      color: #888;
+      margin-top: 2px;
+      font-weight: normal;
+    }
+
+    .btn-clear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: #fce4ec;
+      color: #c62828;
+      cursor: pointer;
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .btn-clear:hover { opacity: 0.75; }
+
+    /* ─── progress ─── */
+    .upload-progress-wrap {
+      display: none;
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-top: 10px;
+    }
+    .upload-progress-wrap.visible { display: block; }
+    .up-filename { font-size: 13px; color: #333; margin-bottom: 8px; }
+    .up-bar-track { height: 10px; background: #eee; border-radius: 5px; overflow: hidden; }
+    .up-bar-fill  { height: 100%; background: var(--primary-color); border-radius: 5px; width: 0%; transition: width 0.2s; }
+    .up-status { font-size: 12px; color: #888; margin-top: 6px; font-weight: normal; }
+
+    /* ─── upload button ─── */
+    .btn-upload {
+      width: 100%;
+      margin-top: 12px;
+      padding: 13px;
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .btn-upload:hover { opacity: 0.85; }
+    .btn-upload:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* ─── toast ─── */
+    #toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #222;
+      color: #fff;
+      font-size: 14px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok  { background: #2e7d32; }
+    #toast.err { background: #c62828; }
+
+    /* ─── confirm overlay ─── */
+    #confirm-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 8000;
+      align-items: center;
+      justify-content: center;
+    }
+    #confirm-overlay.open { display: flex; }
+    .confirm-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px 28px;
+      max-width: 340px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .confirm-box h3 { margin: 0 0 10px; font-size: 17px; color: #111; }
+    .confirm-box p  { margin: 0 0 6px; font-size: 14px; color: #666; word-break: break-all; }
+    .confirm-box .confirm-sub { font-size: 12px; color: #aaa; margin-bottom: 20px; font-weight: normal; }
+    .confirm-actions { display: flex; gap: 10px; }
+    .confirm-actions button {
+      flex: 1; padding: 10px; border-radius: 7px; border: none;
+      font-family: 'Nunito', sans-serif; font-weight: bold;
+      font-size: 14px; cursor: pointer;
+    }
+    .btn-cancel-confirm { background: #eee; color: #333; }
+    .btn-cancel-confirm:hover { background: #ddd; }
+    .btn-ok-confirm { background: var(--primary-color); color: #fff; }
+    .btn-ok-confirm:hover { opacity: 0.85; }
+
+    @media (max-width: 600px) {
+      .metric-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <img src="/logo.png" alt="Chronofit" style="height:32px;" onerror="this.style.display='none'"/>
+    <span class="navbar-title">Aggiornamento Firmware</span>
+    <span class="navbar-badge" id="fw-badge">fw —</span>
+  </div>
+
+  <div class="page">
+
+    <!-- Versione corrente -->
+    <div class="section-title">Versione corrente</div>
+    <div class="metric-grid">
+      <div class="metric-card highlight">
+        <div class="m-label">Dispositivo</div>
+        <div class="m-value" id="devName">—</div>
+        <div class="m-sub" id="hwName">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Firmware installato</div>
+        <div class="m-value" id="fwVer">—</div>
+        <div class="m-sub">versione</div>
+      </div>
+    </div>
+
+    <!-- Upload firmware -->
+    <div class="section-title">Carica nuovo firmware</div>
+
+    <div class="upload-zone" id="upload-zone"
+         onclick="document.getElementById('file-input').click()"
+         ondragover="onDragOver(event)"
+         ondragleave="onDragLeave(event)"
+         ondrop="onDrop(event)">
+      <input type="file" id="file-input" accept=".bin" onchange="onFileSelected(this.files[0])"/>
+      <span class="up-icon">&#8679;</span>
+      Trascina il file <strong>.bin</strong> qui oppure <strong>clicca per selezionare</strong>
+    </div>
+
+    <div class="file-info-wrap" id="file-info">
+      <div class="file-icon-big" id="file-icon-label">BIN</div>
+      <div class="file-meta">
+        <div class="fname" id="file-name">—</div>
+        <div class="fsize" id="file-size">—</div>
+      </div>
+      <button class="btn-clear" title="Rimuovi" onclick="clearFile()">&#10005;</button>
+    </div>
+
+    <div class="upload-progress-wrap" id="upload-progress">
+      <div class="up-filename" id="up-filename">—</div>
+      <div class="up-bar-track"><div class="up-bar-fill" id="up-bar"></div></div>
+      <div class="up-status" id="up-status"></div>
+    </div>
+
+    <button class="btn-upload" id="btn-upload" disabled onclick="askConfirm()">
+      Aggiorna firmware
+    </button>
+
+  </div>
+
+  <!-- Confirm dialog -->
+  <div id="confirm-overlay">
+    <div class="confirm-box">
+      <h3>Conferma aggiornamento</h3>
+      <p id="confirm-filename">—</p>
+      <p class="confirm-sub">Il dispositivo si riavvierà al termine dell'aggiornamento.</p>
+      <div class="confirm-actions">
+        <button class="btn-cancel-confirm" onclick="closeConfirm()">Annulla</button>
+        <button class="btn-ok-confirm" onclick="startUpload()">Aggiorna</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script>
+    let selectedFile = null;
+
+    /* ── Carica info dispositivo ── */
+    async function loadData() {
+      try {
+        const res = await fetch('/systemSettings');
+        const data = await res.json();
+        document.getElementById('devName').textContent  = data.devName || '—';
+        document.getElementById('hwName').textContent   = data.hwName  || '—';
+        document.getElementById('fwVer').textContent    = 'v' + (data.fwVer || '—');
+        document.getElementById('fw-badge').textContent = 'fw v' + (data.fwVer || '—');
+      } catch (e) {
+        // silenzioso se offline
+      }
+    }
+
+    loadData();
+
+    /* ── helpers ── */
+    function fmtBytes(b) {
+      if (b >= 1048576) return (b / 1048576).toFixed(2) + ' MB';
+      if (b >= 1024)    return (b / 1024).toFixed(1) + ' KB';
+      return b + ' B';
+    }
+
+    /* ── drag & drop ── */
+    function onDragOver(e) {
+      e.preventDefault();
+      document.getElementById('upload-zone').classList.add('drag-over');
+    }
+    function onDragLeave() {
+      document.getElementById('upload-zone').classList.remove('drag-over');
+    }
+    function onDrop(e) {
+      e.preventDefault();
+      document.getElementById('upload-zone').classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f) onFileSelected(f);
+    }
+
+    /* ── selezione file ── */
+    function onFileSelected(file) {
+      if (!file || !file.name.endsWith('.bin')) {
+        showToast('Seleziona un file .bin valido', 'err');
+        return;
+      }
+      selectedFile = file;
+      document.getElementById('file-name').textContent  = file.name;
+      document.getElementById('file-size').textContent  = fmtBytes(file.size);
+      document.getElementById('file-info').classList.add('visible');
+      document.getElementById('upload-zone').classList.add('has-file');
+      document.getElementById('btn-upload').disabled = false;
+      document.getElementById('upload-progress').classList.remove('visible');
+    }
+
+    function clearFile() {
+      selectedFile = null;
+      document.getElementById('file-input').value = '';
+      document.getElementById('file-info').classList.remove('visible');
+      document.getElementById('upload-zone').classList.remove('has-file');
+      document.getElementById('btn-upload').disabled = true;
+    }
+
+    /* ── confirm ── */
+    function askConfirm() {
+      if (!selectedFile) return;
+      document.getElementById('confirm-filename').textContent = selectedFile.name + ' (' + fmtBytes(selectedFile.size) + ')';
+      document.getElementById('confirm-overlay').classList.add('open');
+    }
+    function closeConfirm() {
+      document.getElementById('confirm-overlay').classList.remove('open');
+    }
+
+    /* ── upload ── */
+    function startUpload() {
+      closeConfirm();
+      if (!selectedFile) return;
+
+      const prog    = document.getElementById('upload-progress');
+      const bar     = document.getElementById('up-bar');
+      const fname   = document.getElementById('up-filename');
+      const status  = document.getElementById('up-status');
+      const btnUpd  = document.getElementById('btn-upload');
+
+      prog.classList.add('visible');
+      fname.textContent  = selectedFile.name;
+      status.textContent = 'Caricamento...';
+      bar.style.width    = '0%';
+      btnUpd.disabled    = true;
+
+      const xhr = new XMLHttpRequest();
+      const fd  = new FormData();
+      fd.append('firmware', selectedFile);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const p = Math.round((e.loaded / e.total) * 100);
+          bar.style.width    = p + '%';
+          status.textContent = p + '%  —  ' + fmtBytes(e.loaded) + ' / ' + fmtBytes(e.total);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200 && xhr.responseText.indexOf('OK') >= 0) {
+          bar.style.width    = '100%';
+          status.textContent = 'Completato ✓  —  Il dispositivo si sta riavviando...';
+          showToast('Aggiornamento completato', 'ok');
+          clearFile();
+        } else {
+          status.textContent = 'Errore: ' + xhr.status;
+          showToast('Errore durante l\'aggiornamento', 'err');
+          btnUpd.disabled = false;
+        }
+      };
+
+      xhr.onerror = () => {
+        status.textContent = 'Errore di connessione';
+        showToast('Errore di rete', 'err');
+        btnUpd.disabled = false;
+      };
+
+      xhr.open('POST', '/update');
+      xhr.send(fd);
+    }
+
+    /* ── toast ── */
+    let toastTimer;
+    function showToast(msg, type='ok') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'show ' + type;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.className = '', 2800);
+    }
+  </script>
+</body>
+</html>

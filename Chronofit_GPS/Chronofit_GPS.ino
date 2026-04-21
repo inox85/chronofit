@@ -148,7 +148,7 @@ void setup() {
 
   //setupWiFi();
 
-  initGPS();
+  //initGPS();
 
   Serial.begin(9600, SERIAL_8N1);
   //ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
@@ -268,6 +268,11 @@ void updateWifiLed(uint8_t ledIndex) {
 
 void loop() {
 
+  if(shouldRestart){
+    delay(500);
+    ESP.restart();
+  }
+  
   if(RTCTriggered){
     RTCTriggered = false;
     if(RTCTtriggerCount == 1){
