@@ -48,6 +48,46 @@ const lineColors = {
 
 const audioCache = {};
 
+// ── Precisione temporale ──────────────────────────────────────
+// 1 = decimi, 2 = centesimi, 3 = millisecondi
+let timePrecision = 3;
+
+function onTimePrecisionChange(val) {
+  val = Math.max(1, Math.min(3, parseInt(val) || 3));
+  timePrecision = val;
+  document.getElementById("time-precision").value = val;
+  refreshAllTimestamps();
+  recalcDeltaTimes();
+  recalcElapsedTimes();
+}
+
+function truncateMs(ms) {
+  if (timePrecision === 1) return Math.floor(ms / 100) * 100;
+  if (timePrecision === 2) return Math.floor(ms / 10)  * 10;
+  return ms;
+}
+
+function refreshAllTimestamps() {
+  document.querySelectorAll("#event-table tbody tr").forEach(row => {
+    const tsCell = row.querySelector(".timestamp");
+    if (!tsCell || tsCell.querySelector("input")) return;
+    const h  = parseInt(row.dataset.hour     ?? 0);
+    const m  = parseInt(row.dataset.minute   ?? 0);
+    const s  = parseInt(row.dataset.seconds  ?? 0);
+    const ms = parseInt(row.dataset.msRaw    ?? 0);
+    tsCell.textContent = formatTime(h, m, s, ms);
+  });
+}
+
+// Converte i data-* raw di una riga in ms (con troncamento precisione)
+function rowToMs(row) {
+  const h  = parseInt(row.dataset.hour    ?? 0);
+  const m  = parseInt(row.dataset.minute  ?? 0);
+  const s  = parseInt(row.dataset.seconds ?? 0);
+  const ms = parseInt(row.dataset.msRaw   ?? 0);
+  return ((h * 3600 + m * 60 + s) * 1000) + truncateMs(ms);
+}
+
 async function cacheAudioFiles(url) {
   for (const file of audioFiles) {
       const audio = new Audio();
@@ -795,7 +835,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   // subito dopo: const row = document.createElement("tr");
   row.classList.add("row-enter");
 
-  const timestamp = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(millis).padStart(3, "0")}`;
+  const timestamp = formatTime(hour, minute, seconds, millis);
   const index = rowIndex;
 
   const activeLines = Array.from(document.querySelectorAll(".toggle-btn:not(.inactive)"))
@@ -811,7 +851,8 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-competitor", competitor);
   row.setAttribute("data-hour", hour);
   row.setAttribute("data-minute", minute);
-  row.setAttribute("data-millis", millis);
+  row.setAttribute("data-seconds", seconds);
+  row.setAttribute("data-ms-raw", millis);
   row.setAttribute("data-penality", 0);
 
   row.innerHTML = `
@@ -871,12 +912,9 @@ function formatDelta(ms, signed) {
   }
 
   let sign = "";
+  if (signed) sign = "+";
 
-  if (signed) {
-    sign = "+";
-  }
-
-  ms = Math.abs(ms);
+  ms = truncateMs(Math.abs(ms));
 
   const hours   = Math.floor(ms / 3600000);
   ms %= 3600000;
@@ -885,12 +923,18 @@ function formatDelta(ms, signed) {
   const seconds = Math.floor(ms / 1000);
   const millis  = ms % 1000;
 
+  const msStr = timePrecision === 1
+    ? String(Math.floor(millis / 100))
+    : timePrecision === 2
+      ? String(Math.floor(millis / 10)).padStart(2, "0")
+      : String(millis).padStart(3, "0");
+
   return (
     sign +
     String(hours).padStart(2, "0") + ":" +
     String(minutes).padStart(2, "0") + ":" +
     String(seconds).padStart(2, "0") + "." +
-    String(millis).padStart(3, "0")
+    msStr
   );
 }
 
@@ -901,23 +945,17 @@ function recalcElapsedTimes() {
     document.querySelectorAll("#event-table tbody tr")
   ).filter(row => row.style.display !== "none");
 
-  // partiamo dal basso (riga più vecchia)
   const firstRow = rows[rows.length - 1];
-  const firstTsCell = firstRow ? firstRow.querySelector(".timestamp") : null;
-  const firstTimeMs = firstTsCell ? timestampToMs(firstTsCell.textContent.trim()) : null;
+  const firstTimeMs = firstRow ? rowToMs(firstRow) : null;
 
   for (let i = rows.length - 1; i >= 0; i--) {
     const row = rows[i];
-    const tsCell = row.querySelector(".timestamp");
     const deltaCell = row.querySelector(".elapsed-time");
+    if (!deltaCell) continue;
 
-    if (!tsCell || !deltaCell) continue;
-
-    const currentMs = timestampToMs(tsCell.textContent.trim());
-
+    const currentMs = rowToMs(row);
     const delta = firstTimeMs - currentMs;
     deltaCell.textContent = formatDelta(delta, false);
-
   }
 }
 
@@ -926,7 +964,6 @@ function recalcDeltaTimes() {
     document.querySelectorAll("#event-table tbody tr")
   ).filter(row => row.style.display !== "none");
 
-  // partiamo dal basso (riga più vecchia)
   let nextTime = null;
 
   for (let i = rows.length - 1; i >= 0; i--) {
@@ -936,18 +973,16 @@ function recalcDeltaTimes() {
 
     if (!tsCell || !deltaCell) continue;
 
-    // pulizia stato precedente
     row.classList.remove("negative-row");
 
     const timestamp = tsCell.textContent.trim();
-    const currentMs = timestampToMs(timestamp);
 
-    // Evidenzia se timestamp è 00:00:00.000
-    if (timestamp === "00:00:00.000") {
+    if (timestamp === "00:00:00.000" || timestamp === "00:00:00.00" || timestamp === "00:00:00.0") {
       row.classList.add("negative-row");
     }
 
-    // riga più in basso → niente delta
+    const currentMs = rowToMs(row);
+
     if (nextTime === null) {
       deltaCell.textContent = "—";
       nextTime = currentMs;
@@ -958,7 +993,7 @@ function recalcDeltaTimes() {
 
     if (delta > 0) {
       deltaCell.textContent = "—";
-      row.classList.add("negative-row"); // mantiene evidenziazione delta negativo
+      row.classList.add("negative-row");
     } else {
       deltaCell.textContent = formatDelta(delta, true);
     }
@@ -1071,9 +1106,14 @@ function saveRow(button) {
         // timestamp → hh:mm:ss.mmm
         const [hms, ms] = newValue.split(".");
         const [h, m, s] = hms.split(":");
-        row.dataset.hour = Number(h);
-        row.dataset.minute = Number(m);
-        row.dataset.millis = Number(ms);
+        row.dataset.hour     = Number(h);
+        row.dataset.minute   = Number(m);
+        row.dataset.seconds  = Number(s);
+        // normalizza sempre a ms interi (il testo può avere 1-3 cifre decimali)
+        let msVal = Number(ms ?? 0);
+        if (ms && ms.length === 1) msVal *= 100;
+        else if (ms && ms.length === 2) msVal *= 10;
+        row.dataset.msRaw = msVal;
         break;
       }
     }
@@ -1705,11 +1745,15 @@ function updateRowFromBroadcas(data) {
   // aggiorna event time
   const timeCell = row.querySelector(".timestamp");
   if (timeCell) {
+    row.dataset.hour    = data.h ?? row.dataset.hour;
+    row.dataset.minute  = data.m ?? row.dataset.minute;
+    row.dataset.seconds = data.s ?? row.dataset.seconds;
+    row.dataset.msRaw   = data.ms ?? row.dataset.msRaw;
     timeCell.textContent = formatTime(
-      data.h,
-      data.m,
-      data.s,
-      data.ms
+      parseInt(row.dataset.hour),
+      parseInt(row.dataset.minute),
+      parseInt(row.dataset.seconds),
+      parseInt(row.dataset.msRaw)
     );
   }
 
@@ -1724,11 +1768,17 @@ function updateRowFromBroadcas(data) {
 }
 
 function formatTime(h, m, s, ms) {
+  const msT = truncateMs(ms);
+  const msStr = timePrecision === 1
+    ? String(Math.floor(msT / 100))
+    : timePrecision === 2
+      ? String(Math.floor(msT / 10)).padStart(2, "0")
+      : String(msT).padStart(3, "0");
   return (
     String(h).padStart(2, "0") + ":" +
     String(m).padStart(2, "0") + ":" +
     String(s).padStart(2, "0") + "." +
-    String(ms).padStart(3, "0")
+    msStr
   );
 }
 
