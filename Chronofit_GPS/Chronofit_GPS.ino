@@ -341,10 +341,10 @@ void loop() {
   if (ppsTriggered){
     lastPPSDetected = lastSyncTrigger;
 
-    // Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
-    //           delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
+    Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
+              delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
 
-    if ((delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+    if ((delta >= 0 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;   // consumato QUI, una sola volta
       uint64_t thisPpsUs = lastSyncTrigger;
       //Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
