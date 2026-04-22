@@ -268,6 +268,9 @@ void updateWifiLed(uint8_t ledIndex) {
   else               RGBLeds.setLed(ledIndex, CRGB::Black);
 }
 
+// In globals.h o all'inizio del file
+bool validNmea = false;  // globale, non locale al loop
+
 void loop() {
 
   if(shouldRestart){
@@ -307,9 +310,8 @@ void loop() {
 
   dnsServer.processNextRequest();
 
-  bool validNmea = false;
-
-  validNmea = processServicesSerial();
+// DOPO (corretto)
+  validNmea = processServicesSerial() || validNmea;
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
@@ -338,16 +340,19 @@ void loop() {
   }
 
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
-  uint64_t delta = lastNmeaValid - lastSyncTrigger;
+  uint64_t delta = (lastNmeaValid > 0 && lastSyncTrigger >= lastNmeaValid)
+                 ? (lastSyncTrigger - lastNmeaValid)
+                 : UINT64_MAX;
 
-  if (ppsTriggered){
+  if (ppsTriggered) {
     lastPPSDetected = lastSyncTrigger;
 
     Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
-              delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
+                  delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
 
-    if ((delta >= 0 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+    if ((delta >= 400000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;   // consumato QUI, una sola volta
+      validNmea = false;  // ← manca questo!
       uint64_t thisPpsUs = lastSyncTrigger;
       //Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
       //              delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
