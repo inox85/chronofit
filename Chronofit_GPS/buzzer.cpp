@@ -1,5 +1,6 @@
 #include "Buzzer.h"
 #include <Arduino.h>
+#include "globals.h"
 
 static uint8_t buzzerPin;
 static QueueHandle_t buzzerQueue;
@@ -78,35 +79,43 @@ void buzzerBeep(uint16_t durationMs,
 }
 
 void sweepBuzz(){
-  // buzzerBeep(400,1,0,220,32);
-  // buzzerBeep(200,1,0,440,64);
-  // buzzerBeep(100,1,0,880,128);
+  if(buzzerActive == 0)
+    return;
+
+  buzzerBeep(400,1,0,220,32);
+  buzzerBeep(200,1,0,440,64);
+  buzzerBeep(100,1,0,880,128);
 }
 
 void graveBuzz(){
-  //buzzerBeep(100,1,0,100,128);
+  buzzerBeep(100,1,0,100,128);
 }
 
 void reverseSweepBuzz(){
-  // buzzerBeep(400,1,0,880,32);
-  // buzzerBeep(200,1,0,440,64);
-  // buzzerBeep(100,1,0,220,128);
+  if(buzzerActive == 0)
+    return;
+
+  buzzerBeep(400,1,0,880,32);
+  buzzerBeep(200,1,0,440,64);
+  buzzerBeep(100,1,0,220,128);
 }
 
 void playBinary(uint32_t value) {
-  // const uint16_t FREQ_1 = 220;
-  // const uint16_t FREQ_0 = 880;
-  // const uint16_t BIT_TIME = 200;
-  // const uint8_t  DUTY = 128;
+  if(buzzerActive == 0)
+    return;
+  const uint16_t FREQ_1 = 220;
+  const uint16_t FREQ_0 = 880;
+  const uint16_t BIT_TIME = 200;
+  const uint8_t  DUTY = 128;
   
-  // uint16_t freq = (value & (1UL << 2)) ? FREQ_1 : FREQ_0;
-  // buzzerBeep(BIT_TIME, 1, 0, freq, DUTY);
-  // buzzerBeep(50, 1, 0, freq, 0);
-  // freq = (value & (1UL << 1)) ? FREQ_1 : FREQ_0;
-  // buzzerBeep(BIT_TIME, 1, 0, freq, DUTY);
-  // buzzerBeep(50, 1, 0, freq, 0);
-  // freq = (value & (1UL << 0)) ? FREQ_1 : FREQ_0;
-  // buzzerBeep(BIT_TIME, 1, 0, freq, DUTY);
-  // buzzerBeep(50, 1, 0, freq, 0);
+  uint16_t freq = (value & (1UL << 2)) ? FREQ_1 : FREQ_0;
+  buzzerBeep(BIT_TIME, 1, 0, freq, DUTY);
+  buzzerBeep(50, 1, 0, freq, 0);
+  freq = (value & (1UL << 1)) ? FREQ_1 : FREQ_0;
+  buzzerBeep(BIT_TIME, 1, 0, freq, DUTY);
+  buzzerBeep(50, 1, 0, freq, 0);
+  freq = (value & (1UL << 0)) ? FREQ_1 : FREQ_0;
+  buzzerBeep(BIT_TIME, 1, 0, freq, DUTY);
+  buzzerBeep(50, 1, 0, freq, 0);
 
 }

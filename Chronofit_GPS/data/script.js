@@ -170,12 +170,15 @@ function setSettings(){
   const printToggle = document.getElementById("printToggle");
   const printEnabled = printToggle && printToggle.checked ? 1 : 0;
 
+  const buzzerToggle = document.getElementById("buzzerToggle");
+  const buzzerEnabled = buzzerToggle && buzzerToggle.checked ? 1 : 0;
+
   const stationName = document.getElementById("station-name-input").value;
   
   console.log(stationName);
   console.log(encodeURIComponent(stationName));
   
-  const url = `/setAttribute?printEnabled=${encodeURIComponent(printEnabled)}&stationName=${encodeURIComponent(stationName)}`;
+  const url = `/setAttribute?printEnabled=${encodeURIComponent(printEnabled)}&stationName=${encodeURIComponent(stationName)}&buzzerEnable=${encodeURIComponent(buzzerEnabled)}`;
 
   console.log(url);
 
@@ -257,7 +260,13 @@ function fillSettingsFields(data){
   document.getElementById("sync-method-select").dispatchEvent(new Event("change"));
   document.getElementById("sync-interval-select").value = data.si ?? 0
 
-  handlePowerUpdate(data);
+  const printToggle = document.getElementById("printToggle");
+  printToggle.checked = (data.print == 1);
+
+  const buzzerToggle = document.getElementById("buzzerToggle");
+  buzzerToggle.checked = (data.bz == 1);
+
+  //handlePowerUpdate(data);
 }
 
 function setElapsedTimemode(){
@@ -588,30 +597,6 @@ function hideGeneralPopup() {
 }
 
 
-
-function handlePowerUpdate(data) {
-  if (prevPowerSource !== data.pw) {
-    const printToggle = document.getElementById("printToggle");
-    prevPowerSource = data.pw;
-
-    if(prevPowerSource === POWER_MODE_NONE){
-      console.log("Switching to low power config")
-      printToggle.checked = 0;
-      printToggle.disabled = 1;
-    }else if(prevPowerSource === POWER_MODE_USB){
-      console.log("Switching to power bank power config")
-      printToggle.checked = 1;
-      printToggle.disabled = 0;
-    }
-    else if(prevPowerSource === POWER_MODE_BATTERY){
-      console.log("Switching to battery bank power config")
-      printToggle.checked = 1;
-      printToggle.disabled = 0;
-    }
-
-  }
-}
-
 function updateClockFromData(data) {
 
     let hourAdj = (data.h + timeOffset + 24) % 24;
@@ -638,7 +623,7 @@ function updateClockFromData(data) {
     const syncStatus = data.sy; 
     const wifiStatus = data.w; // 0=disconnected, 1=connecting, 2=connected
 
-    handlePowerUpdate(data);
+    //handlePowerUpdate(data);
 
     let syncTestIcon = document.getElementById("incon-sync-test");
     //syncTestIcon.style.display = "none";

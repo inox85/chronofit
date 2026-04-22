@@ -116,4 +116,6 @@ extern unsigned long lastRxTime;
 extern unsigned long lastTxTime;
 
 extern volatile bool shouldRestart;
+
+extern int buzzerActive;
 #endif

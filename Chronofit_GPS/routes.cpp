@@ -667,6 +667,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       printEnabled = request->getParam("printEnabled")->value().toInt();
     }
 
+    if (request->hasParam("buzzerEnable")) {
+      buzzerActive = request->getParam("buzzerEnable")->value().toInt();
+    }
+
     if(request->hasParam("stationName"))
     {
       stationName = request->getParam("stationName")->value();
@@ -1123,6 +1127,7 @@ String serializeSettings(){
   doc["sn"] = stationName;
   doc["si"] = GPSRefreshInterval;
   doc["pw"] = powerSource;
+  doc["bz"] = buzzerActive;
 
   String message;
   serializeJson(doc, message);

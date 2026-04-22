@@ -2,19 +2,15 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0">
   <title>Chronofit</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="icon" type="image/png" href="/favicon.png">
-
 
   <!-- COLORE DELLA STATUS BAR SU ANDROID -->
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/manifest.json">
 </head>
-<meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=0.8, minimum-scale=0.8">
 <body>
 
   <div id="splash">
@@ -412,6 +408,15 @@
     </label>
   </div>
 
+    <!-- Setting 1: Print on paper -->
+  <div class="toggle-row">
+    <span>Buzzer enable</span>
+    <label class="switch">
+      <input type="checkbox" id="buzzerToggle" onchange="setSettings()" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
   <div class="toggle-row">
     <span>Fullscreen</span>
     <label class="switch">
@@ -446,11 +451,15 @@
       </table>
     </div>
 
-    <div class="button-row">
-      <button class="big-button" onclick="downloadSession()">Download session</button>
-      <button class="big-button" onclick="downloadActualView()">Download view</button>
-      <button class="big-button" id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
-      <button class="big-button" onclick="clearSession()">Clear session</button>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div class="button-row">
+        <button class="big-button" onclick="downloadSession()">Download session</button>
+        <button class="big-button" onclick="downloadActualView()">Download view</button>
+      </div>
+      <div class="button-row">
+        <button class="big-button" id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
+        <button class="big-button" onclick="clearSession()">Clear session</button>
+      </div>
     </div>
 
   </div>

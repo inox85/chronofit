@@ -193,6 +193,8 @@ void setup() {
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
   int rtcAging = readIntFromSettings("rtcAging", 0);
+  buzzerActive = readIntFromSettings("buzzActive", 0);
+
   Serial.print("Writing aging factor: ");
   Serial.println(rtcAging);
   writeAgingOffset(rtcAging);
