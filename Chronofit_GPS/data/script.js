@@ -59,6 +59,7 @@ function onTimePrecisionChange(val) {
   refreshAllTimestamps();
   recalcDeltaTimes();
   recalcElapsedTimes();
+  saveViewPrefs();
 }
 
 function truncateMs(ms) {
@@ -219,6 +220,78 @@ function updateTimeOffset(){
     .then(msg=>console.log(msg));
 }
 
+// ======= LOCALSTORAGE: preferenze visualizzazione =======
+
+const VIEW_PREFS_KEY = "chronofit_view_prefs";
+
+function saveViewPrefs() {
+  const prefs = {
+    timestamp:     document.getElementById("toggle-timestamp").checked,
+    deltaTime:     document.getElementById("toggle-delta-time").checked,
+    elapsedTime:   document.getElementById("toggle-elapsed-time").checked,
+    penality:      document.getElementById("toggle-penality").checked,
+    timePrecision: document.getElementById("time-precision").value,
+    lines: {}
+  };
+  document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
+    if (btn.tagName === "BUTTON") {
+      prefs.lines[btn.dataset.line] = !btn.classList.contains("inactive");
+    } else if (btn.tagName === "INPUT" && btn.type === "checkbox") {
+      prefs.lines[btn.dataset.line] = btn.checked;
+    }
+  });
+  localStorage.setItem(VIEW_PREFS_KEY, JSON.stringify(prefs));
+}
+
+function restoreViewPrefs() {
+  const raw = localStorage.getItem(VIEW_PREFS_KEY);
+  if (!raw) return;
+  try {
+    const prefs = JSON.parse(raw);
+
+    const setChk = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined) el.checked = val;
+    };
+    setChk("toggle-timestamp",    prefs.timestamp);
+    setChk("toggle-delta-time",   prefs.deltaTime);
+    setChk("toggle-elapsed-time", prefs.elapsedTime);
+    setChk("toggle-penality",     prefs.penality);
+
+    if (prefs.timePrecision !== undefined) {
+      const val = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
+      timePrecision = val;
+      document.getElementById("time-precision").value = val;
+    }
+
+    if (prefs.lines) {
+      document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
+        const active = prefs.lines[btn.dataset.line];
+        if (active === undefined) return;
+        if (btn.tagName === "BUTTON") {
+          const color = btn.dataset.color;
+          if (active) {
+            btn.classList.remove("inactive");
+            btn.style.backgroundColor = color;
+          } else {
+            btn.classList.add("inactive");
+            btn.style.backgroundColor = "#ccc";
+          }
+        } else if (btn.tagName === "INPUT" && btn.type === "checkbox") {
+          btn.checked = active;
+        }
+      });
+    }
+
+    updateVisibleColumns();
+    applyLineFilter();
+  } catch(e) {
+    console.warn("Errore ripristino preferenze:", e);
+  }
+}
+
+// ======= FINE LOCALSTORAGE =======
+
 function updateParams() {
 fetch('/allSettings')
   .then(res => {
@@ -265,6 +338,9 @@ function fillSettingsFields(data){
 
   const buzzerToggle = document.getElementById("buzzerToggle");
   buzzerToggle.checked = (data.bz == 1);
+
+  // Riapplica preferenze visive — il server non deve sovrascriverle
+  restoreViewPrefs();
 
   //handlePowerUpdate(data);
 }
@@ -1238,11 +1314,12 @@ document.querySelectorAll('.toggle-btn').forEach(el => {
 
       // Aggiorna il filtro
       applyLineFilter();
+      saveViewPrefs();
     });
   } 
   else if (el.tagName === "INPUT" && el.type === "checkbox") {
     // checkbox: basta monitorare il cambio
-    el.addEventListener('change', applyLineFilter);
+    el.addEventListener('change', () => { applyLineFilter(); saveViewPrefs(); });
   }
 });
 
@@ -1416,6 +1493,9 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Timposto toggle delta time a default...")
     const chk = document.getElementById("toggle-delta-time");
     toggleDeltaTimeColumn(chk.checked);
+
+    console.log("Ripristino preferenze visualizzazione...");
+    restoreViewPrefs();
 });
 
 
@@ -1652,24 +1732,28 @@ document
 .getElementById("toggle-delta-time")
 .addEventListener("change", e => {
   toggleDeltaTimeColumn(e.target.checked);
+  saveViewPrefs();
 });
 
 document
 .getElementById("toggle-timestamp")
 .addEventListener("change", e => {
   toggleTimestampColumn(e.target.checked);
+  saveViewPrefs();
 });
 
 document
 .getElementById("toggle-elapsed-time")
 .addEventListener("change", e => {
   toggleElapsedTimeColumn(e.target.checked);
+  saveViewPrefs();
 });
 
 document
 .getElementById("toggle-penality")
 .addEventListener("change", e => {
   togglePenalityColumn(e.target.checked);
+  saveViewPrefs();
 });
 
 

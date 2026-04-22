@@ -464,16 +464,69 @@ CRGB getStatusColor() {
   return color;
 }
 
-bool processServicesSerial() {
-  while (ServicesSerial.available()) {
-    char c = ServicesSerial.read();
-    gps.encode(c);  // decodifica NMEA
-    //Serial.print(c);
-    if(gps.time.isValid()){
-      lastNmeaValid = esp_timer_get_time();
-      return true;
-    }
-  }
-  return false;
+// bool processServicesSerial() {
+//   while (ServicesSerial.available()) {
+//     char c = ServicesSerial.read();
+//     gps.encode(c);  // decodifica NMEA
+//     //Serial.print(c);
+//     if(gps.time.isValid()){
+//       lastNmeaValid = esp_timer_get_time();
+//       return true;
+//     }
+//   }
+//   return false;
+// }
+
+
+// Buffer per accumulare la sentence corrente
+static char nmeaBuffer[90];
+static uint8_t nmeaLen = 0;
+static bool inSentence = false;
+
+bool isUsefulSentence(const char* buf) {
+  // Accetta solo RMC e GGA (sia GP che GN per moduli multi-costellazione)
+  return (strncmp(buf, "$GPRMC", 6) == 0 ||
+          strncmp(buf, "$GNRMC", 6) == 0 ||
+          strncmp(buf, "$GPGGA", 6) == 0 ||
+          strncmp(buf, "$GNGGA", 6) == 0);
 }
 
+bool processServicesSerial() {
+  bool gotValid = false;
+
+  while (ServicesSerial.available()) {
+    char c = ServicesSerial.read();
+
+    if (c == '$') {
+      // Inizio nuova sentence
+      inSentence = true;
+      nmeaLen = 0;
+      nmeaBuffer[nmeaLen++] = c;
+    }
+    else if (inSentence) {
+      if (nmeaLen < sizeof(nmeaBuffer) - 1) {
+        nmeaBuffer[nmeaLen++] = c;
+      }
+
+      if (c == '\n') {
+        // Sentence completa
+        nmeaBuffer[nmeaLen] = '\0';
+        inSentence = false;
+
+        if (isUsefulSentence(nmeaBuffer)) {
+          // Passa solo RMC e GGA alla libreria
+          for (uint8_t i = 0; i < nmeaLen; i++) {
+            gps.encode(nmeaBuffer[i]);
+          }
+
+          if (gps.time.isValid()) {
+            lastNmeaValid = esp_timer_get_time();
+            gotValid = true;
+          }
+        }
+      }
+    }
+  }
+
+  return gotValid;
+}
