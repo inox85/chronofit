@@ -286,6 +286,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
 
+  // In registerRoutes(), aggiungere alla fine
+  server.onNotFound([](AsyncWebServerRequest *request) {
+    request->redirect("http://192.168.1.1");
+  });
+
   server.on("/update.html", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(LittleFS, "/update.html", "text/html");
   });
