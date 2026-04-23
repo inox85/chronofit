@@ -92,6 +92,40 @@ PreciseTime getPreciseSensorTime(int i) {
   return t;
 }
 
+PreciseTime getPreciseTimeFromSync(uint64_t referenceUs) {
+  PreciseTime t;
+
+  uint64_t rawUs    = referenceUs - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
+
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs      = elapsedUs % 1000000ULL;
+
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
+
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec += 1;
+  }
+
+  if (remUs > 500000ULL) {
+    t.us_drift = (int64_t)(remUs - 1000000ULL);
+  } else {
+    t.us_drift = (int64_t)remUs;
+  }
+
+  t.ms = ms;
+
+  // ⏱️ tempo assoluto
+  uint64_t absSec = ppsEpochSec + elapsedSec;
+
+  t.ss = absSec % 60;
+  t.mm = (absSec / 60) % 60;
+  t.hh = (absSec / 3600) % 24;
+
+  return t;
+}
 
 void setExtimatedDriftParams(int us){
 

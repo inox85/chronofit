@@ -346,51 +346,44 @@ void loop() {
 
   if (ppsTriggered) {
     lastPPSDetected = lastSyncTrigger;
+    uint64_t thisPpsUs = lastSyncTrigger;
 
-    Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
-                  delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
-
+    // Sincronizzazione iniziale — richiede NMEA fresco
     if ((delta >= 400000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
-      ppsTriggered = false;   // consumato QUI, una sola volta
-      validNmea = false;  // ← manca questo!
-      uint64_t thisPpsUs = lastSyncTrigger;
-      //Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
-      //              delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
+      ppsTriggered = false;
+      validNmea = false;
+
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
         syncReference = thisPpsUs;
-        handlePpsSync();          // NON deve più toccare ppsTriggered
+        handlePpsSync();
         usDriftAtPPS = 0;
         lastDeltaPPSSync = 0;
         extimatedDriftByPPS = 0;
         syncStatus = SYNC_GPS_SYNCED;
         RTCTtriggerCount = 0;
         lastGPSSync = millis();
-      }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
-        PreciseTime pt = getPreciseTime();
-
-        // Serial.printf("[SYNCTEST] ss=%d ms=%d — condizione: %d\n",
-        //             pt.ss, pt.ms,
-        //             (pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500));
-
-        if((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)){
-          syncTestRequested = 0;
-          sensorTime[4] = thisPpsUs;
-          sensorTriggered[4] = true;
-          handleSensorTrigger();
-        }
-        //else {
-          //Serial.printf("[SYNCTEST] FALLITO: condizione temporale non soddisfatta\n");
-        //}
-      //}else {
-        //Serial.printf("[PPS] SCARTATO: condizione esterna non soddisfatta\n");
-      //}
       }
-    } else {
-    // Serial.printf("[PPS] SCARTATO — delta ok=%d validNmea=%d isUpdated=%d syncMode=%d\n",
-    //               (delta >= 20000 && delta <= 100000), validNmea, gps.time.isUpdated(), syncMode);
-    ppsTriggered = false; // consuma comunque per evitare loop
-  }
-  }
+
+    // Sync test — basta il PPS, NMEA non necessario
+    } 
+
+    if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED && syncMode == MODE_SYNC_GPS) {
+      ppsTriggered = false;
+
+      PreciseTime pt = getPreciseTimeFromSync(thisPpsUs);
+      if ((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)) {
+        syncTestRequested = 0;
+        sensorTime[4] = thisPpsUs;
+        sensorTriggered[4] = true;
+        handleSensorTrigger();
+      }
+      
+    } 
+    else 
+    {
+      ppsTriggered = false;
+    }
+}
 
   PreciseTime t = getPreciseTime();
   actualSecond = t.ss;
@@ -489,11 +482,12 @@ static uint8_t nmeaLen = 0;
 static bool inSentence = false;
 
 bool isUsefulSentence(const char* buf) {
-  // Accetta solo RMC e GGA (sia GP che GN per moduli multi-costellazione)
   return (strncmp(buf, "$GPRMC", 6) == 0 ||
           strncmp(buf, "$GNRMC", 6) == 0 ||
           strncmp(buf, "$GPGGA", 6) == 0 ||
-          strncmp(buf, "$GNGGA", 6) == 0);
+          strncmp(buf, "$GNGGA", 6) == 0 ||
+          strncmp(buf, "$GPGSV", 6) == 0 ||  // satelliti in vista
+          strncmp(buf, "$GNGSV", 6) == 0);   // multi-costellazione
 }
 
 bool processServicesSerial() {
