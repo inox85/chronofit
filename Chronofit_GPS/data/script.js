@@ -744,7 +744,7 @@ function updateClockFromData(data) {
     }
     if(syncStatus === SYNC_FIRST_GPS_SYNC || syncStatus === SYNC_WAIT_GPS){
       statusElem.innerText = "Sync mode: GPS — Status: ⏳ waiting for signal..."
-    }if(syncStatus === SYNC_GPS_SYNCED){
+    }if(syncStatus === SYNC_GPS_SYNCED && ppsDetected){
       const lastSync = data.ls;
       const GPSRefreshInterval = data.lg;
       const nextSync = data.lg - data.ls;
