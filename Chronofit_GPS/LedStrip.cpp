@@ -19,6 +19,11 @@ void LedStrip::setLed(uint8_t index, CRGB color) {
     FastLED.show();
 }
 
+void LedStrip::setAllLeds(uint8_t r, uint8_t g, uint8_t b) {
+  for(int i = 0; i < NUM_LEDS; i++) _leds[i] = CRGB(r, g, b);
+  FastLED.show();
+}
+
 void LedStrip::turnOffLed(uint8_t index) {
     if (index >= NUM_LEDS) return;
     _leds[index] = CRGB::Black;

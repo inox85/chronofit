@@ -2077,3 +2077,33 @@ try {
     status.style.color = "red";
   }
 }
+
+function downloadWifiFix() {
+  const content = `@echo off
+
+:: Controlla se è già amministratore
+net session >nul 2>&1
+if %errorLevel% == 0 (
+    goto :main
+)
+
+:: Non è amministratore — si rilancia con privilegi elevati
+echo Richiedo privilegi amministratore...
+powershell -Command "Start-Process '%~f0' -Verb RunAs"
+exit
+
+:main
+REG ADD "HKLM\\SYSTEM\\CurrentControlSet\\Services\\NlaSvc\\Parameters\\Internet" /v EnableActiveProbing /t REG_DWORD /d 0 /f
+echo Done! Restart required.
+pause`;
+
+  const blob = new Blob([content], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'wifi_disconnect_fix.bat';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

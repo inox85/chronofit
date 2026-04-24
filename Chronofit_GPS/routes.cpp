@@ -24,6 +24,7 @@
 #include <time.h>
 #include <ESP_Mail_Client.h>
 #include "gps_custom.h"
+#include "LedStrip.h"
 
 
 SMTPSession smtp;
@@ -326,7 +327,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     },
     [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
       if(!index){
-        Serial.printf("Update start: %s\n", filename.c_str());
+        Serial.printf("Update start: %s\n", filename.c_str());     
         Update.begin();
       }
       Update.write(data, len);

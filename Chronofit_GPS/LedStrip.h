@@ -19,6 +19,7 @@ public:
     void setLed(uint8_t index, CRGB color);
     void turnOffLed(uint8_t index);
     void turnOffAll();
+    void setAllLeds(uint8_t r, uint8_t g, uint8_t b);
 
     // --- Effetti ---
     void sweepEffect(CRGB color, uint16_t delayMs = SWEEP_DELAY);
