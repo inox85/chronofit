@@ -648,20 +648,27 @@ function stopWatchdog() {
 const generalPopup = document.getElementById("generalPopup");
 const generalPopupText = document.getElementById("generalPopupText");
 
+let generalPopupTimer = null;
+
 function showGeneralPopup(message, bgColor = "#3b55ffff", duration = 3000) {
+  // Se c'è un timer in corso, cancellalo
+  if (generalPopupTimer) {
+    clearTimeout(generalPopupTimer);
+    generalPopupTimer = null;
+  }
+
   generalPopupText.innerText = message;
   generalPopup.style.backgroundColor = bgColor;
 
-  if (!generalPopup.classList.contains("show")) {
-    generalPopup.classList.remove("hidden");
-    setTimeout(() => generalPopup.classList.add("show"), 5); // fade-in
-  }
+  // Mostra subito
+  generalPopup.classList.remove("hidden");
+  generalPopup.classList.add("show");
 
-  // Nascondi il popup dopo 'duration' millisecondi
-  setTimeout(() => {
+  // Nascondi dopo duration ms
+  generalPopupTimer = setTimeout(() => {
     generalPopup.classList.remove("show");
-    // opzionale: dopo la transizione, aggiungi di nuovo hidden
-    setTimeout(() => generalPopup.classList.add("hidden"), 1000); // 300ms dipende dalla durata della transizione CSS
+    setTimeout(() => generalPopup.classList.add("hidden"), 500);
+    generalPopupTimer = null;
   }, duration);
 }
 
