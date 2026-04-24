@@ -156,7 +156,7 @@ void wifiTxActivity() { lastTxTime = millis(); }
 
 static uint8_t reconnectAttempts = 0;
 static const uint8_t MAX_ATTEMPTS = 5;
-
+bool wifiAuthFailed = false;
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
@@ -169,20 +169,20 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
   Serial.print("Connessione a ");
   Serial.print(ssid);
-
-
+  
   WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+    switch (event) {
 
-   switch (event) {
+      case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+        wifiAuthFailed = false; // reset flag
+        Serial.println("WiFi: associato all'AP");
+        break;
 
-    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-      Serial.println("WiFi: associato all'AP");
-      break;
-
-    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
-      ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
-      break;
+      case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+        wifiAuthFailed = false; // reset flag
+        Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
+        ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
+        break;
 
       case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
         uint8_t reason = info.wifi_sta_disconnected.reason;
@@ -193,19 +193,21 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
           case WIFI_REASON_AUTH_FAIL:
           case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
           case WIFI_REASON_NO_AP_FOUND:
-            // Non riprovare — credenziali errate o rete assente
-            reconnectAttempts = 0;
-            Serial.println("❌ WiFi: credenziali errate o rete non trovata");
-            ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
+            if (!wifiAuthFailed) { // manda il messaggio solo la prima volta
+              wifiAuthFailed = true;
+              reconnectAttempts = 0;
+              Serial.println("❌ WiFi: credenziali errate o rete non trovata");
+              ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
+            }
             break;
 
           default:
-            if (reconnectAttempts < MAX_ATTEMPTS) {
+            if (!wifiAuthFailed && reconnectAttempts < MAX_ATTEMPTS) {
               reconnectAttempts++;
               Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
-              delay(1000 * reconnectAttempts);  // backoff: 1s, 2s, 3s...
+              delay(1000 * reconnectAttempts);
               WiFi.reconnect();
-            } else {
+            } else if (!wifiAuthFailed) {
               reconnectAttempts = 0;
               Serial.println("❌ WiFi: troppi tentativi falliti, arresto riconnessione");
               ws.textAll(serializeMessage("WiFi: max reconnect attempts reached"));
@@ -1159,7 +1161,7 @@ void broadCastSettings(){
 }
 
 
-void broadCastRowEdited(const DynamicJsonDocument& entry){
+void broadCastRowEdited(const JsonDocument& entry){
   StaticJsonDocument<512> doc;
   doc["t"] = TYPE_ROW_UPDATED;
   doc[INDEX_FIELD] = entry[INDEX_FIELD];
