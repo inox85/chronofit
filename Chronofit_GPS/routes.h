@@ -8,7 +8,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws);
 
 void activateAccessPoint();
 
-bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs);
+bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs = 10000);
 
 // POST del file session.json a Hooklistener
 // postSessionJson(
@@ -47,3 +47,12 @@ String serializeMessage(String msg);
 void sendMailTask(void* param);
 
 void sendMailAsync(String email);
+
+String hexToBase64(const String& hex);
+
+void wifiRxActivity();
+
+void wifiTxActivity(); 
+
+// Tabella Base64
+

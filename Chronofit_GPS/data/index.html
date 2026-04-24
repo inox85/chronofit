@@ -2,19 +2,15 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0">
   <title>Chronofit</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="icon" type="image/png" href="/favicon.png">
-
 
   <!-- COLORE DELLA STATUS BAR SU ANDROID -->
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/manifest.json">
 </head>
-<meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=0.8, minimum-scale=0.8">
 <body>
 
   <div id="splash">
@@ -211,6 +207,15 @@
         </label>
       </div>
 
+      <div class="toggle-row">
+        <span>Time precision decimals</span>
+        <select id="time-precision" onchange="onTimePrecisionChange(this.value)">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+        </select>
+      </div>
+
       <hr class="divider">
       
       <h2>Table row settings</h2>
@@ -299,8 +304,51 @@
     </div>
   </div>
 
+  <!-- Overlay About Chronofit -->
+  <div id="aboutOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <div style="text-align:center; margin-bottom:16px;">
+        <img src="/logo-black.png" alt="Chronofit Logo" style="height:60px;">
+      </div>
+      <h2>Chronofit</h2>
+      <p style="text-align:center; color:#888; margin-bottom:4px;">Precision timing system</p>
+
+      <hr class="divider">
+
+      <div class="toggle-row">
+        <span>📍 Headquarters</span>
+        <span style="text-align:right; font-size:15px;">Via Iacopo del Meglio 8<br>50143 Firenze</span>
+      </div>
+
+      <div class="toggle-row">
+        <span>✉️ Email</span>
+        <a href="mailto:info@chronofit.it" style="font-size:15px; color:var(--primary-color);">info@chronofit.it</a>
+      </div>
+
+      <hr class="divider">
+
+      <div class="toggle-row">
+        <span>📄 Manual</span>
+        <a href="/manual.pdf" target="_blank">
+          <button class="big-button" style="width:auto; padding:5px 15px;">⬇ Download</button>
+        </a>
+      </div>
+
+      <div class="toggle-row">
+        <span>🖥️ WiFi disconnect fix tool</span>
+        <button class="big-button" style="width:auto; padding:5px 15px;" onclick="downloadWifiFix()">⬇ Download</button>
+      </div>
+
+      <hr class="divider">
+
+      <div class="button-row" style="justify-content:center;">
+        <button class="big-button" onclick="document.getElementById('aboutOverlay').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div class="navbar">
-    <img src="/logo.png" alt="Logo">
+    <img src="/logo.png" alt="Logo" style="cursor:pointer;" onclick="document.getElementById('aboutOverlay').style.display='flex'">
   </div>
   
   <div class="container">
@@ -403,6 +451,15 @@
     </label>
   </div>
 
+    <!-- Setting 1: Print on paper -->
+  <div class="toggle-row">
+    <span>Buzzer enable</span>
+    <label class="switch">
+      <input type="checkbox" id="buzzerToggle" onchange="setSettings()" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
   <div class="toggle-row">
     <span>Fullscreen</span>
     <label class="switch">
@@ -437,11 +494,15 @@
       </table>
     </div>
 
-    <div class="button-row">
-      <button class="big-button" onclick="downloadSession()">Download session</button>
-      <button class="big-button" onclick="downloadActualView()">Download view</button>
-      <button class="big-button" id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
-      <button class="big-button" onclick="clearSession()">Clear session</button>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div class="button-row">
+        <button class="big-button" onclick="downloadSession()">Download session</button>
+        <button class="big-button" onclick="downloadActualView()">Download view</button>
+      </div>
+      <div class="button-row">
+        <button class="big-button" id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
+        <button class="big-button" onclick="clearSession()">Clear session</button>
+      </div>
     </div>
 
   </div>

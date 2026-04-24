@@ -23,6 +23,9 @@
 #include "esp_wifi.h"
 #include <time.h>
 #include <ESP_Mail_Client.h>
+#include "gps_custom.h"
+#include "LedStrip.h"
+
 
 SMTPSession smtp;
 
@@ -41,7 +44,7 @@ void activateAccessPoint(){
 
   uint64_t chipId = ESP.getEfuseMac();
   // Converti il chipId in una stringa esadecimale
-  String chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
+  chipIdStr = String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
 
   // Crea l'SSID con il chipId
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
@@ -59,6 +62,10 @@ void activateAccessPoint(){
 
   server.begin();
 }
+
+void wifiRxActivity() { lastRxTime = millis(); }
+
+void wifiTxActivity() { lastTxTime = millis(); }
 
 // bool postSessionJson(const char* url, const char* filePath) {
 
@@ -99,6 +106,57 @@ void activateAccessPoint(){
 //   }
 // }
 
+// ── Connessione WiFi con retry infinito ───────────────────────
+// // Dopo — con valore di default
+// bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
+
+//   writeStringToSettings("wifi_ssid", String(ssid));
+//   writeStringToSettings("wifi_pass", String(password));
+
+//   // Registra l'evento UNA SOLA VOLTA con flag statico
+//   static bool eventRegistered = false;
+//   if (!eventRegistered) {
+//     WiFi.onEvent([](WiFiEvent_t event) {
+//       if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
+//         Serial.println("Connesso! IP: " + WiFi.localIP().toString());
+//         String msgJson = serializeMessage("WiFi connected with IP address");
+//         ws.textAll(msgJson);
+//       }
+//       if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+//         Serial.println("WiFi disconnesso, riconnessione...");
+//         WiFi.reconnect();
+//       }
+//     });
+//     eventRegistered = true;
+//   }
+
+//   // Disconnetti prima di riconnetterti
+//   WiFi.disconnect(true);
+//   delay(100);
+//   WiFi.mode(WIFI_STA);
+//   WiFi.begin(ssid, password);
+//   Serial.println("Connessione a " + String(ssid) + " in corso...");
+
+//   static bool taskCreated = false;
+//   if (!taskCreated) {
+//     xTaskCreatePinnedToCore(
+//       internetCheckTask,
+//       "InternetCheck",
+//       4096,
+//       NULL,
+//       1,
+//       NULL,
+//       0
+//     );
+//     taskCreated = true;
+//   }
+
+//   return true;
+// }
+
+static uint8_t reconnectAttempts = 0;
+static const uint8_t MAX_ATTEMPTS = 5;
+
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
@@ -113,19 +171,60 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   Serial.print(ssid);
 
 
-  WiFi.onEvent([](WiFiEvent_t event) {
-    if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
-      Serial.println("Connesso con IP");
-        
-      String msgJson = serializeMessage("WiFi connected with IP address");
-      ws.textAll(msgJson);
-    }
-    if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
 
+   switch (event) {
+
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+      Serial.println("WiFi: associato all'AP");
+      break;
+
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+      Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
+      ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
+      break;
+
+      case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
+        uint8_t reason = info.wifi_sta_disconnected.reason;
+        Serial.printf("❌ WiFi: disconnesso, reason=%d\n", reason);
+
+        switch (reason) {
+          case WIFI_REASON_AUTH_EXPIRE:
+          case WIFI_REASON_AUTH_FAIL:
+          case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+          case WIFI_REASON_NO_AP_FOUND:
+            // Non riprovare — credenziali errate o rete assente
+            reconnectAttempts = 0;
+            Serial.println("❌ WiFi: credenziali errate o rete non trovata");
+            ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
+            break;
+
+          default:
+            if (reconnectAttempts < MAX_ATTEMPTS) {
+              reconnectAttempts++;
+              Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
+              delay(1000 * reconnectAttempts);  // backoff: 1s, 2s, 3s...
+              WiFi.reconnect();
+            } else {
+              reconnectAttempts = 0;
+              Serial.println("❌ WiFi: troppi tentativi falliti, arresto riconnessione");
+              ws.textAll(serializeMessage("WiFi: max reconnect attempts reached"));
+            }
+            break;
+        }
+        break;
+      }
+
+      case ARDUINO_EVENT_WIFI_STA_LOST_IP:
+        Serial.println("WiFi: IP perso");
+        ws.textAll(serializeMessage("WiFi IP lost"));
+        break;
+
+      default:
+        break;
     }
   });
 
-  
   xTaskCreatePinnedToCore(
     internetCheckTask,
     "InternetCheck",
@@ -137,7 +236,6 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   );
 
   return true;
-
 }
 
 void internetCheckTask(void *pvParameters) {
@@ -188,6 +286,57 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
+
+  // In registerRoutes(), aggiungere alla fine
+  server.onNotFound([](AsyncWebServerRequest *request) {
+    request->redirect("http://192.168.1.1");
+  });
+
+  server.on("/update.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "/update.html", "text/html");
+  });
+
+  server.on("/updatefs", HTTP_POST,
+  [](AsyncWebServerRequest *request){
+    bool ok = !Update.hasError();
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", ok ? "OK - Riavvio..." : "ERRORE");
+    response->addHeader("Connection", "close");
+    request->send(response);
+    if(ok) shouldRestart = true;
+  },
+  [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+    if(!index){
+      Serial.println("FS Update start");
+      Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS);
+    }
+    Update.write(data, len);
+    if(final){
+      Update.end(true);
+      Serial.println("FS Update completato");
+    }
+  }
+);
+
+  server.on("/update", HTTP_POST,
+    [](AsyncWebServerRequest *request){
+      bool ok = !Update.hasError();
+      AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", ok ? "OK - Riavvio..." : "ERRORE");
+      response->addHeader("Connection", "close");
+      request->send(response);
+      if(ok) shouldRestart = true;
+    },
+    [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+      if(!index){
+        Serial.printf("Update start: %s\n", filename.c_str());     
+        Update.begin();
+      }
+      Update.write(data, len);
+      if(final){
+        Update.end(true);
+        Serial.println("Update completato");
+      }
+    }
+  );
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
      request->send(LittleFS, "/index.html", "text/html");
@@ -289,7 +438,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     } else {
       request->send(400, "text/plain", "Missed params");
     }
-    
+    wifiRxActivity();
   });
 
   server.on("/checkPoint", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -301,8 +450,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
-
     request->send(200, "text/plain", "CheckPoint received!");
+    wifiRxActivity();
   });
 
   server.on("/wifiConnect", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -328,7 +477,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     connectToWiFi(ssidBuf, pwBuf, 10000);
   
     request->send(200, "text/plain", "Wifi connecting...");
-});
+    wifiRxActivity();
+  });
 
     // --- JSON completo ---
   server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -346,7 +496,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serializeJson(doc, json);
 
     request->send(200, "application/json", json);
-
+    wifiRxActivity();
   });
 
     // --- JSON completo ---
@@ -360,7 +510,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     }
 
     request->send(200, "text/plain", "Email sended!");
-
+    wifiRxActivity();
   });
 
     // --- JSON completo ---
@@ -375,7 +525,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serializeJson(doc, json);
 
     request->send(200, "application/json", json);
-
+    wifiRxActivity();
   });
 
 
@@ -388,6 +538,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     
     debug(message);
 
+    wifiRxActivity();
   });
 
 
@@ -420,6 +571,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     );
 
     request->send(response);
+    wifiRxActivity();
   });
 
 
@@ -461,7 +613,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         serializeJson(doc, message);
 
         ws.textAll(message);
-
+        wifiTxActivity();
       } else {
         request->send(500, "text/plain", "❌ Errore nella cancellazione del file!");
       }
@@ -480,6 +632,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         File f = LittleFS.open("/"+filename,"a");
         f.write(data,len);
         f.close();
+        wifiRxActivity();
     });
 
 
@@ -505,6 +658,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     printOnPrinter(text, cr);
 
     request->send(200, "text/plain", "Printed successfully");
+    wifiRxActivity();
   });
 
 
@@ -517,6 +671,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     if (request->hasParam("printEnabled")) {
       printEnabled = request->getParam("printEnabled")->value().toInt();
+    }
+
+    if (request->hasParam("buzzerEnable")) {
+      buzzerActive = request->getParam("buzzerEnable")->value().toInt();
     }
 
     if(request->hasParam("stationName"))
@@ -537,7 +695,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     #endif
 
     request->send(200, "text/plain", "Saved sucessfully");
-
+    wifiRxActivity();
   });
 
   server.on("/syncTest", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -548,7 +706,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     digitalWrite(12, HIGH);
 
     request->send(200, "text/plain", "Sync test started");
-
+    wifiRxActivity();
   });
 
 
@@ -576,7 +734,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     #endif
     // E qui elabori o invii via seriale, BLE, ecc.
     request->send(200, "text/plain", "Saved sucessfully"); 
-      
+    wifiRxActivity();
   });
 
   server.on("/sendCheckPointRow", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
@@ -610,7 +768,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     Serial.println(timeString);  // stampa "007-00042"
 
-    request->send(200, "text/plain", "JSON ricevuto con successo"); 
+    request->send(200, "text/plain", "JSON ricevuto con successo");
+    wifiRxActivity();
   });
 
   server.on("/updateCheckPointRow", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
@@ -717,6 +876,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         LittleFS.rename("/session_tmp.json", "/session.json");
         
         request->send(200, "text/plain", "Riga aggiornata con successo");
+        wifiRxActivity();
     });
 
 
@@ -726,51 +886,90 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     return;
   }
   request->send(LittleFS, "/session.json", "application/json");
+  wifiRxActivity();
   });
 
   server.on("/systemSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
-
-      StaticJsonDocument<2048> doc;  // aumentato!
-
-      doc["timeCal"] = calibrationFactor;
-      doc["cpuTemp"] = readInternalTemp();
-      doc["rtcAging"] = readAgingOffset();
-      doc["rtcTemp"] = rtc_get_temperature();
-      doc["fwVer"] = String(FW_VERSION);
-      doc["devName"] = String(DEV_NAME);
-      doc["hwName"] = String(HW_NAME);
-      doc["freeRam"] = ESP.getFreeHeap();
-      doc["minFreeRam"] = ESP.getMinFreeHeap();
-      doc["lastDeltaPPSSync"] = lastDeltaPPSSync;
-      doc["usDriftAtPPS"] = usDriftAtPPS;
-      doc["extimatedDriftByPPS"] = extimatedDriftByPPS;
-
-      size_t totalBytes = LittleFS.totalBytes();
-      size_t usedBytes  = LittleFS.usedBytes();
-      size_t freeBytes  = totalBytes - usedBytes;
-
-      doc["fsTotalBytes"] = totalBytes;
-      doc["fsUsedBytes"]  = usedBytes;
-      doc["fsFreeBytes"]  = freeBytes;
-
-      JsonArray files = doc.createNestedArray("files");
-
-      File root = LittleFS.open("/");
-      File file = root.openNextFile();
-
-      while (file) {
-        JsonObject obj = files.createNestedObject();
-        obj["name"] = file.name();
-        obj["size"] = file.size();
-        file = root.openNextFile();
-      }
-
-      String json;
-      serializeJson(doc, json);
-
-      request->send(200, "application/json", json);
-
-  });
+ 
+    DynamicJsonDocument doc(4096);
+  
+    // ── dati esistenti ──────────────────────────────────────
+    doc["timeCal"]             = calibrationFactor;
+    doc["sn"]                  = chipIdStr;
+    doc["cpuTemp"]             = readInternalTemp();
+    doc["rtcAging"]            = readAgingOffset();
+    doc["rtcTemp"]             = rtc_get_temperature();
+    doc["fwVer"]               = String(FW_VERSION);
+    doc["devName"]             = String(DEV_NAME);
+    doc["hwName"]              = String(HW_NAME);
+    doc["freeRam"]             = ESP.getFreeHeap();
+    doc["minFreeRam"]          = ESP.getMinFreeHeap();
+    doc["lastDeltaPPSSync"]    = lastDeltaPPSSync;
+    doc["usDriftAtPPS"]        = usDriftAtPPS;
+    doc["extimatedDriftByPPS"] = extimatedDriftByPPS;
+  
+    size_t totalBytes = LittleFS.totalBytes();
+    size_t usedBytes  = LittleFS.usedBytes();
+    doc["fsTotalBytes"] = totalBytes;
+    doc["fsUsedBytes"]  = usedBytes;
+    doc["fsFreeBytes"]  = totalBytes - usedBytes;
+  
+    JsonArray files = doc.createNestedArray("files");
+    File root = LittleFS.open("/");
+    File file = root.openNextFile();
+    while (file) {
+      JsonObject obj = files.createNestedObject();
+      obj["name"] = file.name();
+      obj["size"] = file.size();
+      file = root.openNextFile();
+    }
+  
+    // ── dati GPS base ────────────────────────────────────────
+    JsonObject gpsObj = doc.createNestedObject("gps");
+  
+    gpsObj["fixValid"]    = gps.location.isValid();
+    gpsObj["fixAge"]      = gps.location.age();
+    gpsObj["lat"]         = gps.location.isValid() ? gps.location.lat()      : 0.0;
+    gpsObj["lng"]         = gps.location.isValid() ? gps.location.lng()      : 0.0;
+    gpsObj["altM"]        = gps.altitude.isValid()  ? gps.altitude.meters()  : 0.0;
+    gpsObj["speedKmh"]    = gps.speed.isValid()     ? gps.speed.kmph()       : 0.0;
+    gpsObj["courseDeg"]   = gps.course.isValid()    ? gps.course.deg()       : 0.0;
+    gpsObj["hdop"]        = gps.hdop.isValid()      ? gps.hdop.hdop()        : 99.99;
+    gpsObj["satsInUse"]   = gps.satellites.isValid() ? (int)gps.satellites.value() : 0;
+    gpsObj["charsProc"]   = gps.charsProcessed();
+    gpsObj["sentencesOk"] = gps.sentencesWithFix();
+    gpsObj["failedCksum"] = gps.failedChecksum();
+  
+    // Data/ora GPS
+    if (gps.date.isValid() && gps.time.isValid()) {
+      char dtBuf[32];
+      snprintf(dtBuf, sizeof(dtBuf), "%04d-%02d-%02dT%02d:%02d:%02d",
+        gps.date.year(), gps.date.month(), gps.date.day(),
+        gps.time.hour(), gps.time.minute(), gps.time.second());
+      gpsObj["utcTime"] = dtBuf;
+    } else {
+      gpsObj["utcTime"] = "";
+    }
+  
+    // ── satelliti GPS ────────────────────────────────────────
+    SatInfo satBuf[GSV_MAX_SAT];
+    int n = gpsParser.getGPSSats(satBuf, GSV_MAX_SAT);
+    gpsObj["gpTotalVisible"] = atoi(gpsParser.gpTotalSats.value());
+    JsonArray arr = gpsObj.createNestedArray("gpSats");
+    for (int i = 0; i < n; i++) {
+      if (!satBuf[i].valid) continue;
+      JsonObject s = arr.createNestedObject();
+      s["prn"]  = satBuf[i].prn;
+      s["elev"] = satBuf[i].elevation;
+      s["az"]   = satBuf[i].azimuth;
+      s["snr"]  = satBuf[i].snr;
+    }
+  
+    String json;
+    serializeJson(doc, json);
+    request->send(200, "application/json", json);
+    wifiTxActivity();
+});
 
   server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request) {
 
@@ -796,8 +995,77 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     // Invia il file come download
     request->send(file, filename, "application/octet-stream");
-
+    wifiRxActivity();
   });
+
+  // ── DELETE ──────────────────────────────────────────────────
+server.on("/delete", HTTP_DELETE, [](AsyncWebServerRequest *request) {
+  if (!request->hasParam("file")) {
+    request->send(400, "text/plain", "Param 'file' missing");
+    return;
+  }
+
+  String filename = request->getParam("file")->value();
+  if (!filename.startsWith("/")) filename = "/" + filename;
+
+  // Sicurezza: blocca path traversal
+  if (filename.indexOf("..") >= 0) {
+    request->send(403, "text/plain", "Forbidden");
+    return;
+  }
+
+  if (!LittleFS.exists(filename)) {
+    request->send(404, "text/plain", "File not found");
+    return;
+  }
+
+  if (LittleFS.remove(filename)) {
+    request->send(200, "text/plain", "File deleted: " + filename);
+  } else {
+    request->send(500, "text/plain", "Delete failed");
+  }
+  wifiRxActivity();
+});
+
+// ── UPLOAD ───────────────────────────────────────────────────
+server.on("/upload", HTTP_POST,
+  [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Upload done");
+  },
+  [](AsyncWebServerRequest *request, String filename, size_t index,
+     uint8_t *data, size_t len, bool final) {
+
+    if (!filename.startsWith("/")) filename = "/" + filename;
+
+    // Sicurezza: blocca path traversal
+    if (filename.indexOf("..") >= 0) {
+      request->send(403, "text/plain", "Forbidden");
+      return;
+    }
+
+    if (index == 0) {
+      Serial.printf("Upload start: %s\n", filename.c_str());
+      File f = LittleFS.open(filename, "w");
+      if (!f) {
+        request->send(500, "text/plain", "Cannot create file");
+        return;
+      }
+      f.close();
+    }
+
+    File f = LittleFS.open(filename, "a");
+    if (f) {
+      f.write(data, len);
+      f.close();
+    }
+
+    if (final) {
+      Serial.printf("Upload done: %s (%u bytes)\n", filename.c_str(), index + len);
+    }
+
+    wifiRxActivity();
+  }
+);
 
   server.on("/timeBaseCal", HTTP_GET, [](AsyncWebServerRequest *request) {
 
@@ -837,7 +1105,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         request->send(400, "text/plain", "Missing parameters");
     }
   });
-
+  wifiRxActivity();
 }
 
 String serializeSettings(){
@@ -865,6 +1133,7 @@ String serializeSettings(){
   doc["sn"] = stationName;
   doc["si"] = GPSRefreshInterval;
   doc["pw"] = powerSource;
+  doc["bz"] = buzzerActive;
 
   String message;
   serializeJson(doc, message);
@@ -886,6 +1155,7 @@ String serializeMessage(String msg){
 void broadCastSettings(){
   String message = serializeSettings();
   ws.textAll(message);
+  wifiTxActivity();
 }
 
 
@@ -906,7 +1176,52 @@ void broadCastRowEdited(const DynamicJsonDocument& entry){
   serializeJson(doc, message);
 
   ws.textAll(message);
+  wifiTxActivity();
 }
+
+// Converte una stringa hex (es. "78a48cd6cdc0") in Base64
+String hexToBase64(const String& hex) {
+    // 1. Converti la stringa hex in array di byte
+    int byteLen = hex.length() / 2;
+    uint8_t bytes[byteLen];
+    
+    for (int i = 0; i < byteLen; i++) {
+        bytes[i] = (uint8_t) strtol(hex.substring(i * 2, i * 2 + 2).c_str(), nullptr, 16);
+    }
+
+    // 2. Codifica i byte in Base64
+    String result = "";
+    int i = 0;
+    uint8_t buf3[3], buf4[4];
+
+    int len = byteLen;
+    const uint8_t* data = bytes;
+
+    while (len--) {
+        buf3[i++] = *data++;
+        if (i == 3) {
+            buf4[0] = (buf3[0] & 0xfc) >> 2;
+            buf4[1] = ((buf3[0] & 0x03) << 4) + ((buf3[1] & 0xf0) >> 4);
+            buf4[2] = ((buf3[1] & 0x0f) << 2) + ((buf3[2] & 0xc0) >> 6);
+            buf4[3] = buf3[2] & 0x3f;
+            for (int j = 0; j < 4; j++) result += BASE64_CHARS[buf4[j]];
+            i = 0;
+        }
+    }
+
+    // Gestisci il padding
+    if (i > 0) {
+        for (int j = i; j < 3; j++) buf3[j] = 0;
+        buf4[0] = (buf3[0] & 0xfc) >> 2;
+        buf4[1] = ((buf3[0] & 0x03) << 4) + ((buf3[1] & 0xf0) >> 4);
+        buf4[2] = ((buf3[1] & 0x0f) << 2) + ((buf3[2] & 0xc0) >> 6);
+        for (int j = 0; j < i + 1; j++) result += BASE64_CHARS[buf4[j]];
+        while (i++ < 3) result += '=';
+    }
+
+    return result;
+}
+
 
 String fileToBase64(const char *path) {
   File file = LittleFS.open(path, "r");
@@ -1037,6 +1352,7 @@ void sendEmail(String emailAddress, const char* subject, const char* body,
   }
 
   smtp.closeSession();
+  wifiTxActivity();
 }
 
 

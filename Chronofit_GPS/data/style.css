@@ -416,7 +416,7 @@ input:checked + .slider:before {
 }
 
 .card.table-card {
-  min-height: 490px;
+  min-height: 526px;
   display: flex;
   flex-direction: column;
   flex: 1 1 350px;

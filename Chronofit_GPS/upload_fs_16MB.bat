@@ -5,14 +5,14 @@ REM ===================== CONFIG =====================
 set MKLITTLEFS=mklittlefs.exe
 set ESPTOOL=esptool.exe
 
-set PORT=COM3
+set PORT=COM2
 set BAUD=921600
 set CHIP=esp32
 REM set CHIP=esp32c3
 
 set FOLDER=data
-set SIZE=0x1E0000        
-set OFFSET=0x210000    
+set SIZE=0xBF0000        
+set OFFSET=0x410000    
 set BIN=littlefs.bin
 REM ==================================================
 

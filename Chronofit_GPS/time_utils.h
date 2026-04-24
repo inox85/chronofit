@@ -18,6 +18,8 @@ void checkPointRoutine(int i);
 
 PreciseTime getPreciseTime();           // legge l'orario corrente
 
+PreciseTime getPreciseTimeFromSync(uint64_t referenceUs);           // legge l'orario corrente
+
 uint32_t getPreciseMillis(uint64_t pm);
 
 PreciseTime getPreciseSensorTime(int i);
