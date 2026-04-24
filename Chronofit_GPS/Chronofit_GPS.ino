@@ -344,45 +344,38 @@ void loop() {
                  ? (lastSyncTrigger - lastNmeaValid)
                  : UINT64_MAX;
 
-  if (ppsTriggered) {
-    lastPPSDetected = lastSyncTrigger;
-    uint64_t thisPpsUs = lastSyncTrigger;
+if (ppsTriggered) {
+  lastPPSDetected = lastSyncTrigger;
+  uint64_t thisPpsUs = lastSyncTrigger;
+  ppsTriggered = false; // consuma subito, una volta sola
 
-    // Sincronizzazione iniziale — richiede NMEA fresco
-    if ((delta >= 400000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
-      ppsTriggered = false;
-      validNmea = false;
+  // Sincronizzazione iniziale
+  if ((delta >= 400000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+    validNmea = false;
 
-      if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
-        syncReference = thisPpsUs;
-        handlePpsSync();
-        usDriftAtPPS = 0;
-        lastDeltaPPSSync = 0;
-        extimatedDriftByPPS = 0;
-        syncStatus = SYNC_GPS_SYNCED;
-        RTCTtriggerCount = 0;
-        lastGPSSync = millis();
-      }
-
-    // Sync test — basta il PPS, NMEA non necessario
-    } 
-
-    if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED && syncMode == MODE_SYNC_GPS) {
-      ppsTriggered = false;
-
-      PreciseTime pt = getPreciseTimeFromSync(thisPpsUs);
-      if ((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)) {
-        syncTestRequested = 0;
-        sensorTime[4] = thisPpsUs;
-        sensorTriggered[4] = true;
-        handleSensorTrigger();
-      }
-      
-    } 
-    else 
-    {
-      ppsTriggered = false;
+    if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
+      syncReference = thisPpsUs;
+      handlePpsSync();
+      usDriftAtPPS = 0;
+      lastDeltaPPSSync = 0;
+      extimatedDriftByPPS = 0;
+      syncStatus = SYNC_GPS_SYNCED;
+      RTCTtriggerCount = 0;
+      lastGPSSync = millis();
     }
+  }
+
+  // Sync test — indipendente, valutato sempre
+  if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED && syncMode == MODE_SYNC_GPS) {
+    PreciseTime pt = getPreciseTimeFromSync(thisPpsUs);
+    Serial.printf("[SYNCTEST] ss=%d ms=%d\n", pt.ss, pt.ms);
+    if ((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)) {
+      syncTestRequested = 0;
+      sensorTime[4] = thisPpsUs;
+      sensorTriggered[4] = true;
+      handleSensorTrigger();
+    }
+  }
 }
 
   PreciseTime t = getPreciseTime();
@@ -495,6 +488,7 @@ bool processServicesSerial() {
 
   while (ServicesSerial.available()) {
     char c = ServicesSerial.read();
+    //Serial.print(c);
 
     if (c == '$') {
       // Inizio nuova sentence
