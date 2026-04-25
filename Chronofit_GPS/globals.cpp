@@ -7,7 +7,9 @@
 
 const char* BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+MQTTManager mqtt;
 LedStrip RGBLeds;
+
 // --- Costanti --- 
 String chipIdStr = "";
 const char *ssid = "Chronofit";

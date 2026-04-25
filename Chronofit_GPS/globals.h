@@ -7,10 +7,15 @@
 #include <TinyGPSPlus.h>
 #include <DNSServer.h>
 #include "LedStrip.h"
+#include "mqtt_manager.h"
+
+
 
 // Dichiarazione (solo extern qui)
 extern const char* BASE64_CHARS;
 extern const char* DEVICE_ID;
+
+extern MQTTManager mqtt;
 
 extern LedStrip RGBLeds;
 

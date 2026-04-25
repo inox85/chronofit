@@ -1107,7 +1107,46 @@ server.on("/upload", HTTP_POST,
         request->send(400, "text/plain", "Missing parameters");
     }
   });
-  wifiRxActivity();
+
+  server.on("/mqtt/settings", HTTP_GET, [](AsyncWebServerRequest *request){
+  DynamicJsonDocument doc(512);
+  doc["server"]         = mqtt.getServer();
+  doc["port"]           = mqtt.getPort();
+  doc["user"]           = mqtt.getUser();
+  doc["subtopic"]       = mqtt.getSubtopic();
+  doc["subscribeTopic"] = mqtt.getSubscribeTopic();
+  doc["deviceTopic"]    = mqtt.getDevicePubTopic();
+  doc["connected"]      = mqtt.isConnected();
+
+  String json;
+  serializeJson(doc, json);
+  request->send(200, "application/json", json);
+  });
+
+  server.on("/mqtt/save", HTTP_POST, [](AsyncWebServerRequest *request){
+    String server         = request->getParam("server",         true)->value();
+    int    port           = request->getParam("port",           true)->value().toInt();
+    String user           = request->getParam("user",           true)->value();
+    String pass           = request->getParam("pass",           true)->value();
+    String subtopic       = request->getParam("subtopic",       true)->value();
+    String subscribeTopic = request->getParam("subscribeTopic", true)->value();
+
+    mqtt.saveSettings(server, port, user, pass, subtopic, subscribeTopic);
+    mqtt.begin(); // riconnette con i nuovi settings
+    request->send(200, "text/plain", "Salvato");
+  });
+
+  server.on("/mqtt/test", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (mqtt.isConnected()) {
+      request->send(200, "text/plain", "Connected");
+    } else {
+      mqtt.begin();
+      delay(500);
+      request->send(200, "text/plain", mqtt.isConnected() ? "Connected" : "Failed");
+    }
+  });
+
+
 }
 
 String serializeSettings(){

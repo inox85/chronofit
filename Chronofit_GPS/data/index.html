@@ -237,11 +237,18 @@
     </div>
   </div>
 
-    <!-- Overlay e popup per la connessione Wi-Fi -->
-  <div id="wifiOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup">
-      <h2>Connect to Wi-Fi for internet access</h2>
+<div id="wifiOverlay" class="fullscreen-overlay" style="display:none;">
+  <div class="fullscreen-popup">
+    <h2>Network Settings</h2>
 
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('wifi')">📶 Wi-Fi</button>
+      <button class="tab-btn" onclick="switchTab('mqtt')">📡 MQTT</button>
+    </div>
+
+    <!-- ===== TAB WIFI ===== -->
+    <div id="tab-wifi">
       <div class="input-row">
         <label for="wifi-ssid">SSID</label>
         <input type="text" id="wifi-ssid" placeholder="Enter Wi-Fi SSID">
@@ -249,10 +256,8 @@
 
       <div class="input-row">
         <label for="wifi-password">Password</label>
-
         <div class="password-row">
           <input type="password" id="wifi-password" placeholder="Enter Wi-Fi password">
-
           <div class="toggle-row">
             <span>Show</span>
             <label class="switch">
@@ -260,7 +265,6 @@
               <span class="slider"></span>
             </label>
           </div>
-
         </div>
       </div>
 
@@ -271,7 +275,78 @@
 
       <p id="wifi-status-field"></p>
     </div>
+
+    <!-- ===== TAB MQTT ===== -->
+    <div id="tab-mqtt" style="display:none;">
+
+      <div class="input-row">
+        <label for="mqtt-server">Server</label>
+        <input type="text" id="mqtt-server" placeholder="broker.example.com">
+      </div>
+
+      <div class="input-row">
+        <label for="mqtt-port">Port</label>
+        <input type="number" id="mqtt-port" placeholder="8883" value="8883">
+      </div>
+
+      <div class="input-row">
+        <label for="mqtt-user">Username</label>
+        <input type="text" id="mqtt-user" placeholder="mqtt user">
+      </div>
+
+      <div class="input-row">
+        <label for="mqtt-pass">Password</label>
+        <div class="password-row">
+          <input type="password" id="mqtt-pass" placeholder="mqtt password">
+          <div class="toggle-row">
+            <span>Show</span>
+            <label class="switch">
+              <input type="checkbox" onchange="toggleMqttPass()">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Publish subtopic -->
+      <div class="input-row">
+        <label for="mqtt-subtopic">Publish subtopic</label>
+        <div class="password-row">
+          <span style="font-size:13px; opacity:0.5; white-space:nowrap;">chronofit/</span>
+          <input type="text" id="mqtt-subtopic" placeholder="data">
+        </div>
+      </div>
+
+      <!-- Subscribe topic -->
+      <div class="input-row">
+        <label for="mqtt-sub-topic">Free subscribe topic</label>
+        <input type="text" id="mqtt-sub-topic" placeholder="casa/luci/ingresso">
+      </div>
+
+      <!-- Device topic (readonly) -->
+      <div class="input-row">
+        <label>Device transmission topic</label>
+        <input type="text" id="mqtt-device-topic" readonly style="opacity:0.5;"
+               placeholder="chronofit/<chipID>">
+      </div>
+
+      <!-- Status badge -->
+      <div class="toggle-row" style="margin-top:8px;">
+        <span>MQTT Status</span>
+        <span id="mqtt-status-badge" class="badge badge-off">Disconnected</span>
+      </div>
+
+      <div class="button-row">
+        <button class="big-button" onclick="saveMQTT()">Save</button>
+        <button class="big-button" onclick="testMQTT()">Connect</button>
+        <button class="big-button" onclick="closeWiFiPopup()">Close</button>
+      </div>
+
+      <p id="mqtt-status-field"></p>
+    </div>
+
   </div>
+</div>
 
   <!-- Overlay e popup per inserimento Email -->
   <div id="emailOverlay" class="fullscreen-overlay" style="display:none;">
@@ -364,7 +439,7 @@
   <!-- Navbar interna della card -->
     <div class="card-navbar">
       <div class="card-status-item" id="wifi-notify">
-        <span class="status-icon">Internet:</span>
+        <span class="status-icon">Network:</span>
         <span id="wifiStatus" class="status-icon">❌</span>
       </div>
       <div class="card-status-item" id="gps-notify">

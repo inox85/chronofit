@@ -2114,3 +2114,60 @@ pause`;
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+
+function switchTab(tab) {
+  document.getElementById('tab-wifi').style.display = tab === 'wifi' ? '' : 'none';
+  document.getElementById('tab-mqtt').style.display = tab === 'mqtt' ? '' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && tab === 'wifi') || (i === 1 && tab === 'mqtt'));
+  });
+  if (tab === 'mqtt') loadMQTTSettings();
+}
+
+function toggleMqttPass() {
+  const f = document.getElementById('mqtt-pass');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+function loadMQTTSettings() {
+  fetch('/mqtt/settings')
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('mqtt-server').value       = d.server       || '';
+      document.getElementById('mqtt-port').value         = d.port         || 8883;
+      document.getElementById('mqtt-user').value         = d.user         || '';
+      document.getElementById('mqtt-subtopic').value     = d.subtopic     || 'data';
+      document.getElementById('mqtt-sub-topic').value    = d.subscribeTopic || '';
+      document.getElementById('mqtt-device-topic').value = d.deviceTopic  || '';
+      const badge = document.getElementById('mqtt-status-badge');
+      badge.textContent = d.connected ? 'Connected' : 'Disconnected';
+      badge.className   = 'badge ' + (d.connected ? 'badge-on' : 'badge-off');
+    })
+    .catch(() => document.getElementById('mqtt-status-field').textContent = 'Cannot load settings');
+}
+
+function saveMQTT() {
+  const body = new URLSearchParams({
+    server:         document.getElementById('mqtt-server').value,
+    port:           document.getElementById('mqtt-port').value,
+    user:           document.getElementById('mqtt-user').value,
+    pass:           document.getElementById('mqtt-pass').value,
+    subtopic:       document.getElementById('mqtt-subtopic').value,
+    subscribeTopic: document.getElementById('mqtt-sub-topic').value
+  });
+  fetch('/mqtt/save', { method: 'POST', body })
+    .then(r => r.text())
+    .then(t => document.getElementById('mqtt-status-field').textContent = t)
+    .catch(() => document.getElementById('mqtt-status-field').textContent = 'Save failed');
+}
+
+function testMQTT() {
+  document.getElementById('mqtt-status-field').textContent = 'Testing...';
+  fetch('/mqtt/test')
+    .then(r => r.text())
+    .then(t => {
+      document.getElementById('mqtt-status-field').textContent = t;
+      loadMQTTSettings(); // aggiorna badge
+    });
+}

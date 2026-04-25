@@ -751,3 +751,32 @@ input:checked + .slider:before {
   font-size: 15px;
   cursor: pointer;
 }
+
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #555;
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.tab-btn.active {
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+}
+.badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-on  { background: #1a7a1a; color: #90ee90; }
+.badge-off { background: #5a1a1a; color: #ff9090; }

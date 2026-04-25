@@ -25,6 +25,8 @@
 #include "lwip/stats.h"
 #include "gps_custom.h"
 #include <SoftwareSerial.h>
+#include "mqtt_service.h"
+#include "esp_task_wdt.h"
 
 SoftwareSerial gpsCmd(-1, 13);
 
@@ -143,9 +145,18 @@ void initGPS(){
 }
 
 void setup() {
+  
+  esp_task_wdt_config_t wdt_config = {
+    .timeout_ms = 30000,    // 30 secondi
+    .idle_core_mask = 0,    // nessun core idle monitorato
+    .trigger_panic = false  // no panic, solo warning
+  };
+  esp_task_wdt_reconfigure(&wdt_config);
+
   gpsParser.begin(gps);
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
 
+  mqttSetup();
   //setupWiFi();
 
   //initGPS();
@@ -272,6 +283,8 @@ void updateWifiLed(uint8_t ledIndex) {
 bool validNmea = false;  // globale, non locale al loop
 
 void loop() {
+
+  mqttLoop();
 
   if(shouldRestart){
     delay(500);
