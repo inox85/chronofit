@@ -167,6 +167,13 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   
   WiFi.begin(ssid, password);
 
+
+  if (password == nullptr || strlen(password) == 0) {
+    WiFi.begin(ssid);
+  } else {
+    WiFi.begin(ssid, password);
+  }
+
   Serial.print("Connessione a ");
   Serial.print(ssid);
   
