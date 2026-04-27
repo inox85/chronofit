@@ -2,16 +2,22 @@
 #include "mqtt_manager.h"
 #include <WiFi.h>
 
+
 void MQTTManager::_connect() {
-  if (!_mqtt || _mqtt->connected()) return;
+  if (!_mqtt || _mqtt->connected() || _connecting) return;
+    _connecting = true;
 
   // Variabili locali che vivono per tutta la funzione
   String user      = getUser();
   String pass      = getPass();
-  String willTopic = getDevicePubTopic() + "/state";
+  String willTopic = getDeviceBaseTopic() + "/state";
 
   const char* userPtr = user.isEmpty() ? nullptr : user.c_str();
   const char* passPtr = pass.isEmpty() ? nullptr : pass.c_str();
+
+  Serial.printf("[MQTT] User: '%s'\n", user.c_str());
+  Serial.printf("[MQTT] Pass: '%s'\n", pass.c_str());  // ← qui
+  Serial.print("[MQTT] Connessione...");
 
   Serial.print("[MQTT] Connessione...");
 
@@ -26,7 +32,7 @@ void MQTTManager::_connect() {
     Serial.println("connesso!");
     _mqtt->publish(willTopic.c_str(), "online", true);
 
-    String cmdTopic = getDevicePubTopic() + "/commands";
+    String cmdTopic = getDeviceBaseTopic() + "/commands";
     _mqtt->subscribe(cmdTopic.c_str());
     Serial.printf("[MQTT SUB] %s\n", cmdTopic.c_str());
 
@@ -39,10 +45,11 @@ void MQTTManager::_connect() {
   } else {
     Serial.printf("fallito, rc=%d\n", _mqtt->state());
   }
+  _connecting = false;
 }
 
 // Topic immutabile — chronofit/<chipID>
-String MQTTManager::getDevicePubTopic() {
+String MQTTManager::getDeviceBaseTopic() {
   uint64_t chipId = ESP.getEfuseMac();
   char chipStr[17];
   snprintf(chipStr, sizeof(chipStr), "%04X%08X",
@@ -60,7 +67,7 @@ bool MQTTManager::publish(const char* subtopic, const char* payload) {
 // Publish su chronofit/<chipID>
 bool MQTTManager::publishDevice(const char* payload) {
   if (!_mqtt || !_mqtt->connected()) return false;
-  return _mqtt->publish(getDevicePubTopic().c_str(), payload);
+  return _mqtt->publish(getDeviceBaseTopic().c_str(), payload);
 }
 
 void MQTTManager::subscribe(const char* fullTopic) {
@@ -73,30 +80,40 @@ void MQTTManager::subscribe(const char* fullTopic) {
 void MQTTManager::saveSettings(const String& server, int port, const String& user,
                                 const String& pass, const String& subtopic,
                                 const String& subscribeTopic) {
-  writeStringToSettings("mqtt_server",    server);
-  writeIntToSettings("mqtt_port",         port);
-  writeStringToSettings("mqtt_user",      user);
-  writeStringToSettings("mqtt_pass",      pass);
-  writeStringToSettings("mqtt_subtopic",  subtopic);
-  writeStringToSettings("mqtt_free_topic", subscribeTopic);
+  writeStringToSettings("mqtt_server",     server);
+  writeIntToSettings("mqtt_port",          port);
+  writeStringToSettings("mqtt_user",       user);
+  writeStringToSettings("mqtt_pass",       pass);
+  writeStringToSettings("mqtt_subtopic",   subtopic);
+  writeStringToSettings("free_topic", subscribeTopic);
+
+  Serial.println("[MQTT] Settings salvati:");
+  Serial.printf("  server:    %s\n", getServer().c_str());
+  Serial.printf("  port:      %d\n", getPort());
+  Serial.printf("  user:      %s\n", getUser().c_str());
+  Serial.printf("  pass:      %s\n", getPass().c_str());
+  Serial.printf("  subtopic:  %s\n", getSubtopic().c_str());
+  Serial.printf("  freetopic: %s\n", getSubscribeTopic().c_str());
 }
 
 void MQTTManager::begin() {
+  if (!_mutex) _mutex = xSemaphoreCreateMutex();
+
+  xSemaphoreTake(_mutex, portMAX_DELAY);
+
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("[MQTT] WiFi non connesso, skip");
+    xSemaphoreGive(_mutex);
     return;
   }
 
-  if (_mqtt) {
-    delete _mqtt;
-    _mqtt = nullptr;
-  }
+  if (_mqtt) { delete _mqtt; _mqtt = nullptr; }
 
   _wifiClient.setInsecure();
   _mqtt = new PubSubClient(_wifiClient);
   _mqtt->setBufferSize(1024);
   _mqtt->setKeepAlive(60);
-  _mqtt->setSocketTimeout(15);
+  _mqtt->setSocketTimeout(3);
 
   String server = getServer();
   int    port   = getPort();
@@ -105,6 +122,7 @@ void MQTTManager::begin() {
     Serial.println("[MQTT] Nessun server configurato");
     delete _mqtt;
     _mqtt = nullptr;
+    xSemaphoreGive(_mutex);
     return;
   }
 
@@ -119,22 +137,28 @@ void MQTTManager::begin() {
     vTaskDelay(3000 / portTICK_PERIOD_MS);
     _connect();
   }
+
+  xSemaphoreGive(_mutex);
 }
 
 void MQTTManager::loop() {
   if (!_mqtt) return;
   if (WiFi.status() != WL_CONNECTED) return;
 
+  xSemaphoreTake(_mutex, portMAX_DELAY);
+
   if (!_mqtt->connected()) {
     unsigned long now = millis();
-    if (now - _lastAttempt > 5000) {  // riprova ogni 5 secondi
+    if (now - _lastAttempt > 5000) {
       _lastAttempt = now;
       _connect();
     }
+    xSemaphoreGive(_mutex);  // ← sempre prima del return
     return;
   }
 
   _mqtt->loop();
+  xSemaphoreGive(_mutex);
 }
 
 bool MQTTManager::isConnected() {

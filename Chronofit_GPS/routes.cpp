@@ -1120,9 +1120,10 @@ server.on("/upload", HTTP_POST,
   doc["server"]         = mqtt.getServer();
   doc["port"]           = mqtt.getPort();
   doc["user"]           = mqtt.getUser();
+  doc["pass"]           = mqtt.getPass();
   doc["subtopic"]       = mqtt.getSubtopic();
   doc["subscribeTopic"] = mqtt.getSubscribeTopic();
-  doc["deviceTopic"]    = mqtt.getDevicePubTopic();
+  doc["deviceTopic"]    = mqtt.getDeviceBaseTopic();
   doc["connected"]      = mqtt.isConnected();
 
   String json;

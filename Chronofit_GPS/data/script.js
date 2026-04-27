@@ -2137,6 +2137,7 @@ function loadMQTTSettings() {
       document.getElementById('mqtt-server').value       = d.server       || '';
       document.getElementById('mqtt-port').value         = d.port         || 8883;
       document.getElementById('mqtt-user').value         = d.user         || '';
+      document.getElementById('mqtt-pass').value         = d.pass         || '';
       document.getElementById('mqtt-subtopic').value     = d.subtopic     || 'data';
       document.getElementById('mqtt-sub-topic').value    = d.subscribeTopic || '';
       document.getElementById('mqtt-device-topic').value = d.deviceTopic  || '';
