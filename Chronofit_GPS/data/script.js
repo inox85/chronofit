@@ -823,11 +823,14 @@ function clearEventTableRows() {
 }
 
 async function populateTableFromSaved() {
+  const fill  = document.getElementById("splashLoadingFill");
+  const label = document.getElementById("splashLoadingLabel");
+
   try {
     const response = await fetch("/getCheckpoints");
-    const text = await response.text(); // ricevi tutto come testo
+    const text = await response.text();
 
-    const lines = text.trim().split("\n"); // dividi per riga
+    const lines = text.trim().split("\n");
     lines.forEach(line => {
       if (line.trim().length > 0) {
         try {
@@ -839,10 +842,16 @@ async function populateTableFromSaved() {
       }
     });
 
+    // Caricamento completato: barra piena + messaggio aggiornato
+    if (fill)  fill.classList.add("done");
+    if (label) label.textContent = "Ready ✓";
+
   } catch (err) {
     console.error("Errore caricamento checkpoint:", err);
+    if (label) label.textContent = "Load error";
   }
 }
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -935,8 +944,6 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td><button class="edit-btn">✎</button></td>
     <td><button class="send-btn">➡</button></td>
   `;
-
-  
 
   // Aggiungi gli eventi ai pulsanti della riga
   const editBtn = row.querySelector(".edit-btn");
