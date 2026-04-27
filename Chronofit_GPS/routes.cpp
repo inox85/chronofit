@@ -157,7 +157,6 @@ void wifiTxActivity() { lastTxTime = millis(); }
 static uint8_t reconnectAttempts = 0;
 static const uint8_t MAX_ATTEMPTS = 5;
 bool wifiAuthFailed = false;
-static bool needsReconnect = false;
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
@@ -212,7 +211,8 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
           default:
             if (!wifiAuthFailed && reconnectAttempts < MAX_ATTEMPTS) {
               reconnectAttempts++;
-              delay(1000 * reconnectAttempts);   // ❌ questo è il problema
+              Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
+              delay(1000 * reconnectAttempts);
               WiFi.reconnect();
             } else if (!wifiAuthFailed) {
               reconnectAttempts = 0;
@@ -233,8 +233,7 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
         break;
     }
   });
-  
-  xTaskCreatePinnedToCore(wifiReconnectTask, "WiFiReconnect", 4096, NULL, 1, NULL, 0);
+
   xTaskCreatePinnedToCore(
     internetCheckTask,
     "InternetCheck",
@@ -246,25 +245,6 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   );
 
   return true;
-}
-
-void wifiReconnectTask(void* param) {
-  for (;;) {
-    if (needsReconnect && !wifiAuthFailed) {
-      needsReconnect = false;
-      if (reconnectAttempts < MAX_ATTEMPTS) {
-        reconnectAttempts++;
-        Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
-        vTaskDelay(pdMS_TO_TICKS(1000 * reconnectAttempts));
-        WiFi.reconnect();
-      } else {
-        reconnectAttempts = 0;
-        Serial.println("❌ WiFi: troppi tentativi falliti");
-        ws.textAll(serializeMessage("WiFi: max reconnect attempts reached"));
-      }
-    }
-    vTaskDelay(pdMS_TO_TICKS(100));
-  }
 }
 
 void internetCheckTask(void *pvParameters) {

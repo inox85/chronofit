@@ -10,8 +10,6 @@ void activateAccessPoint();
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs = 10000);
 
-void wifiReconnectTask(void* param);
-
 // POST del file session.json a Hooklistener
 // postSessionJson(
 //   "https://app.hooklistener.com/w/my-first-endpoint-lwi8/esp32",
