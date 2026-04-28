@@ -25,6 +25,7 @@
 #include <ESP_Mail_Client.h>
 #include "gps_custom.h"
 #include "LedStrip.h"
+#include "mqtt_manager.h"
 
 
 SMTPSession smtp;
@@ -88,11 +89,17 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
     switch (event) {
       case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-        Serial.println("WiFi: associato all'AP");
+        Serial.println("WiFi: associato all'AP");     
         break;
       case ARDUINO_EVENT_WIFI_STA_GOT_IP:
         Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
         ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
+
+        static bool mqttStarted = false;
+        if (!mqttStarted) {
+          mqttManagerBegin();  // _connect() viene chiamata automaticamente dal task
+          mqttStarted = true;
+        }
         break;
       case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
         uint8_t reason = info.wifi_sta_disconnected.reason;
@@ -449,34 +456,18 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
 
   server.on("/getCheckpoints", HTTP_GET, [](AsyncWebServerRequest *request) {
-    debug("Sending data from json...");
+      debug("Sending data from json...");
 
-    const char* path = "/session.json";
+      const char* path = "/session.json";
 
-    if (!LittleFS.exists(path)) {
-        request->send(200, "application/json", "{}"); // nessun checkpoint
-        return;
-    }
+      if (!LittleFS.exists(path)) {
+          request->send(200, "application/json", "{}");
+          return;
+      }
 
-    File file = LittleFS.open(path, "r");
-    if (!file) {
-        request->send(500, "text/plain", "File open error");
-        return;
-    }
-
-    Serial.println("Inizio invio file JSON...");
-
-    // Chunked response corretta
-    AsyncWebServerResponse *response = request->beginChunkedResponse("application/json",
-        [file](uint8_t *buffer, size_t maxLen, size_t index) mutable -> unsigned int {
-            size_t bytesRead = file.read(buffer, maxLen);
-            if (bytesRead == 0) file.close(); // chiudi alla fine
-            return bytesRead;
-        }
-    );
-
-    request->send(response);
-    wifiRxActivity();
+      // ✅ ESPAsyncWebServer gestisce apertura/chiusura internamente
+      request->send(LittleFS, path, "application/json");
+      wifiRxActivity();
   });
 
 
@@ -821,13 +812,18 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   
     JsonArray files = doc.createNestedArray("files");
     File root = LittleFS.open("/");
+
     File file = root.openNextFile();
+
     while (file) {
       JsonObject obj = files.createNestedObject();
       obj["name"] = file.name();
       obj["size"] = file.size();
       file = root.openNextFile();
     }
+
+    file.close();  // ✅
+    root.close();  // ✅
   
     // ── dati GPS base ────────────────────────────────────────
     JsonObject gpsObj = doc.createNestedObject("gps");
@@ -900,6 +896,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     // Invia il file come download
     request->send(file, filename, "application/octet-stream");
+    file.close();
     wifiRxActivity();
   });
 

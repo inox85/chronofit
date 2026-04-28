@@ -4,7 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0">
   <title>Chronofit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+  <style>
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      transition: opacity 0.8s ease;
+    }
+    #splash.finished {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .splash-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+    .splash-logo {
+      width: auto;
+      object-fit: contain;
+    }
+    .splash-logo-main    { height: 60px;  }
+    .splash-logo-sponsor { height: 120px; }
+    .splash-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.45);
+    }
+  </style>
   <link rel="icon" type="image/png" href="/favicon.png">
 
   <!-- COLORE DELLA STATUS BAR SU ANDROID -->
@@ -14,7 +54,11 @@
 <body>
 
   <div id="splash">
-    <img src="/logo.png" alt="Logo">
+    <div class="splash-logos">
+      <img src="/logo.png"     alt="Chronofit" class="splash-logo splash-logo-main">
+      <img src="/sponsor.png"  alt="Sponsor"   class="splash-logo splash-logo-sponsor">
+    </div>
+    <span class="splash-label">Loading session...</span>
   </div>
 
 

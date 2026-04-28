@@ -615,9 +615,7 @@ input:checked + .slider:before {
 
 /* Logo */
 #splash img {
-  width: 40vw;        /* grande ma adattabile */
   max-width: 500px;   /* limite su schermi grandi */
-  height: auto;
 }
 
 /* Quando aggiungiamo la classe "finished", parte la dissolvenza */

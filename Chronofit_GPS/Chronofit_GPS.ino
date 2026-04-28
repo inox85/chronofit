@@ -25,6 +25,7 @@
 #include "lwip/stats.h"
 #include "gps_custom.h"
 #include <SoftwareSerial.h>
+#include "mqtt_manager.h"
 
 SoftwareSerial gpsCmd(-1, 13);
 
@@ -248,7 +249,6 @@ void configFS(){
     return;
   }
   server.serveStatic("/", LittleFS, "/");
-
 }
 
 
