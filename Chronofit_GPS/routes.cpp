@@ -67,143 +67,51 @@ void wifiRxActivity() { lastRxTime = millis(); }
 
 void wifiTxActivity() { lastTxTime = millis(); }
 
-// bool postSessionJson(const char* url, const char* filePath) {
-
-//   // Controllo esistenza file
-//   if (!LittleFS.exists(filePath)) {
-//     Serial.println("❌ File non trovato: " + String(filePath));
-//     return false;
-//   }
-
-//   // Apro il file in lettura
-//   File file = LittleFS.open(filePath, "r");
-//   if (!file) {
-//     Serial.println("❌ Errore apertura file");
-//     return false;
-//   }
-
-//   // Creo HTTP client
-//   HTTPClient http;
-//   http.begin(url);
-//   http.addHeader("Content-Type", "application/json"); // JSON
-
-//   // POST leggendo il file direttamente come payload
-//   int httpResponseCode = http.sendRequest("POST", &file, file.size());
-
-//   file.close(); // chiudo file
-
-//   if (httpResponseCode > 0) {
-//     Serial.print("✅ POST OK, HTTP code: ");
-//     Serial.println(httpResponseCode);
-//     Serial.println(http.getString()); // risposta server
-//     http.end();
-//     return true;
-//   } else {
-//     Serial.print("❌ POST fallita: ");
-//     Serial.println(http.errorToString(httpResponseCode));
-//     http.end();
-//     return false;
-//   }
-// }
-
-// ── Connessione WiFi con retry infinito ───────────────────────
-// // Dopo — con valore di default
-// bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
-
-//   writeStringToSettings("wifi_ssid", String(ssid));
-//   writeStringToSettings("wifi_pass", String(password));
-
-//   // Registra l'evento UNA SOLA VOLTA con flag statico
-//   static bool eventRegistered = false;
-//   if (!eventRegistered) {
-//     WiFi.onEvent([](WiFiEvent_t event) {
-//       if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
-//         Serial.println("Connesso! IP: " + WiFi.localIP().toString());
-//         String msgJson = serializeMessage("WiFi connected with IP address");
-//         ws.textAll(msgJson);
-//       }
-//       if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
-//         Serial.println("WiFi disconnesso, riconnessione...");
-//         WiFi.reconnect();
-//       }
-//     });
-//     eventRegistered = true;
-//   }
-
-//   // Disconnetti prima di riconnetterti
-//   WiFi.disconnect(true);
-//   delay(100);
-//   WiFi.mode(WIFI_STA);
-//   WiFi.begin(ssid, password);
-//   Serial.println("Connessione a " + String(ssid) + " in corso...");
-
-//   static bool taskCreated = false;
-//   if (!taskCreated) {
-//     xTaskCreatePinnedToCore(
-//       internetCheckTask,
-//       "InternetCheck",
-//       4096,
-//       NULL,
-//       1,
-//       NULL,
-//       0
-//     );
-//     taskCreated = true;
-//   }
-
-//   return true;
-// }
 
 static uint8_t reconnectAttempts = 0;
 static const uint8_t MAX_ATTEMPTS = 5;
 
-
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
-
   String msgJson = serializeMessage("Connecting to WiFi for internet access...");
   ws.textAll(msgJson);
-
   startAttemptTime = millis();
-  
-  WiFi.begin(ssid, password);
 
-  Serial.print("Connessione a ");
-  Serial.print(ssid);
-
+  // ── connessione con o senza password ────────────────────────────────────────
+  if (password == nullptr || strlen(password) == 0) {
+    WiFi.begin(ssid);
+    Serial.println("Connessione a rete aperta: " + String(ssid));
+  } else {
+    WiFi.begin(ssid, password);
+    Serial.println("Connessione a rete protetta: " + String(ssid));
+  }
 
   WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
-
-   switch (event) {
-
-    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-      Serial.println("WiFi: associato all'AP");
-      break;
-
-    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
-      ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
-      break;
-
+    switch (event) {
+      case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+        Serial.println("WiFi: associato all'AP");
+        break;
+      case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+        Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
+        ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
+        break;
       case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
         uint8_t reason = info.wifi_sta_disconnected.reason;
         Serial.printf("❌ WiFi: disconnesso, reason=%d\n", reason);
-
         switch (reason) {
           case WIFI_REASON_AUTH_EXPIRE:
           case WIFI_REASON_AUTH_FAIL:
           case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
           case WIFI_REASON_NO_AP_FOUND:
-            // Non riprovare — credenziali errate o rete assente
-            reconnectAttempts = 0;
+            // credenziali errate o rete assente → stop definitivo
+            reconnectAttempts = MAX_ATTEMPTS;  // ← forza lo stop invece di azzerare
             Serial.println("❌ WiFi: credenziali errate o rete non trovata");
             ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
             break;
-
           default:
             if (reconnectAttempts < MAX_ATTEMPTS) {
               reconnectAttempts++;
               Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
-              delay(1000 * reconnectAttempts);  // backoff: 1s, 2s, 3s...
+              delay(1000 * reconnectAttempts);
               WiFi.reconnect();
             } else {
               reconnectAttempts = 0;
@@ -214,12 +122,10 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
         }
         break;
       }
-
       case ARDUINO_EVENT_WIFI_STA_LOST_IP:
         Serial.println("WiFi: IP perso");
         ws.textAll(serializeMessage("WiFi IP lost"));
         break;
-
       default:
         break;
     }
@@ -232,9 +138,8 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
     NULL,
     1,
     NULL,
-    0   // core 0 (WiFi sta su core 0/1 senza problemi)
+    0
   );
-
   return true;
 }
 
