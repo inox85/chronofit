@@ -91,47 +91,6 @@ function rowToMs(row) {
   return ((h * 3600 + m * 60 + s) * 1000) + truncateMs(ms);
 }
 
-// ── Precisione temporale ──────────────────────────────────────
-// 1 = decimi, 2 = centesimi, 3 = millisecondi
-let timePrecision = 3;
-
-function onTimePrecisionChange(val) {
-  val = Math.max(1, Math.min(3, parseInt(val) || 3));
-  timePrecision = val;
-  document.getElementById("time-precision").value = val;
-  refreshAllTimestamps();
-  recalcDeltaTimes();
-  recalcElapsedTimes();
-  saveViewPrefs();
-}
-
-function truncateMs(ms) {
-  if (timePrecision === 1) return Math.floor(ms / 100) * 100;
-  if (timePrecision === 2) return Math.floor(ms / 10)  * 10;
-  return ms;
-}
-
-function refreshAllTimestamps() {
-  document.querySelectorAll("#event-table tbody tr").forEach(row => {
-    const tsCell = row.querySelector(".timestamp");
-    if (!tsCell || tsCell.querySelector("input")) return;
-    const h  = parseInt(row.dataset.hour     ?? 0);
-    const m  = parseInt(row.dataset.minute   ?? 0);
-    const s  = parseInt(row.dataset.seconds  ?? 0);
-    const ms = parseInt(row.dataset.msRaw    ?? 0);
-    tsCell.textContent = formatTime(h, m, s, ms);
-  });
-}
-
-// Converte i data-* raw di una riga in ms (con troncamento precisione)
-function rowToMs(row) {
-  const h  = parseInt(row.dataset.hour    ?? 0);
-  const m  = parseInt(row.dataset.minute  ?? 0);
-  const s  = parseInt(row.dataset.seconds ?? 0);
-  const ms = parseInt(row.dataset.msRaw   ?? 0);
-  return ((h * 3600 + m * 60 + s) * 1000) + truncateMs(ms);
-}
-
 async function cacheAudioFiles(url) {
   for (const file of audioFiles) {
       const audio = new Audio();
