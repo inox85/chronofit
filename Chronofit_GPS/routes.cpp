@@ -50,6 +50,7 @@ void activateAccessPoint(){
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
 
   WiFi.softAP(ssid_sn);
+
   #ifdef DEBUG
     Serial.println("Access Point avviato");
     Serial.print("IP: ");
@@ -164,8 +165,14 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   ws.textAll(msgJson);
 
   startAttemptTime = millis();
+
+  WiFi.mode(WIFI_AP_STA);  // ← aggiungi questa riga
   
-  WiFi.begin(ssid, password);
+  if (password == nullptr || strlen(password) == 0) {
+    WiFi.begin(ssid);
+  } else {
+    WiFi.begin(ssid, password);
+  }
 
   Serial.print("Connessione a ");
   Serial.print(ssid);
@@ -180,6 +187,7 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
       break;
 
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+      reconnectAttempts = 0;  // ← manca questa
       Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
       ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
       break;
@@ -194,7 +202,7 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
           case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
           case WIFI_REASON_NO_AP_FOUND:
             // Non riprovare — credenziali errate o rete assente
-            reconnectAttempts = 0;
+            reconnectAttempts = MAX_ATTEMPTS;  // ← forza stop definitivo
             Serial.println("❌ WiFi: credenziali errate o rete non trovata");
             ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
             break;
@@ -203,10 +211,11 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
             if (reconnectAttempts < MAX_ATTEMPTS) {
               reconnectAttempts++;
               Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
-              delay(1000 * reconnectAttempts);  // backoff: 1s, 2s, 3s...
-              WiFi.reconnect();
+              // backoff non bloccante
+              uint32_t backoff = 1000 * reconnectAttempts;
+              xTimerStart(xTimerCreate("wifiRetry", pdMS_TO_TICKS(backoff), pdFALSE, nullptr,
+                [](TimerHandle_t){ WiFi.reconnect(); }), 0);
             } else {
-              reconnectAttempts = 0;
               Serial.println("❌ WiFi: troppi tentativi falliti, arresto riconnessione");
               ws.textAll(serializeMessage("WiFi: max reconnect attempts reached"));
             }
@@ -225,15 +234,20 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
     }
   });
 
-  xTaskCreatePinnedToCore(
-    internetCheckTask,
-    "InternetCheck",
-    4096,
-    NULL,
-    1,
-    NULL,
-    0   // core 0 (WiFi sta su core 0/1 senza problemi)
-  );
+    // ← crea il task UNA SOLA VOLTA
+  static bool internetTaskStarted = false;
+  if (!internetTaskStarted) {
+    internetTaskStarted = true;
+    xTaskCreatePinnedToCore(
+      internetCheckTask,
+      "InternetCheck",
+      4096,
+      NULL,
+      1,
+      NULL,
+      0
+    );
+  }
 
   return true;
 }

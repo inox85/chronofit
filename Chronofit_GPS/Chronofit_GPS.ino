@@ -143,6 +143,7 @@ void initGPS(){
 }
 
 void setup() {
+  configFS();
   gpsParser.begin(gps);
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
 
@@ -231,8 +232,6 @@ void setup() {
       CHANGE
     );
   }
-
-  configFS();
 
   sessionRowIndex = getLastSessionRowIndex();
 
@@ -349,7 +348,7 @@ void loop() {
     uint64_t thisPpsUs = lastSyncTrigger;
 
     // Sincronizzazione iniziale — richiede NMEA fresco
-    if ((delta >= 400000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+    if ((delta >= 300000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       ppsTriggered = false;
       validNmea = false;
 
