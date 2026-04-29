@@ -205,10 +205,6 @@ void checkPointRoutine(int i) {
   file.println();                // nuova riga
   file.close();
 
-#ifdef DEBUG
-  Serial.printf("Checkpoint #%d salvato su LittleFS (in append)\n", sessionRowIndex);
-#endif
-
   // 🔹 Invia sul WebSocket
   StaticJsonDocument<256> wsDoc = ordered;
   wsDoc["t"] = TYPE_CHECKPOINT;

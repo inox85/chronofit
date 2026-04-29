@@ -1,7 +1,7 @@
 const FLAG_SYNC_ENABLED = 1; // 0001
 const FLAG_TIME_VALID = 2; // 0010
 const FLAG_LOCATION_VALID = 4; // 0100
-const FLAG_TIMEBASE_CALIBRATION = 8; // 1000
+const FLAG_PPS_DETECTED = 8; // 1000
 
 const SYNC_NONE = 0;
 const SYNC_MANUAL_SET = 1;  // Tempo settato manualmente
@@ -31,6 +31,9 @@ let prevPowerSource = 1;
 
 let timeOffset = 0;
 
+
+const audioCache = {};
+
 const audioFiles = [
   "/sound1.mp3",
   "/sound2.mp3",
@@ -46,7 +49,47 @@ const lineColors = {
   5: "#808080ff" // giallo tenue
 };
 
-const audioCache = {};
+
+// ── Precisione temporale ──────────────────────────────────────
+// 1 = decimi, 2 = centesimi, 3 = millisecondi
+let timePrecision = 3;
+
+function onTimePrecisionChange(val) {
+  val = Math.max(1, Math.min(3, parseInt(val) || 3));
+  timePrecision = val;
+  document.getElementById("time-precision").value = val;
+  refreshAllTimestamps();
+  recalcDeltaTimes();
+  recalcElapsedTimes();
+  saveViewPrefs();
+}
+
+function truncateMs(ms) {
+  if (timePrecision === 1) return Math.floor(ms / 100) * 100;
+  if (timePrecision === 2) return Math.floor(ms / 10)  * 10;
+  return ms;
+}
+
+function refreshAllTimestamps() {
+  document.querySelectorAll("#event-table tbody tr").forEach(row => {
+    const tsCell = row.querySelector(".timestamp");
+    if (!tsCell || tsCell.querySelector("input")) return;
+    const h  = parseInt(row.dataset.hour     ?? 0);
+    const m  = parseInt(row.dataset.minute   ?? 0);
+    const s  = parseInt(row.dataset.seconds  ?? 0);
+    const ms = parseInt(row.dataset.msRaw    ?? 0);
+    tsCell.textContent = formatTime(h, m, s, ms);
+  });
+}
+
+// Converte i data-* raw di una riga in ms (con troncamento precisione)
+function rowToMs(row) {
+  const h  = parseInt(row.dataset.hour    ?? 0);
+  const m  = parseInt(row.dataset.minute  ?? 0);
+  const s  = parseInt(row.dataset.seconds ?? 0);
+  const ms = parseInt(row.dataset.msRaw   ?? 0);
+  return ((h * 3600 + m * 60 + s) * 1000) + truncateMs(ms);
+}
 
 async function cacheAudioFiles(url) {
   for (const file of audioFiles) {
@@ -130,12 +173,15 @@ function setSettings(){
   const printToggle = document.getElementById("printToggle");
   const printEnabled = printToggle && printToggle.checked ? 1 : 0;
 
+  const buzzerToggle = document.getElementById("buzzerToggle");
+  const buzzerEnabled = buzzerToggle && buzzerToggle.checked ? 1 : 0;
+
   const stationName = document.getElementById("station-name-input").value;
   
   console.log(stationName);
   console.log(encodeURIComponent(stationName));
   
-  const url = `/setAttribute?printEnabled=${encodeURIComponent(printEnabled)}&stationName=${encodeURIComponent(stationName)}`;
+  const url = `/setAttribute?printEnabled=${encodeURIComponent(printEnabled)}&stationName=${encodeURIComponent(stationName)}&buzzerEnable=${encodeURIComponent(buzzerEnabled)}`;
 
   console.log(url);
 
@@ -175,6 +221,78 @@ function updateTimeOffset(){
     .then(res=>res.text())
     .then(msg=>console.log(msg));
 }
+
+// ======= LOCALSTORAGE: preferenze visualizzazione =======
+
+const VIEW_PREFS_KEY = "chronofit_view_prefs";
+
+function saveViewPrefs() {
+  const prefs = {
+    timestamp:     document.getElementById("toggle-timestamp").checked,
+    deltaTime:     document.getElementById("toggle-delta-time").checked,
+    elapsedTime:   document.getElementById("toggle-elapsed-time").checked,
+    penality:      document.getElementById("toggle-penality").checked,
+    timePrecision: document.getElementById("time-precision").value,
+    lines: {}
+  };
+  document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
+    if (btn.tagName === "BUTTON") {
+      prefs.lines[btn.dataset.line] = !btn.classList.contains("inactive");
+    } else if (btn.tagName === "INPUT" && btn.type === "checkbox") {
+      prefs.lines[btn.dataset.line] = btn.checked;
+    }
+  });
+  localStorage.setItem(VIEW_PREFS_KEY, JSON.stringify(prefs));
+}
+
+function restoreViewPrefs() {
+  const raw = localStorage.getItem(VIEW_PREFS_KEY);
+  if (!raw) return;
+  try {
+    const prefs = JSON.parse(raw);
+
+    const setChk = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined) el.checked = val;
+    };
+    setChk("toggle-timestamp",    prefs.timestamp);
+    setChk("toggle-delta-time",   prefs.deltaTime);
+    setChk("toggle-elapsed-time", prefs.elapsedTime);
+    setChk("toggle-penality",     prefs.penality);
+
+    if (prefs.timePrecision !== undefined) {
+      const val = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
+      timePrecision = val;
+      document.getElementById("time-precision").value = val;
+    }
+
+    if (prefs.lines) {
+      document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
+        const active = prefs.lines[btn.dataset.line];
+        if (active === undefined) return;
+        if (btn.tagName === "BUTTON") {
+          const color = btn.dataset.color;
+          if (active) {
+            btn.classList.remove("inactive");
+            btn.style.backgroundColor = color;
+          } else {
+            btn.classList.add("inactive");
+            btn.style.backgroundColor = "#ccc";
+          }
+        } else if (btn.tagName === "INPUT" && btn.type === "checkbox") {
+          btn.checked = active;
+        }
+      });
+    }
+
+    updateVisibleColumns();
+    applyLineFilter();
+  } catch(e) {
+    console.warn("Errore ripristino preferenze:", e);
+  }
+}
+
+// ======= FINE LOCALSTORAGE =======
 
 function updateParams() {
 fetch('/allSettings')
@@ -217,7 +335,16 @@ function fillSettingsFields(data){
   document.getElementById("sync-method-select").dispatchEvent(new Event("change"));
   document.getElementById("sync-interval-select").value = data.si ?? 0
 
-  handlePowerUpdate(data);
+  const printToggle = document.getElementById("printToggle");
+  printToggle.checked = (data.print == 1);
+
+  const buzzerToggle = document.getElementById("buzzerToggle");
+  buzzerToggle.checked = (data.bz == 1);
+
+  // Riapplica preferenze visive — il server non deve sovrascriverle
+  restoreViewPrefs();
+
+  //handlePowerUpdate(data);
 }
 
 function setElapsedTimemode(){
@@ -548,30 +675,6 @@ function hideGeneralPopup() {
 }
 
 
-
-function handlePowerUpdate(data) {
-  if (prevPowerSource !== data.pw) {
-    const printToggle = document.getElementById("printToggle");
-    prevPowerSource = data.pw;
-
-    if(prevPowerSource === POWER_MODE_NONE){
-      console.log("Switching to low power config")
-      printToggle.checked = 0;
-      printToggle.disabled = 1;
-    }else if(prevPowerSource === POWER_MODE_USB){
-      console.log("Switching to power bank power config")
-      printToggle.checked = 1;
-      printToggle.disabled = 0;
-    }
-    else if(prevPowerSource === POWER_MODE_BATTERY){
-      console.log("Switching to battery bank power config")
-      printToggle.checked = 1;
-      printToggle.disabled = 0;
-    }
-
-  }
-}
-
 function updateClockFromData(data) {
 
     let hourAdj = (data.h + timeOffset + 24) % 24;
@@ -592,16 +695,13 @@ function updateClockFromData(data) {
     const syncEnabled = (fixFlags & FLAG_SYNC_ENABLED) !== 0;
     const timeValid = (fixFlags & FLAG_TIME_VALID) !== 0;
     const locationValid = (fixFlags & FLAG_LOCATION_VALID) !== 0;
-    const calRunning = (fixFlags & FLAG_TIMEBASE_CALIBRATION) !== 0;
+    const ppsDetected = (fixFlags & FLAG_PPS_DETECTED) !== 0;
 
-    if (calRunning) {
-      showGeneralPopup("Timebase calibration running...", "#ff9800", 5000); // arancione per calibrazione
-    } 
 
     const syncStatus = data.sy; 
     const wifiStatus = data.w; // 0=disconnected, 1=connecting, 2=connected
 
-    handlePowerUpdate(data);
+    //handlePowerUpdate(data);
 
     let syncTestIcon = document.getElementById("incon-sync-test");
     //syncTestIcon.style.display = "none";
@@ -646,7 +746,7 @@ function updateClockFromData(data) {
     }
     if(syncStatus === SYNC_FIRST_GPS_SYNC || syncStatus === SYNC_WAIT_GPS){
       statusElem.innerText = "Sync mode: GPS — Status: ⏳ waiting for signal..."
-    }if(syncStatus === SYNC_GPS_SYNCED){
+    }if(syncStatus === SYNC_GPS_SYNCED && ppsDetected){
       const lastSync = data.ls;
       const GPSRefreshInterval = data.lg;
       const nextSync = data.lg - data.ls;
@@ -691,7 +791,7 @@ function updateClockFromData(data) {
     }
     
   
-  if(timeValid && locationValid){
+  if(timeValid && locationValid && ppsDetected){
     let tzOffsetAuto = Math.round(data.ln / 15); 
     let offsetString =  "UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
     document.getElementById("pos").innerText = "🟢 " + "Lat: " 
@@ -798,7 +898,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   // subito dopo: const row = document.createElement("tr");
   row.classList.add("row-enter");
 
-  const timestamp = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(millis).padStart(3, "0")}`;
+  const timestamp = formatTime(hour, minute, seconds, millis);
   const index = rowIndex;
 
   const activeLines = Array.from(document.querySelectorAll(".toggle-btn:not(.inactive)"))
@@ -814,7 +914,8 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-competitor", competitor);
   row.setAttribute("data-hour", hour);
   row.setAttribute("data-minute", minute);
-  row.setAttribute("data-millis", millis);
+  row.setAttribute("data-seconds", seconds);
+  row.setAttribute("data-ms-raw", millis);
   row.setAttribute("data-penality", 0);
 
   row.innerHTML = `
@@ -874,12 +975,9 @@ function formatDelta(ms, signed) {
   }
 
   let sign = "";
+  if (signed) sign = "+";
 
-  if (signed) {
-    sign = "+";
-  }
-
-  ms = Math.abs(ms);
+  ms = truncateMs(Math.abs(ms));
 
   const hours   = Math.floor(ms / 3600000);
   ms %= 3600000;
@@ -888,12 +986,18 @@ function formatDelta(ms, signed) {
   const seconds = Math.floor(ms / 1000);
   const millis  = ms % 1000;
 
+  const msStr = timePrecision === 1
+    ? String(Math.floor(millis / 100))
+    : timePrecision === 2
+      ? String(Math.floor(millis / 10)).padStart(2, "0")
+      : String(millis).padStart(3, "0");
+
   return (
     sign +
     String(hours).padStart(2, "0") + ":" +
     String(minutes).padStart(2, "0") + ":" +
     String(seconds).padStart(2, "0") + "." +
-    String(millis).padStart(3, "0")
+    msStr
   );
 }
 
@@ -904,23 +1008,17 @@ function recalcElapsedTimes() {
     document.querySelectorAll("#event-table tbody tr")
   ).filter(row => row.style.display !== "none");
 
-  // partiamo dal basso (riga più vecchia)
   const firstRow = rows[rows.length - 1];
-  const firstTsCell = firstRow ? firstRow.querySelector(".timestamp") : null;
-  const firstTimeMs = firstTsCell ? timestampToMs(firstTsCell.textContent.trim()) : null;
+  const firstTimeMs = firstRow ? rowToMs(firstRow) : null;
 
   for (let i = rows.length - 1; i >= 0; i--) {
     const row = rows[i];
-    const tsCell = row.querySelector(".timestamp");
     const deltaCell = row.querySelector(".elapsed-time");
+    if (!deltaCell) continue;
 
-    if (!tsCell || !deltaCell) continue;
-
-    const currentMs = timestampToMs(tsCell.textContent.trim());
-
+    const currentMs = rowToMs(row);
     const delta = firstTimeMs - currentMs;
     deltaCell.textContent = formatDelta(delta, false);
-
   }
 }
 
@@ -929,7 +1027,6 @@ function recalcDeltaTimes() {
     document.querySelectorAll("#event-table tbody tr")
   ).filter(row => row.style.display !== "none");
 
-  // partiamo dal basso (riga più vecchia)
   let nextTime = null;
 
   for (let i = rows.length - 1; i >= 0; i--) {
@@ -939,18 +1036,16 @@ function recalcDeltaTimes() {
 
     if (!tsCell || !deltaCell) continue;
 
-    // pulizia stato precedente
     row.classList.remove("negative-row");
 
     const timestamp = tsCell.textContent.trim();
-    const currentMs = timestampToMs(timestamp);
 
-    // Evidenzia se timestamp è 00:00:00.000
-    if (timestamp === "00:00:00.000") {
+    if (timestamp === "00:00:00.000" || timestamp === "00:00:00.00" || timestamp === "00:00:00.0") {
       row.classList.add("negative-row");
     }
 
-    // riga più in basso → niente delta
+    const currentMs = rowToMs(row);
+
     if (nextTime === null) {
       deltaCell.textContent = "—";
       nextTime = currentMs;
@@ -961,7 +1056,7 @@ function recalcDeltaTimes() {
 
     if (delta > 0) {
       deltaCell.textContent = "—";
-      row.classList.add("negative-row"); // mantiene evidenziazione delta negativo
+      row.classList.add("negative-row");
     } else {
       deltaCell.textContent = formatDelta(delta, true);
     }
@@ -1074,9 +1169,14 @@ function saveRow(button) {
         // timestamp → hh:mm:ss.mmm
         const [hms, ms] = newValue.split(".");
         const [h, m, s] = hms.split(":");
-        row.dataset.hour = Number(h);
-        row.dataset.minute = Number(m);
-        row.dataset.millis = Number(ms);
+        row.dataset.hour     = Number(h);
+        row.dataset.minute   = Number(m);
+        row.dataset.seconds  = Number(s);
+        // normalizza sempre a ms interi (il testo può avere 1-3 cifre decimali)
+        let msVal = Number(ms ?? 0);
+        if (ms && ms.length === 1) msVal *= 100;
+        else if (ms && ms.length === 2) msVal *= 10;
+        row.dataset.msRaw = msVal;
         break;
       }
     }
@@ -1216,11 +1316,12 @@ document.querySelectorAll('.toggle-btn').forEach(el => {
 
       // Aggiorna il filtro
       applyLineFilter();
+      saveViewPrefs();
     });
   } 
   else if (el.tagName === "INPUT" && el.type === "checkbox") {
     // checkbox: basta monitorare il cambio
-    el.addEventListener('change', applyLineFilter);
+    el.addEventListener('change', () => { applyLineFilter(); saveViewPrefs(); });
   }
 });
 
@@ -1388,12 +1489,15 @@ document.addEventListener("DOMContentLoaded", () => {
     keepScreenOn();
 
 
-    console.log("Carica audio files nella cache...")
-    cacheAudioFiles();
+    // console.log("Carica audio files nella cache...")
+    // cacheAudioFiles();
 
     console.log("Timposto toggle delta time a default...")
     const chk = document.getElementById("toggle-delta-time");
     toggleDeltaTimeColumn(chk.checked);
+
+    console.log("Ripristino preferenze visualizzazione...");
+    restoreViewPrefs();
 });
 
 
@@ -1412,7 +1516,10 @@ document.getElementById('noFullscreen').addEventListener('click', () => {
 });
 
 function playSound(name) {
-  audioCache[name].currentTime = 0; // riavvia da inizio
+  if (!audioCache[name]) {
+    audioCache[name] = new Audio(name);
+  }
+  audioCache[name].currentTime = 0;
   audioCache[name].play();
 }
 
@@ -1630,24 +1737,28 @@ document
 .getElementById("toggle-delta-time")
 .addEventListener("change", e => {
   toggleDeltaTimeColumn(e.target.checked);
+  saveViewPrefs();
 });
 
 document
 .getElementById("toggle-timestamp")
 .addEventListener("change", e => {
   toggleTimestampColumn(e.target.checked);
+  saveViewPrefs();
 });
 
 document
 .getElementById("toggle-elapsed-time")
 .addEventListener("change", e => {
   toggleElapsedTimeColumn(e.target.checked);
+  saveViewPrefs();
 });
 
 document
 .getElementById("toggle-penality")
 .addEventListener("change", e => {
   togglePenalityColumn(e.target.checked);
+  saveViewPrefs();
 });
 
 
@@ -1708,11 +1819,15 @@ function updateRowFromBroadcas(data) {
   // aggiorna event time
   const timeCell = row.querySelector(".timestamp");
   if (timeCell) {
+    row.dataset.hour    = data.h ?? row.dataset.hour;
+    row.dataset.minute  = data.m ?? row.dataset.minute;
+    row.dataset.seconds = data.s ?? row.dataset.seconds;
+    row.dataset.msRaw   = data.ms ?? row.dataset.msRaw;
     timeCell.textContent = formatTime(
-      data.h,
-      data.m,
-      data.s,
-      data.ms
+      parseInt(row.dataset.hour),
+      parseInt(row.dataset.minute),
+      parseInt(row.dataset.seconds),
+      parseInt(row.dataset.msRaw)
     );
   }
 
@@ -1727,11 +1842,17 @@ function updateRowFromBroadcas(data) {
 }
 
 function formatTime(h, m, s, ms) {
+  const msT = truncateMs(ms);
+  const msStr = timePrecision === 1
+    ? String(Math.floor(msT / 100))
+    : timePrecision === 2
+      ? String(Math.floor(msT / 10)).padStart(2, "0")
+      : String(msT).padStart(3, "0");
   return (
     String(h).padStart(2, "0") + ":" +
     String(m).padStart(2, "0") + ":" +
     String(s).padStart(2, "0") + "." +
-    String(ms).padStart(3, "0")
+    msStr
   );
 }
 
@@ -1960,4 +2081,34 @@ try {
     status.textContent = "Error request sending email";
     status.style.color = "red";
   }
+}
+
+function downloadWifiFix() {
+  const content = `@echo off
+
+:: Controlla se è già amministratore
+net session >nul 2>&1
+if %errorLevel% == 0 (
+    goto :main
+)
+
+:: Non è amministratore — si rilancia con privilegi elevati
+echo Richiedo privilegi amministratore...
+powershell -Command "Start-Process '%~f0' -Verb RunAs"
+exit
+
+:main
+REG ADD "HKLM\\SYSTEM\\CurrentControlSet\\Services\\NlaSvc\\Parameters\\Internet" /v EnableActiveProbing /t REG_DWORD /d 0 /f
+echo Done! Restart required.
+pause`;
+
+  const blob = new Blob([content], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'wifi_disconnect_fix.bat';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

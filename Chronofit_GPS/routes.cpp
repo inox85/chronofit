@@ -25,7 +25,6 @@
 #include <ESP_Mail_Client.h>
 #include "gps_custom.h"
 #include "LedStrip.h"
-#include "mqtt_manager.h"
 
 
 SMTPSession smtp;
@@ -51,6 +50,7 @@ void activateAccessPoint(){
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
 
   WiFi.softAP(ssid_sn);
+
   #ifdef DEBUG
     Serial.println("Access Point avviato");
     Serial.print("IP: ");
@@ -68,60 +68,154 @@ void wifiRxActivity() { lastRxTime = millis(); }
 
 void wifiTxActivity() { lastTxTime = millis(); }
 
+// bool postSessionJson(const char* url, const char* filePath) {
+
+//   // Controllo esistenza file
+//   if (!LittleFS.exists(filePath)) {
+//     Serial.println("❌ File non trovato: " + String(filePath));
+//     return false;
+//   }
+
+//   // Apro il file in lettura
+//   File file = LittleFS.open(filePath, "r");
+//   if (!file) {
+//     Serial.println("❌ Errore apertura file");
+//     return false;
+//   }
+
+//   // Creo HTTP client
+//   HTTPClient http;
+//   http.begin(url);
+//   http.addHeader("Content-Type", "application/json"); // JSON
+
+//   // POST leggendo il file direttamente come payload
+//   int httpResponseCode = http.sendRequest("POST", &file, file.size());
+
+//   file.close(); // chiudo file
+
+//   if (httpResponseCode > 0) {
+//     Serial.print("✅ POST OK, HTTP code: ");
+//     Serial.println(httpResponseCode);
+//     Serial.println(http.getString()); // risposta server
+//     http.end();
+//     return true;
+//   } else {
+//     Serial.print("❌ POST fallita: ");
+//     Serial.println(http.errorToString(httpResponseCode));
+//     http.end();
+//     return false;
+//   }
+// }
+
+// ── Connessione WiFi con retry infinito ───────────────────────
+// // Dopo — con valore di default
+// bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
+
+//   writeStringToSettings("wifi_ssid", String(ssid));
+//   writeStringToSettings("wifi_pass", String(password));
+
+//   // Registra l'evento UNA SOLA VOLTA con flag statico
+//   static bool eventRegistered = false;
+//   if (!eventRegistered) {
+//     WiFi.onEvent([](WiFiEvent_t event) {
+//       if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
+//         Serial.println("Connesso! IP: " + WiFi.localIP().toString());
+//         String msgJson = serializeMessage("WiFi connected with IP address");
+//         ws.textAll(msgJson);
+//       }
+//       if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+//         Serial.println("WiFi disconnesso, riconnessione...");
+//         WiFi.reconnect();
+//       }
+//     });
+//     eventRegistered = true;
+//   }
+
+//   // Disconnetti prima di riconnetterti
+//   WiFi.disconnect(true);
+//   delay(100);
+//   WiFi.mode(WIFI_STA);
+//   WiFi.begin(ssid, password);
+//   Serial.println("Connessione a " + String(ssid) + " in corso...");
+
+//   static bool taskCreated = false;
+//   if (!taskCreated) {
+//     xTaskCreatePinnedToCore(
+//       internetCheckTask,
+//       "InternetCheck",
+//       4096,
+//       NULL,
+//       1,
+//       NULL,
+//       0
+//     );
+//     taskCreated = true;
+//   }
+
+//   return true;
+// }
 
 static uint8_t reconnectAttempts = 0;
 static const uint8_t MAX_ATTEMPTS = 5;
 
+
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
+
   String msgJson = serializeMessage("Connecting to WiFi for internet access...");
   ws.textAll(msgJson);
+
   startAttemptTime = millis();
 
-  // ── connessione con o senza password ────────────────────────────────────────
+  WiFi.mode(WIFI_AP_STA);  // ← aggiungi questa riga
+  
   if (password == nullptr || strlen(password) == 0) {
     WiFi.begin(ssid);
-    Serial.println("Connessione a rete aperta: " + String(ssid));
   } else {
     WiFi.begin(ssid, password);
-    Serial.println("Connessione a rete protetta: " + String(ssid));
   }
 
-  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
-    switch (event) {
-      case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-        Serial.println("WiFi: associato all'AP");     
-        break;
-      case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-        Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
-        ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
+  Serial.print("Connessione a ");
+  Serial.print(ssid);
 
-        static bool mqttStarted = false;
-        if (!mqttStarted) {
-          mqttManagerBegin();  // _connect() viene chiamata automaticamente dal task
-          mqttStarted = true;
-        }
-        break;
+
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+
+   switch (event) {
+
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+      Serial.println("WiFi: associato all'AP");
+      break;
+
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+      reconnectAttempts = 0;  // ← manca questa
+      Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
+      ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
+      break;
+
       case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
         uint8_t reason = info.wifi_sta_disconnected.reason;
         Serial.printf("❌ WiFi: disconnesso, reason=%d\n", reason);
+
         switch (reason) {
           case WIFI_REASON_AUTH_EXPIRE:
           case WIFI_REASON_AUTH_FAIL:
           case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
           case WIFI_REASON_NO_AP_FOUND:
-            // credenziali errate o rete assente → stop definitivo
-            reconnectAttempts = MAX_ATTEMPTS;  // ← forza lo stop invece di azzerare
+            // Non riprovare — credenziali errate o rete assente
+            reconnectAttempts = MAX_ATTEMPTS;  // ← forza stop definitivo
             Serial.println("❌ WiFi: credenziali errate o rete non trovata");
             ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
             break;
+
           default:
             if (reconnectAttempts < MAX_ATTEMPTS) {
               reconnectAttempts++;
               Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
-              delay(1000 * reconnectAttempts);
-              WiFi.reconnect();
+              // backoff non bloccante
+              uint32_t backoff = 1000 * reconnectAttempts;
+              xTimerStart(xTimerCreate("wifiRetry", pdMS_TO_TICKS(backoff), pdFALSE, nullptr,
+                [](TimerHandle_t){ WiFi.reconnect(); }), 0);
             } else {
-              reconnectAttempts = 0;
               Serial.println("❌ WiFi: troppi tentativi falliti, arresto riconnessione");
               ws.textAll(serializeMessage("WiFi: max reconnect attempts reached"));
             }
@@ -129,24 +223,32 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
         }
         break;
       }
+
       case ARDUINO_EVENT_WIFI_STA_LOST_IP:
         Serial.println("WiFi: IP perso");
         ws.textAll(serializeMessage("WiFi IP lost"));
         break;
+
       default:
         break;
     }
   });
 
-  xTaskCreatePinnedToCore(
-    internetCheckTask,
-    "InternetCheck",
-    4096,
-    NULL,
-    1,
-    NULL,
-    0
-  );
+    // ← crea il task UNA SOLA VOLTA
+  static bool internetTaskStarted = false;
+  if (!internetTaskStarted) {
+    internetTaskStarted = true;
+    xTaskCreatePinnedToCore(
+      internetCheckTask,
+      "InternetCheck",
+      4096,
+      NULL,
+      1,
+      NULL,
+      0
+    );
+  }
+
   return true;
 }
 
@@ -456,18 +558,34 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
 
   server.on("/getCheckpoints", HTTP_GET, [](AsyncWebServerRequest *request) {
-      debug("Sending data from json...");
+    debug("Sending data from json...");
 
-      const char* path = "/session.json";
+    const char* path = "/session.json";
 
-      if (!LittleFS.exists(path)) {
-          request->send(200, "application/json", "{}");
-          return;
-      }
+    if (!LittleFS.exists(path)) {
+        request->send(200, "application/json", "{}"); // nessun checkpoint
+        return;
+    }
 
-      // ✅ ESPAsyncWebServer gestisce apertura/chiusura internamente
-      request->send(LittleFS, path, "application/json");
-      wifiRxActivity();
+    File file = LittleFS.open(path, "r");
+    if (!file) {
+        request->send(500, "text/plain", "File open error");
+        return;
+    }
+
+    Serial.println("Inizio invio file JSON...");
+
+    // Chunked response corretta
+    AsyncWebServerResponse *response = request->beginChunkedResponse("application/json",
+        [file](uint8_t *buffer, size_t maxLen, size_t index) mutable -> unsigned int {
+            size_t bytesRead = file.read(buffer, maxLen);
+            if (bytesRead == 0) file.close(); // chiudi alla fine
+            return bytesRead;
+        }
+    );
+
+    request->send(response);
+    wifiRxActivity();
   });
 
 
@@ -812,18 +930,13 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   
     JsonArray files = doc.createNestedArray("files");
     File root = LittleFS.open("/");
-
     File file = root.openNextFile();
-
     while (file) {
       JsonObject obj = files.createNestedObject();
       obj["name"] = file.name();
       obj["size"] = file.size();
       file = root.openNextFile();
     }
-
-    file.close();  // ✅
-    root.close();  // ✅
   
     // ── dati GPS base ────────────────────────────────────────
     JsonObject gpsObj = doc.createNestedObject("gps");
@@ -896,7 +1009,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     // Invia il file come download
     request->send(file, filename, "application/octet-stream");
-    file.close();
     wifiRxActivity();
   });
 

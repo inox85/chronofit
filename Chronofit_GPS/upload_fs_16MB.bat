@@ -11,8 +11,8 @@ set CHIP=esp32
 REM set CHIP=esp32c3
 
 set FOLDER=data
-set SIZE=0xBF0000        
-set OFFSET=0x410000    
+set SIZE=0xBE0000        
+set OFFSET=0x420000    
 set BIN=littlefs.bin
 REM ==================================================
 
