@@ -6,8 +6,16 @@
 #include <ESPAsyncWebServer.h>
 #include <TinyGPSPlus.h>
 #include <DNSServer.h>
+#include "LedStrip.h"
+
+// Dichiarazione (solo extern qui)
+extern const char* BASE64_CHARS;
+extern const char* DEVICE_ID;
+
+extern LedStrip RGBLeds;
 
 // --- Costanti ---
+extern String chipIdStr;
 extern const char *ssid;
 extern const byte DNS_PORT;
 
@@ -49,11 +57,14 @@ extern volatile uint64_t syncReference;
 extern unsigned long gpsTimeOffsetUs;
 extern int utcOffset;
 
+extern uint64_t lastPPSDetected;
+
 extern int syncEnabled;
 
 extern volatile uint64_t lastRTCTrigger;
 
 // --- Sensori ---
+
 extern String lineIds[5];
 extern int competitors[5];
 extern unsigned long delays[5];
@@ -100,4 +111,11 @@ extern int agingFactor;
 extern int32_t usDriftAtPPS;
 extern uint64_t lastDeltaPPSSync;
 extern double extimatedDriftByPPS;
+
+extern unsigned long lastRxTime;
+extern unsigned long lastTxTime;
+
+extern volatile bool shouldRestart;
+
+extern int buzzerActive;
 #endif

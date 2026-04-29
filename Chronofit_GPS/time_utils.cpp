@@ -27,9 +27,14 @@ PreciseTime getPreciseTime() {
   // Printf corretta
   //Serial.printf("us_drift=%lld  ms=%u\n", t.us_drift, ms);
 
-  // millisecondi arrotondati
-  uint32_t ms = (remUs) / 1000;
-  if (ms >= 1000) ms = 999;
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
+
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec += 1;
+  }
+
   t.ms = ms;
 
   // ⏱️ tempo assoluto
@@ -55,35 +60,27 @@ uint32_t getPreciseMillis(uint64_t lpps){
 PreciseTime getPreciseSensorTime(int i) {
   PreciseTime t;
 
-  uint64_t rawUs = sensorTime[i] - syncReference;
+  uint64_t rawUs    = sensorTime[i] - syncReference;
   uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
   uint64_t elapsedSec = elapsedUs / 1000000ULL;
   uint64_t remUs      = elapsedUs % 1000000ULL;
 
-  uint32_t ms          = (remUs + 500) / 1000;   // millisecondo corrente
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
 
-    // ── Rollback ms ──────────────────────────────
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
   if (ms >= 1000) {
     ms = 0;
-    elapsedSec++;          // propaga il riporto ai secondi
+    elapsedSec += 1;
   }
 
-  if (remUs > 500000LL)
-  {
-    t.us_drift = (int64_t)(remUs - 1000000ULL);  // negativo = prima del ms
-  }
-  else
-  {
-    t.us_drift = (int64_t)remUs;   // positivo = dopo il ms
+  if (remUs > 500000ULL) {
+    t.us_drift = (int64_t)(remUs - 1000000ULL);
+  } else {
+    t.us_drift = (int64_t)remUs;
   }
 
   t.ms = ms;
-
-  Serial.print("us_drift: ");
-  Serial.println(t.us_drift);
-  Serial.print("ms: ");
-  Serial.println(t.ms);
 
   // ⏱️ tempo assoluto
   uint64_t absSec = ppsEpochSec + elapsedSec;
@@ -95,39 +92,40 @@ PreciseTime getPreciseSensorTime(int i) {
   return t;
 }
 
+PreciseTime getPreciseTimeFromSync(uint64_t referenceUs) {
+  PreciseTime t;
 
-// PreciseTime getPreciseSensorTime(uint64_t us) {
-//   PreciseTime t;
+  uint64_t rawUs    = referenceUs - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
 
-//   uint64_t rawUs = us - syncReference;
-//   uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs      = elapsedUs % 1000000ULL;
 
-//   uint64_t elapsedSec = elapsedUs / 1000000ULL;
-//   uint64_t remUs = elapsedUs % 1000000ULL;
-//   // Calcolo
-//   if (remUs > 500000) 
-//   {
-//     t.us_drift = -((int64_t)(1000000 - remUs));  // negativo = prima del secondo
-//   } 
-//   else 
-//   {
-//     t.us_drift = (int64_t)remUs;                  // positivo = dopo il secondo
-//   }
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
 
-//   // millisecondi arrotondati
-//   uint32_t ms = (remUs + 500) / 1000;
-//   if (ms >= 1000) ms = 999;
-//   t.ms = ms;
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec += 1;
+  }
 
-//   // ⏱️ tempo assoluto
-//   uint64_t absSec = ppsEpochSec + elapsedSec;
+  if (remUs > 500000ULL) {
+    t.us_drift = (int64_t)(remUs - 1000000ULL);
+  } else {
+    t.us_drift = (int64_t)remUs;
+  }
 
-//   t.ss = absSec % 60;
-//   t.mm = (absSec / 60) % 60;
-//   t.hh = (absSec / 3600) % 24;
+  t.ms = ms;
 
-//   return t;
-// }
+  // ⏱️ tempo assoluto
+  uint64_t absSec = ppsEpochSec + elapsedSec;
+
+  t.ss = absSec % 60;
+  t.mm = (absSec / 60) % 60;
+  t.hh = (absSec / 3600) % 24;
+
+  return t;
+}
 
 void setExtimatedDriftParams(int us){
 
@@ -267,11 +265,6 @@ void handleRTCSync() {
   syncReference = lastRTCTrigger;
 
   lastBroadcast = millis();
-
-  // Serial.printf("%02d:%02d:%02d\n",
-  //                    dTime.hour(),
-  //                    dTime.minute(),
-  //                    dTime.second());
 }
 
 // Funzione di supporto: gestione sincronizzazione Line
@@ -367,8 +360,9 @@ void broadcastTime() {
   if (gps.location.isValid())
     fixStatus += 4;
 
-  if (calRunning)
+  if(esp_timer_get_time() - lastPPSDetected < 5000000){
     fixStatus += 8;
+  }
 
   doc["f"] = fixStatus;
 
@@ -386,59 +380,27 @@ void broadcastTime() {
     }
   }
 
-  if (doc["w"] == 3)
-    digitalWrite(LED_2, HIGH);
-  else
-    digitalWrite(LED_2, LOW);
+  if (doc["w"] == 3){
+    #ifdef VER2
+      
+    #else
+      digitalWrite(LED_2, HIGH);
+    #endif
+  }
+  else{
+    #ifdef VER2
+      
+    #else
+      digitalWrite(LED_2, LOW);
+    #endif
+  }
 
   String json;
   serializeJson(doc, json);
   ws.cleanupClients();  // rimuove client chiusi
   ws.textAll(json);     // 🔹 invia a tutti i client connessi
+  //wifiTxActivity();
 }
-
-
-
-// void broadcastStaticTime(uint8_t hh, uint8_t mm, uint8_t ss, uint8_t ms) {
-
-//   StaticJsonDocument<256> doc;
-//   doc["t"] = TYPE_TIME_UPDATE;
-//   doc["h"] = hh;
-//   doc["m"] = mm;
-//   doc["s"] = ss;
-//   doc["ms"] = ms;
-
-//   doc["lt"] = gps.location.isValid() ? gps.location.lat() : 0;
-//   doc["ln"] = gps.location.isValid() ? gps.location.lng() : 0;
-//   doc["st"] = gps.satellites.value();
-//   doc["sy"] = syncStatus;
-//   doc["ls"] = (millis() - lastGPSSync) / 1000;
-//   doc["lg"] = GPSRefreshInterval * 60;
-//   doc["pw"] = powerSource;
-//   doc["ts"] = syncTestRequested;
-
-
-//   fixStatus = syncMode == MODE_SYNC_GPS;
-
-//   if (gps.time.isValid())
-//     fixStatus += 2;
-
-//   if (gps.location.isValid())
-//     fixStatus += 4;
-
-//   if(calRunning)
-//     fixStatus += 8;
-
-//   doc["f"] = fixStatus;
-
-//   String json;
-//   serializeJson(doc, json);
-//   ws.cleanupClients(); // rimuove client chiusi
-//   ws.textAll(json);  // 🔹 invia a tutti i client connessi
-
-//   //Serial.println(json);
-
-// }
 
 double readInternalTemp() {
   double t = (double)(temprature_sens_read() - 32) / 1.8;

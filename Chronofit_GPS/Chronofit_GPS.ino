@@ -19,14 +19,20 @@
 #include "printer.h"
 #include "settings.h"
 #include "RTC.h"
+#include <FastLED.h>
+#include "esp_netif.h"
+#include "lwip/netif.h"
+#include "lwip/stats.h"
+#include "gps_custom.h"
+#include <SoftwareSerial.h>
+#include "mqtt_manager.h"
 
-#define PROTOTYPE
+SoftwareSerial gpsCmd(-1, 13);
 
 void IRAM_ATTR sensorISR(void *arg) {
   int i = (int)arg;
   signalMenagement(i);
 }
-
 
 // --- ISR PPS ---
 void IRAM_ATTR onPpsInterrupt() {   
@@ -59,17 +65,101 @@ void IRAM_ATTR onSecondTick(){
   lastRTCTrigger = esp_timer_get_time();
   RTCTriggered = true;
   RTCTtriggerCount++;
+}
 
+
+// void setupWiFi() {
+//   String ssid     = readStringFromSettings("wifi_ssid", "");
+//   String password = readStringFromSettings("wifi_pass", "");
+
+//   if (!ssid.isEmpty()) {
+//     Serial.println("Rete salvata trovata: " + ssid);
+//     connectToWiFi(ssid.c_str(), password.c_str());
+//   } else {
+//     Serial.println("Nessuna rete configurata. In attesa di credenziali...");
+//   }
+// }
+
+// Calcola e invia comando NMEA con checksum automatico
+void sendGPSCommand(const char* cmd) {
+  uint8_t checksum = 0;
+  // Calcola XOR di tutti i caratteri tra $ e *
+  for (int i = 0; cmd[i] != '\0'; i++) {
+    checksum ^= (uint8_t)cmd[i];
+  }
+  char buf[128];
+  snprintf(buf, sizeof(buf), "$%s*%02X\r\n", cmd, checksum);
+  Serial.print("Invio: ");
+  Serial.print(buf);
+  gpsCmd.print(buf);
+  gpsCmd.flush();
+  delay(200);
+}
+
+void initGPS(){
+
+  Serial.begin(115200);
+  delay(500); // aspetta che il monitor seriale si connetta
+
+  gpsCmd.begin(9600);
+  delay(100);
+
+  sendGPSCommand("PCAS04,1");           // GPS only
+  sendGPSCommand("PCAS02,1000");        // 1Hz
+  sendGPSCommand("PCAS03,1,0,1,1,1,0,0,0,0,0,,,0,0");
+
+  gpsCmd.end();
+  delay(100);
+
+  ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+  delay(100);
+  while (ServicesSerial.available()) ServicesSerial.read();
+
+  // Leggi ACK
+  unsigned long start = millis();
+  String line = "";
+  bool success = false;
+
+  while (millis() - start < 3000) {
+    while (ServicesSerial.available()) {
+      char c = ServicesSerial.read();
+      line += c;
+      if (c == '\n') {
+        Serial.print("GPS risponde: ");
+        Serial.print(line);
+        if (line.indexOf("PCAS001") >= 0) {
+          success = line.indexOf(",0") >= 0;
+          Serial.println(success ? "✅ ACK OK" : "❌ ACK errore");
+        }
+        line = "";
+      }
+    }
+  }
+
+  if (!success) {
+    Serial.println("⚠️ Nessun ACK ricevuto dal GPS");
+  }
+
+  Serial.println("GPS init completato @ 9600 baud");
 }
 
 void setup() {
+  gpsParser.begin(gps);
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
-  Serial.begin(9600, SERIAL_8N1);
-  ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
 
+  //setupWiFi();
+
+  //initGPS();
+
+  Serial.begin(9600, SERIAL_8N1);
+  //ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX);
+  ServicesSerial.begin(9600, SERIAL_8N1, GPS_RX, PRINTER_TX, false, 2048);
+
+  pinMode(RST_PIN, OUTPUT);
+  digitalWrite(RST_PIN, HIGH);
+  
   rtc_init(SDA_PIN, SCL_PIN, 400000);
   
-
   pinMode(SQW_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(SQW_PIN), onSecondTick, RISING);
 
@@ -78,13 +168,25 @@ void setup() {
   
   rtc_set_datetime(2026, 2, 25, 12, 0, 0); // solo una volta
 
-  pinMode(LED_1, OUTPUT);
-  pinMode(LED_2, OUTPUT);
-  pinMode(LED_3, OUTPUT);
+  #ifdef VER2
 
-  digitalWrite(LED_1, HIGH);
-  digitalWrite(LED_2, HIGH);
-  digitalWrite(LED_3, HIGH);
+    RGBLeds.begin();
+  
+  #else
+
+    digitalWrite(LED_1, LOW);
+    digitalWrite(LED_2, LOW);
+    digitalWrite(LED_3, LOW);
+
+    pinMode(LED_1, OUTPUT);
+    pinMode(LED_2, OUTPUT);
+    pinMode(LED_3, OUTPUT);
+
+    digitalWrite(LED_1, HIGH);
+    digitalWrite(LED_2, HIGH);
+    digitalWrite(LED_3, HIGH);
+
+  #endif
 
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
   
@@ -92,6 +194,8 @@ void setup() {
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
   int rtcAging = readIntFromSettings("rtcAging", 0);
+  buzzerActive = readIntFromSettings("buzzActive", 0);
+
   Serial.print("Writing aging factor: ");
   Serial.println(rtcAging);
   writeAgingOffset(rtcAging);
@@ -135,12 +239,7 @@ void setup() {
 
   activateAccessPoint();
 
-  delay(1000);
-  digitalWrite(LED_1, LOW);
-  digitalWrite(LED_2, LOW);
-  digitalWrite(LED_3, LOW);
-
-
+  RGBLeds.defaultSweepSequence();
 
 }
 
@@ -150,11 +249,35 @@ void configFS(){
     return;
   }
   server.serveStatic("/", LittleFS, "/");
-
 }
+
+
+#define IDLE_TIMEOUT 200  // ms
+
+// ── Chiama queste nel tuo webserver ──────────────────────────
+
+
+// ── Nel loop() ───────────────────────────────────────────────
+void updateWifiLed(uint8_t ledIndex) {
+  unsigned long now = millis();
+  bool rxRecent = (now - lastRxTime) < IDLE_TIMEOUT;
+  bool txRecent = (now - lastTxTime) < IDLE_TIMEOUT;
+
+  if      (txRecent) RGBLeds.setLed(ledIndex, CRGB(0, 255, 0));
+  else if (rxRecent) RGBLeds.setLed(ledIndex, CRGB(255, 140, 0));
+  else               RGBLeds.setLed(ledIndex, CRGB::Black);
+}
+
+// In globals.h o all'inizio del file
+bool validNmea = false;  // globale, non locale al loop
 
 void loop() {
 
+  if(shouldRestart){
+    delay(500);
+    ESP.restart();
+  }
+  
   if(RTCTriggered){
     RTCTriggered = false;
     if(RTCTtriggerCount == 1){
@@ -176,10 +299,6 @@ void loop() {
       // Serial.print(driftPPM);
 
 
-      float temperature = rtc_get_temperature();
-      // Serial.print(" temperature: ");
-      // Serial.println(temperature);
-
       if(fabs(driftPPM)> 0.5){
         updateCalibrationFactor(driftPPM * 2.0);
       }
@@ -191,13 +310,26 @@ void loop() {
 
   dnsServer.processNextRequest();
 
-  bool validNmea = false;
-
-  validNmea = processServicesSerial();
+// DOPO (corretto)
+  validNmea = processServicesSerial() || validNmea;
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
-    digitalWrite(LED_1, checkConnectedClient());
+
+    #ifdef VER2
+      if(checkConnectedClient()){
+        if(internetOK){
+          RGBLeds.setLed(WIFI_LED, CRGB::Green);
+        }else{
+          RGBLeds.setLed(WIFI_LED, CRGB::Yellow);
+        }
+      }else{
+        RGBLeds.setLed(WIFI_LED, CRGB::Red);
+      }
+    #else
+      digitalWrite(LED_1, checkConnectedClient());
+    #endif
+
   }
   
   if(syncStatus != SYNC_WAIT_LINE_SIGNAL){
@@ -208,55 +340,75 @@ void loop() {
   }
 
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
-  uint64_t delta = lastNmeaValid - lastSyncTrigger;
+  uint64_t delta = (lastNmeaValid > 0 && lastSyncTrigger >= lastNmeaValid)
+                 ? (lastSyncTrigger - lastNmeaValid)
+                 : UINT64_MAX;
 
-  if (ppsTriggered){
+  if (ppsTriggered) {
+    lastPPSDetected = lastSyncTrigger;
+    uint64_t thisPpsUs = lastSyncTrigger;
 
-    if ((delta >=20000 && delta <= 100000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
-      ppsTriggered = false;   // consumato QUI, una sola volta
-      uint64_t thisPpsUs = lastSyncTrigger;
-      //Serial.printf("[PPS] delta=%llu validNmea=%d isUpdated=%d syncMode=%d syncStatus=%d syncTestRequested=%d\n",
-      //              delta, validNmea, gps.time.isUpdated(), syncMode, syncStatus, syncTestRequested);
+    // Sincronizzazione iniziale — richiede NMEA fresco
+    if ((delta >= 400000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+      ppsTriggered = false;
+      validNmea = false;
+
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
         syncReference = thisPpsUs;
-        handlePpsSync();          // NON deve più toccare ppsTriggered
+        handlePpsSync();
         usDriftAtPPS = 0;
         lastDeltaPPSSync = 0;
         extimatedDriftByPPS = 0;
         syncStatus = SYNC_GPS_SYNCED;
         RTCTtriggerCount = 0;
         lastGPSSync = millis();
-      }else if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED){
-        PreciseTime pt = getPreciseTime();
-        //Serial.printf("[SYNCTEST] ss=%d ms=%d us_drift=%d\n", pt.ss, pt.ms, pt.us_drift);
-        if((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)){
-          syncTestRequested = 0;
-          sensorTime[4] = thisPpsUs;
-          sensorTriggered[4] = true;
-          handleSensorTrigger();
-        }
-        //else {
-          //Serial.printf("[SYNCTEST] FALLITO: condizione temporale non soddisfatta\n");
-        //}
-      //}else {
-        //Serial.printf("[PPS] SCARTATO: condizione esterna non soddisfatta\n");
-      //}
       }
+
+    // Sync test — basta il PPS, NMEA non necessario
+    } 
+
+    if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED && syncMode == MODE_SYNC_GPS) {
+      ppsTriggered = false;
+
+      PreciseTime pt = getPreciseTimeFromSync(thisPpsUs);
+      if ((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)) {
+        syncTestRequested = 0;
+        sensorTime[4] = thisPpsUs;
+        sensorTriggered[4] = true;
+        handleSensorTrigger();
+      }
+      
+    } 
+    else 
+    {
+      ppsTriggered = false;
     }
-  }
+}
 
   PreciseTime t = getPreciseTime();
   actualSecond = t.ss;
 
-  if(actualSecond != lastBroadCastSecond && t.ms < 10){
+  if(actualSecond != lastBroadCastSecond && t.ms < 100){
     lastBroadCastSecond = actualSecond;
     broadcastTime();   
   }
-  
-  digitalWrite(LED_3, syncTestRequested);
 
-  handleSensorTrigger();
+  #ifdef VER2
+    if(digitalRead(PPS_PIN)){
+      RGBLeds.setLed(PPS_LED, CRGB::Blue);
+    }else{
+      RGBLeds.turnOffLed(PPS_LED);
+    }
+
+    RGBLeds.setLed(LINE_LED, getStatusColor());
+  #else 
+    digitalWrite(LED_3, syncTestRequested);
+  #endif
   
+  handleSensorTrigger();
+
+  updateWifiLed(COM_LED);
+
 }
 
 bool checkConnectedClient(){
@@ -299,16 +451,81 @@ void handleSensorTrigger(){
   }
 }
 
-bool processServicesSerial() {
-  while (ServicesSerial.available()) {
-    char c = ServicesSerial.read();
-    gps.encode(c);  // decodifica NMEA
-    //Serial.print(c);
-    if(gps.time.isValid()){
-      lastNmeaValid = esp_timer_get_time();
-      return true;
-    }
-  }
-  return false;
+CRGB getStatusColor() {
+  CRGB color = CRGB::Black;  // parte da spento
+
+  if (digitalRead(SENSOR_IN1) == LOW) color += CRGB::Red;
+  if (digitalRead(SENSOR_IN2) == LOW) color += CRGB::Green;
+  if (digitalRead(SENSOR_IN3) == LOW) color += CRGB::Blue;
+  if (digitalRead(SENSOR_IN4) == LOW) color += CRGB::Yellow;
+
+  return color;
 }
 
+// bool processServicesSerial() {
+//   while (ServicesSerial.available()) {
+//     char c = ServicesSerial.read();
+//     gps.encode(c);  // decodifica NMEA
+//     //Serial.print(c);
+//     if(gps.time.isValid()){
+//       lastNmeaValid = esp_timer_get_time();
+//       return true;
+//     }
+//   }
+//   return false;
+// }
+
+
+// Buffer per accumulare la sentence corrente
+static char nmeaBuffer[90];
+static uint8_t nmeaLen = 0;
+static bool inSentence = false;
+
+bool isUsefulSentence(const char* buf) {
+  return (strncmp(buf, "$GPRMC", 6) == 0 ||
+          strncmp(buf, "$GNRMC", 6) == 0 ||
+          strncmp(buf, "$GPGGA", 6) == 0 ||
+          strncmp(buf, "$GNGGA", 6) == 0 ||
+          strncmp(buf, "$GPGSV", 6) == 0 ||  // satelliti in vista
+          strncmp(buf, "$GNGSV", 6) == 0);   // multi-costellazione
+}
+
+bool processServicesSerial() {
+  bool gotValid = false;
+
+  while (ServicesSerial.available()) {
+    char c = ServicesSerial.read();
+
+    if (c == '$') {
+      // Inizio nuova sentence
+      inSentence = true;
+      nmeaLen = 0;
+      nmeaBuffer[nmeaLen++] = c;
+    }
+    else if (inSentence) {
+      if (nmeaLen < sizeof(nmeaBuffer) - 1) {
+        nmeaBuffer[nmeaLen++] = c;
+      }
+
+      if (c == '\n') {
+        // Sentence completa
+        nmeaBuffer[nmeaLen] = '\0';
+        inSentence = false;
+
+        if (isUsefulSentence(nmeaBuffer)) {
+          // Passa solo RMC e GGA alla libreria
+          for (uint8_t i = 0; i < nmeaLen; i++) {
+            gps.encode(nmeaBuffer[i]);
+          }
+
+          if (gps.time.isValid()) {
+            lastNmeaValid = esp_timer_get_time();
+            gotValid = true;
+          }
+        }
+      }
+    }
+  }
+
+  return gotValid;
+}

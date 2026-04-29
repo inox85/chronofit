@@ -1,0 +1,1 @@
+Questa cartella contiene i files di un progetto di una web interface che gira su un ESP32
