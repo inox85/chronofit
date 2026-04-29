@@ -615,9 +615,7 @@ input:checked + .slider:before {
 
 /* Logo */
 #splash img {
-  width: 40vw;        /* grande ma adattabile */
   max-width: 500px;   /* limite su schermi grandi */
-  height: auto;
 }
 
 /* Quando aggiungiamo la classe "finished", parte la dissolvenza */
@@ -750,4 +748,39 @@ input:checked + .slider:before {
   font-weight: bold;
   font-size: 15px;
   cursor: pointer;
+}
+
+#splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.splash-logos {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.splash-logos img:first-child {
+  height: 60px;
+}
+
+.splash-logos img:last-child {
+  height: 120px;
+}
+
+.splash-divider {
+  width: 1px;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.3); /* o adatta al tuo tema */
+}
+
+.splash-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.05em;
+  margin: 0;
 }
