@@ -296,6 +296,22 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
   }
 }
 
+// Ritorna false e invia 401 se il token non corrisponde.
+// Se nessun token è configurato in NVS, lascia passare tutto (retrocompatibilità).
+bool isAuthorized(AsyncWebServerRequest *request) {
+  String token = readStringFromSettings("api_token", "");
+  if (token.isEmpty()) return true;
+  if (!request->hasHeader("X-Token")) {
+    request->send(401, "text/plain", "Unauthorized");
+    return false;
+  }
+  if (request->header("X-Token") != token) {
+    request->send(401, "text/plain", "Unauthorized");
+    return false;
+  }
+  return true;
+}
+
 void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   ws.onEvent(onWsEvent);
@@ -320,6 +336,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   },
   [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
     if(!index){
+      if (!isAuthorized(request)) return;
       Serial.println("FS Update start");
       Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS);
     }
@@ -341,7 +358,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     },
     [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
       if(!index){
-        Serial.printf("Update start: %s\n", filename.c_str());     
+        if (!isAuthorized(request)) return;
+        Serial.printf("Update start: %s\n", filename.c_str());
         Update.begin();
       }
       Update.write(data, len);
@@ -369,6 +387,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/setOffset", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
     if (request->hasParam("offset")) {
       String val = request->getParam("offset")->value();
       utcOffset = val.toInt();
@@ -379,12 +398,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
     request->send(400, "text/plain", "Board reboot!");
     esp_restart();
   });
 
   // --- Set Time Manuale --
   server.on("/setTime", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
 
     if(request->hasParam("mode"))
     {  
@@ -469,6 +490,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/wifiConnect", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
     Serial.println("Richiesta connessione wifi...");
 
     String ssid = request->hasParam("ssid") ? request->getParam("ssid")->value() : "";
@@ -615,6 +637,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/clearSession", HTTP_GET, [&](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
     if (LittleFS.exists("/session.json")) {
       if (LittleFS.remove("/session.json")) {
         request->send(200, "text/plain", "✅ Sessione cancellata con successo!");
@@ -677,6 +700,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
 
   server.on("/setAttribute", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (!isAuthorized(request)) return;
 
     #ifdef DEBUG
       Serial.print("URL richiesta: ");
@@ -1014,6 +1038,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   // ── DELETE ──────────────────────────────────────────────────
 server.on("/delete", HTTP_DELETE, [](AsyncWebServerRequest *request) {
+  if (!isAuthorized(request)) return;
   if (!request->hasParam("file")) {
     request->send(400, "text/plain", "Param 'file' missing");
     return;
@@ -1422,4 +1447,3 @@ void sendMailAsync(String email) {
     char* emailCopy = strdup(email.c_str());  // ✅ corretto
     xTaskCreate(sendMailTask, "sendMailTask", 8192, emailCopy, 1, NULL);
 }
-

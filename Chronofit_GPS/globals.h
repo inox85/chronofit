@@ -118,4 +118,6 @@ extern unsigned long lastTxTime;
 extern volatile bool shouldRestart;
 
 extern int buzzerActive;
+
+extern portMUX_TYPE isrMux;
 #endif

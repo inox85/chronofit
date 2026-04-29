@@ -277,33 +277,37 @@ void loop() {
     ESP.restart();
   }
   
-  if(RTCTriggered){
-    RTCTriggered = false;
-    if(RTCTtriggerCount == 1){
-      startRTC = lastRTCTrigger;
+  bool localRTCTriggered = false;
+  uint64_t localRTCTrigger = 0;
+  uint32_t localRTCCount = 0;
+  portENTER_CRITICAL(&isrMux);
+    if (RTCTriggered) {
+      localRTCTriggered = true;
+      localRTCTrigger = lastRTCTrigger;
+      localRTCCount = RTCTtriggerCount;
+      RTCTriggered = false;
+    }
+  portEXIT_CRITICAL(&isrMux);
+
+  if(localRTCTriggered){
+    if(localRTCCount == 1){
+      startRTC = localRTCTrigger;
       Serial.print("startRTC: ");
       Serial.println(startRTC);
 
-    }else if(RTCTtriggerCount > 60){
-      double extimated = ((double)(RTCTtriggerCount - 1) * 1000000.0)/1000.0;
-      double elapsed = (double)(((double)lastRTCTrigger - (double)startRTC)* calibrationFactor )/1000.0;
+    }else if(localRTCCount > 60){
+      double extimated = ((double)(localRTCCount - 1) * 1000000.0)/1000.0;
+      double elapsed = (double)(((double)localRTCTrigger - (double)startRTC)* calibrationFactor )/1000.0;
       double delta = (double)elapsed - (double)extimated;
 
-      // Serial.print(" Delta: ");
-      // Serial.print(delta);
-      // Serial.print(" in ");
-      // Serial.print(RTCTtriggerCount - 1);
-      double driftPPM = (delta / (double)(RTCTtriggerCount - 1)) * 1000.0;
-      // Serial.print(" DriftPPM: ");
-      // Serial.print(driftPPM);
-
+      double driftPPM = (delta / (double)(localRTCCount - 1)) * 1000.0;
 
       if(fabs(driftPPM)> 0.5){
         updateCalibrationFactor(driftPPM * 2.0);
       }
 
     }
-    
+
   }
 
 
@@ -339,17 +343,24 @@ void loop() {
   }
 
   // 🔹 Gestione PPS GPS (unico punto che consuma ppsTriggered)
-  uint64_t delta = (lastNmeaValid > 0 && lastSyncTrigger >= lastNmeaValid)
-                 ? (lastSyncTrigger - lastNmeaValid)
+  bool localPpsTriggered = false;
+  uint64_t thisPpsUs = 0;
+  portENTER_CRITICAL(&isrMux);
+    if (ppsTriggered) {
+      localPpsTriggered = true;
+      thisPpsUs = lastSyncTrigger;
+    }
+  portEXIT_CRITICAL(&isrMux);
+
+  uint64_t delta = (lastNmeaValid > 0 && thisPpsUs >= lastNmeaValid)
+                 ? (thisPpsUs - lastNmeaValid)
                  : UINT64_MAX;
 
-  if (ppsTriggered) {
-    lastPPSDetected = lastSyncTrigger;
-    uint64_t thisPpsUs = lastSyncTrigger;
+  if (localPpsTriggered) {
+    lastPPSDetected = thisPpsUs;
 
     // Sincronizzazione iniziale — richiede NMEA fresco
     if ((delta >= 300000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
-      ppsTriggered = false;
       validNmea = false;
 
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
@@ -362,27 +373,24 @@ void loop() {
         RTCTtriggerCount = 0;
         lastGPSSync = millis();
       }
-
-    // Sync test — basta il PPS, NMEA non necessario
-    } 
+    }
 
     if (syncTestRequested && syncStatus == SYNC_GPS_SYNCED && syncMode == MODE_SYNC_GPS) {
-      ppsTriggered = false;
-
       PreciseTime pt = getPreciseTimeFromSync(thisPpsUs);
       if ((pt.ss == 0 && pt.ms < 500) || (pt.ss == 59 && pt.ms > 500)) {
         syncTestRequested = 0;
         sensorTime[4] = thisPpsUs;
-        sensorTriggered[4] = true;
+        portENTER_CRITICAL(&isrMux);
+          sensorTriggered[4] = true;
+        portEXIT_CRITICAL(&isrMux);
         handleSensorTrigger();
       }
-      
-    } 
-    else 
-    {
-      ppsTriggered = false;
     }
-}
+
+    portENTER_CRITICAL(&isrMux);
+      ppsTriggered = false;
+    portEXIT_CRITICAL(&isrMux);
+  }
 
   PreciseTime t = getPreciseTime();
   actualSecond = t.ss;
@@ -422,17 +430,25 @@ bool checkConnectedClient(){
 
 void handleSensorTrigger(){
   for (int i = 0; i < 5; i++) {
-    if (sensorTriggered[i]) {
+    bool triggered = false;
+    uint64_t tUs = 0;
+    portENTER_CRITICAL(&isrMux);
+      if (sensorTriggered[i]) {
+        triggered = true;
+        tUs = sensorTime[i];
+        sensorTriggered[i] = false;
+      }
+    portEXIT_CRITICAL(&isrMux);
 
-      sensorTriggered[i] = false;           // reset del flag
+    if (triggered) {
       playBinary(i+1);
       if (syncMode == MODE_SYNC_LINE && syncStatus == SYNC_WAIT_LINE_SIGNAL){
-        lastSyncTrigger = sensorTime[i];    //lineTriggered = true;
+        lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;
         handleLineSync();
       }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START)
       {
-        lastSyncTrigger = sensorTime[i];    //lineTriggered = true;
+        lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;
         RTCTtriggerCount = 0;
         handleLineSync();
@@ -504,6 +520,10 @@ bool processServicesSerial() {
     else if (inSentence) {
       if (nmeaLen < sizeof(nmeaBuffer) - 1) {
         nmeaBuffer[nmeaLen++] = c;
+      } else {
+        // Sentenza troppo lunga: scarta e attendi la prossima
+        inSentence = false;
+        nmeaLen = 0;
       }
 
       if (c == '\n') {
