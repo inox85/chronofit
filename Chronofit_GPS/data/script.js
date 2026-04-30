@@ -1488,10 +1488,6 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Richiedo always on display...");
     keepScreenOn();
 
-
-    // console.log("Carica audio files nella cache...")
-    // cacheAudioFiles();
-
     console.log("Timposto toggle delta time a default...")
     const chk = document.getElementById("toggle-delta-time");
     toggleDeltaTimeColumn(chk.checked);
@@ -1515,9 +1511,32 @@ document.getElementById('noFullscreen').addEventListener('click', () => {
   document.getElementById('fullscreenOverlay').style.display = 'none';
 });
 
+function preloadLineAudio() {
+  const params = new URLSearchParams(window.location.search);
+  const line = params.get("line");
+  if (line && line >= 1 && line <= 4) {
+    const name = `/sound${line}.mp3`;
+    if (!audioCache[name]) {
+      // delay casuale 0-3s → i 6 dispositivi non scaricano tutti insieme
+      const delay = Math.random() * 3000;
+      setTimeout(() => {
+        const audio = new Audio();
+        audio.preload = "auto";
+        audio.src = name;
+        audio.load();
+        audioCache[name] = audio;
+        console.log(`Audio precaricato per linea ${line} (dopo ${Math.round(delay)}ms)`);
+      }, delay);
+    }
+  }
+}
+
 function playSound(name) {
   if (!audioCache[name]) {
-    audioCache[name] = new Audio(name);
+    const audio = new Audio();
+    audio.preload = "none";  // non scaricare finché non serve
+    audio.src = name;
+    audioCache[name] = audio;
   }
   audioCache[name].currentTime = 0;
   audioCache[name].play();

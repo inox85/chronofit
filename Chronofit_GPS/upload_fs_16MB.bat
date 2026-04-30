@@ -20,6 +20,8 @@ echo ================================================
 echo  Generazione LittleFS
 echo ================================================
 
+python compress_assets.py
+
 REM Controllo mklittlefs
 where %MKLITTLEFS% >nul 2>&1
 if errorlevel 1 (

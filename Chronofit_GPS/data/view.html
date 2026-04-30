@@ -220,6 +220,19 @@
         </label>
       </div>
 
+      <hr class="divider">
+
+      <h2>Time precision</h2>
+
+      <div class="toggle-row">
+        <span>Decimal digits</span>
+        <select id="time-precision" onchange="onTimePrecisionChange(this.value)">
+          <option value="1">Tenths (0.0)</option>
+          <option value="2">Hundredths (0.00)</option>
+          <option value="3" selected>Milliseconds (0.000)</option>
+        </select>
+      </div>
+
       <div class="button-row">
         <!--<button class="big-button">Clear session</button>-->
         <button class="big-button" id="closeTablePopup">Close</button>

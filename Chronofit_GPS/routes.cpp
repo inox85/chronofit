@@ -49,7 +49,9 @@ void activateAccessPoint(){
   // Crea l'SSID con il chipId
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
 
-  WiFi.softAP(ssid_sn);
+  WiFi.softAP(ssid_sn.c_str(), nullptr, 6, false, 6);
+
+  esp_wifi_set_ps(WIFI_PS_NONE);
 
   #ifdef DEBUG
     Serial.println("Access Point avviato");
@@ -374,12 +376,31 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
      request->send(LittleFS, "/index.html", "text/html");
   });
 
-  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(LittleFS, "/style.css", "text/css");
+  // Route manuale solo per i file gzippati
+  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/script.js.gz", "application/javascript");
+    r->addHeader("Cache-Control", "public, max-age=3600");
+    r->addHeader("Content-Encoding", "gzip");
+    request->send(r);
   });
 
-  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(LittleFS, "/script.js", "application/javascript");
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/style.css.gz", "text/css");
+    r->addHeader("Cache-Control", "public, max-age=3600");
+    r->addHeader("Content-Encoding", "gzip");
+    request->send(r);
+  });
+
+  server.on("/logo.webp", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/logo.webp", "image/webp");
+    r->addHeader("Cache-Control", "public, max-age=2592000");
+    request->send(r);
+  });
+
+  server.on("/logo-black.webp", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/logo-black.webp", "image/webp");
+    r->addHeader("Cache-Control", "public, max-age=2592000");
+    request->send(r);
   });
 
   server.on("/admin", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -1345,7 +1366,7 @@ void sendEmail(String emailAddress, const char* subject, const char* body,
   session.login.password   = GMAIL_SMTP_PASSWORD;
   session.login.user_domain = "";
 
-  Serial.printf("EMAIL: [%s]\n", emailAddress.c_str());
+  //Serial.printf("EMAIL: [%s]\n", emailAddress.c_str());
 
   SMTP_Message message;
   message.sender.name  = "⏱️Chronofit";
@@ -1371,7 +1392,7 @@ void sendEmail(String emailAddress, const char* subject, const char* body,
     Serial.printf("[MAIL] ⚠️ File non trovato: %s, invio senza allegato\n", attachPath);
   }
 
-  smtp.debug(1);
+  smtp.debug(0);
   smtp.callback(smtpCallback);
 
   Serial.println("[MAIL] Connessione a Gmail...");

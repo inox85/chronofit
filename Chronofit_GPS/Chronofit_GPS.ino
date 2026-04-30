@@ -145,7 +145,9 @@ void initGPS(){
 void setup() {
   configFS();
   gpsParser.begin(gps);
+
   esp_wifi_set_max_tx_power(80);   // 80 × 0.25 dBm = 20 dBm
+  esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G);
 
   //setupWiFi();
 
@@ -246,7 +248,7 @@ void configFS(){
     Serial.println("Errore nel montaggio di LittleFS");
     return;
   }
-  server.serveStatic("/", LittleFS, "/");
+  server.serveStatic("/", LittleFS, "/").setCacheControl("public, max-age=2592000");
 
 }
 
