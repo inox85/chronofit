@@ -242,7 +242,7 @@ void setup() {
 }
 
 void configFS(){
-  if (!LittleFS.begin(true)) {  // true = formatta se non montato!
+  if (!LittleFS.begin(true, "/spiffs", 20)) {  // true = formatta se non montato!
     Serial.println("Errore nel montaggio di LittleFS");
     return;
   }
