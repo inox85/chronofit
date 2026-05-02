@@ -1,4 +1,5 @@
 #include "time_utils.h"
+#include "mqtt.h"
 #include <TimeLib.h>  // se usi TimeLib
 #include "globals.h"
 #include "constants.h"
@@ -14,7 +15,6 @@
 #include "settings.h"
 #include <WiFi.h>
 #include "RTC.h"
-#include "mqtt.h"
 
 PreciseTime getPreciseTime() {
   PreciseTime t;

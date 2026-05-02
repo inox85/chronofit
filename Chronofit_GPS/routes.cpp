@@ -160,12 +160,19 @@ void wifiTxActivity() { lastTxTime = millis(); }
 static uint8_t reconnectAttempts = 0;
 static const uint8_t MAX_ATTEMPTS = 5;
 
+
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
   reconnectAttempts = 0;
 
-  String msgJson = serializeMessage("Connecting to WiFi for internet access...");
-  ws.textAll(msgJson);
+  // Avvisa il frontend prima che il WebSocket cada per il cambio modalità WiFi
+  StaticJsonDocument<64> wifiDoc;
+  wifiDoc["t"] = TYPE_WIFI_CONNECTING;
+  wifiDoc["ssid"] = ssid;
+  String wifiMsg;
+  serializeJson(wifiDoc, wifiMsg);
+  ws.textAll(wifiMsg);
+  delay(100); // lascia tempo al browser di ricevere il messaggio prima del disconnect
 
   startAttemptTime = millis();
 
@@ -181,61 +188,67 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   Serial.print(ssid);
 
 
-  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+  static bool eventRegistered = false;
+  if (!eventRegistered) {
+    eventRegistered = true;
+    WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
 
-   switch (event) {
+      switch (event) {
 
-    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-      Serial.println("WiFi: associato all'AP");
-      break;
+        case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+          Serial.println("WiFi: associato all'AP");
+          break;
 
-    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      reconnectAttempts = 0;  // ← manca questa
-      Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
-      ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
-      break;
+        case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+          reconnectAttempts = 0;
+          Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
+          ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
+          break;
 
-      case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
-        uint8_t reason = info.wifi_sta_disconnected.reason;
-        Serial.printf("❌ WiFi: disconnesso, reason=%d\n", reason);
+        case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
+          uint8_t reason = info.wifi_sta_disconnected.reason;
+          Serial.printf("❌ WiFi: disconnesso, reason=%d\n", reason);
 
-        switch (reason) {
-          case WIFI_REASON_AUTH_EXPIRE:
-          case WIFI_REASON_AUTH_FAIL:
-          case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
-          case WIFI_REASON_NO_AP_FOUND:
-            // Non riprovare — credenziali errate o rete assente
-            reconnectAttempts = MAX_ATTEMPTS;  // ← forza stop definitivo
-            Serial.println("❌ WiFi: credenziali errate o rete non trovata");
-            ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
-            break;
+          switch (reason) {
+            case WIFI_REASON_ASSOC_LEAVE:
+              // Disconnessione volontaria (WiFi.begin() su nuova rete): ignora
+              break;
 
-          default:
-            if (reconnectAttempts < MAX_ATTEMPTS) {
-              reconnectAttempts++;
-              Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
-              // backoff non bloccante
-              uint32_t backoff = 1000 * reconnectAttempts;
-              xTimerStart(xTimerCreate("wifiRetry", pdMS_TO_TICKS(backoff), pdFALSE, nullptr,
-                [](TimerHandle_t){ WiFi.reconnect(); }), 0);
-            } else {
-              Serial.println("❌ WiFi: troppi tentativi falliti, arresto riconnessione");
-              ws.textAll(serializeMessage("WiFi: max reconnect attempts reached"));
-            }
-            break;
+            case WIFI_REASON_AUTH_EXPIRE:
+            case WIFI_REASON_AUTH_FAIL:
+            case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+            case WIFI_REASON_NO_AP_FOUND:
+              reconnectAttempts = MAX_ATTEMPTS;
+              Serial.println("❌ WiFi: credenziali errate o rete non trovata");
+              ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
+              break;
+
+            default:
+              if (reconnectAttempts < MAX_ATTEMPTS) {
+                reconnectAttempts++;
+                Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
+                uint32_t backoff = 1000 * reconnectAttempts;
+                xTimerStart(xTimerCreate("wifiRetry", pdMS_TO_TICKS(backoff), pdFALSE, nullptr,
+                  [](TimerHandle_t){ WiFi.reconnect(); }), 0);
+              } else {
+                Serial.println("❌ WiFi: troppi tentativi falliti, arresto riconnessione");
+                ws.textAll(serializeMessage("WiFi: max reconnect attempts reached"));
+              }
+              break;
+          }
+          break;
         }
-        break;
+
+        case ARDUINO_EVENT_WIFI_STA_LOST_IP:
+          Serial.println("WiFi: IP perso");
+          ws.textAll(serializeMessage("WiFi IP lost"));
+          break;
+
+        default:
+          break;
       }
-
-      case ARDUINO_EVENT_WIFI_STA_LOST_IP:
-        Serial.println("WiFi: IP perso");
-        ws.textAll(serializeMessage("WiFi IP lost"));
-        break;
-
-      default:
-        break;
-    }
-  });
+    });
+  }
 
     // ← crea il task UNA SOLA VOLTA
   static bool internetTaskStarted = false;

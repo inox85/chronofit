@@ -607,7 +607,7 @@ function handleMessage(data) {
 
     case TYPE_WIFI_CONNECTING:
       wifiConnecting = true;
-      //showGeneralPopup("Connecting to WIFI and MQTT Network!", "#3b55ffff", 3000 );
+      // Quando il WebSocket si riapre, resettiamo il flag
       break;
   }
 }

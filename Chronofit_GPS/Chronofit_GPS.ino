@@ -25,7 +25,7 @@
 #include "lwip/stats.h"
 #include "gps_custom.h"
 #include <SoftwareSerial.h>
-#include "mqtt.h" 
+#include "mqtt.h"
 
 SoftwareSerial gpsCmd(-1, 13);
 
@@ -240,9 +240,9 @@ void setup() {
 
   activateAccessPoint();
 
-  RGBLeds.defaultSweepSequence();
+  mqttSetup();
 
-  mqttSetup(); 
+  RGBLeds.defaultSweepSequence();
 
 }
 
