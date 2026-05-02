@@ -36,6 +36,16 @@ static void connectBlocking() {
             vTaskDelay(pdMS_TO_TICKS(2000));
             continue;
         }
+
+        // Risoluzione DNS prima del connect per diagnosticare
+        IPAddress brokerIp;
+        if (!WiFi.hostByName(MQTT_SERVER, brokerIp)) {
+            Serial.println("[MQTT] DNS fallito per " + String(MQTT_SERVER) + ", riprovo tra 5s");
+            vTaskDelay(pdMS_TO_TICKS(5000));
+            continue;
+        }
+        Serial.printf("[MQTT] %s risolto in %s\n", MQTT_SERVER, brokerIp.toString().c_str());
+
         String clientId = "chronofit-" + chipIdStr;
         Serial.print("[MQTT] Connessione...");
         if (mqtt.connect(clientId.c_str())) {
@@ -72,7 +82,6 @@ void mqttSetup() {
     // Core 0: stesso core di AsyncTCP, lontano dal loop() principale su Core 1
     xTaskCreatePinnedToCore(mqttTask, "mqtt", 4096, nullptr, 1, nullptr, 0);
 }
-
 
 void mqttPublishCheckpoint(const String& jsonPayload) {
     if (mqttQueue == nullptr) return;
