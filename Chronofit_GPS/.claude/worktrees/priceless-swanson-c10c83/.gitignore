@@ -1,0 +1,25 @@
+Chronofit_GPS/littlefs.bin
+Chronofit_GPS/secrets.h
+
+# PlatformIO build artifacts
+Chronofit_GPS/.pio/
+.pio/
+
+Software/ChronoUpdater/.vs/ChronoUpdater.slnx/FileContentIndex/ec9830a6-9422-4c16-8d6e-a58295488ee8.vsidx
+*.vsidx
+Software/ChronoUpdater/.vs/ChronoUpdater.slnx/FileContentIndex/ef5ccf70-d723-4fcd-905c-9806d0dc71d2.vsidx
+Software/ChronoUpdater/ChronoUpdater/Secrets.cs
+/Software/ChronoUpdater/ChronoUpdater/bin
+/Software/ChronoUpdater/ChronoUpdater/bin
+/Software/ChronoUpdater/ChronoUpdater/bin
+/Software/ChronoUpdater/ChronoUpdater/obj
+/Chronofit_GPS/build
+/Software/ChronoUpdater/ChronoUpdater/obj
+*.bin
+*.bin
+Chronofit_GPS/littlefs.bin
+/Software/ChronoUpdater/ChronoUpdater/obj
+/Software/ChronoUpdater/ChronoUpdater/obj
+/Chronofit_GPS/release
+/Software/ChronoUpdater/ChronoUpdater/bin
+Chronofit_GPS/.claude/worktrees/jovial-hamilton-e577ad/
