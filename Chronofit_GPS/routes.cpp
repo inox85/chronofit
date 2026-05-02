@@ -160,8 +160,9 @@ void wifiTxActivity() { lastTxTime = millis(); }
 static uint8_t reconnectAttempts = 0;
 static const uint8_t MAX_ATTEMPTS = 5;
 
-
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
+
+  reconnectAttempts = 0;
 
   String msgJson = serializeMessage("Connecting to WiFi for internet access...");
   ws.textAll(msgJson);

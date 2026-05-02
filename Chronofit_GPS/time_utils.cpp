@@ -14,6 +14,7 @@
 #include "settings.h"
 #include <WiFi.h>
 #include "RTC.h"
+#include "mqtt.h"
 
 PreciseTime getPreciseTime() {
   PreciseTime t;
@@ -213,6 +214,11 @@ void checkPointRoutine(int i) {
   serializeJson(wsDoc, jsonMessage);
   //ws.cleanupClients(); // rimuove client chiusi
   ws.textAll(jsonMessage);
+
+  // 🔹 Pubblica su MQTT
+  String mqttPayload;
+  serializeJson(ordered, mqttPayload);
+  mqttPublishCheckpoint(mqttPayload);
 }
 
 

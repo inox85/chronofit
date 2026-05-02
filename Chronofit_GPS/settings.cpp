@@ -76,7 +76,7 @@ uint64_t writeULong64ToSettings(const char* key, uint64_t val) {
     settingsBegin();
     settings.putULong64(key, val);
     settingsEnd();
-    return readULong64FromSettings(key, -1.0);
+    return readULong64FromSettings(key, 0);
 }
 
 uint64_t readULong64FromSettings(const char* key, uint64_t def) {
