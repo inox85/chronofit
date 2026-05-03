@@ -141,33 +141,36 @@ function uploadFS() {
         .catch(err => console.error(err));
 }
 
-function setCheckPointFields() {
+// function setCheckPointFields() {
 
-  const l1 = document.getElementById("l1").value;
-  const l2 = document.getElementById("l2").value;
-  const l3 = document.getElementById("l3").value;
-  const l4 = document.getElementById("l4").value;
-  const competitor = document.getElementById("competitor").value;
-  const lag1 = document.getElementById("lag1").value;
-  const lag2 = document.getElementById("lag2").value;
-  const lag3 = document.getElementById("lag3").value;
-  const lag4 = document.getElementById("lag4").value;
+//   const l1 = document.getElementById("l1").value;
+//   const l2 = document.getElementById("l2").value;
+//   const l3 = document.getElementById("l3").value;
+//   const l4 = document.getElementById("l4").value;
+//   const c1 = document.getElementById("c1").value;
+//   const c2 = document.getElementById("c2").value;
+//   const c3 = document.getElementById("c3").value;
+//   const c4 = document.getElementById("c4").value;
+//   const lag1 = document.getElementById("lag1").value;
+//   const lag2 = document.getElementById("lag2").value;
+//   const lag3 = document.getElementById("lag3").value;
+//   const lag4 = document.getElementById("lag4").value;
 
-  const url = `/setCheckPointFields?l1=${encodeURIComponent(l1)}&l2=${encodeURIComponent(l2)}&l3=${encodeURIComponent(l3)}&l4=${encodeURIComponent(l4)}&competitor=${encodeURIComponent(competitor)}&lag1=${encodeURIComponent(lag1)}&lag2=${encodeURIComponent(lag2)}&lag3=${encodeURIComponent(lag3)}&lag4=${encodeURIComponent(lag4)}`;
+//   const url = `/setCheckPointFields?l1=${encodeURIComponent(l1)}&l2=${encodeURIComponent(l2)}&l3=${encodeURIComponent(l3)}&l4=${encodeURIComponent(l4)}&c1=${encodeURIComponent(c1)}&c2=${encodeURIComponent(c2)}&c3=${encodeURIComponent(c3)}&c4=${encodeURIComponent(c4)}&lag1=${encodeURIComponent(lag1)}&lag2=${encodeURIComponent(lag2)}&lag3=${encodeURIComponent(lag3)}&lag4=${encodeURIComponent(lag4)}`;
 
-  console.log(url);
+//   console.log(url);
 
-  fetch(url)
-    .then(response => response.text())
-    .then(msg => {
-      document.getElementById("fields-msg").innerText = msg;
-      setTimeout(() => { document.getElementById("fields-msg").innerText = ""; }, 3000);
-    })
-    .catch(err => {
-      document.getElementById("fields-msg").innerText = "Errore invio dati";
-      console.error(err);
-    });
-}
+//   fetch(url)
+//     .then(response => response.text())
+//     .then(msg => {
+//       document.getElementById("fields-msg").innerText = msg;
+//       setTimeout(() => { document.getElementById("fields-msg").innerText = ""; }, 3000);
+//     })
+//     .catch(err => {
+//       document.getElementById("fields-msg").innerText = "Errore invio dati";
+//       console.error(err);
+//     });
+// }
 
 function setSettings(){
 
@@ -2127,8 +2130,7 @@ function showMqttNotification(topic, d) {
     <div class="mqtt-notif-header">
       <span class="mqtt-notif-source">📡 ${source}</span>
     </div>
-    <div class="mqtt-notif-row">L${lineNum ?? "?"} &nbsp;·&nbsp; ${d?.lId ?? "—"}</div>
-    <div class="mqtt-notif-row">Competitor: <b>${competitor || "—"}</b></div>
+    <div class="mqtt-notif-row">L${lineNum ?? "?"} &nbsp;·&nbsp; ${d?.lId ?? "—"} &nbsp;·&nbsp; Competitor: ${competitor || "—"}</div>
     <div class="mqtt-notif-time">${hh}:${mm}:${ss}.${ms}</div>
     <div class="mqtt-notif-actions">
       <button class="mqtt-notif-btn mqtt-notif-accept">✓ Accept</button>
@@ -2137,11 +2139,23 @@ function showMqttNotification(topic, d) {
   `;
 
   card.querySelector(".mqtt-notif-accept").addEventListener("click", () => {
-    const inp = document.getElementById("c" + lineNum);
-    if (inp) {
-      inp.value = competitor;
-      inp.dispatchEvent(new Event("change"));
-    }
+    
+    [1, 2, 3, 4].forEach(n => {
+      console.log("c" + n)
+      const inp = document.getElementById("c" + n);
+      if (inp) inp.value = competitor;
+
+      const data = {
+        l: Number(n),
+        ld: String(document.querySelector(`#l${n}`).value),
+        c: Number(document.querySelector(`#c${n}`).value),
+        d: Number(document.querySelector(`#d${n}`).value) || 0
+      };
+
+      sendSettingsRowData(data);
+
+    });
+
     card.remove();
     updateCloseAllBtn();
   });

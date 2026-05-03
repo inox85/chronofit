@@ -324,6 +324,7 @@ void loop() {
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
+    ws.cleanupClients();
 
     #ifdef VER2
       if(checkConnectedClient()){

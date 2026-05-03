@@ -14,6 +14,7 @@ static const int   QUEUE_SIZE  = 20;
 struct MqttMessage {
     char topic[80];
     char payload[300];
+    bool retained;  // aggiungi questo
 };
 
 static WiFiClient    wifiClient;
@@ -86,7 +87,7 @@ static void mqttTask(void*) {
 
         MqttMessage msg;
         while (mqtt.connected() && xQueueReceive(mqttQueue, &msg, 0) == pdTRUE) {
-            mqtt.publish(msg.topic, msg.payload);
+            mqtt.publish(msg.topic, msg.payload, true);
             Serial.printf("[MQTT OUT] %s: %s\n", msg.topic, msg.payload);
         }
 
