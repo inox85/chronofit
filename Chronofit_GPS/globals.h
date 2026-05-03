@@ -32,6 +32,8 @@ extern String stationName;
 extern unsigned long startAttemptTime;
 extern const unsigned long wifiTimeout; // 10 secondi
 extern volatile bool internetOK;
+extern bool wifiReconnecting;
+extern volatile bool mqttConnected;
 
 // --- PPS ---
 extern volatile uint8_t ppsH, ppsM, ppsS;

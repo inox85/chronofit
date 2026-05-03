@@ -37,6 +37,7 @@
 #define TYPE_ROW_UPDATED              4
 #define TYPE_GENERIC_MESSAGE          5
 #define TYPE_WIFI_CONNECTING          7
+#define TYPE_WIFI_ERROR               8
 
 #define AGING_REG                     0x10
 #define DS3231_ADDR                   0x68

@@ -368,18 +368,16 @@ void broadcastTime() {
 
   doc["f"] = fixStatus;
 
+  doc["mq"] = (mqttConnected && internetOK) ? 1 : 0;
+
   if (WiFi.status() == WL_CONNECTED) {
-    if (internetOK) {
-      doc["w"] = 3;
-    } else {
-      doc["w"] = 2;
-    }
+    doc["w"] = internetOK ? 3 : 2;
+  } else if (wifiReconnecting) {
+    doc["w"] = 4;  // caduta post-connessione, retry in corso
+  } else if (millis() - startAttemptTime < wifiTimeout) {
+    doc["w"] = 1;  // primo tentativo di connessione in corso
   } else {
-    if (millis() - startAttemptTime < wifiTimeout) {
-      doc["w"] = 1;
-    } else {
-      doc["w"] = 0;
-    }
+    doc["w"] = 0;
   }
 
   if (doc["w"] == 3){

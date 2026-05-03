@@ -2,7 +2,6 @@
 #include "globals.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include "esp_task_wdt.h"
 
 static const char* MQTT_SERVER = "broker.hivemq.com";
 static const int   MQTT_PORT   = 1883;
@@ -32,9 +31,8 @@ static void subscribe() {
 
 static void connectBlocking() {
     while (!mqtt.connected()) {
-
-
         if (!internetOK) {
+            mqttConnected = false;  // segnala subito: niente internet = niente MQTT
             vTaskDelay(pdMS_TO_TICKS(2000));
             continue;
         }
@@ -49,11 +47,12 @@ static void connectBlocking() {
 
         String clientId = "chronofit-" + chipIdStr;
         Serial.print("[MQTT] Connessione...");
-
         if (mqtt.connect(clientId.c_str())) {
             Serial.println(" OK");
+            mqttConnected = true;
             subscribe();
         } else {
+            mqttConnected = false;
             Serial.printf(" fallita rc=%d, riprovo tra 5s\n", mqtt.state());
             vTaskDelay(pdMS_TO_TICKS(5000));
         }
@@ -63,6 +62,12 @@ static void connectBlocking() {
 static void mqttTask(void*) {
     for (;;) {
         connectBlocking();
+
+        // Rileva caduta connessione
+        if (!mqtt.connected()) {
+            mqttConnected = false;
+            continue;
+        }
 
         MqttMessage msg;
         while (mqtt.connected() && xQueueReceive(mqttQueue, &msg, 0) == pdTRUE) {
@@ -77,7 +82,7 @@ static void mqttTask(void*) {
 
 void mqttSetup() {
     mqttQueue = xQueueCreate(QUEUE_SIZE, sizeof(MqttMessage));
-    wifiClient.setTimeout(1);
+    wifiClient.setTimeout(1);  // max 1s bloccante: WDT default è 5s, margine ampio
     mqtt.setServer(MQTT_SERVER, MQTT_PORT);
     mqtt.setCallback(onMqttMessage);
     xTaskCreatePinnedToCore(mqttTask, "mqtt", 4096, nullptr, 1, nullptr, 0);

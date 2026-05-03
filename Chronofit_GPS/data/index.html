@@ -274,6 +274,8 @@
         <button class="big-button" id="closeWifiPopup" onclick="closeWiFiPopup()">Cancel</button>
       </div>
 
+      <button class="big-button" id="stopReconnectBtn" onclick="stopWifiReconnect()" style="display:none; background:#c0392b; margin-top:8px; width:100%;">⛔ Stop reconnecting</button>
+
       <p id="wifi-status-field"></p>
     </div>
   </div>
@@ -375,6 +377,10 @@
       <div class="card-status-item" id="gps-notify">
         <span class="status-icon">GPS:</span>
         <span id="gpsStatus" class="status-icon">❌</span>
+      </div>
+      <div class="card-status-item" id="mqtt-notify">
+        <span class="status-icon">MQTT:</span>
+        <span id="mqttStatus" class="status-icon">📡</span>
       </div>
     </div>
     

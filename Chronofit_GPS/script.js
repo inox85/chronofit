@@ -20,6 +20,7 @@ const WIFI_STATUS_DISCONNECTED = 0;
 const WIFI_STATUS_CONNECING = 1;
 const WIFI_STATUS_CONNECTED = 2;
 const WIFI_STATUS_INTERNET_OK = 3;
+const WIFI_STATUS_RECONNECTING = 4;
 
 const POWER_MODE_NONE = 0;   // Alimentatore esterno non collegato
 const POWER_MODE_USB = 1;   // Dispositivo alimentato da POWER BANK
@@ -534,7 +535,7 @@ function connectWebSocket() {
     console.warn("⚠️ WebSocket closed");
     wsConnecting = false;
     connectionLost = true;
-    showPopup();
+    if (!wifiConnecting) showPopup();  // non mostrare il popup durante il reconnect WiFi
     stopWatchdog();
 
     if (!reconnectTimer) {
@@ -730,16 +731,28 @@ function updateClockFromData(data) {
 
     const hasRows = document.querySelectorAll('#event-table tbody tr').length > 0;
 
-    if(wifiStatus == WIFI_STATUS_CONNECTED){
-      wifiNavBar.innerText =  "🟡";
-    }else if(wifiStatus == WIFI_STATUS_CONNECING){
-      wifiNavBar.innerText =  "🔄";
-    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK && hasRows){
-      wifiNavBar.innerText =  "🟢";
-      btn.disabled = false;
-      btn.classList.remove("disabled");
-    }else if(wifiStatus == WIFI_STATUS_DISCONNECTED){
-      wifiNavBar.innerText =  "🔴";
+    const stopBtn = document.getElementById("stopReconnectBtn");
+    if (wifiStatus == WIFI_STATUS_INTERNET_OK) {
+      wifiNavBar.innerText = "🟢";
+      wifiConnecting = false;
+      if (stopBtn) stopBtn.style.display = "none";
+      if (hasRows) { btn.disabled = false; btn.classList.remove("disabled"); }
+    } else if (wifiStatus == WIFI_STATUS_CONNECTED) {
+      wifiNavBar.innerText = "🟡";
+      wifiConnecting = false;
+      if (stopBtn) stopBtn.style.display = "none";
+    } else if (wifiStatus == WIFI_STATUS_CONNECING) {
+      wifiNavBar.innerText = "🔄";
+      wifiConnecting = true;
+      if (stopBtn) stopBtn.style.display = "none";  // primo tentativo: no Stop
+    } else if (wifiStatus == WIFI_STATUS_RECONNECTING) {
+      wifiNavBar.innerText = "🔁";
+      wifiConnecting = true;
+      if (stopBtn) stopBtn.style.display = "block";  // caduta: mostra Stop
+    } else if (wifiStatus == WIFI_STATUS_DISCONNECTED) {
+      wifiNavBar.innerText = "🔴";
+      wifiConnecting = false;
+      if (stopBtn) stopBtn.style.display = "none";
     }
 
     if(syncStatus === SYNC_NONE){
@@ -2045,6 +2058,12 @@ document.getElementById("wifi-notify").addEventListener("click", () => {
 });
 
 function closeWiFiPopup(){
+  document.getElementById("wifiOverlay").style.display = "none";
+}
+
+function stopWifiReconnect() {
+  fetch('/wifiStop').catch(e => console.error(e));
+  document.getElementById("stopReconnectBtn").style.display = "none";
   document.getElementById("wifiOverlay").style.display = "none";
 }
 

@@ -159,6 +159,21 @@ void wifiTxActivity() { lastTxTime = millis(); }
 
 static uint8_t reconnectAttempts = 0;
 static const uint8_t MAX_ATTEMPTS = 5;
+static TimerHandle_t wifiRetryTimer = nullptr;
+
+static void scheduleWifiRetry(uint32_t backoffMs) {
+  if (wifiRetryTimer != nullptr) {
+    xTimerStop(wifiRetryTimer, 0);
+    xTimerDelete(wifiRetryTimer, 0);
+    wifiRetryTimer = nullptr;
+  }
+  wifiRetryTimer = xTimerCreate("wifiRetry", pdMS_TO_TICKS(backoffMs), pdFALSE, nullptr,
+    [](TimerHandle_t) {
+      wifiRetryTimer = nullptr;
+      WiFi.reconnect();
+    });
+  xTimerStart(wifiRetryTimer, 0);
+}
 
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
@@ -201,6 +216,12 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
 
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
           reconnectAttempts = 0;
+          wifiReconnecting = false;
+          if (wifiRetryTimer != nullptr) {
+            xTimerStop(wifiRetryTimer, 0);
+            xTimerDelete(wifiRetryTimer, 0);
+            wifiRetryTimer = nullptr;
+          }
           Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
           ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
           break;
@@ -217,22 +238,46 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
             case WIFI_REASON_AUTH_EXPIRE:
             case WIFI_REASON_AUTH_FAIL:
             case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+              // Credenziali sbagliate: ferma sempre
+              if (!wifiReconnecting) {
+                WiFi.setAutoReconnect(false);
+                Serial.println("❌ WiFi: credenziali errate");
+                StaticJsonDocument<128> errDoc;
+                errDoc["t"] = TYPE_WIFI_ERROR;
+                errDoc["msg"] = "Wrong credentials";
+                String errJson;
+                serializeJson(errDoc, errJson);
+                ws.textAll(errJson);
+              }
+              break;
+
             case WIFI_REASON_NO_AP_FOUND:
-              reconnectAttempts = MAX_ATTEMPTS;
-              Serial.println("❌ WiFi: credenziali errate o rete non trovata");
-              ws.textAll(serializeMessage("WiFi error: wrong credentials or AP not found"));
+              if (reconnectAttempts == 0 && !wifiReconnecting) {
+                // Primo tentativo: AP proprio non esiste
+                WiFi.setAutoReconnect(false);
+                Serial.println("❌ WiFi: rete non trovata");
+                StaticJsonDocument<128> errDoc;
+                errDoc["t"] = TYPE_WIFI_ERROR;
+                errDoc["msg"] = "Network not found";
+                String errJson;
+                serializeJson(errDoc, errJson);
+                ws.textAll(errJson);
+              } else {
+                // Durante reconnect: AP temporaneamente assente, riprova
+                goto retry;
+              }
               break;
 
             default:
-              if (reconnectAttempts < MAX_ATTEMPTS) {
-                reconnectAttempts++;
-                Serial.printf("🔄 WiFi: tentativo %d/%d...\n", reconnectAttempts, MAX_ATTEMPTS);
-                uint32_t backoff = 1000 * reconnectAttempts;
-                xTimerStart(xTimerCreate("wifiRetry", pdMS_TO_TICKS(backoff), pdFALSE, nullptr,
-                  [](TimerHandle_t){ WiFi.reconnect(); }), 0);
-              } else {
-                Serial.println("❌ WiFi: troppi tentativi falliti, arresto riconnessione");
-                ws.textAll(serializeMessage("WiFi: max reconnect attempts reached"));
+            retry:
+              // Retry infiniti con backoff cappato a 30s, timer singolo
+              reconnectAttempts++;
+              wifiReconnecting = true;
+              startAttemptTime = millis();
+              {
+                uint32_t backoff = min((uint32_t)(2000 * reconnectAttempts), (uint32_t)30000);
+                Serial.printf("🔄 WiFi: tentativo %d (backoff %lums)...\n", reconnectAttempts, (unsigned long)backoff);
+                scheduleWifiRetry(backoff);
               }
               break;
           }
@@ -599,6 +644,16 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     wifiRxActivity();
   });
 
+
+  server.on("/wifiStop", HTTP_GET, [](AsyncWebServerRequest *request) {
+    WiFi.setAutoReconnect(false);
+    WiFi.disconnect(false);
+    reconnectAttempts = MAX_ATTEMPTS;
+    wifiReconnecting = false;
+    Serial.println("🛑 WiFi: riconnessione interrotta dall'utente");
+    request->send(200, "text/plain", "OK");
+    wifiRxActivity();
+  });
 
     // --- JSON completo ---
   server.on("/allSettings", HTTP_GET, [](AsyncWebServerRequest *request) {

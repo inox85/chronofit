@@ -78,6 +78,8 @@ volatile int8_t actualSecondForTest = 0;
 unsigned long startAttemptTime = 0;
 const unsigned long wifiTimeout = 10000; // 10 secondi
 volatile bool internetOK = false;
+bool wifiReconnecting = false;  // true = caduta dopo connessione riuscita, sta riprovando
+volatile bool mqttConnected = false;
 
 // --- Varie ---
 unsigned long lastBroadcast = 0;

@@ -20,6 +20,7 @@ const WIFI_STATUS_DISCONNECTED = 0;
 const WIFI_STATUS_CONNECING = 1;
 const WIFI_STATUS_CONNECTED = 2;
 const WIFI_STATUS_INTERNET_OK = 3;
+const WIFI_STATUS_RECONNECTING = 4;
 
 const POWER_MODE_NONE = 0;   // Alimentatore esterno non collegato
 const POWER_MODE_USB = 1;   // Dispositivo alimentato da POWER BANK
@@ -200,6 +201,7 @@ function setSettings(){
 
 let connectionLost = false;
 let wifiConnecting = false;
+let lastWifiStatus = 0;
 const popup = document.getElementById("popup");
 
 function showPopup() {
@@ -534,7 +536,7 @@ function connectWebSocket() {
     console.warn("⚠️ WebSocket closed");
     wsConnecting = false;
     connectionLost = true;
-    showPopup();
+    if (!wifiConnecting) showPopup();  // non mostrare il popup durante il reconnect WiFi
     stopWatchdog();
 
     if (!reconnectTimer) {
@@ -559,6 +561,7 @@ const TYPE_ROW_UPDATED = 4;
 const TYPE_GENERIC_MESSAGE = 5;
 const TYPE_EMAIL_SENT = 6;
 const TYPE_WIFI_CONNECTING = 7;
+const TYPE_WIFI_ERROR = 8;
 
 function handleMessage(data) {
   switch (data.t) {
@@ -607,7 +610,16 @@ function handleMessage(data) {
 
     case TYPE_WIFI_CONNECTING:
       wifiConnecting = true;
-      //showGeneralPopup("Connecting to WIFI and MQTT Network!", "#3b55ffff", 3000 );
+      break;
+
+    case TYPE_WIFI_ERROR:
+      wifiConnecting = false;
+      const statusField = document.getElementById("wifi-status-field");
+      if (statusField) {
+        statusField.innerText = "❌ " + (data.msg || "Connection error");
+        statusField.style.color = "#c0392b";
+      }
+      document.getElementById("wifiOverlay").style.display = "flex";
       break;
   }
 }
@@ -700,6 +712,7 @@ function updateClockFromData(data) {
     let statusElem = document.getElementById("status");
     let wifiNavBar = document.getElementById("wifiStatus");
     let gpsNavBar = document.getElementById("gpsStatus");
+    let mqttNavBar = document.getElementById("mqttStatus");
     //let timezoneElem = document.getElementById("timezone");
 
     const fixFlags = data.f; // esempio: 7
@@ -730,16 +743,29 @@ function updateClockFromData(data) {
 
     const hasRows = document.querySelectorAll('#event-table tbody tr').length > 0;
 
-    if(wifiStatus == WIFI_STATUS_CONNECTED){
-      wifiNavBar.innerText =  "🟡";
-    }else if(wifiStatus == WIFI_STATUS_CONNECING){
-      wifiNavBar.innerText =  "🔄";
-    }else if(wifiStatus == WIFI_STATUS_INTERNET_OK && hasRows){
-      wifiNavBar.innerText =  "🟢";
-      btn.disabled = false;
-      btn.classList.remove("disabled");
-    }else if(wifiStatus == WIFI_STATUS_DISCONNECTED){
-      wifiNavBar.innerText =  "🔴";
+    lastWifiStatus = wifiStatus;
+    const stopBtn = document.getElementById("stopReconnectBtn");
+    if (wifiStatus == WIFI_STATUS_INTERNET_OK) {
+      wifiNavBar.innerText = "🟢";
+      wifiConnecting = false;
+      if (stopBtn) stopBtn.style.display = "none";
+      if (hasRows) { btn.disabled = false; btn.classList.remove("disabled"); }
+    } else if (wifiStatus == WIFI_STATUS_CONNECTED) {
+      wifiNavBar.innerText = "🟡";
+      wifiConnecting = false;
+      if (stopBtn) stopBtn.style.display = "none";
+    } else if (wifiStatus == WIFI_STATUS_CONNECING) {
+      wifiNavBar.innerText = "🔄";
+      wifiConnecting = true;
+      if (stopBtn) stopBtn.style.display = "none";  // primo tentativo: no Stop
+    } else if (wifiStatus == WIFI_STATUS_RECONNECTING) {
+      wifiNavBar.innerText = "🔁";
+      wifiConnecting = true;
+      if (stopBtn) stopBtn.style.display = "block";  // caduta: mostra Stop
+    } else if (wifiStatus == WIFI_STATUS_DISCONNECTED) {
+      wifiNavBar.innerText = "🔴";
+      wifiConnecting = false;
+      if (stopBtn) stopBtn.style.display = "none";
     }
 
     if(syncStatus === SYNC_NONE){
@@ -819,6 +845,12 @@ function updateClockFromData(data) {
     // GPS disabilitato
     document.getElementById("pos").innerText = "🔴 " + "Lat:--, Lng:--, Sat: 0, Fix:--" ;
     gpsNavBar.innerText = "🔴";
+  }
+
+  if (mqttNavBar) {
+    if (data.mq === 1)                              mqttNavBar.innerText = "🟢";
+    else if (lastWifiStatus === WIFI_STATUS_INTERNET_OK) mqttNavBar.innerText = "🔴";
+    else                                             mqttNavBar.innerText = "⚫";
   }
 }
 
@@ -2011,7 +2043,13 @@ function downloadActualView() {
   URL.revokeObjectURL(url);
 }
 
+function clearWifiError() {
+  const f = document.getElementById("wifi-status-field");
+  if (f) { f.innerText = ""; f.style.color = ""; }
+}
+
 function connectWiFi() {
+  clearWifiError();
   const ssid = document.getElementById("wifi-ssid").value;
   const pw   = document.getElementById("wifi-password").value;
 
@@ -2041,10 +2079,17 @@ document.getElementById("wifi-notify").addEventListener("click", () => {
     })
   .catch(err => console.error("Errore:", err));
 
+  clearWifiError();
   document.getElementById("wifiOverlay").style.display = "flex";
 });
 
 function closeWiFiPopup(){
+  document.getElementById("wifiOverlay").style.display = "none";
+}
+
+function stopWifiReconnect() {
+  fetch('/wifiStop').catch(e => console.error(e));
+  document.getElementById("stopReconnectBtn").style.display = "none";
   document.getElementById("wifiOverlay").style.display = "none";
 }
 
