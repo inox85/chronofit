@@ -1,4 +1,5 @@
 #include "routes.h"
+#include "mqtt.h"
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include "globals.h"
@@ -645,6 +646,28 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
 
+  server.on("/mqttSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
+    StaticJsonDocument<256> doc;
+    doc["subTopic"]    = readStringFromSettings("mqttSubTopic", "");
+    doc["eventName"]   = readStringFromSettings("mqttEvent", "");
+    doc["stationName"] = stationName;
+    doc["chipId"]      = chipIdStr;
+    String json;
+    serializeJson(doc, json);
+    request->send(200, "application/json", json);
+    wifiRxActivity();
+  });
+
+  server.on("/mqttSave", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String sub = request->hasParam("subTopic")  ? request->getParam("subTopic")->value()  : "";
+    String evt = request->hasParam("eventName") ? request->getParam("eventName")->value() : "";
+    writeStringToSettings("mqttSubTopic", sub);
+    writeStringToSettings("mqttEvent", evt);
+    mqttUpdateSettings(sub, evt);
+    request->send(200, "text/plain", "OK");
+    wifiRxActivity();
+  });
+
   server.on("/wifiStop", HTTP_GET, [](AsyncWebServerRequest *request) {
     WiFi.setAutoReconnect(false);
     WiFi.disconnect(false);
@@ -808,6 +831,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     if(request->hasParam("stationName"))
     {
       stationName = request->getParam("stationName")->value();
+      writeStringToSettings("stationName", stationName);
       debug("Impostazione nome stazione!");
       debug(stationName);
       if(printEnabled){

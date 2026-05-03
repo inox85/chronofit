@@ -561,7 +561,8 @@ const TYPE_ROW_UPDATED = 4;
 const TYPE_GENERIC_MESSAGE = 5;
 const TYPE_EMAIL_SENT = 6;
 const TYPE_WIFI_CONNECTING = 7;
-const TYPE_WIFI_ERROR = 8;
+const TYPE_WIFI_ERROR      = 8;
+const TYPE_MQTT_NOTIFICATION = 9;
 
 function handleMessage(data) {
   switch (data.t) {
@@ -610,6 +611,10 @@ function handleMessage(data) {
 
     case TYPE_WIFI_CONNECTING:
       wifiConnecting = true;
+      break;
+
+    case TYPE_MQTT_NOTIFICATION:
+      showMqttNotification(data.topic, data.data);
       break;
 
     case TYPE_WIFI_ERROR:
@@ -2092,6 +2097,113 @@ function stopWifiReconnect() {
   document.getElementById("stopReconnectBtn").style.display = "none";
   document.getElementById("wifiOverlay").style.display = "none";
 }
+
+// ── MQTT notifications ───────────────────────────────────────
+function updateCloseAllBtn() {
+  const cards = document.getElementById("mqtt-cards");
+  const btn   = document.getElementById("mqtt-close-all");
+  if (btn) btn.style.display = cards.children.length >= 2 ? "block" : "none";
+}
+
+document.getElementById("mqtt-close-all").addEventListener("click", () => {
+  document.getElementById("mqtt-cards").innerHTML = "";
+  updateCloseAllBtn();
+});
+
+function showMqttNotification(topic, d) {
+  const parts      = (topic || "").split("/");
+  const source     = parts.length >= 3 ? parts[1] + " / " + parts[2] : topic;
+  const lineNum    = d?.ln;
+  const competitor = String(d?.c ?? "");
+
+  const hh = String(d?.h  ?? "--").padStart(2, "0");
+  const mm = String(d?.m  ?? "--").padStart(2, "0");
+  const ss = String(d?.s  ?? "--").padStart(2, "0");
+  const ms = String(d?.ms ?? "--").padStart(3, "0");
+
+  const card = document.createElement("div");
+  card.className = "mqtt-notif";
+  card.innerHTML = `
+    <div class="mqtt-notif-header">
+      <span class="mqtt-notif-source">📡 ${source}</span>
+    </div>
+    <div class="mqtt-notif-row">L${lineNum ?? "?"} &nbsp;·&nbsp; ${d?.lId ?? "—"}</div>
+    <div class="mqtt-notif-row">Competitor: <b>${competitor || "—"}</b></div>
+    <div class="mqtt-notif-time">${hh}:${mm}:${ss}.${ms}</div>
+    <div class="mqtt-notif-actions">
+      <button class="mqtt-notif-btn mqtt-notif-accept">✓ Accept</button>
+      <button class="mqtt-notif-btn mqtt-notif-close">✕ Close</button>
+    </div>
+  `;
+
+  card.querySelector(".mqtt-notif-accept").addEventListener("click", () => {
+    const inp = document.getElementById("c" + lineNum);
+    if (inp) {
+      inp.value = competitor;
+      inp.dispatchEvent(new Event("change"));
+    }
+    card.remove();
+    updateCloseAllBtn();
+  });
+
+  card.querySelector(".mqtt-notif-close").addEventListener("click", () => {
+    card.remove();
+    updateCloseAllBtn();
+  });
+
+  document.getElementById("mqtt-cards").prepend(card);
+  updateCloseAllBtn();
+}
+
+// ── MQTT popup ────────────────────────────────────────────────
+let mqttStationName = "";
+let mqttChipId      = "";
+
+function updateMqttPreview() {
+  const evt     = document.getElementById("mqtt-event").value.trim() || "<event>";
+  const station = mqttStationName || "<stationName>";
+  const chip    = mqttChipId      || "<chipId>";
+  document.getElementById("mqtt-pub-preview").innerText =
+    "📤 chronofit/" + evt + "/" + station + "/" + chip + "/checkpoint";
+}
+
+document.getElementById("mqtt-notify").addEventListener("click", () => {
+  fetch('/mqttSettings')
+    .then(r => r.json())
+    .then(data => {
+      mqttStationName = data.stationName || "";
+      mqttChipId      = data.chipId      || "";
+      document.getElementById("mqtt-event").value = data.eventName || "";
+      document.getElementById("mqtt-sub").value   = data.subTopic  || "";
+      document.getElementById("mqtt-status-field").innerText = "";
+      updateMqttPreview();
+    })
+    .catch(e => console.error(e));
+  document.getElementById("mqttOverlay").style.display = "flex";
+});
+
+function saveMqttSettings() {
+  const evt = encodeURIComponent(document.getElementById("mqtt-event").value.trim());
+  const sub = encodeURIComponent(document.getElementById("mqtt-sub").value.trim());
+  fetch(`/mqttSave?eventName=${evt}&subTopic=${sub}`)
+    .then(r => r.text())
+    .then(() => {
+      const f = document.getElementById("mqtt-status-field");
+      f.innerText = "✅ Saved";
+      f.style.color = "green";
+      setTimeout(() => { document.getElementById("mqttOverlay").style.display = "none"; }, 800);
+    })
+    .catch(e => {
+      const f = document.getElementById("mqtt-status-field");
+      f.innerText = "❌ Error saving";
+      f.style.color = "#c0392b";
+    });
+}
+
+function closeMqttPopup() {
+  document.getElementById("mqttOverlay").style.display = "none";
+}
+
 
 function togglePassword() {
   const pwInput = document.getElementById("wifi-password");

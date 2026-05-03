@@ -191,6 +191,7 @@ void setup() {
 
   #endif
 
+  stationName       = readStringFromSettings("stationName", "");
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
   
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
