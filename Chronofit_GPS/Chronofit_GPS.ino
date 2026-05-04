@@ -144,6 +144,7 @@ void initGPS(){
 }
 
 void setup() {
+  esp_task_wdt_init(30, true);  // 30 secondi invece del default 5
   configFS();
   gpsParser.begin(gps);
 

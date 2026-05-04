@@ -103,7 +103,7 @@ void mqttSetup() {
     wifiClient.setTimeout(1);
     mqtt.setServer(MQTT_SERVER, MQTT_PORT);
     mqtt.setCallback(onMqttMessage);
-    xTaskCreatePinnedToCore(mqttTask, "mqtt", 4096, nullptr, 1, nullptr, 0);
+    xTaskCreatePinnedToCore(mqttTask, "mqtt", 4096, nullptr, 1, nullptr, 1);
 }
 
 void mqttUpdateSettings(const String& newSubTopic, const String& newEventName) {
