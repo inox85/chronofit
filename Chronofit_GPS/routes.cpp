@@ -50,7 +50,8 @@ void activateAccessPoint(){
   // Crea l'SSID con il chipId
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
 
-  WiFi.softAP(ssid_sn.c_str(), nullptr, 6, false, 10);
+  //WiFi.softAP(ssid_sn.c_str(), nullptr, 6, false, 10);
+  WiFi.softAP(ssid_sn.c_str());
 
   esp_wifi_set_ps(WIFI_PS_NONE);
 
