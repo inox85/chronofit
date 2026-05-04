@@ -50,8 +50,7 @@ void activateAccessPoint(){
   // Crea l'SSID con il chipId
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
 
-  //WiFi.softAP(ssid_sn.c_str(), nullptr, 6, false, 10);
-  WiFi.softAP(ssid_sn.c_str());
+  WiFi.softAP(ssid_sn.c_str(), nullptr, 6, false, 10);
 
   esp_wifi_set_ps(WIFI_PS_NONE);
 
@@ -375,6 +374,18 @@ bool isAuthorized(AsyncWebServerRequest *request) {
   return true;
 }
 
+static void serveGzipped(AsyncWebServerRequest *request, const char* path, const char* mime) {
+  String gz = String(path) + ".gz";
+  if (LittleFS.exists(gz)) {
+    AsyncWebServerResponse *r = request->beginResponse(LittleFS, gz, mime);
+    r->addHeader("Content-Encoding", "gzip");
+    r->addHeader("Cache-Control", "public, max-age=3600");
+    request->send(r);
+  } else {
+    request->send(LittleFS, path, mime);
+  }
+}
+
 void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   ws.onEvent(onWsEvent);
@@ -385,7 +396,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/update.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(LittleFS, "/update.html", "text/html");
+    serveGzipped(request, "/update.html", "text/html");
   });
 
   server.on("/updatefs", HTTP_POST,
@@ -433,22 +444,15 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   );
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-     request->send(LittleFS, "/index.html", "text/html");
+    serveGzipped(request, "/index.html", "text/html");
   });
 
-  // Route manuale solo per i file gzippati
   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/script.js.gz", "application/javascript");
-    r->addHeader("Cache-Control", "public, max-age=3600");
-    r->addHeader("Content-Encoding", "gzip");
-    request->send(r);
+    serveGzipped(request, "/script.js", "application/javascript");
   });
 
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/style.css.gz", "text/css");
-    r->addHeader("Cache-Control", "public, max-age=3600");
-    r->addHeader("Content-Encoding", "gzip");
-    request->send(r);
+    serveGzipped(request, "/style.css", "text/css");
   });
 
   server.on("/logo.webp", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -464,7 +468,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/admin", HTTP_GET, [](AsyncWebServerRequest *request){
-     request->send(LittleFS, "/admin.html", "text/html");
+    serveGzipped(request, "/admin.html", "text/html");
   });
 
   server.on("/setOffset", HTTP_GET, [](AsyncWebServerRequest *request) {
