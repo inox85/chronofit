@@ -26,6 +26,7 @@
 #include "gps_custom.h"
 #include <SoftwareSerial.h>
 #include "mqtt.h"
+#include "esp_task_wdt.h"
 
 SoftwareSerial gpsCmd(-1, 13);
 
@@ -144,7 +145,14 @@ void initGPS(){
 }
 
 void setup() {
-  esp_task_wdt_init(30, true);  // 30 secondi invece del default 5
+  // setup()
+  esp_task_wdt_config_t wdt_config = {
+      .timeout_ms = 30000,  // 30 secondi
+      .idle_core_mask = (1 << 0) | (1 << 1),  // entrambi i core
+      .trigger_panic = true
+  };
+  esp_task_wdt_reconfigure(&wdt_config);
+  
   configFS();
   gpsParser.begin(gps);
 
