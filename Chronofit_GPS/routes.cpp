@@ -50,8 +50,7 @@ void activateAccessPoint(){
   // Crea l'SSID con il chipId
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
 
-  //WiFi.softAP(ssid_sn.c_str(), nullptr, 6, false, 6);
-  WiFi.softAP(ssid_sn.c_str());
+  WiFi.softAP(ssid_sn.c_str(), nullptr, 6, false, 10);
 
   esp_wifi_set_ps(WIFI_PS_NONE);
 
@@ -61,7 +60,7 @@ void activateAccessPoint(){
     Serial.println(WiFi.softAPIP());
   #endif
 
-  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+  // dnsServer.start(DNS_PORT, "*", WiFi.softAPIP()); // captive portal disabilitato
 
   registerRoutes(server, ws);
 
@@ -380,9 +379,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
 
-  // In registerRoutes(), aggiungere alla fine
   server.onNotFound([](AsyncWebServerRequest *request) {
-    request->redirect("http://192.168.1.1");
+    request->send(404);
   });
 
   server.on("/update.html", HTTP_GET, [](AsyncWebServerRequest *request){
