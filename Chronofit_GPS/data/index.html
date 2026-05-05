@@ -358,7 +358,7 @@
   <!-- Overlay MQTT settings -->
   <div id="mqttOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>MQTT Settings</h2>
+      <h2>Messages settings</h2>
 
       <div class="input-row">
         <label for="mqtt-event">Event name</label>
@@ -373,36 +373,60 @@
       </div>
 
       <div class="toggle-row">
-        <span>Show notification popup</span>
+        <span>Enable notifications</span>
         <label class="switch">
           <input type="checkbox" id="mqttShowPopupToggle" checked>
           <span class="slider"></span>
         </label>
       </div>
 
+      <hr style="border-color:#333; margin:10px 0;">
+
       <div class="toggle-row">
-        <span>Add arrival row (auto)</span>
+        <span>Acquire row</span>
         <label class="switch">
-          <input type="checkbox" id="mqttAddRowToggle">
+          <input type="checkbox" id="mqttAcquireRowToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Acquire competitor</span>
+        <label class="switch">
+          <input type="checkbox" id="mqttAcquireCompetitorToggle">
           <span class="slider"></span>
         </label>
       </div>
 
       <div class="input-row">
-        <label for="mqttAcceptModeSelect">Accept action</label>
-        <select id="mqttAcceptModeSelect">
-          <option value="competitor">Set competitor on all lines</option>
-          <option value="row">Add arrival row</option>
-          <option value="both">Set competitor + Add row</option>
+        <label for="mqttAcqModeSelect">Acquisition</label>
+        <select id="mqttAcqModeSelect" onchange="updateMqttModeUI()">
+          <option value="immediate">Immediate</option>
+          <option value="manual">Manual confirm</option>
+          <option value="timed">Timed</option>
         </select>
       </div>
 
-      <div class="toggle-row">
-        <span>Auto-accept (5s countdown)</span>
+      <div class="toggle-row" id="mqttShowInfoRow">
+        <span>Show info popup</span>
         <label class="switch">
-          <input type="checkbox" id="mqttAutoAcceptToggle">
+          <input type="checkbox" id="mqttShowInfoToggle" checked>
           <span class="slider"></span>
         </label>
+      </div>
+
+      <div id="mqttTimedOpts" style="display:none;">
+        <div class="input-row">
+          <label for="mqttTimeoutInput">Timeout (s)</label>
+          <input type="number" id="mqttTimeoutInput" min="1" max="60" value="5">
+        </div>
+        <div class="input-row">
+          <label for="mqttOnTimeoutSelect">On timeout</label>
+          <select id="mqttOnTimeoutSelect">
+            <option value="accept">Accept</option>
+            <option value="reject">Reject</option>
+          </select>
+        </div>
       </div>
 
       <div class="button-row">

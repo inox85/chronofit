@@ -29,10 +29,6 @@ static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     msg.reserve(length);
     for (unsigned int i = 0; i < length; i++) msg += (char)payload[i];
 
-    if (mqttAddRow) {
-        writeCheckpointFromMqtt(msg);
-    }
-
     if (mqttShowPopup) {
         StaticJsonDocument<512> doc;
         doc["t"]     = TYPE_MQTT_NOTIFICATION;

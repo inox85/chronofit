@@ -666,7 +666,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["stationName"] = stationName;
     doc["chipId"]      = chipIdStr;
     doc["showPopup"]   = mqttShowPopup;
-    doc["addRow"]      = mqttAddRow;
     String json;
     serializeJson(doc, json);
     request->send(200, "application/json", json);
@@ -680,9 +679,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     writeStringToSettings("mqttEvent", evt);
     if (request->hasParam("showPopup")) {
       mqttShowPopup = request->getParam("showPopup")->value().toInt();
-    }
-    if (request->hasParam("addRow")) {
-      mqttAddRow = request->getParam("addRow")->value().toInt();
     }
     mqttUpdateSettings(sub, evt);
     request->send(200, "text/plain", "OK");
