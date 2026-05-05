@@ -350,6 +350,9 @@ function fillSettingsFields(data){
   const buzzerToggle = document.getElementById("buzzerToggle");
   buzzerToggle.checked = (data.bz == 1);
 
+  if (data.mqttAcquireRow    !== undefined) mqttCfg.acquireRow    = (data.mqttAcquireRow    == 1);
+  if (data.mqttImmediateMode !== undefined) mqttCfg.immediateMode = (data.mqttImmediateMode == 1);
+
   // Riapplica preferenze visive — il server non deve sovrascriverle
   restoreViewPrefs();
 
@@ -2116,9 +2119,9 @@ document.getElementById("mqtt-close-all").addEventListener("click", () => {
 });
 
 function handleMqttIncoming(topic, d, pendingId) {
-  const acquireRow        = localStorage.getItem("mqttAcquireRow")        === "1";
+  const acquireRow        = mqttCfg.acquireRow;
   const acquireCompetitor = localStorage.getItem("mqttAcquireCompetitor") === "1";
-  const mode              = localStorage.getItem("mqttAcqMode")           || "manual";
+  const mode              = mqttCfg.immediateMode ? "immediate" : (localStorage.getItem("mqttAcqMode") || "manual");
   const showInfo          = localStorage.getItem("mqttShowInfo")          !== "0";
   const timeout           = parseInt(localStorage.getItem("mqttTimeout")  || "5", 10);
   const onTimeout         = localStorage.getItem("mqttOnTimeout")         || "accept";
@@ -2138,10 +2141,10 @@ function handleMqttIncoming(topic, d, pendingId) {
         });
       });
     }
-    if (acquireRow && pendingId !== undefined) {
+    if (pendingId !== undefined) {
       fetch("/mqttConfirmPending?id=" + pendingId).catch(e => console.error(e));
     }
-    // pendingId undefined = immediate mode, l'ESP32 ha già scritto in session.json
+    // pendingId assente = immediate mode, l'ESP32 ha già scritto in session.json
   }
 
   function doDiscard() {
@@ -2238,6 +2241,7 @@ function showMqttCard(topic, d, doAcquire, onDiscard, timeoutSec, onTimeout, acq
 // ── MQTT popup ────────────────────────────────────────────────
 let mqttStationName = "";
 let mqttChipId      = "";
+const mqttCfg       = { acquireRow: false, immediateMode: false };
 
 function updateMqttPreview() {
   const evt     = document.getElementById("mqtt-event").value.trim() || "<event>";
@@ -2263,6 +2267,8 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
       document.getElementById("mqtt-sub").value            = data.subTopic  || "";
       document.getElementById("mqttShowPopupToggle").checked        = (data.showPopup    !== 0);
       document.getElementById("mqttAcquireRowToggle").checked       = (data.acquireRow   == 1);
+      mqttCfg.acquireRow    = (data.acquireRow    == 1);
+      mqttCfg.immediateMode = (data.immediateMode == 1);
       document.getElementById("mqttAcquireCompetitorToggle").checked = localStorage.getItem("mqttAcquireCompetitor") === "1";
       document.getElementById("mqttAcqModeSelect").value            = data.immediateMode == 1
           ? "immediate"

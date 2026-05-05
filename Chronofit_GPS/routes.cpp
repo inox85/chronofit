@@ -681,6 +681,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     writeStringToSettings("mqttEvent", evt);
     if (request->hasParam("showPopup")) {
       mqttShowPopup = request->getParam("showPopup")->value().toInt();
+      writeStringToSettings("mqttShowPopup", String(mqttShowPopup));
     }
     if (request->hasParam("acquireRow")) {
       mqttAcquireRow = request->getParam("acquireRow")->value().toInt();
@@ -1308,7 +1309,7 @@ server.on("/upload", HTTP_POST,
 }
 
 String serializeSettings(){
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<768> doc;
   doc["t"] = TYPE_PARAMS_UPDATED;
   doc["c1"] = competitors[0];
   doc["c2"] = competitors[1];
@@ -1332,7 +1333,10 @@ String serializeSettings(){
   doc["sn"] = stationName;
   doc["si"] = GPSRefreshInterval;
   doc["pw"] = powerSource;
-  doc["bz"] = buzzerActive;
+  doc["bz"]               = buzzerActive;
+  doc["mqttAcquireRow"]   = mqttAcquireRow;
+  doc["mqttImmediateMode"]= mqttImmediateMode;
+  doc["mqttShowPopup"]    = mqttShowPopup;
 
   String message;
   serializeJson(doc, message);
