@@ -471,6 +471,15 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serveGzipped(request, "/admin.html", "text/html");
   });
 
+  server.onNotFound([](AsyncWebServerRequest *req){
+    String url = req->url();
+    if (url == "/index.html" || url == "/") {
+      req->send(404, "text/plain", "Not found");
+    } else {
+      req->redirect("http://192.168.1.1/index.html");
+    }
+  });
+
   server.on("/setOffset", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!isAuthorized(request)) return;
     if (request->hasParam("offset")) {
@@ -656,6 +665,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["eventName"]   = readStringFromSettings("mqttEvent", "");
     doc["stationName"] = stationName;
     doc["chipId"]      = chipIdStr;
+    doc["showPopup"]   = mqttShowPopup;
+    doc["addRow"]      = mqttAddRow;
     String json;
     serializeJson(doc, json);
     request->send(200, "application/json", json);
@@ -667,7 +678,22 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     String evt = request->hasParam("eventName") ? request->getParam("eventName")->value() : "";
     writeStringToSettings("mqttSubTopic", sub);
     writeStringToSettings("mqttEvent", evt);
+    if (request->hasParam("showPopup")) {
+      mqttShowPopup = request->getParam("showPopup")->value().toInt();
+    }
+    if (request->hasParam("addRow")) {
+      mqttAddRow = request->getParam("addRow")->value().toInt();
+    }
     mqttUpdateSettings(sub, evt);
+    request->send(200, "text/plain", "OK");
+    wifiRxActivity();
+  });
+
+  server.on("/mqttAcceptRow", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("data")) {
+      String payload = request->getParam("data")->value();
+      writeCheckpointFromMqtt(payload);
+    }
     request->send(200, "text/plain", "OK");
     wifiRxActivity();
   });

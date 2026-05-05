@@ -3,13 +3,14 @@
 #include "settings.h"
 #include "routes.h"
 #include "Params.h"
+#include "time_utils.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
 static const char* MQTT_SERVER = "broker.hivemq.com";
 static const int   MQTT_PORT   = 1883;
-static const int   QUEUE_SIZE  = 20;
+static const int   QUEUE_SIZE  = 50;
 
 struct MqttMessage {
     char topic[80];
@@ -27,21 +28,26 @@ static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     String msg;
     msg.reserve(length);
     for (unsigned int i = 0; i < length; i++) msg += (char)payload[i];
-    Serial.printf("[MQTT IN] %s: %s\n", topic, msg.c_str());
 
-    StaticJsonDocument<512> doc;
-    doc["t"]     = TYPE_MQTT_NOTIFICATION;
-    doc["topic"] = topic;
-    doc["data"]  = serialized(msg);  // embedded come JSON nidificato
-    String out;
-    serializeJson(doc, out);
-    ws.textAll(out);
+    if (mqttAddRow) {
+        writeCheckpointFromMqtt(msg);
+    }
+
+    if (mqttShowPopup) {
+        StaticJsonDocument<512> doc;
+        doc["t"]     = TYPE_MQTT_NOTIFICATION;
+        doc["topic"] = topic;
+        doc["data"]  = serialized(msg);
+        String out;
+        serializeJson(doc, out);
+        ws.textAll(out);
+    }
 }
 
 static void subscribe() {
     if (mqttSubTopic.length() > 0) {
         mqtt.subscribe(mqttSubTopic.c_str());
-        Serial.printf("[MQTT] Sottoscritto a: %s\n", mqttSubTopic.c_str());
+        //Serial.printf("[MQTT] Sottoscritto a: %s\n", mqttSubTopic.c_str());
     }
 }
 
@@ -55,7 +61,7 @@ static void connectBlocking() {
 
         IPAddress brokerIp;
         if (!WiFi.hostByName(MQTT_SERVER, brokerIp)) {
-            Serial.println("[MQTT] DNS fallito per " + String(MQTT_SERVER) + ", riprovo tra 5s");
+            //Serial.println("[MQTT] DNS fallito per " + String(MQTT_SERVER) + ", riprovo tra 5s");
             vTaskDelay(pdMS_TO_TICKS(5000));
             continue;
         }
@@ -88,7 +94,7 @@ static void mqttTask(void*) {
         MqttMessage msg;
         while (mqtt.connected() && xQueueReceive(mqttQueue, &msg, 0) == pdTRUE) {
             mqtt.publish(msg.topic, msg.payload, true);
-            Serial.printf("[MQTT OUT] %s: %s\n", msg.topic, msg.payload);
+            //Serial.printf("[MQTT OUT] %s: %s\n", msg.topic, msg.payload);
         }
 
         mqtt.loop();

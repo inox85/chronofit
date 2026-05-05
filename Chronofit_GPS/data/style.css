@@ -860,3 +860,11 @@ input:checked + .slider:before {
 .mqtt-notif-btn:hover  { background: #5570ff; }
 .mqtt-notif-close      { background: #555; }
 .mqtt-notif-close:hover { background: #777; }
+.mqtt-notif-accept-desc {
+  font-size: 0.78em;
+  color: #aaa;
+  margin: 4px 0 2px;
+  line-height: 1.3;
+}
+.mqtt-notif-accept-desc strong { color: #e0e0e0; }
+.mqtt-countdown { font-size: 0.85em; opacity: 0.75; }

@@ -223,6 +223,51 @@ void checkPointRoutine(int i) {
 
 
 // ----------------------------------------
+void writeCheckpointFromMqtt(const String& jsonPayload) {
+  StaticJsonDocument<256> src;
+  if (deserializeJson(src, jsonPayload) != DeserializationError::Ok) return;
+
+  sessionRowIndex++;
+
+  StaticJsonDocument<256> ordered;
+  ordered[INDEX_FIELD]       = sessionRowIndex;
+  ordered[LINE_NUMBER_FIELD] = src[LINE_NUMBER_FIELD];
+  ordered[LINE_ID_FIELD]     = src[LINE_ID_FIELD];
+  ordered[COMPETITOR_FIELD]  = src[COMPETITOR_FIELD];
+  ordered[HOUR_FIELD]        = src[HOUR_FIELD];
+  ordered[MINUTE_FIELD]      = src[MINUTE_FIELD];
+  ordered[SECOND_FIELD]      = src[SECOND_FIELD];
+  ordered[MILLIS_FIELD]      = src[MILLIS_FIELD];
+  ordered[PENALITY_FIELD]    = src[PENALITY_FIELD] | 0;
+
+  if (printEnabled) {
+    printFormatted(
+      sessionRowIndex,
+      src[LINE_ID_FIELD].as<String>(),
+      src[COMPETITOR_FIELD].as<int>(),
+      src[HOUR_FIELD].as<int>(),
+      src[MINUTE_FIELD].as<int>(),
+      src[SECOND_FIELD].as<int>(),
+      src[MILLIS_FIELD].as<int>(),
+      1
+    );
+  }
+
+  File file = LittleFS.open("/session.json", "a");
+  if (file) {
+    serializeJson(ordered, file);
+    file.println();
+    file.close();
+  }
+
+  StaticJsonDocument<256> wsDoc = ordered;
+  wsDoc["t"] = TYPE_CHECKPOINT;
+  String jsonMessage;
+  serializeJson(wsDoc, jsonMessage);
+  ws.textAll(jsonMessage);
+}
+
+// ----------------------------------------
 void handlePpsSync() {
   //syncReference = lastSyncTrigger;
   // PPS = inizio del secondo successivo

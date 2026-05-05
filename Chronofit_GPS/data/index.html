@@ -372,6 +372,39 @@
         <input type="text" id="mqtt-sub" placeholder="e.g. chronofit/cmd">
       </div>
 
+      <div class="toggle-row">
+        <span>Show notification popup</span>
+        <label class="switch">
+          <input type="checkbox" id="mqttShowPopupToggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Add arrival row (auto)</span>
+        <label class="switch">
+          <input type="checkbox" id="mqttAddRowToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="input-row">
+        <label for="mqttAcceptModeSelect">Accept action</label>
+        <select id="mqttAcceptModeSelect">
+          <option value="competitor">Set competitor on all lines</option>
+          <option value="row">Add arrival row</option>
+          <option value="both">Set competitor + Add row</option>
+        </select>
+      </div>
+
+      <div class="toggle-row">
+        <span>Auto-accept (5s countdown)</span>
+        <label class="switch">
+          <input type="checkbox" id="mqttAutoAcceptToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
       <div class="button-row">
         <button class="big-button" onclick="saveMqttSettings()">Save</button>
         <button class="big-button" onclick="closeMqttPopup()">Cancel</button>

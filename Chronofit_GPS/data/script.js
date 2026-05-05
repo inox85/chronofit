@@ -2124,6 +2124,16 @@ function showMqttNotification(topic, d) {
   const ss = String(d?.s  ?? "--").padStart(2, "0");
   const ms = String(d?.ms ?? "--").padStart(3, "0");
 
+  const acceptMode = localStorage.getItem("mqttAcceptMode") || "competitor";
+  const autoAccept = localStorage.getItem("mqttAutoAccept") === "1";
+
+  const acceptDescMap = {
+    competitor: `Set competitor <strong>${competitor || "—"}</strong> on all lines`,
+    row:        `Add arrival row &nbsp;L${lineNum ?? "?"} · ${d?.lId ?? "—"} · #${competitor || "—"}`,
+    both:       `Set competitor <strong>${competitor || "—"}</strong> + add arrival row`
+  };
+  const acceptDesc = acceptDescMap[acceptMode] ?? acceptDescMap.competitor;
+
   const card = document.createElement("div");
   card.className = "mqtt-notif";
   card.innerHTML = `
@@ -2132,46 +2142,64 @@ function showMqttNotification(topic, d) {
     </div>
     <div class="mqtt-notif-row">L${lineNum ?? "?"} &nbsp;·&nbsp; ${d?.lId ?? "—"} &nbsp;·&nbsp; Competitor: ${competitor || "—"}</div>
     <div class="mqtt-notif-time">${hh}:${mm}:${ss}.${ms}</div>
+    <div class="mqtt-notif-accept-desc">${acceptDesc}</div>
     <div class="mqtt-notif-actions">
-      <button class="mqtt-notif-btn mqtt-notif-accept">✓ Accept</button>
+      <button class="mqtt-notif-btn mqtt-notif-accept">✓ Accept${autoAccept ? ' <span class="mqtt-countdown">(5)</span>' : ''}</button>
       <button class="mqtt-notif-btn mqtt-notif-close">✕ Close</button>
     </div>
   `;
 
-  card.querySelector(".mqtt-notif-accept").addEventListener("click", () => {
-    
-    [1, 2, 3, 4].forEach(n => {
-      console.log("c" + n)
-      const inp = document.getElementById("c" + n);
-      if (inp) inp.value = competitor;
+  let autoTimer = null;
 
-      const data = {
-        l: Number(n),
-        ld: String(document.querySelector(`#l${n}`).value),
-        c: Number(document.querySelector(`#c${n}`).value),
-        d: Number(document.querySelector(`#d${n}`).value) || 0
-      };
-
-      sendSettingsRowData(data);
-
-    });
-
+  function doAccept() {
+    if (autoTimer) clearInterval(autoTimer);
+    if (acceptMode === "competitor" || acceptMode === "both") {
+      [1, 2, 3, 4].forEach(n => {
+        const inp = document.getElementById("c" + n);
+        if (inp) inp.value = competitor;
+        const data = {
+          l: Number(n),
+          ld: String(document.querySelector(`#l${n}`).value),
+          c: Number(document.querySelector(`#c${n}`).value),
+          d: Number(document.querySelector(`#d${n}`).value) || 0
+        };
+        sendSettingsRowData(data);
+      });
+    }
+    if ((acceptMode === "row" || acceptMode === "both") && !mqttServerAddRow) {
+      fetch("/mqttAcceptRow?data=" + encodeURIComponent(JSON.stringify(d)))
+        .catch(e => console.error(e));
+    }
     card.remove();
     updateCloseAllBtn();
-  });
+  }
+
+  card.querySelector(".mqtt-notif-accept").addEventListener("click", doAccept);
 
   card.querySelector(".mqtt-notif-close").addEventListener("click", () => {
+    if (autoTimer) clearInterval(autoTimer);
     card.remove();
     updateCloseAllBtn();
   });
+
+  if (autoAccept) {
+    let remaining = 5;
+    autoTimer = setInterval(() => {
+      remaining--;
+      const span = card.querySelector(".mqtt-countdown");
+      if (span) span.textContent = `(${remaining})`;
+      if (remaining <= 0) doAccept();
+    }, 1000);
+  }
 
   document.getElementById("mqtt-cards").prepend(card);
   updateCloseAllBtn();
 }
 
 // ── MQTT popup ────────────────────────────────────────────────
-let mqttStationName = "";
-let mqttChipId      = "";
+let mqttStationName  = "";
+let mqttChipId       = "";
+let mqttServerAddRow = false;
 
 function updateMqttPreview() {
   const evt     = document.getElementById("mqtt-event").value.trim() || "<event>";
@@ -2189,6 +2217,11 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
       mqttChipId      = data.chipId      || "";
       document.getElementById("mqtt-event").value = data.eventName || "";
       document.getElementById("mqtt-sub").value   = data.subTopic  || "";
+      document.getElementById("mqttShowPopupToggle").checked = (data.showPopup !== 0);
+      document.getElementById("mqttAddRowToggle").checked    = (data.addRow    == 1);
+      mqttServerAddRow = (data.addRow == 1);
+      document.getElementById("mqttAcceptModeSelect").value  = localStorage.getItem("mqttAcceptMode") || "competitor";
+      document.getElementById("mqttAutoAcceptToggle").checked = localStorage.getItem("mqttAutoAccept") === "1";
       document.getElementById("mqtt-status-field").innerText = "";
       updateMqttPreview();
     })
@@ -2197,9 +2230,13 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
 });
 
 function saveMqttSettings() {
-  const evt = encodeURIComponent(document.getElementById("mqtt-event").value.trim());
-  const sub = encodeURIComponent(document.getElementById("mqtt-sub").value.trim());
-  fetch(`/mqttSave?eventName=${evt}&subTopic=${sub}`)
+  const evt       = encodeURIComponent(document.getElementById("mqtt-event").value.trim());
+  const sub       = encodeURIComponent(document.getElementById("mqtt-sub").value.trim());
+  const showPopup = document.getElementById("mqttShowPopupToggle").checked ? 1 : 0;
+  const addRow    = document.getElementById("mqttAddRowToggle").checked    ? 1 : 0;
+  localStorage.setItem("mqttAcceptMode", document.getElementById("mqttAcceptModeSelect").value);
+  localStorage.setItem("mqttAutoAccept", document.getElementById("mqttAutoAcceptToggle").checked ? "1" : "0");
+  fetch(`/mqttSave?eventName=${evt}&subTopic=${sub}&showPopup=${showPopup}&addRow=${addRow}`)
     .then(r => r.text())
     .then(() => {
       const f = document.getElementById("mqtt-status-field");

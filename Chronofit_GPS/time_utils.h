@@ -49,3 +49,5 @@ double termFactor(double T);
 void updateCalibrationFactor(double driftPPM);
 
 void setExtimatedDriftParams(int us);
+
+void writeCheckpointFromMqtt(const String& jsonPayload);

@@ -121,5 +121,8 @@ extern volatile bool shouldRestart;
 
 extern int buzzerActive;
 
+extern int mqttShowPopup;
+extern int mqttAddRow;
+
 extern portMUX_TYPE isrMux;
 #endif
