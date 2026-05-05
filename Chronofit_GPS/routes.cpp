@@ -336,7 +336,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
   switch (type) {
     case WS_EVT_CONNECT:
       debug("🔌 WebSocket client connected");
-      //client->text("Benvenuto!");  // messaggio di benvenuto al client
+      broadcastPendingItems(client);
       break;
 
     case WS_EVT_DISCONNECT:
@@ -665,7 +665,9 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["eventName"]   = readStringFromSettings("mqttEvent", "");
     doc["stationName"] = stationName;
     doc["chipId"]      = chipIdStr;
-    doc["showPopup"]   = mqttShowPopup;
+    doc["showPopup"]     = mqttShowPopup;
+    doc["acquireRow"]    = mqttAcquireRow;
+    doc["immediateMode"] = mqttImmediateMode;
     String json;
     serializeJson(doc, json);
     request->send(200, "application/json", json);
@@ -680,15 +682,32 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     if (request->hasParam("showPopup")) {
       mqttShowPopup = request->getParam("showPopup")->value().toInt();
     }
+    if (request->hasParam("acquireRow")) {
+      mqttAcquireRow = request->getParam("acquireRow")->value().toInt();
+      writeStringToSettings("mqttAcquireRow", String(mqttAcquireRow));
+    }
+    if (request->hasParam("immediateMode")) {
+      mqttImmediateMode = request->getParam("immediateMode")->value().toInt();
+      writeStringToSettings("mqttImmediateMode", String(mqttImmediateMode));
+    }
     mqttUpdateSettings(sub, evt);
     request->send(200, "text/plain", "OK");
     wifiRxActivity();
   });
 
-  server.on("/mqttAcceptRow", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if (request->hasParam("data")) {
-      String payload = request->getParam("data")->value();
-      writeCheckpointFromMqtt(payload);
+  server.on("/mqttConfirmPending", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("id")) {
+      int id = request->getParam("id")->value().toInt();
+      processPending(id, true);
+    }
+    request->send(200, "text/plain", "OK");
+    wifiRxActivity();
+  });
+
+  server.on("/mqttDiscardPending", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("id")) {
+      int id = request->getParam("id")->value().toInt();
+      processPending(id, false);
     }
     request->send(200, "text/plain", "OK");
     wifiRxActivity();
@@ -782,6 +801,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         request->send(200, "text/plain", "✅ Sessione cancellata con successo!");
         Serial.println("Sessione cancellata dal filesystem.");
         sessionRowIndex = 0;
+        clearPendingFile();
         StaticJsonDocument<512> doc;
         doc["t"] = TYPE_SESSION_CLEARED;
 

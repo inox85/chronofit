@@ -29,11 +29,21 @@ static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     msg.reserve(length);
     for (unsigned int i = 0; i < length; i++) msg += (char)payload[i];
 
+    int pendingId = -1;
+    if (mqttAcquireRow) {
+        if (mqttImmediateMode) {
+            writeCheckpointFromMqtt(msg);
+        } else {
+            pendingId = appendToPending(String(topic), msg);
+        }
+    }
+
     if (mqttShowPopup) {
         StaticJsonDocument<512> doc;
         doc["t"]     = TYPE_MQTT_NOTIFICATION;
         doc["topic"] = topic;
         doc["data"]  = serialized(msg);
+        if (pendingId >= 0) doc["pendingId"] = pendingId;
         String out;
         serializeJson(doc, out);
         ws.textAll(out);
@@ -99,8 +109,11 @@ static void mqttTask(void*) {
 }
 
 void mqttSetup() {
-    mqttSubTopic  = readStringFromSettings("mqttSubTopic", "");
-    mqttEventName = readStringFromSettings("mqttEvent", "");
+    mqttSubTopic     = readStringFromSettings("mqttSubTopic", "");
+    mqttEventName    = readStringFromSettings("mqttEvent", "");
+    mqttAcquireRow   = readStringFromSettings("mqttAcquireRow",   "0").toInt();
+    mqttImmediateMode = readStringFromSettings("mqttImmediateMode","0").toInt();
+    initPendingIndex();
     mqttQueue = xQueueCreate(QUEUE_SIZE, sizeof(MqttMessage));
     wifiClient.setTimeout(1);
     mqtt.setServer(MQTT_SERVER, MQTT_PORT);

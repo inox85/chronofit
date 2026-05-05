@@ -566,6 +566,7 @@ const TYPE_EMAIL_SENT = 6;
 const TYPE_WIFI_CONNECTING = 7;
 const TYPE_WIFI_ERROR      = 8;
 const TYPE_MQTT_NOTIFICATION = 9;
+const TYPE_MQTT_PENDING      = 10;
 
 function handleMessage(data) {
   switch (data.t) {
@@ -617,7 +618,8 @@ function handleMessage(data) {
       break;
 
     case TYPE_MQTT_NOTIFICATION:
-      handleMqttIncoming(data.topic, data.data);
+    case TYPE_MQTT_PENDING:
+      handleMqttIncoming(data.topic, data.data, data.pendingId);
       break;
 
     case TYPE_WIFI_ERROR:
@@ -2113,7 +2115,7 @@ document.getElementById("mqtt-close-all").addEventListener("click", () => {
   updateCloseAllBtn();
 });
 
-function handleMqttIncoming(topic, d) {
+function handleMqttIncoming(topic, d, pendingId) {
   const acquireRow        = localStorage.getItem("mqttAcquireRow")        === "1";
   const acquireCompetitor = localStorage.getItem("mqttAcquireCompetitor") === "1";
   const mode              = localStorage.getItem("mqttAcqMode")           || "manual";
@@ -2136,25 +2138,31 @@ function handleMqttIncoming(topic, d) {
         });
       });
     }
-    if (acquireRow) {
-      fetch("/mqttAcceptRow?data=" + encodeURIComponent(JSON.stringify(d)))
-        .catch(e => console.error(e));
+    if (acquireRow && pendingId !== undefined) {
+      fetch("/mqttConfirmPending?id=" + pendingId).catch(e => console.error(e));
+    }
+    // pendingId undefined = immediate mode, l'ESP32 ha già scritto in session.json
+  }
+
+  function doDiscard() {
+    if (pendingId !== undefined) {
+      fetch("/mqttDiscardPending?id=" + pendingId).catch(e => console.error(e));
     }
   }
 
   if (mode === "immediate") {
     doAcquire();
-    if (showInfo) showMqttCard(topic, d, null, null, null, acquireRow, acquireCompetitor, true);
+    if (showInfo) showMqttCard(topic, d, null, null, null, null, acquireRow, acquireCompetitor, true);
     return;
   }
 
-  showMqttCard(topic, d, doAcquire,
+  showMqttCard(topic, d, doAcquire, doDiscard,
     mode === "timed" ? timeout   : null,
     mode === "timed" ? onTimeout : null,
     acquireRow, acquireCompetitor, false);
 }
 
-function showMqttCard(topic, d, doAcquire, timeoutSec, onTimeout, acquireRow, acquireCompetitor, immediateMode) {
+function showMqttCard(topic, d, doAcquire, onDiscard, timeoutSec, onTimeout, acquireRow, acquireCompetitor, immediateMode) {
   const parts      = (topic || "").split("/");
   const source     = parts.length >= 3 ? parts[1] + " / " + parts[2] : topic;
   const lineNum    = d?.ln;
@@ -2201,6 +2209,7 @@ function showMqttCard(topic, d, doAcquire, timeoutSec, onTimeout, acquireRow, ac
 
   function discard() {
     if (autoTimer) clearInterval(autoTimer);
+    if (onDiscard) onDiscard();
     card.remove();
     updateCloseAllBtn();
   }
@@ -2252,10 +2261,12 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
       mqttChipId      = data.chipId      || "";
       document.getElementById("mqtt-event").value          = data.eventName || "";
       document.getElementById("mqtt-sub").value            = data.subTopic  || "";
-      document.getElementById("mqttShowPopupToggle").checked        = (data.showPopup !== 0);
-      document.getElementById("mqttAcquireRowToggle").checked       = localStorage.getItem("mqttAcquireRow")        === "1";
+      document.getElementById("mqttShowPopupToggle").checked        = (data.showPopup    !== 0);
+      document.getElementById("mqttAcquireRowToggle").checked       = (data.acquireRow   == 1);
       document.getElementById("mqttAcquireCompetitorToggle").checked = localStorage.getItem("mqttAcquireCompetitor") === "1";
-      document.getElementById("mqttAcqModeSelect").value            = localStorage.getItem("mqttAcqMode")    || "manual";
+      document.getElementById("mqttAcqModeSelect").value            = data.immediateMode == 1
+          ? "immediate"
+          : (localStorage.getItem("mqttAcqMode") || "manual");
       document.getElementById("mqttShowInfoToggle").checked         = localStorage.getItem("mqttShowInfo")   !== "0";
       document.getElementById("mqttTimeoutInput").value             = localStorage.getItem("mqttTimeout")    || "5";
       document.getElementById("mqttOnTimeoutSelect").value          = localStorage.getItem("mqttOnTimeout")  || "accept";
@@ -2272,14 +2283,15 @@ function saveMqttSettings() {
   const sub       = encodeURIComponent(document.getElementById("mqtt-sub").value.trim());
   const showPopup = document.getElementById("mqttShowPopupToggle").checked ? 1 : 0;
 
-  localStorage.setItem("mqttAcquireRow",        document.getElementById("mqttAcquireRowToggle").checked        ? "1" : "0");
   localStorage.setItem("mqttAcquireCompetitor", document.getElementById("mqttAcquireCompetitorToggle").checked ? "1" : "0");
   localStorage.setItem("mqttAcqMode",           document.getElementById("mqttAcqModeSelect").value);
   localStorage.setItem("mqttShowInfo",          document.getElementById("mqttShowInfoToggle").checked          ? "1" : "0");
   localStorage.setItem("mqttTimeout",           document.getElementById("mqttTimeoutInput").value);
   localStorage.setItem("mqttOnTimeout",         document.getElementById("mqttOnTimeoutSelect").value);
 
-  fetch(`/mqttSave?eventName=${evt}&subTopic=${sub}&showPopup=${showPopup}`)
+  const acquireRow    = document.getElementById("mqttAcquireRowToggle").checked ? 1 : 0;
+  const immediateMode = document.getElementById("mqttAcqModeSelect").value === "immediate" ? 1 : 0;
+  fetch(`/mqttSave?eventName=${evt}&subTopic=${sub}&showPopup=${showPopup}&acquireRow=${acquireRow}&immediateMode=${immediateMode}`)
     .then(r => r.text())
     .then(() => {
       const f = document.getElementById("mqtt-status-field");

@@ -268,6 +268,97 @@ void writeCheckpointFromMqtt(const String& jsonPayload) {
 }
 
 // ----------------------------------------
+void initPendingIndex() {
+  pendingRowIndex = 0;
+  File file = LittleFS.open("/mqtt_pending.json", "r");
+  if (!file) return;
+  while (file.available()) {
+    String line = file.readStringUntil('\n');
+    line.trim();
+    if (line.length() == 0) continue;
+    StaticJsonDocument<256> entry;
+    if (deserializeJson(entry, line) == DeserializationError::Ok) {
+      int id = entry["id"] | 0;
+      if (id > pendingRowIndex) pendingRowIndex = id;
+    }
+  }
+  file.close();
+}
+
+void clearPendingFile() {
+  LittleFS.remove("/mqtt_pending.json");
+}
+
+int appendToPending(const String& topic, const String& jsonPayload) {
+  pendingRowIndex++;
+  StaticJsonDocument<512> entry;
+  entry["id"]    = pendingRowIndex;
+  entry["topic"] = topic;
+  entry["data"]  = serialized(jsonPayload);
+  File file = LittleFS.open("/mqtt_pending.json", "a");
+  if (!file) return -1;
+  serializeJson(entry, file);
+  file.println();
+  file.close();
+  return pendingRowIndex;
+}
+
+bool processPending(int id, bool confirm) {
+  File inFile = LittleFS.open("/mqtt_pending.json", "r");
+  if (!inFile) return false;
+  File tmpFile = LittleFS.open("/mqtt_pending_tmp.json", "w");
+  if (!tmpFile) { inFile.close(); return false; }
+
+  bool   found    = false;
+  String foundData;
+
+  while (inFile.available()) {
+    String line = inFile.readStringUntil('\n');
+    line.trim();
+    if (line.length() == 0) continue;
+    StaticJsonDocument<512> entry;
+    if (deserializeJson(entry, line) == DeserializationError::Ok && (int)(entry["id"] | 0) == id) {
+      found = true;
+      if (confirm) serializeJson(entry["data"], foundData);
+      continue;
+    }
+    tmpFile.println(line);
+  }
+  inFile.close();
+  tmpFile.close();
+
+  if (found) {
+    LittleFS.remove("/mqtt_pending.json");
+    LittleFS.rename("/mqtt_pending_tmp.json", "/mqtt_pending.json");
+    if (confirm && foundData.length() > 0) writeCheckpointFromMqtt(foundData);
+  } else {
+    LittleFS.remove("/mqtt_pending_tmp.json");
+  }
+  return found;
+}
+
+void broadcastPendingItems(AsyncWebSocketClient* client) {
+  File file = LittleFS.open("/mqtt_pending.json", "r");
+  if (!file) return;
+  while (file.available()) {
+    String line = file.readStringUntil('\n');
+    line.trim();
+    if (line.length() == 0) continue;
+    StaticJsonDocument<512> entry;
+    if (deserializeJson(entry, line) != DeserializationError::Ok) continue;
+    StaticJsonDocument<512> msg;
+    msg["t"]         = TYPE_MQTT_PENDING;
+    msg["topic"]     = entry["topic"];
+    msg["data"]      = entry["data"];
+    msg["pendingId"] = entry["id"];
+    String out;
+    serializeJson(msg, out);
+    client->text(out);
+  }
+  file.close();
+}
+
+// ----------------------------------------
 void handlePpsSync() {
   //syncReference = lastSyncTrigger;
   // PPS = inizio del secondo successivo

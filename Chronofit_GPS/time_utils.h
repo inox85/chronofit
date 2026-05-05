@@ -1,5 +1,6 @@
 #pragma once  // evita inclusioni multiple
 #include <Arduino.h>
+#include <ESPAsyncWebServer.h>
 
 // Struct per rappresentare un orario preciso
 struct PreciseTime {
@@ -51,3 +52,9 @@ void updateCalibrationFactor(double driftPPM);
 void setExtimatedDriftParams(int us);
 
 void writeCheckpointFromMqtt(const String& jsonPayload);
+
+int  appendToPending(const String& topic, const String& jsonPayload);
+bool processPending(int id, bool confirm);
+void broadcastPendingItems(AsyncWebSocketClient* client);
+void initPendingIndex();
+void clearPendingFile();

@@ -142,6 +142,9 @@ volatile bool shouldRestart = false;
 
 int buzzerActive = 0;
 
-int mqttShowPopup = 1;
+int mqttShowPopup     = 1;
+int mqttAcquireRow    = 0;
+int mqttImmediateMode = 0;
+int pendingRowIndex   = 0;
 
 portMUX_TYPE isrMux = portMUX_INITIALIZER_UNLOCKED;
