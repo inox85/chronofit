@@ -111,8 +111,9 @@ static void mqttTask(void*) {
 void mqttSetup() {
     mqttSubTopic     = readStringFromSettings("mqttSubTopic", "");
     mqttEventName    = readStringFromSettings("mqttEvent", "");
-    mqttAcquireRow   = readStringFromSettings("mqttAcquireRow",   "0").toInt();
+    mqttAcquireRow    = readStringFromSettings("mqttAcquireRow",    "0").toInt();
     mqttImmediateMode = readStringFromSettings("mqttImmediateMode","0").toInt();
+    mqttShowPopup     = readStringFromSettings("mqttShowPopup",     "1").toInt();
     initPendingIndex();
     mqttQueue = xQueueCreate(QUEUE_SIZE, sizeof(MqttMessage));
     wifiClient.setTimeout(1);
