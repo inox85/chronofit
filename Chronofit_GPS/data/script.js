@@ -2182,12 +2182,15 @@ function showMqttCard(topic, d, doAcquire, onDiscard, timeoutSec, onTimeout, acq
   const verb = immediateMode ? "Acquired" : "Will acquire";
   const desc = parts2.length > 0 ? `${verb}: ${parts2.join(" + ")}` : "(info only)";
 
-  const hasTimed    = timeoutSec !== null;
-  const acceptLabel = hasTimed ? `✓ Accept <span class="mqtt-countdown">(${timeoutSec})</span>` : "✓ Accept";
+  const hasTimed       = timeoutSec !== null;
+  const countdownSpan  = `<span class="mqtt-countdown">(${timeoutSec})</span>`;
+  const timeoutOnClose = hasTimed && onTimeout !== "accept";
+  const acceptLabel    = hasTimed && !timeoutOnClose ? `✓ Accept ${countdownSpan}` : "✓ Accept";
+  const closeLabel     = timeoutOnClose ? `✕ Close ${countdownSpan}` : "✕ Close";
   const actionsHtml = doAcquire
     ? `<button class="mqtt-notif-btn mqtt-notif-accept">${acceptLabel}</button>
-       <button class="mqtt-notif-btn mqtt-notif-close">✕ Close</button>`
-    : `<button class="mqtt-notif-btn mqtt-notif-close">✕ Close</button>`;
+       <button class="mqtt-notif-btn mqtt-notif-close">${closeLabel}</button>`
+    : `<button class="mqtt-notif-btn mqtt-notif-close">${closeLabel}</button>`;
 
   const card = document.createElement("div");
   card.className = "mqtt-notif";
