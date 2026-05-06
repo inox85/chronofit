@@ -946,7 +946,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     // Puoi poi parsarlo con ArduinoJson
     DynamicJsonDocument doc(256);
     deserializeJson(doc, body);
-
+    int lineNumber = doc["lineNumber"];
     int id  = doc["index"];
     String lineId = doc["lineId"];
     int competitor = doc["competitor"];
@@ -966,6 +966,21 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     String timeString = String(buffer);
 
     Serial.println(timeString);  // stampa "007-00042"
+
+    {
+        StaticJsonDocument<256> mqttDoc;
+        mqttDoc["ln"] = lineNumber;
+        mqttDoc["lId"] = lineId;
+        mqttDoc["c"]   = competitor;
+        mqttDoc["h"]   = hour;
+        mqttDoc["m"]   = minute;
+        mqttDoc["s"]   = second;
+        mqttDoc["ms"]  = millis;
+        mqttDoc["x"]   = 0;
+        String mqttPayload;
+        serializeJson(mqttDoc, mqttPayload);
+        mqttPublishCheckpoint(mqttPayload);
+    }
 
     request->send(200, "text/plain", "JSON ricevuto con successo");
     wifiRxActivity();
