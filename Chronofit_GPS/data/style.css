@@ -557,11 +557,25 @@ input:checked + .slider:before {
 }
 
 /* --- WiFi overlay: password row con toggle inline --- */
+#wifiOverlay .input-row label {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+#wifiOverlay .toggle-row span {
+  font-size: 20px;
+}
+
 #wifiOverlay .input-row input[type="text"],
 #wifiOverlay .input-row input[type="password"] {
   flex: 1;
   min-width: 0;
   width: auto;
+}
+
+#wifiOverlay .fullscreen-popup {
+  width: 92%;
+  max-width: 580px;
 }
 
 
