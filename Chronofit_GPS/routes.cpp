@@ -1008,7 +1008,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         int penality = doc["penality"].as<int>();
 
         #ifdef DEBUG
-          Serial.printf("Aggiorno riga index=%d,  lineNumber=%d, lineId=%d, competitor=%d, %02d:%02d.%d\n",
+          Serial.printf("Aggiorno riga index=%d,  lineNumber=%d, lineId=%s, competitor=%d, %02d:%02d.%d\n",
                       entryIndex, lineNumber, lineId, competitor, hour, minute, millis);
         #endif
 

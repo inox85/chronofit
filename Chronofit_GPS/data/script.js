@@ -1160,7 +1160,7 @@ function editRow(button) {
 
     // ID → numero
     if (cell.classList.contains("col-id")) {
-      cell.innerHTML = `<input type="number" value="${value}" style="width:90%">`;
+      cell.innerHTML = `<input type="text" value="${value}" style="width:90%">`;
     }
 
     // Event Time → orario mascherato
@@ -1276,7 +1276,7 @@ function sendUpdatedCheckPointRow(row) {
   const messageObj = {
     index,
     lineNumber: parseInt(lineNumber),
-    lineId: parseInt(lineId),
+    lineId: lineId,
     competitor: parseInt(competitor),
     hour: parseInt(hour),
     minute: parseInt(minute),
