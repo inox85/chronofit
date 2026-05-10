@@ -205,8 +205,8 @@ hr {
 input[type="text"],
 input[type="number"],
 input[type="numeric"],
-input[type="password"], 
-input[type="email"] {
+input[type="password"]
+ {
   font-family: 'Nunito';
   width: 100%;
   padding: 0px;
@@ -218,6 +218,19 @@ input[type="email"] {
   min-height: 30px;
   text-align: center;
   
+}
+
+input[type="email"]{
+  font-family: 'Nunito';
+  width: 80%;
+  padding: 0px;
+  margin: 2px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 20px;
+  box-sizing: border-box;
+  min-height: 30px;
+  text-align: center;
 }
 
 input#station-name-input{
