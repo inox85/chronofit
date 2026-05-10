@@ -71,6 +71,8 @@ void wifiRxActivity() { lastRxTime = millis(); }
 
 void wifiTxActivity() { lastTxTime = millis(); }
 
+void broadcastLineUpdate(int idx);
+
 // bool postSessionJson(const char* url, const char* filePath) {
 
 //   // Controllo esistenza file
@@ -920,48 +922,22 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     deserializeJson(doc, body);
     int line = doc["l"].as<int>();
     int idx = line - 1;
-    lineIds[idx] = doc["ld"].as<String>();
+    lineIds[idx]     = doc["ld"].as<String>();
     competitors[idx] = doc["c"].as<int>();
-    delays[idx] = doc["d"].as<int>();
-    enabled[idx] = doc["e"].as<int>();
+    delays[idx]      = doc["d"].as<int>();
+    lineEnabled[idx] = doc["e"].as<int>();
 
-    broadCastSettings();
+    broadcastLineUpdate(idx);
 
     #ifdef DEBUG
-    Serial.printf("Ricevuti: %d, %s, %d, %d\n",
-                    line, lineIds[idx], competitors[idx], delays[idx]);
+    Serial.printf("Ricevuti: %d, %s, %d, %d, %d\n",
+                    line, lineIds[idx].c_str(), competitors[idx], delays[idx], lineEnabled[idx]);
     #endif
     // E qui elabori o invii via seriale, BLE, ecc.
     request->send(200, "text/plain", "Saved sucessfully"); 
     wifiRxActivity();
   });
 
-  server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
-  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-
-    String body;
-    for (size_t i = 0; i < len; i++) body += (char)data[i];
-    debug("Ricevuti nuovi settings: " + body);
-
-    // Puoi poi parsarlo con ArduinoJson
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, body);
-    int line = doc["l"].as<int>();
-    int idx = line - 1;
-    lineIds[idx] = doc["ld"].as<String>();
-    competitors[idx] = doc["c"].as<int>();
-    delays[idx] = doc["d"].as<int>();
-
-    broadCastSettings();
-
-    #ifdef DEBUG
-    Serial.printf("Ricevuti: %d, %s, %d, %d\n",
-                    line, lineIds[idx], competitors[idx], delays[idx]);
-    #endif
-    // E qui elabori o invii via seriale, BLE, ecc.
-    request->send(200, "text/plain", "Saved sucessfully"); 
-    wifiRxActivity();
-  });
 
   server.on("/sendCheckPointRow", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
@@ -1405,6 +1381,20 @@ String serializeMessage(String msg){
 void broadCastSettings(){
   String message = serializeSettings();
   ws.textAll(message);
+  wifiTxActivity();
+}
+
+void broadcastLineUpdate(int idx) {
+  StaticJsonDocument<128> doc;
+  doc["t"]  = TYPE_LINE_UPDATED;
+  doc["l"]  = idx + 1;
+  doc["ld"] = lineIds[idx];
+  doc["c"]  = competitors[idx];
+  doc["d"]  = delays[idx];
+  doc["e"]  = lineEnabled[idx];
+  String msg;
+  serializeJson(doc, msg);
+  ws.textAll(msg);
   wifiTxActivity();
 }
 

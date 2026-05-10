@@ -805,6 +805,12 @@ input:checked + .slider:before {
   background-color: #888;
 }
 
+#event-table tbody tr.row-disabled td {
+  background-color: #b0b0b0;
+  color: #555;
+  font-style: italic;
+}
+
 /* Assicurati che anche tr non abbia altezza fissa */
 #event-table tr {
   vertical-align: middle;

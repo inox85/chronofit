@@ -166,13 +166,14 @@ void checkPointRoutine(int i) {
   // 🔹 Crea il JSON base
   StaticJsonDocument<256> checkpoint;
   checkpoint[LINE_NUMBER_FIELD] = i + 1;
-  checkpoint[LINE_ID_FIELD] = lineIds[i];
-  checkpoint[COMPETITOR_FIELD] = competitors[i];
-  checkpoint[HOUR_FIELD] = hh;
-  checkpoint[MINUTE_FIELD] = mm;
-  checkpoint[SECOND_FIELD] = ss;
-  checkpoint[MILLIS_FIELD] = ms;
-  checkpoint[PENALITY_FIELD] = 0;
+  checkpoint[LINE_ID_FIELD]     = lineIds[i];
+  checkpoint[COMPETITOR_FIELD]  = competitors[i];
+  checkpoint[HOUR_FIELD]        = hh;
+  checkpoint[MINUTE_FIELD]      = mm;
+  checkpoint[SECOND_FIELD]      = ss;
+  checkpoint[MILLIS_FIELD]      = ms;
+  checkpoint[PENALITY_FIELD]    = 0;
+  checkpoint[ENABLED_FIELD]     = lineEnabled[i];
 
   // 🔹 Calcola nuovo index
   sessionRowIndex = sessionRowIndex + 1;
@@ -188,13 +189,14 @@ void checkPointRoutine(int i) {
 
   // Copia i campi principali in ordine desiderato
   if (checkpoint.containsKey(LINE_NUMBER_FIELD)) ordered[LINE_NUMBER_FIELD] = checkpoint[LINE_NUMBER_FIELD];
-  if (checkpoint.containsKey(LINE_ID_FIELD)) ordered[LINE_ID_FIELD] = checkpoint[LINE_ID_FIELD];
-  if (checkpoint.containsKey(COMPETITOR_FIELD)) ordered[COMPETITOR_FIELD] = checkpoint[COMPETITOR_FIELD];
-  if (checkpoint.containsKey(HOUR_FIELD)) ordered[HOUR_FIELD] = checkpoint[HOUR_FIELD];
-  if (checkpoint.containsKey(MINUTE_FIELD)) ordered[MINUTE_FIELD] = checkpoint[MINUTE_FIELD];
-  if (checkpoint.containsKey(SECOND_FIELD)) ordered[SECOND_FIELD] = checkpoint[SECOND_FIELD];
-  if (checkpoint.containsKey(MILLIS_FIELD)) ordered[MILLIS_FIELD] = checkpoint[MILLIS_FIELD];
-  if (checkpoint.containsKey(PENALITY_FIELD)) ordered[PENALITY_FIELD] = checkpoint[PENALITY_FIELD];
+  if (checkpoint.containsKey(LINE_ID_FIELD))     ordered[LINE_ID_FIELD]     = checkpoint[LINE_ID_FIELD];
+  if (checkpoint.containsKey(COMPETITOR_FIELD))  ordered[COMPETITOR_FIELD]  = checkpoint[COMPETITOR_FIELD];
+  if (checkpoint.containsKey(HOUR_FIELD))        ordered[HOUR_FIELD]        = checkpoint[HOUR_FIELD];
+  if (checkpoint.containsKey(MINUTE_FIELD))      ordered[MINUTE_FIELD]      = checkpoint[MINUTE_FIELD];
+  if (checkpoint.containsKey(SECOND_FIELD))      ordered[SECOND_FIELD]      = checkpoint[SECOND_FIELD];
+  if (checkpoint.containsKey(MILLIS_FIELD))      ordered[MILLIS_FIELD]      = checkpoint[MILLIS_FIELD];
+  if (checkpoint.containsKey(PENALITY_FIELD))    ordered[PENALITY_FIELD]    = checkpoint[PENALITY_FIELD];
+  if (checkpoint.containsKey(ENABLED_FIELD))     ordered[ENABLED_FIELD]     = checkpoint[ENABLED_FIELD];
 
   // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
   File file = LittleFS.open("/session.json", "a");
@@ -239,6 +241,7 @@ void writeCheckpointFromMqtt(const String& jsonPayload) {
   ordered[SECOND_FIELD]      = src[SECOND_FIELD];
   ordered[MILLIS_FIELD]      = src[MILLIS_FIELD];
   ordered[PENALITY_FIELD]    = src[PENALITY_FIELD] | 0;
+  ordered[ENABLED_FIELD]     = src[ENABLED_FIELD]  | 1;
 
   if (printEnabled) {
     printFormatted(

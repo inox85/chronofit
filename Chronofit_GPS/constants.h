@@ -77,5 +77,6 @@ constexpr const char MINUTE_FIELD[] = "m";
 constexpr const char SECOND_FIELD[] = "s";
 constexpr const char MILLIS_FIELD[] = "ms";
 constexpr const char PENALITY_FIELD[] = "x";
+constexpr const char ENABLED_FIELD[]  = "e";
 
 #endif

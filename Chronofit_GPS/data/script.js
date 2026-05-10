@@ -241,6 +241,7 @@ function saveViewPrefs() {
     deltaTime:     document.getElementById("toggle-delta-time").checked,
     elapsedTime:   document.getElementById("toggle-elapsed-time").checked,
     penality:      document.getElementById("toggle-penality").checked,
+    showDisabled:  document.getElementById("toggle-disabled-rows").checked,
     timePrecision: document.getElementById("time-precision").value,
     lines: {}
   };
@@ -264,10 +265,11 @@ function restoreViewPrefs() {
       const el = document.getElementById(id);
       if (el && val !== undefined) el.checked = val;
     };
-    setChk("toggle-timestamp",    prefs.timestamp);
-    setChk("toggle-delta-time",   prefs.deltaTime);
-    setChk("toggle-elapsed-time", prefs.elapsedTime);
-    setChk("toggle-penality",     prefs.penality);
+    setChk("toggle-timestamp",     prefs.timestamp);
+    setChk("toggle-delta-time",    prefs.deltaTime);
+    setChk("toggle-elapsed-time",  prefs.elapsedTime);
+    setChk("toggle-penality",      prefs.penality);
+    setChk("toggle-disabled-rows", prefs.showDisabled);
 
     if (prefs.timePrecision !== undefined) {
       const val = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
@@ -334,6 +336,13 @@ function fillSettingsFields(data){
   document.getElementById("d2").value = data.d2 ?? 0;
   document.getElementById("d3").value = data.d3 ?? 0;
   document.getElementById("d4").value = data.d4 ?? 0;
+
+  for (let n = 1; n <= 4; n++) {
+    if (data[`e${n}`] !== undefined) {
+      const btn = document.querySelector(`.line-enable-btn[data-line="${n}"]`);
+      if (btn) applyLineEnableState(btn, data[`e${n}`]);
+    }
+  }
 
   
   document.getElementById("timezone-select").value = data.utc ?? 0;
@@ -570,6 +579,7 @@ const TYPE_WIFI_CONNECTING = 7;
 const TYPE_WIFI_ERROR      = 8;
 const TYPE_MQTT_NOTIFICATION = 9;
 const TYPE_MQTT_PENDING      = 10;
+const TYPE_LINE_UPDATED      = 11;
 
 function handleMessage(data) {
   switch (data.t) {
@@ -583,7 +593,8 @@ function handleMessage(data) {
         data.m,
         data.s,
         data.ms,
-        0
+        0,
+        data.e ?? 1
       );
       break;
 
@@ -623,6 +634,10 @@ function handleMessage(data) {
     case TYPE_MQTT_NOTIFICATION:
     case TYPE_MQTT_PENDING:
       handleMqttIncoming(data.topic, data.data, data.pendingId);
+      break;
+
+    case TYPE_LINE_UPDATED:
+      applyLineUpdate(data);
       break;
 
     case TYPE_WIFI_ERROR:
@@ -941,19 +956,20 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const second = checkpoint.s;
   const millis = checkpoint.ms;
   const penality = checkpoint.x;
+  const enabled = checkpoint.e ?? 1;
 
   // Richiama la funzione originale
-  addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, second, millis, penality);
+  addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, second, millis, penality, enabled);
 }
 
 
-function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis, penality) {
-  console.log(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis, penality);
+function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis, penality, enabled = 1) {
+  console.log(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis, penality, enabled);
   const tbody = document.querySelector("#event-table tbody");
   const row = document.createElement("tr");
 
-  // subito dopo: const row = document.createElement("tr");
   row.classList.add("row-enter");
+  if (!enabled) row.classList.add("row-disabled");
 
   const timestamp = formatTime(hour, minute, seconds, millis);
   const index = rowIndex;
@@ -974,6 +990,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-seconds", seconds);
   row.setAttribute("data-ms-raw", millis);
   row.setAttribute("data-penality", 0);
+  row.setAttribute("data-enabled", enabled ? "1" : "0");
 
   row.innerHTML = `
     <td class="col-index">${index}</td>
@@ -1132,11 +1149,16 @@ function applyLineFilter() {
     })
     .map(el => el.dataset.line);
 
+  const showDisabled = document.getElementById("toggle-disabled-rows")?.checked ?? true;
+
   const rows = document.querySelectorAll("#event-table tbody tr");
 
   rows.forEach(row => {
-    const line = String(row.getAttribute("data-line"));
-    row.style.display = activeLines.includes(line) ? "" : "none";
+    const line    = String(row.getAttribute("data-line"));
+    const enabled = row.getAttribute("data-enabled") !== "0";
+    const lineOk     = activeLines.includes(line);
+    const disabledOk = enabled || showDisabled;
+    row.style.display = (lineOk && disabledOk) ? "" : "none";
   });
 
   // 🔥 ricalcolo intertempi DOPO il filtro
@@ -1498,13 +1520,47 @@ function handleInputUpdate(e) {
   const lineNumber = e.target.dataset.line;
   if (!lineNumber) return;
 
+  const enableBtn = document.querySelector(`.line-enable-btn[data-line="${lineNumber}"]`);
   const data = {
-    l: Number(lineNumber),
+    l:  Number(lineNumber),
     ld: String(document.querySelector(`#l${lineNumber}`).value),
-    c: Number(document.querySelector(`#c${lineNumber}`).value),
-    d: Number(document.querySelector(`#d${lineNumber}`).value) || 0
+    c:  Number(document.querySelector(`#c${lineNumber}`).value),
+    d:  Number(document.querySelector(`#d${lineNumber}`).value) || 0,
+    e:  Number(enableBtn?.dataset.enabled ?? 1)
   };
 
+  sendSettingsRowData(data);
+}
+
+function applyLineEnableState(btn, enabled) {
+  btn.dataset.enabled = enabled ? "1" : "0";
+  btn.style.backgroundColor = enabled ? (btn.dataset.color || "#ccc") : "#888";
+}
+
+function applyLineUpdate(data) {
+  const n = data.l;
+  const lEl = document.getElementById(`l${n}`);
+  const cEl = document.getElementById(`c${n}`);
+  const dEl = document.getElementById(`d${n}`);
+  const btn = document.querySelector(`.line-enable-btn[data-line="${n}"]`);
+  if (lEl) lEl.value = data.ld ?? lEl.value;
+  if (cEl) cEl.value = data.c  ?? cEl.value;
+  if (dEl) dEl.value = data.d  ?? dEl.value;
+  if (btn && data.e !== undefined) applyLineEnableState(btn, data.e);
+}
+
+function toggleLineEnable(line) {
+  const btn = document.querySelector(`.line-enable-btn[data-line="${line}"]`);
+  const currentEnabled = (btn.dataset.enabled ?? "1") !== "0";
+  const newEnabled = currentEnabled ? 0 : 1;
+  const data = {
+    l:  line,
+    ld: document.querySelector(`#l${line}`).value,
+    c:  Number(document.querySelector(`#c${line}`).value),
+    d:  Number(document.querySelector(`#d${line}`).value) || 0,
+    e:  newEnabled
+  };
+  applyLineEnableState(btn, newEnabled); // aggiornamento ottimistico
   sendSettingsRowData(data);
 }
 
@@ -1843,6 +1899,13 @@ document
 .getElementById("toggle-penality")
 .addEventListener("change", e => {
   togglePenalityColumn(e.target.checked);
+  saveViewPrefs();
+});
+
+document
+.getElementById("toggle-disabled-rows")
+.addEventListener("change", () => {
+  applyLineFilter();
   saveViewPrefs();
 });
 

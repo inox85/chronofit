@@ -40,6 +40,7 @@
 #define TYPE_WIFI_ERROR               8
 #define TYPE_MQTT_NOTIFICATION        9
 #define TYPE_MQTT_PENDING             10
+#define TYPE_LINE_UPDATED             11
 
 #define AGING_REG                     0x10
 #define DS3231_ADDR                   0x68
