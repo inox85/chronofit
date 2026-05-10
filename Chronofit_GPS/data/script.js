@@ -584,6 +584,7 @@ const TYPE_LINE_UPDATED      = 11;
 function handleMessage(data) {
   switch (data.t) {
     case TYPE_CHECKPOINT:
+      if (data.ln !== 5) resetLineCompetitor(data.ln);
       addEventToTable(
         data.id,
         data.ln,
@@ -1515,6 +1516,20 @@ document.querySelectorAll('input[type="text"], input[type="number"]').forEach(in
   // aggiunge solo il necessario
   input.addEventListener('change', handleInputUpdate);
 });
+
+function resetLineCompetitor(lineNumber) {
+  const cEl = document.getElementById(`c${lineNumber}`);
+  if (!cEl) return;
+  cEl.value = 0;
+  const enableBtn = document.querySelector(`.line-enable-btn[data-line="${lineNumber}"]`);
+  sendSettingsRowData({
+    l:  lineNumber,
+    ld: document.getElementById(`l${lineNumber}`)?.value ?? "",
+    c:  0,
+    d:  Number(document.getElementById(`d${lineNumber}`)?.value) || 0,
+    e:  Number(enableBtn?.dataset.enabled ?? 1)
+  });
+}
 
 function handleInputUpdate(e) {
   const lineNumber = e.target.dataset.line;
