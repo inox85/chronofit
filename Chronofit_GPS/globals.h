@@ -70,6 +70,7 @@ extern volatile uint64_t lastRTCTrigger;
 extern String lineIds[5];
 extern int competitors[5];
 extern unsigned long delays[5];
+extern int lineEnabled[5];
 extern volatile unsigned long lastSensorsSignal[5];
 extern int sensorsPins[5];
 extern volatile  bool lastSensorState[5];

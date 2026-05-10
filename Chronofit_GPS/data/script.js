@@ -1382,6 +1382,15 @@ document.querySelectorAll('.toggle-btn').forEach(el => {
   }
 });
 
+
+
+document.querySelectorAll('.line-enable-btn').forEach(el => {
+  if (el.tagName === "BUTTON") {
+    const color = el.dataset.color; // colore originale
+    el.style.backgroundColor = color;
+  } 
+});
+
 async function downloadSession() {
   try {
     const response = await fetch('/downloadSession');

@@ -908,6 +908,33 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     wifiRxActivity();
   });
 
+  server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
+  [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+
+    String body;
+    for (size_t i = 0; i < len; i++) body += (char)data[i];
+    debug("Ricevuti nuovi settings: " + body);
+
+    // Puoi poi parsarlo con ArduinoJson
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, body);
+    int line = doc["l"].as<int>();
+    int idx = line - 1;
+    lineIds[idx] = doc["ld"].as<String>();
+    competitors[idx] = doc["c"].as<int>();
+    delays[idx] = doc["d"].as<int>();
+    enabled[idx] = doc["e"].as<int>();
+
+    broadCastSettings();
+
+    #ifdef DEBUG
+    Serial.printf("Ricevuti: %d, %s, %d, %d\n",
+                    line, lineIds[idx], competitors[idx], delays[idx]);
+    #endif
+    // E qui elabori o invii via seriale, BLE, ecc.
+    request->send(200, "text/plain", "Saved sucessfully"); 
+    wifiRxActivity();
+  });
 
   server.on("/checkPointFields", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
   [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
@@ -1340,6 +1367,11 @@ String serializeSettings(){
   doc["d2"] = delays[1];
   doc["d3"] = delays[2];
   doc["d4"] = delays[3];
+
+  doc["e1"] = lineEnabled[0];
+  doc["e2"] = lineEnabled[1];
+  doc["e3"] = lineEnabled[2];
+  doc["e4"] = lineEnabled[3];
 
   doc["utc"] = utcOffset;
   doc["print"] = printEnabled;

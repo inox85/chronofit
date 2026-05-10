@@ -62,6 +62,7 @@ int syncEnabled = 1;
 String lineIds[5] = {"1", "2", "3", "4", "Sync-test"};
 int competitors[5] = {0, 0, 0, 0, 0};
 unsigned long delays[5] = {0, 0, 0, 0, 0};
+int lineEnabled[5] = {1, 1, 1, 1, 1};
 volatile unsigned long lastSensorsSignal[5] = {0, 0, 0, 0, 0};
 int sensorsPins[5] = { SENSOR_IN1, SENSOR_IN2, SENSOR_IN3, SENSOR_IN4, -1 };
 volatile bool lastSensorState[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};

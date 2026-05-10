@@ -282,7 +282,7 @@ input#station-name-input{
 
 button {
   text-align: center;
-  padding: 5px 15px;
+  padding: 5px 10px;
   font-family: 'Nunito';
   border-radius: 5px;
   background: var(--primary-color);
@@ -297,14 +297,19 @@ button:hover {
   opacity: 0.8;
 }
 
-.toggle-btn {
+.toggle-btn, .line-enable-btn {
   border: none;
-  padding: 5px 2px;
+  padding: 5px 10px;  /* regola a piacere */
   border-radius: 6px;
   cursor: pointer;
-  padding: 5px 20px;
+  width: auto;        /* annulla il width:100% ereditato da button */
   background-color: var(--primary-color);
   transition: background-color 0.3s;
+}
+
+/* Stato inattivo solo stile */
+.line-enable-btn.inactive {
+  color: #666;
 }
 
 /* Stato inattivo solo stile */
