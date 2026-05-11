@@ -742,6 +742,7 @@ function updateClockFromData(data) {
     let wifiNavBar = document.getElementById("wifiStatus");
     let gpsNavBar = document.getElementById("gpsStatus");
     let mqttNavBar = document.getElementById("mqttStatus");
+    let clientNavBar = document.getElementById("clientStatus");
     //let timezoneElem = document.getElementById("timezone");
 
     const fixFlags = data.f; // esempio: 7
@@ -771,6 +772,8 @@ function updateClockFromData(data) {
     btn.classList.add("disabled");
 
     const hasRows = document.querySelectorAll('#event-table tbody tr').length > 0;
+
+    clientNavBar.innerText = data.cl;
 
     lastWifiStatus = wifiStatus;
     const stopBtn = document.getElementById("stopReconnectBtn");
@@ -1530,6 +1533,7 @@ function resetLineCompetitor(lineNumber) {
     e:  Number(enableBtn?.dataset.enabled ?? 1)
   });
 }
+
 
 function handleInputUpdate(e) {
   const lineNumber = e.target.dataset.line;

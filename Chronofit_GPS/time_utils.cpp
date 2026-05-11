@@ -492,6 +492,7 @@ void broadcastTime() {
   doc["lg"] = GPSRefreshInterval * 60;
   doc["pw"] = powerSource;
   doc["ts"] = syncTestRequested;
+  doc["cl"] = ws.count();
 
   fixStatus = syncMode == MODE_SYNC_GPS;
 
