@@ -174,6 +174,52 @@
   </div>
 
 
+  <!-- Overlay Athlete Registry -->
+  <div id="athleteOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup athlete-popup">
+      <h2>Athlete Registry</h2>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="select" onclick="switchAthleteTab('select')">Select</button>
+        <button class="tab-btn"        data-tab="load"   onclick="switchAthleteTab('load')">Load</button>
+      </div>
+
+      <!-- Tab: Select -->
+      <div id="tab-select" class="tab-content">
+        <input type="text" id="athlete-search" placeholder="Search bib, name, surname…" oninput="renderAthleteList(this.value)">
+        <div class="athlete-layout">
+          <div id="athlete-list" class="athlete-list"></div>
+          <div id="athlete-detail" class="athlete-detail">
+            <p class="athlete-detail-empty">Select an athlete from the list</p>
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="big-button" id="athleteAssignBtn" onclick="assignAthlete()" disabled>Assign</button>
+          <button class="big-button" onclick="closeAthleteModal()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Tab: Load -->
+      <div id="tab-load" class="tab-content" style="display:none;">
+        <p style="color:#555; margin:4px 0 8px;">Paste JSON or load a file.<br>
+          Expected format: <code>[{"bib":1,"name":"Mario","surname":"Rossi", ...}]</code></p>
+        <div class="button-row" style="margin-bottom:8px;">
+          <label class="big-button" style="cursor:pointer;">
+            📂 Open file
+            <input type="file" id="athlete-file-input" accept=".json" style="display:none;">
+          </label>
+        </div>
+        <textarea id="athlete-json-input" placeholder='[{"bib":1,"name":"Mario","surname":"Rossi"}]'></textarea>
+        <div class="button-row">
+          <button class="big-button" onclick="loadAthleteRegistry()">Load</button>
+          <button class="big-button" onclick="closeAthleteModal()">Cancel</button>
+        </div>
+        <p id="athlete-load-status"></p>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Overlay e popup per Edit Time -->
   <div id="tableSettingsOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">

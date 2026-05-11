@@ -811,6 +811,162 @@ input:checked + .slider:before {
   font-style: italic;
 }
 
+/* ── Athlete Registry overlay ── */
+#athleteOverlay .fullscreen-popup.athlete-popup {
+  width: 94%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #222;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #ddd;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-btn.active {
+  color: #3b55ff;
+  border-bottom-color: #3b55ff;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#athlete-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.athlete-layout {
+  display: flex;
+  gap: 10px;
+  min-height: 220px;
+}
+
+.athlete-list {
+  flex: 1;
+  min-width: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.athlete-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background 0.15s;
+}
+
+.athlete-item:last-child { border-bottom: none; }
+.athlete-item:hover      { background: #f0f4ff; }
+.athlete-item.selected   { background: #dce4ff; }
+
+.athlete-bib {
+  font-weight: bold;
+  font-size: 16px;
+  min-width: 36px;
+  color: #3b55ff;
+}
+
+.athlete-name {
+  font-size: 14px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.athlete-empty,
+.athlete-detail-empty {
+  color: #aaa;
+  font-size: 14px;
+  text-align: center;
+  padding: 16px;
+}
+
+.athlete-detail {
+  flex: 1;
+  min-width: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.athlete-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.athlete-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+
+.athlete-field-key {
+  font-weight: bold;
+  color: #555;
+  text-transform: capitalize;
+}
+
+.athlete-field-val {
+  color: #222;
+  text-align: right;
+}
+
+#athlete-json-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 140px;
+  padding: 8px;
+  font-size: 13px;
+  font-family: monospace;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+#athlete-load-status {
+  font-size: 14px;
+  min-height: 20px;
+  text-align: center;
+}
+
 /* Assicurati che anche tr non abbia altezza fissa */
 #event-table tr {
   vertical-align: middle;

@@ -867,7 +867,7 @@ function updateClockFromData(data) {
     document.getElementById("pos").innerText = "🟢 " + "Lat: " 
       + data.lt.toFixed(6) + ", Lng: " + data.ln.toFixed(6) + ", Sat: " + data.st + " [" + offsetString +"]";
 
-    gpsNavBar.innerText = "🟢 Lt: " + data.lt.toFixed(6) + ", Ln: " + data.ln.toFixed(6);
+    gpsNavBar.innerText = "🟢";
       //timezoneElem.innerText = "Estimated timezone: UTC" + (tzOffsetAuto >=0 ? "+" : "") + tzOffsetAuto;
   } else if(timeValid || locationValid){
     // GPS in attesa segnale
@@ -2506,3 +2506,155 @@ pause`;
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+// ══════════════════════════════════════════════
+// ATHLETE REGISTRY
+// ══════════════════════════════════════════════
+
+let athleteRegistry = JSON.parse(localStorage.getItem("chronofit_athletes") || "[]");
+let selectedAthlete  = null;
+let athleteTargetLine = null;
+
+// ── Long press helper ──
+function addLongPress(el, callback, ms = 600) {
+  let timer = null;
+  let moved = false;
+
+  el.addEventListener("pointerdown", e => {
+    moved = false;
+    timer = setTimeout(() => {
+      timer = null;
+      if (!moved) callback(e);
+    }, ms);
+  });
+  el.addEventListener("pointermove", () => { moved = true; });
+  el.addEventListener("pointerup",   () => { if (timer) { clearTimeout(timer); timer = null; } });
+  el.addEventListener("pointerleave",() => { if (timer) { clearTimeout(timer); timer = null; } });
+  el.addEventListener("contextmenu", e => { if (!moved) e.preventDefault(); });
+}
+
+// Attach long press to c1..c4
+for (let n = 1; n <= 4; n++) {
+  const el = document.getElementById(`c${n}`);
+  if (el) addLongPress(el, () => openAthleteModal(n));
+}
+
+// ── Modal open / close ──
+function openAthleteModal(lineNumber) {
+  athleteTargetLine = lineNumber;
+  selectedAthlete   = null;
+  document.getElementById("athleteAssignBtn").disabled = true;
+  document.getElementById("athlete-search").value = "";
+  document.getElementById("athlete-detail").innerHTML =
+    '<p class="athlete-detail-empty">Select an athlete from the list</p>';
+  document.getElementById("athlete-load-status").textContent = "";
+  switchAthleteTab("select");
+  renderAthleteList("");
+  document.getElementById("athleteOverlay").style.display = "flex";
+}
+
+function closeAthleteModal() {
+  document.getElementById("athleteOverlay").style.display = "none";
+  selectedAthlete   = null;
+  athleteTargetLine = null;
+}
+
+// ── Tab switching ──
+function switchAthleteTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.tab === tab));
+  document.querySelectorAll(".tab-content").forEach(c =>
+    c.style.display = "none");
+  document.getElementById(`tab-${tab}`).style.display = "";
+}
+
+// ── Athlete list rendering ──
+function renderAthleteList(filter) {
+  const list = document.getElementById("athlete-list");
+  const q = filter.trim().toLowerCase();
+
+  const filtered = athleteRegistry.filter(a =>
+    String(a.bib).includes(q) ||
+    (a.name    || "").toLowerCase().includes(q) ||
+    (a.surname || "").toLowerCase().includes(q)
+  );
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<p class="athlete-empty">${
+      athleteRegistry.length === 0 ? "No athletes loaded" : "No match found"
+    }</p>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(a => `
+    <div class="athlete-item" data-bib="${a.bib}">
+      <span class="athlete-bib">${a.bib}</span>
+      <span class="athlete-name">${a.name ?? ""} ${a.surname ?? ""}</span>
+    </div>`).join("");
+
+  list.querySelectorAll(".athlete-item").forEach(item =>
+    item.addEventListener("click", () => selectAthlete(Number(item.dataset.bib)))
+  );
+}
+
+// ── Select athlete from list ──
+function selectAthlete(bib) {
+  selectedAthlete = athleteRegistry.find(a => a.bib === bib) ?? null;
+  if (!selectedAthlete) return;
+
+  document.querySelectorAll(".athlete-item").forEach(el =>
+    el.classList.toggle("selected", Number(el.dataset.bib) === bib));
+
+  const detail = document.getElementById("athlete-detail");
+  const rows = Object.entries(selectedAthlete).map(([k, v]) => `
+    <div class="athlete-field">
+      <span class="athlete-field-key">${k}</span>
+      <span class="athlete-field-val">${v}</span>
+    </div>`).join("");
+  detail.innerHTML = `<div class="athlete-fields">${rows}</div>`;
+
+  document.getElementById("athleteAssignBtn").disabled = false;
+}
+
+// ── Assign selected athlete to textbox ──
+function assignAthlete() {
+  if (!selectedAthlete || !athleteTargetLine) return;
+  const cEl = document.getElementById(`c${athleteTargetLine}`);
+  if (cEl) {
+    cEl.value = selectedAthlete.bib;
+    cEl.dispatchEvent(new Event("change")); // triggers handleInputUpdate → server save
+  }
+  closeAthleteModal();
+}
+
+// ── Load registry from textarea ──
+function loadAthleteRegistry() {
+  const raw = document.getElementById("athlete-json-input").value.trim();
+  const status = document.getElementById("athlete-load-status");
+  try {
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data)) throw new Error("Root must be a JSON array");
+    if (data.length > 0 && data[0].bib === undefined)
+      throw new Error('Each entry must have a "bib" field');
+    athleteRegistry = data;
+    localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
+    status.style.color = "green";
+    status.textContent = `✅ ${athleteRegistry.length} athletes loaded`;
+    renderAthleteList(document.getElementById("athlete-search").value);
+  } catch (e) {
+    status.style.color = "red";
+    status.textContent = `❌ ${e.message}`;
+  }
+}
+
+// ── File picker → fill textarea ──
+document.getElementById("athlete-file-input").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById("athlete-json-input").value = ev.target.result;
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
