@@ -209,9 +209,10 @@
             <input type="file" id="athlete-file-input" accept=".json" style="display:none;">
           </label>
         </div>
-        <textarea id="athlete-json-input" placeholder='[{"bib":1,"name":"Mario","surname":"Rossi"}]'></textarea>
+        <textarea id="athlete-json-input" placeholder='[{"competitor":1,"name":"Mario","surname":"Rossi"}]'></textarea>
         <div class="button-row">
           <button class="big-button" onclick="loadAthleteRegistry()">Load</button>
+          <button class="big-button" style="background:#c0392b;" onclick="clearAthleteRegistry()">Clear</button>
           <button class="big-button" onclick="closeAthleteModal()">Cancel</button>
         </div>
         <p id="athlete-load-status"></p>
@@ -282,6 +283,14 @@
         <span>Show disabled line rows</span>
         <label class="switch">
           <input type="checkbox" id="toggle-disabled-rows" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Reverse row order</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-reverse-order">
           <span class="slider"></span>
         </label>
       </div>

@@ -31,7 +31,7 @@ String serializeSettings();
 
 void broadCastSettings();
 
-void broadCastRowEdited(const DynamicJsonDocument& entry);
+void broadCastRowEdited(const JsonDocument& entry);
 
 extern AsyncWebServer server;
 extern AsyncWebSocket ws;

@@ -886,9 +886,11 @@ input:checked + .slider:before {
   transition: background 0.15s;
 }
 
-.athlete-item:last-child { border-bottom: none; }
-.athlete-item:hover      { background: #f0f4ff; }
-.athlete-item.selected   { background: #dce4ff; }
+.athlete-item:last-child           { border-bottom: none; }
+.athlete-item:hover                { background: #f0f4ff; }
+.athlete-item.selected             { background: #dce4ff; }
+.athlete-item.athlete-assigned       { opacity: 0.45; }
+.athlete-item.athlete-assigned:hover { background: #f5f5f5; }
 
 .athlete-bib {
   font-weight: bold;

@@ -918,7 +918,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     debug("Ricevuti nuovi settings: " + body);
 
     // Puoi poi parsarlo con ArduinoJson
-    DynamicJsonDocument doc(1024);
+    JsonDocument doc;
     deserializeJson(doc, body);
     int line = doc["l"].as<int>();
     int idx = line - 1;
@@ -947,7 +947,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     debug("Ricevuto JSON per stampa riga : " + body);
 
     // Puoi poi parsarlo con ArduinoJson
-    DynamicJsonDocument doc(256);
+    JsonDocument doc;
     deserializeJson(doc, body);
     int lineNumber = doc["lineNumber"];
     int id  = doc["index"];
@@ -993,7 +993,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
 
         // --- Parse JSON ricevuto ---
-        DynamicJsonDocument doc(256);
+        JsonDocument doc;
         DeserializationError err = deserializeJson(doc, data, len);
         if (err) {
             request->send(400, "text/plain", "JSON non valido");
@@ -1040,7 +1040,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
             String lineStr = inFile.readStringUntil('\n');
             if (lineStr.isEmpty()) continue;
 
-            DynamicJsonDocument entry(256);
+            JsonDocument entry;
             if (deserializeJson(entry, lineStr)) continue;
 
             int currentIndex = entry[INDEX_FIELD].as<int>();
@@ -1068,7 +1068,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         }
         // --- Se non trovato, aggiungi alla fine ---
         if (!updated) {
-            DynamicJsonDocument newEntry(256);
+            JsonDocument newEntry;
             newEntry[INDEX_FIELD] = entryIndex;
             newEntry[LINE_NUMBER_FIELD] = lineNumber;
             newEntry[LINE_ID_FIELD] = lineId;
@@ -1108,7 +1108,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
   server.on("/systemSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
  
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
   
     // ── dati esistenti ──────────────────────────────────────
     doc["timeCal"]             = calibrationFactor;
@@ -1399,7 +1399,7 @@ void broadcastLineUpdate(int idx) {
 }
 
 
-void broadCastRowEdited(const DynamicJsonDocument& entry){
+void broadCastRowEdited(const JsonDocument& entry){
   StaticJsonDocument<512> doc;
   doc["t"] = TYPE_ROW_UPDATED;
   doc[INDEX_FIELD] = entry[INDEX_FIELD];

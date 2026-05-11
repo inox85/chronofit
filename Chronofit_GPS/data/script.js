@@ -235,6 +235,8 @@ function updateTimeOffset(){
 
 const VIEW_PREFS_KEY = "chronofit_view_prefs";
 
+let reverseOrder = false;
+
 function saveViewPrefs() {
   const prefs = {
     timestamp:     document.getElementById("toggle-timestamp").checked,
@@ -242,6 +244,7 @@ function saveViewPrefs() {
     elapsedTime:   document.getElementById("toggle-elapsed-time").checked,
     penality:      document.getElementById("toggle-penality").checked,
     showDisabled:  document.getElementById("toggle-disabled-rows").checked,
+    reverseOrder:      document.getElementById("toggle-reverse-order").checked,
     timePrecision: document.getElementById("time-precision").value,
     lines: {}
   };
@@ -269,7 +272,9 @@ function restoreViewPrefs() {
     setChk("toggle-delta-time",    prefs.deltaTime);
     setChk("toggle-elapsed-time",  prefs.elapsedTime);
     setChk("toggle-penality",      prefs.penality);
-    setChk("toggle-disabled-rows", prefs.showDisabled);
+    setChk("toggle-disabled-rows",  prefs.showDisabled);
+    setChk("toggle-reverse-order", prefs.reverseOrder);
+    if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
 
     if (prefs.timePrecision !== undefined) {
       const val = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
@@ -597,6 +602,7 @@ function handleMessage(data) {
         0,
         data.e ?? 1
       );
+      reorderTable();
       break;
 
     case TYPE_TIME_UPDATE:
@@ -910,6 +916,8 @@ async function populateTableFromSaved() {
       }
     });
 
+    reorderTable();
+
   } catch (err) {
     console.error("Errore caricamento checkpoint:", err);
   }
@@ -995,6 +1003,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-ms-raw", millis);
   row.setAttribute("data-penality", 0);
   row.setAttribute("data-enabled", enabled ? "1" : "0");
+  row.setAttribute("data-row-id", rowIndex);
 
   row.innerHTML = `
     <td class="col-index">${index}</td>
@@ -1018,25 +1027,15 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   editBtn.onclick = () => editRow(editBtn);
   sendBtn.onclick = () => sendRow(sendBtn);
 
-  //tbody.appendChild(row);
+  tbody.appendChild(row);
 
-  tbody.insertBefore(row, tbody.firstChild);
-
-  // forza reflow (FONDAMENTALE)
+  // forza reflow (FONDAMENTALE per animazione)
   row.offsetHeight;
-
-  // attiva animazione
   row.classList.add("row-enter-active");
-
-  // (opzionale) rimuovi highlight dopo 1.5s
   setTimeout(() => {
     row.classList.remove("row-enter");
     row.classList.remove("row-enter-active");
   }, 1500);
-
-  // Applica subito il filtro
-  applyLineFilter();
-
 }
 
 function timestampToMs(ts) {
@@ -1082,65 +1081,58 @@ function formatDelta(ms, signed) {
 
 
 function recalcElapsedTimes() {
+  // Ordine cronologico (dal più vecchio al più nuovo) indipendente dalla visualizzazione
   const rows = Array.from(
     document.querySelectorAll("#event-table tbody tr")
-  ).filter(row => row.style.display !== "none");
+  ).filter(row => row.style.display !== "none")
+   .sort((a, b) => (Number(a.dataset.rowId) || 0) - (Number(b.dataset.rowId) || 0));
 
-  const firstRow = rows[rows.length - 1];
-  const firstTimeMs = firstRow ? rowToMs(firstRow) : null;
+  const firstTimeMs = rows.length > 0 ? rowToMs(rows[0]) : null;
 
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const row = rows[i];
+  rows.forEach(row => {
     const deltaCell = row.querySelector(".elapsed-time");
-    if (!deltaCell) continue;
-
-    const currentMs = rowToMs(row);
-    const delta = firstTimeMs - currentMs;
+    if (!deltaCell) return;
+    const delta = firstTimeMs - rowToMs(row);
     deltaCell.textContent = formatDelta(delta, false);
-  }
+  });
 }
 
 function recalcDeltaTimes() {
+  // Ordine cronologico (dal più vecchio al più nuovo) indipendente dalla visualizzazione
   const rows = Array.from(
     document.querySelectorAll("#event-table tbody tr")
-  ).filter(row => row.style.display !== "none");
+  ).filter(row => row.style.display !== "none")
+   .sort((a, b) => (Number(a.dataset.rowId) || 0) - (Number(b.dataset.rowId) || 0));
 
-  let nextTime = null;
+  let prevTime = null;
 
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const row = rows[i];
-    const tsCell = row.querySelector(".timestamp");
+  rows.forEach(row => {
+    const tsCell    = row.querySelector(".timestamp");
     const deltaCell = row.querySelector(".delta-time");
-
-    if (!tsCell || !deltaCell) continue;
+    if (!tsCell || !deltaCell) return;
 
     row.classList.remove("negative-row");
 
     const timestamp = tsCell.textContent.trim();
-
     if (timestamp === "00:00:00.000" || timestamp === "00:00:00.00" || timestamp === "00:00:00.0") {
       row.classList.add("negative-row");
     }
 
     const currentMs = rowToMs(row);
 
-    if (nextTime === null) {
+    if (prevTime === null) {
       deltaCell.textContent = "—";
-      nextTime = currentMs;
-      continue;
-    }
-
-    const delta = nextTime - currentMs;
-
-    if (delta > 0) {
-      deltaCell.textContent = "—";
-      row.classList.add("negative-row");
     } else {
-      deltaCell.textContent = formatDelta(delta, true);
+      const delta = currentMs - prevTime;
+      if (delta < 0) {
+        deltaCell.textContent = "—";
+        row.classList.add("negative-row");
+      } else {
+        deltaCell.textContent = formatDelta(-delta, false);
+      }
     }
-
-    nextTime = currentMs;
-  }
+    prevTime = currentMs;
+  });
 }
 
 
@@ -1882,6 +1874,21 @@ function togglePenalityColumn(show) {
 }
 
 
+function reorderTable() {
+  const tbody = document.querySelector("#event-table tbody");
+
+  let rows = Array.from(tbody.querySelectorAll("tr"));
+  rows.sort((a, b) => {
+    const ia = Number(a.dataset.rowId) || 0;
+    const ib = Number(b.dataset.rowId) || 0;
+    return reverseOrder ? ia - ib : ib - ia;
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+
+  applyLineFilter();
+}
+
 function updateVisibleColumns(){
   let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
   toggleTimestampColumn(absoluteTimeVisible); 
@@ -1927,6 +1934,15 @@ document
   applyLineFilter();
   saveViewPrefs();
 });
+
+document
+.getElementById("toggle-reverse-order")
+.addEventListener("change", e => {
+  reverseOrder = e.target.checked;
+  reorderTable();
+  saveViewPrefs();
+});
+
 
 
 // seleziona l'intera riga dell'header
@@ -2512,6 +2528,7 @@ pause`;
 // ══════════════════════════════════════════════
 
 let athleteRegistry = JSON.parse(localStorage.getItem("chronofit_athletes") || "[]");
+let assignedCompetitorSet = new Set(JSON.parse(localStorage.getItem("chronofit_assigned") || "[]"));
 let selectedAthlete  = null;
 let athleteTargetLine = null;
 
@@ -2569,12 +2586,17 @@ function switchAthleteTab(tab) {
 }
 
 // ── Athlete list rendering ──
+function getAssignedCompetitors() {
+  return assignedCompetitorSet;
+}
+
 function renderAthleteList(filter) {
   const list = document.getElementById("athlete-list");
   const q = filter.trim().toLowerCase();
+  const assigned = getAssignedCompetitors();
 
   const filtered = athleteRegistry.filter(a =>
-    String(a.bib).includes(q) ||
+    String(a.competitor).includes(q) ||
     (a.name    || "").toLowerCase().includes(q) ||
     (a.surname || "").toLowerCase().includes(q)
   );
@@ -2586,24 +2608,27 @@ function renderAthleteList(filter) {
     return;
   }
 
-  list.innerHTML = filtered.map(a => `
-    <div class="athlete-item" data-bib="${a.bib}">
-      <span class="athlete-bib">${a.bib}</span>
+  list.innerHTML = filtered.map(a => {
+    const isAssigned = assigned.has(Number(a.competitor));
+    return `
+    <div class="athlete-item${isAssigned ? " athlete-assigned" : ""}" data-competitor="${a.competitor}">
+      <span class="athlete-bib">${a.competitor}</span>
       <span class="athlete-name">${a.name ?? ""} ${a.surname ?? ""}</span>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 
   list.querySelectorAll(".athlete-item").forEach(item =>
-    item.addEventListener("click", () => selectAthlete(Number(item.dataset.bib)))
+    item.addEventListener("click", () => selectAthlete(Number(item.dataset.competitor)))
   );
 }
 
 // ── Select athlete from list ──
-function selectAthlete(bib) {
-  selectedAthlete = athleteRegistry.find(a => a.bib === bib) ?? null;
+function selectAthlete(competitor) {
+  selectedAthlete = athleteRegistry.find(a => a.competitor === competitor) ?? null;
   if (!selectedAthlete) return;
 
   document.querySelectorAll(".athlete-item").forEach(el =>
-    el.classList.toggle("selected", Number(el.dataset.bib) === bib));
+    el.classList.toggle("selected", Number(el.dataset.competitor) === competitor));
 
   const detail = document.getElementById("athlete-detail");
   const rows = Object.entries(selectedAthlete).map(([k, v]) => `
@@ -2621,21 +2646,35 @@ function assignAthlete() {
   if (!selectedAthlete || !athleteTargetLine) return;
   const cEl = document.getElementById(`c${athleteTargetLine}`);
   if (cEl) {
-    cEl.value = selectedAthlete.bib;
+    cEl.value = selectedAthlete.competitor;
     cEl.dispatchEvent(new Event("change")); // triggers handleInputUpdate → server save
   }
+  assignedCompetitorSet.add(Number(selectedAthlete.competitor));
+  localStorage.setItem("chronofit_assigned", JSON.stringify([...assignedCompetitorSet]));
   closeAthleteModal();
 }
 
 // ── Load registry from textarea ──
+function clearAthleteRegistry() {
+  athleteRegistry = [];
+  assignedCompetitorSet.clear();
+  localStorage.removeItem("chronofit_athletes");
+  localStorage.removeItem("chronofit_assigned");
+  document.getElementById("athlete-json-input").value = "";
+  const status = document.getElementById("athlete-load-status");
+  status.style.color = "#888";
+  status.textContent = "Registry cleared";
+  renderAthleteList(document.getElementById("athlete-search").value);
+}
+
 function loadAthleteRegistry() {
   const raw = document.getElementById("athlete-json-input").value.trim();
   const status = document.getElementById("athlete-load-status");
   try {
     const data = JSON.parse(raw);
     if (!Array.isArray(data)) throw new Error("Root must be a JSON array");
-    if (data.length > 0 && data[0].bib === undefined)
-      throw new Error('Each entry must have a "bib" field');
+    if (data.length > 0 && data[0].competitor === undefined)
+      throw new Error('Each entry must have a "competitor" field');
     athleteRegistry = data;
     localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
     status.style.color = "green";

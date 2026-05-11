@@ -39,7 +39,7 @@ void IRAM_ATTR sensorISR(void *arg) {
 void IRAM_ATTR onPpsInterrupt() {   
   lastSyncTrigger = esp_timer_get_time();
   ppsTriggered = true;
-  ppsCounter++;
+  ppsCounter = ppsCounter + 1;
 }
 
 void signalMenagement(int i){

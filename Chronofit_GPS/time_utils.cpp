@@ -462,7 +462,7 @@ int getLastSessionRowIndex() {
   if (file) {
     while (file.available()) {
       String line = file.readStringUntil('\n');
-      DynamicJsonDocument tmp(256);
+      JsonDocument tmp;
       DeserializationError err = deserializeJson(tmp, line);
       if (!err) {
         int idx = tmp[INDEX_FIELD] | 0;
