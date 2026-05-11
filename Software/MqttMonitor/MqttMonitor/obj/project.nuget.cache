@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "LBLvnmPjseo=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\innocenti\\Downloads\\MqttMonitor_1\\MqttMonitor\\MqttMonitor.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\innocenti\\.nuget\\packages\\mqttnet\\4.3.7.1207\\mqttnet.4.3.7.1207.nupkg.sha512",
+    "C:\\Users\\innocenti\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,234 @@
+<Window
+    x:Class="MqttMonitor.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="MQTT Monitor"
+    Width="1050"
+    Height="650"
+    Background="#1E1E2E"
+    Foreground="#CCCCDD">
+
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#0E0E1A" />
+            <Setter Property="Foreground" Value="#CCCCDD" />
+            <Setter Property="BorderBrush" Value="#333350" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="4,3" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="CaretBrush" Value="#CCCCDD" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="14,5" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Height" Value="28" />
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#1A1A28" />
+            <Setter Property="RowBackground" Value="Transparent" />
+            <Setter Property="AlternatingRowBackground" Value="#1E1E30" />
+            <Setter Property="Foreground" Value="#9F9FBB" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#22223A" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="ColumnHeaderHeight" Value="30" />
+            <Setter Property="RowHeight" Value="28" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="EnableRowVirtualization" Value="True" />
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#0E0E1A" />
+            <Setter Property="Foreground" Value="#6E6E8A" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="BorderBrush" Value="#22223A" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="#9F9FBB" />
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1D9E7522" />
+                    <Setter Property="Foreground" Value="#CCCCDD" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridRow">
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1D9E7522" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!--  Toolbar  -->
+        <Border
+            Padding="12,8"
+            Background="#16161E"
+            BorderBrush="#22223A"
+            BorderThickness="0,0,0,1"
+            DockPanel.Dock="Top">
+            <WrapPanel VerticalAlignment="Center" Orientation="Horizontal">
+
+                <TextBlock
+                    Margin="0,0,6,0"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="#6E6E8A"
+                    Text="Broker" />
+                <TextBox
+                    x:Name="TxtHost"
+                    Width="180"
+                    Height="26"
+                    Margin="0,0,10,0"
+                    Text="broker.hivemq.com" />
+
+                <TextBlock
+                    Margin="0,0,6,0"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="#6E6E8A"
+                    Text="Porta" />
+                <TextBox
+                    x:Name="TxtPort"
+                    Width="55"
+                    Height="26"
+                    Margin="0,0,10,0"
+                    Text="1883" />
+
+                <TextBlock
+                    Margin="0,0,6,0"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="#6E6E8A"
+                    Text="Topic" />
+                <TextBox
+                    x:Name="TxtTopic"
+                    Width="200"
+                    Height="26"
+                    Margin="0,0,10,0"
+                    Text="#" />
+
+                <Button
+                    x:Name="BtnConnect"
+                    Margin="0,0,6,0"
+                    Background="#1D9E75"
+                    Click="BtnConnect_Click"
+                    Content="Connetti"
+                    Foreground="White" />
+                <Button
+                    x:Name="BtnDisconnect"
+                    Margin="0,0,6,0"
+                    Background="#993C1D"
+                    Click="BtnDisconnect_Click"
+                    Content="Disconnetti"
+                    Foreground="White"
+                    IsEnabled="False" />
+                <Button
+                    Margin="0,0,16,0"
+                    Background="#3A3A50"
+                    Click="BtnClear_Click"
+                    Content="Pulisci"
+                    Foreground="#AAAACC" />
+
+                <!--  Status indicator  -->
+                <Ellipse
+                    x:Name="StatusDot"
+                    Width="8"
+                    Height="8"
+                    Margin="0,0,6,0"
+                    VerticalAlignment="Center"
+                    Fill="#993C1D" />
+                <TextBlock
+                    x:Name="StatusText"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="#6E6E8A"
+                    Text="Disconnesso" />
+            </WrapPanel>
+        </Border>
+
+        <!--  Detail / JSON panel at bottom  -->
+        <Border
+            Height="130"
+            Padding="12,8"
+            Background="#0E0E1A"
+            BorderBrush="#22223A"
+            BorderThickness="0,1,0,0"
+            DockPanel.Dock="Bottom">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    Margin="0,0,0,5"
+                    FontSize="10"
+                    Foreground="#6E6E8A"
+                    Text="JSON — messaggio selezionato" />
+                <TextBox
+                    x:Name="TxtJsonDetail"
+                    Grid.Row="1"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    CaretBrush="#9F9FBB"
+                    FontFamily="Consolas"
+                    FontSize="12"
+                    Foreground="#9F9FBB"
+                    IsReadOnly="True"
+                    TextWrapping="Wrap"
+                    VerticalScrollBarVisibility="Auto" />
+            </Grid>
+        </Border>
+
+        <!--  Message count bar  -->
+        <Border
+            Height="24"
+            Padding="12,0"
+            Background="#16161E"
+            BorderBrush="#22223A"
+            BorderThickness="0,1,0,0"
+            DockPanel.Dock="Bottom">
+            <TextBlock
+                x:Name="TxtCount"
+                VerticalAlignment="Center"
+                FontSize="11"
+                Foreground="#4E4E6A"
+                Text="0 messaggi ricevuti" />
+        </Border>
+
+        <!--  Main DataGrid  -->
+        <DataGrid x:Name="GridMessages" SelectionChanged="GridMessages_SelectionChanged">
+            <DataGrid.Columns>
+                <DataGridTextColumn
+                    Width="55"
+                    Binding="{Binding Index}"
+                    Header="#" />
+                <DataGridTextColumn
+                    Width="110"
+                    Binding="{Binding TimestampDisplay}"
+                    Header="Timestamp" />
+                <DataGridTextColumn
+                    Width="220"
+                    Binding="{Binding Topic}"
+                    Header="Topic" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding Payload}"
+                    Header="Payload" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
