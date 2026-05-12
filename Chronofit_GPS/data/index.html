@@ -177,7 +177,7 @@
   <!-- Overlay Athlete Registry -->
   <div id="athleteOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup athlete-popup">
-      <h2>Athlete Registry</h2>
+      <h2>Competitor registry</h2>
 
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="select" onclick="switchAthleteTab('select')">Select</button>
@@ -195,6 +195,7 @@
         </div>
         <div class="button-row">
           <button class="big-button" id="athleteAssignBtn" onclick="assignAthlete()" disabled>Assign</button>
+          <button class="big-button" style="background:#e67e22;" onclick="resetAssignedAthletes()">Reset assigned</button>
           <button class="big-button" onclick="closeAthleteModal()">Cancel</button>
         </div>
       </div>
@@ -206,7 +207,7 @@
         <div class="button-row" style="margin-bottom:8px;">
           <label class="big-button" style="cursor:pointer;">
             📂 Open file
-            <input type="file" id="athlete-file-input" accept=".json" style="display:none;">
+            <input type="file" id="athlete-file-input" accept=".json,.csv" style="display:none;">
           </label>
         </div>
         <textarea id="athlete-json-input" placeholder='[{"competitor":1,"name":"Mario","surname":"Rossi"}]'></textarea>

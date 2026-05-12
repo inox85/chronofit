@@ -2655,6 +2655,12 @@ function assignAthlete() {
 }
 
 // ── Load registry from textarea ──
+function resetAssignedAthletes() {
+  assignedCompetitorSet.clear();
+  localStorage.removeItem("chronofit_assigned");
+  renderAthleteList(document.getElementById("athlete-search").value);
+}
+
 function clearAthleteRegistry() {
   athleteRegistry = [];
   assignedCompetitorSet.clear();
@@ -2686,14 +2692,49 @@ function loadAthleteRegistry() {
   }
 }
 
-// ── File picker → fill textarea ──
+// ── CSV parser ──
+function parseCsvRegistry(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim() !== "");
+  if (lines.length < 2) throw new Error("CSV must have a header row and at least one data row");
+
+  const headers = lines[0].split(";").map(h => h.trim());
+  if (!headers.includes("competitor")) throw new Error('CSV must have a "competitor" column');
+
+  return lines.slice(1).map(line => {
+    const values = line.split(";").map(v => v.trim());
+    const obj = {};
+    headers.forEach((h, i) => {
+      const v = values[i] ?? "";
+      obj[h] = h === "competitor" ? Number(v) : v;
+    });
+    return obj;
+  });
+}
+
+// ── File picker ──
 document.getElementById("athlete-file-input").addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
+  const status = document.getElementById("athlete-load-status");
   const reader = new FileReader();
   reader.onload = ev => {
-    document.getElementById("athlete-json-input").value = ev.target.result;
+    const text = ev.target.result;
     e.target.value = "";
+    if (file.name.toLowerCase().endsWith(".csv")) {
+      try {
+        const data = parseCsvRegistry(text);
+        athleteRegistry = data;
+        localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
+        status.style.color = "green";
+        status.textContent = `✅ ${athleteRegistry.length} athletes loaded from CSV`;
+        renderAthleteList(document.getElementById("athlete-search").value);
+      } catch (err) {
+        status.style.color = "red";
+        status.textContent = `❌ ${err.message}`;
+      }
+    } else {
+      document.getElementById("athlete-json-input").value = text;
+    }
   };
   reader.readAsText(file);
 });
