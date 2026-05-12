@@ -260,6 +260,54 @@
       </div>
 
       <div class="toggle-row">
+        <span>Show index column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-index" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show line column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-line" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show line ID column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-lineid" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show race time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-race-time">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show edit button</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-edit-btn" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show send button</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-send-btn" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
         <span>Time precision decimals</span>
         <select id="time-precision" onchange="onTimePrecisionChange(this.value)">
           <option value="1">1</option>
@@ -292,6 +340,14 @@
         <span>Reverse row order</span>
         <label class="switch">
           <input type="checkbox" id="toggle-reverse-order">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Competitor splits mode</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-splits">
           <span class="slider"></span>
         </label>
       </div>
@@ -649,16 +705,17 @@
       <table id="event-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Line</th>
-            <th>ID</th>
+            <th class="col-index-col">#</th>
+            <th class="col-line-col">Line</th>
+            <th class="col-id-col">ID</th>
             <th>Comp.</th>
             <th class="timestamp-col">Event ⏱️</th>
+            <th class="race-time-col">Race time</th>
             <th class="delta-time-col">Δ ⏱️</th>
             <th class="elapsed-time-col">Elapsed ⏱️</th>
             <th class="penality-col">❌</th>
-            <th>Edit</th>
-            <th>Send</th>
+            <th class="col-edit-col">Edit</th>
+            <th class="col-send-col">Send</th>
           </tr>
         </thead>
         <tbody></tbody>

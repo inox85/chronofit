@@ -35,8 +35,8 @@ AsyncWebSocket ws("/ws");
 
 void activateAccessPoint(){
    // Imposta un IP statico per l’AP
-  IPAddress local_IP(192, 168, 1, 1);
-  IPAddress gateway(192, 168, 1, 1);
+  IPAddress local_IP(192, 168, 10, 1);
+  IPAddress gateway(192, 168, 10, 1);
   IPAddress subnet(255, 255, 255, 0);
 
   if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {

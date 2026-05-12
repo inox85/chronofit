@@ -457,11 +457,12 @@ input:checked + .slider:before {
   border-collapse: collapse;
   font-family: 'Nunito';
   font-size: 20px;
-  border-radius: 8px;
-  overflow: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   table-layout: auto;
 }
+
+#event-table thead th:first-child { border-top-left-radius: 8px; }
+#event-table thead th:last-child  { border-top-right-radius: 8px; }
 
 #event-table th {
   background-color: #333;
@@ -809,6 +810,17 @@ input:checked + .slider:before {
   background-color: #b0b0b0;
   color: #555;
   font-style: italic;
+}
+
+/* ── Race time column (hidden by default) ── */
+.race-time-col, td.race-time { display: none; }
+
+/* ── Competitor splits diff rows ── */
+#event-table tbody tr.diff-row td {
+  font-style: italic;
+}
+#event-table tbody tr.diff-row .diff-time {
+  font-weight: 700;
 }
 
 /* ── Athlete Registry overlay ── */

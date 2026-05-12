@@ -244,7 +244,14 @@ function saveViewPrefs() {
     elapsedTime:   document.getElementById("toggle-elapsed-time").checked,
     penality:      document.getElementById("toggle-penality").checked,
     showDisabled:  document.getElementById("toggle-disabled-rows").checked,
-    reverseOrder:      document.getElementById("toggle-reverse-order").checked,
+    reverseOrder:  document.getElementById("toggle-reverse-order").checked,
+    showIndex:     document.getElementById("toggle-index").checked,
+    showLine:      document.getElementById("toggle-line").checked,
+    showLineId:    document.getElementById("toggle-lineid").checked,
+    showRaceTime:  document.getElementById("toggle-race-time").checked,
+    showEditBtn:   document.getElementById("toggle-edit-btn").checked,
+    showSendBtn:   document.getElementById("toggle-send-btn").checked,
+    splitsMode:    document.getElementById("toggle-splits").checked,
     timePrecision: document.getElementById("time-precision").value,
     lines: {}
   };
@@ -272,8 +279,15 @@ function restoreViewPrefs() {
     setChk("toggle-delta-time",    prefs.deltaTime);
     setChk("toggle-elapsed-time",  prefs.elapsedTime);
     setChk("toggle-penality",      prefs.penality);
-    setChk("toggle-disabled-rows",  prefs.showDisabled);
+    setChk("toggle-disabled-rows", prefs.showDisabled);
     setChk("toggle-reverse-order", prefs.reverseOrder);
+    setChk("toggle-index",         prefs.showIndex    ?? true);
+    setChk("toggle-line",          prefs.showLine     ?? true);
+    setChk("toggle-lineid",        prefs.showLineId   ?? true);
+    setChk("toggle-race-time",     prefs.showRaceTime ?? false);
+    setChk("toggle-edit-btn",      prefs.showEditBtn  ?? true);
+    setChk("toggle-send-btn",      prefs.showSendBtn  ?? true);
+    setChk("toggle-splits",        prefs.splitsMode   ?? false);
     if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
 
     if (prefs.timePrecision !== undefined) {
@@ -302,7 +316,8 @@ function restoreViewPrefs() {
     }
 
     updateVisibleColumns();
-    applyLineFilter();
+    if (prefs.splitsMode) applyCompetitorSplits();
+    else applyLineFilter();
   } catch(e) {
     console.warn("Errore ripristino preferenze:", e);
   }
@@ -603,6 +618,7 @@ function handleMessage(data) {
         data.e ?? 1
       );
       reorderTable();
+      if (document.getElementById("toggle-splits").checked) applyCompetitorSplits();
       break;
 
     case TYPE_TIME_UPDATE:
@@ -1011,6 +1027,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td class="col-id">${lineId}</td>
     <td class="col-competitor">${competitor}</td>
     <td class="timestamp">${timestamp}</td>
+    <td class="race-time">—</td>
     <td class="delta-time"></td>
     <td class="elapsed-time"></td>
     <td><button class="penality penality-btn">${penality}</button></td>
@@ -1627,6 +1644,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Ripristino preferenze visualizzazione...");
     restoreViewPrefs();
+
+    updateTableCorners();
 });
 
 
@@ -1889,15 +1908,153 @@ function reorderTable() {
   applyLineFilter();
 }
 
+function toggleIndexColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-index-col, td.col-index").forEach(el => el.style.display = d);
+}
+
+function toggleLineColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-line-col, td.col-line").forEach(el => el.style.display = d);
+}
+
+function toggleLineIdColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-id-col, td.col-id").forEach(el => el.style.display = d);
+}
+
+function toggleRaceTimeColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.race-time-col, td.race-time").forEach(el => el.style.display = d);
+}
+
+function toggleEditColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-edit-col").forEach(el => el.style.display = d);
+  document.querySelectorAll("td:has(.edit-btn)").forEach(el => el.style.display = d);
+}
+
+function toggleSendColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-send-col").forEach(el => el.style.display = d);
+  document.querySelectorAll("td:has(.send-btn)").forEach(el => el.style.display = d);
+}
+
+function updateTableCorners() {
+  const ths = Array.from(document.querySelectorAll("#event-table thead th"));
+  ths.forEach(th => { th.style.borderTopLeftRadius = ""; th.style.borderTopRightRadius = ""; });
+  const visible = ths.filter(th => getComputedStyle(th).display !== "none");
+  if (visible.length > 0) {
+    visible[0].style.borderTopLeftRadius = "8px";
+    visible[visible.length - 1].style.borderTopRightRadius = "8px";
+  }
+}
+
 function updateVisibleColumns(){
-  let absoluteTimeVisible = document.getElementById("toggle-timestamp").checked;
-  toggleTimestampColumn(absoluteTimeVisible); 
-  let elapsedTimeVisible = document.getElementById("toggle-elapsed-time").checked;
-  toggleElapsedTimeColumn(elapsedTimeVisible);
-  let deltaTimeVisible = document.getElementById("toggle-delta-time").checked;
-  toggleDeltaTimeColumn(deltaTimeVisible);
-  let penalityVisible = document.getElementById("toggle-penality").checked;
-  togglePenalityColumn(penalityVisible);
+  toggleTimestampColumn(document.getElementById("toggle-timestamp").checked);
+  toggleElapsedTimeColumn(document.getElementById("toggle-elapsed-time").checked);
+  toggleDeltaTimeColumn(document.getElementById("toggle-delta-time").checked);
+  togglePenalityColumn(document.getElementById("toggle-penality").checked);
+  toggleIndexColumn(document.getElementById("toggle-index").checked);
+  toggleLineColumn(document.getElementById("toggle-line").checked);
+  toggleLineIdColumn(document.getElementById("toggle-lineid").checked);
+  toggleRaceTimeColumn(document.getElementById("toggle-race-time").checked);
+  toggleEditColumn(document.getElementById("toggle-edit-btn").checked);
+  toggleSendColumn(document.getElementById("toggle-send-btn").checked);
+  updateTableCorners();
+}
+
+// ── Competitor splits ─────────────────────────────────────────
+function rowToMsExact(row) {
+  const h  = parseInt(row.dataset.hour    ?? 0);
+  const m  = parseInt(row.dataset.minute  ?? 0);
+  const s  = parseInt(row.dataset.seconds ?? 0);
+  const ms = parseInt(row.dataset.msRaw   ?? 0);
+  return ((h * 3600 + m * 60 + s) * 1000) + ms;
+}
+
+function applyCompetitorSplits() {
+  clearCompetitorSplits();
+  const tbody = document.querySelector("#event-table tbody");
+  const allRows = Array.from(tbody.querySelectorAll("tr:not(.diff-row)"));
+
+  // Raggruppa per competitor (tutte le righe, indipendentemente dalla visibilità)
+  const groups = {};
+  allRows.forEach(row => {
+    const comp = (row.dataset.competitor ?? "").trim();
+    if (!comp || comp === "0") return;
+    if (!groups[comp]) groups[comp] = [];
+    groups[comp].push(row);
+  });
+
+  Object.values(groups).forEach(compRows => {
+    // Ordina cronologicamente (crescente per tempo assoluto)
+    compRows.sort((a, b) => rowToMsExact(a) - rowToMsExact(b));
+
+    if (compRows.length >= 2) {
+      // Coppie CONSECUTIVE: (0,1), (1,2), (2,3), ...  → N righe = N-1 diff
+      for (let i = 0; i < compRows.length - 1; i++) {
+        const r1 = compRows[i];      // evento precedente
+        const r2 = compRows[i + 1]; // evento successivo
+
+        const diffMs = rowToMsExact(r2) - rowToMsExact(r1);
+        const dH  = Math.floor(diffMs / 3600000);
+        const dM  = Math.floor((diffMs % 3600000) / 60000);
+        const dS  = Math.floor((diffMs % 60000) / 1000);
+        const dMs = diffMs % 1000;
+
+        const line1 = r1.dataset.line;
+        const line2 = r2.dataset.line;
+        const comp  = r1.dataset.competitor;
+
+        const diffRow = document.createElement("tr");
+        diffRow.className = "diff-row";
+        diffRow.dataset.competitor = comp;
+        diffRow.innerHTML = `
+          <td class="col-index">—</td>
+          <td class="col-line">L${line1}→L${line2}</td>
+          <td class="col-id">—</td>
+          <td class="col-competitor">${comp}</td>
+          <td class="timestamp">—</td>
+          <td class="race-time diff-time">${formatTime(dH, dM, dS, dMs)}</td>
+          <td class="delta-time">—</td>
+          <td class="elapsed-time">—</td>
+          <td></td><td></td><td></td>
+        `;
+
+        // r2 è il più recente → appare prima nel DOM (newest-first)
+        // Inserisce la diff-row prima di r2 nel DOM
+        tbody.insertBefore(diffRow, r2);
+      }
+    }
+
+    // Nasconde TUTTE le righe originali del competitor (incluse le singole senza coppia)
+    compRows.forEach(r => {
+      r.classList.add("diff-hidden");
+      r.style.display = "none";
+    });
+  });
+
+  // Nasconde anche le righe senza competitor in splits mode
+  allRows.forEach(row => {
+    const comp = (row.dataset.competitor ?? "").trim();
+    if (!comp || comp === "0") {
+      row.classList.add("diff-hidden");
+      row.style.display = "none";
+    }
+  });
+
+  updateVisibleColumns();
+}
+
+function clearCompetitorSplits() {
+  const tbody = document.querySelector("#event-table tbody");
+  tbody.querySelectorAll(".diff-row").forEach(r => r.remove());
+  tbody.querySelectorAll(".diff-hidden").forEach(r => {
+    r.classList.remove("diff-hidden");
+    r.style.display = "";
+  });
+  applyLineFilter();
 }
 
 document
@@ -1942,6 +2099,31 @@ document
   reorderTable();
   saveViewPrefs();
 });
+
+document.getElementById("toggle-index")
+.addEventListener("change", e => { toggleIndexColumn(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-line")
+.addEventListener("change", e => { toggleLineColumn(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-lineid")
+.addEventListener("change", e => { toggleLineIdColumn(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-splits")
+.addEventListener("change", e => {
+  if (e.target.checked) applyCompetitorSplits();
+  else clearCompetitorSplits();
+  saveViewPrefs();
+});
+
+document.getElementById("toggle-race-time")
+.addEventListener("change", e => { toggleRaceTimeColumn(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-edit-btn")
+.addEventListener("change", e => { toggleEditColumn(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-send-btn")
+.addEventListener("change", e => { toggleSendColumn(e.target.checked); saveViewPrefs(); });
 
 
 
