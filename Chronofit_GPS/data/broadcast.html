@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronofit Broadcast</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta name="theme-color" content="#000000">
+  <style>
+    /* ══════════════════════════════════════════════════════
+       CSS VARIABLES  (usate solo dall'overlay impostazioni)
+    ══════════════════════════════════════════════════════ */
+    :root {
+      --s-bg-page:#0a0a0a; --s-bg-header:#111; --s-bg-card:#171717;
+      --s-bg-input:#222;   --s-bg-input2:#2a2a2a;
+      --s-border-1:#1e1e1e; --s-border-2:#2a2a2a;
+      --s-border-3:#333;    --s-border-4:#444;
+      --s-text-1:#fff; --s-text-2:#ddd; --s-text-3:#aaa;
+      --s-text-4:#888; --s-text-5:#666; --s-text-6:#555;
+      --s-ovl-bg:#1a1a1a; --s-ovl-fg:#eee; --s-ovl-h2:#fff;
+      --s-ovl-span:#bbb;  --s-ovl-ibg:#2a2a2a; --s-ovl-ifg:#eee;
+      --s-ovl-ibrd:#444;
+    }
+    body.theme-light {
+      --s-bg-page:#ebebeb; --s-bg-card:#fff; --s-bg-input:#f0f0f0;
+      --s-bg-input2:#fff;  --s-border-1:#e0e0e0; --s-border-2:#d0d0d0;
+      --s-border-3:#ccc;   --s-border-4:#bbb;
+      --s-text-1:#111; --s-text-2:#222; --s-text-3:#444;
+      --s-text-4:#666; --s-text-5:#888; --s-text-6:#999;
+      --s-ovl-bg:#fff;    --s-ovl-fg:#222; --s-ovl-h2:#111;
+      --s-ovl-span:#444;  --s-ovl-ibg:#f5f5f5; --s-ovl-ifg:#111;
+      --s-ovl-ibrd:#ccc;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       BASE
+    ══════════════════════════════════════════════════════ */
+    * { box-sizing:border-box; }
+    body { margin:0; padding:0; background:#000; overflow:hidden;
+           width:100vw; height:100vh; font-family:'Nunito',sans-serif; }
+
+    /* ══════════════════════════════════════════════════════
+       BROADCAST CONTAINER
+    ══════════════════════════════════════════════════════ */
+    #bc-container { position:fixed; inset:0; background:#000; }
+
+    /* ══════════════════════════════════════════════════════
+       VIDEO — sfondo a tutto schermo
+    ══════════════════════════════════════════════════════ */
+    #videoSection {
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; z-index:1;
+    }
+    #streamVideo, #streamImg {
+      width:100%; height:100%; object-fit:contain; display:none;
+    }
+    .video-placeholder {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      color:#444; text-align:center; pointer-events:none;
+    }
+    .placeholder-icon { font-size:80px; margin-bottom:16px; }
+    .placeholder-text { font-size:20px; color:#555; margin:0; }
+    .placeholder-sub  { font-size:14px; color:#333; margin:8px 0 0; }
+
+    /* ══════════════════════════════════════════════════════
+       HUD — layer sopra il video, non blocca i click
+    ══════════════════════════════════════════════════════ */
+    #bc-hud {
+      position:absolute; inset:0; z-index:40;
+      pointer-events:none;
+    }
+    #bc-hud > * { pointer-events:auto; }
+
+    /* ── Logos top-left ── */
+    #bc-logo {
+      position:absolute; top:14px; left:14px;
+      display:flex; align-items:center; gap:10px;
+    }
+    #bc-logo img {
+      height:34px; max-width:130px; object-fit:contain;
+      filter:drop-shadow(0 1px 4px rgba(0,0,0,.7));
+    }
+    .logo-for-dark  { display:block; }
+    .logo-for-light { display:none;  }
+    body.theme-light .logo-for-dark  { display:none;  }
+    body.theme-light .logo-for-light { display:block; }
+
+    /* ── Clock + Settings top-right ── */
+    #bc-top-right {
+      position:absolute; top:14px; right:14px;
+      display:flex; align-items:center; gap:8px;
+      pointer-events:auto;
+    }
+    #bc-clock {
+      font-family:monospace; font-size:26px; font-weight:700;
+      color:#fff; letter-spacing:1px;
+      background:rgba(0,0,0,.45);
+      padding:4px 14px; border-radius:5px;
+      backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+      text-shadow:0 1px 6px rgba(0,0,0,.8);
+      white-space:nowrap; pointer-events:none;
+    }
+    #openSettings {
+      background:rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:8px; color:rgba(255,255,255,.7);
+      font-size:18px; padding:4px 10px; cursor:pointer;
+      line-height:1; transition:background .2s,color .2s;
+    }
+    #openSettings:hover { background:rgba(0,0,0,.75); color:#fff; }
+
+    /* ── Sponsor bottom-right ── */
+    #bc-sponsor {
+      position:absolute; bottom:14px; right:14px;
+      pointer-events:none;
+    }
+    #bc-sponsor img {
+      height:38px; max-width:130px; object-fit:contain;
+      opacity:.75; filter:drop-shadow(0 1px 4px rgba(0,0,0,.7));
+    }
+
+    /* ══════════════════════════════════════════════════════
+       LOWER THIRD — anagrafica competitor
+    ══════════════════════════════════════════════════════ */
+    .lower-third {
+      position:absolute; bottom:70px; left:0;
+      min-width:360px; max-width:min(540px,56vw);
+      z-index:30; overflow:hidden;
+      /* Slide da sinistra */
+      transform:translateX(-100%); opacity:0;
+      transition:transform .45s cubic-bezier(.22,1,.36,1), opacity .3s ease;
+    }
+    .lower-third.lt-visible { transform:translateX(0); opacity:1; }
+
+    /* Nascosta in certi view mode (via CSS body class) */
+    body.view-griglia  .lower-third,
+    body.view-nascosto .lower-third { display:none; }
+
+    /* ── Barra header (colore linea) ── */
+    .lt-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:5px 14px;
+      font-size:10px; font-weight:800; letter-spacing:3px; text-transform:uppercase;
+      color:#000; background:#ccc; /* colore aggiornato via JS */
+    }
+    .lt-status {
+      font-size:9px; letter-spacing:1px;
+      padding:2px 8px; border-radius:3px;
+      background:rgba(0,0,0,.25);
+    }
+    #ltStatus.status-prossimo { animation:incomingPulse 1.4s ease-in-out infinite; }
+    @keyframes incomingPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── Corpo principale ── */
+    .lt-body {
+      display:flex; align-items:center;
+      background:rgba(6,6,6,.84);
+      backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+      padding:10px 16px 10px 14px; gap:0;
+    }
+    .lt-number {
+      font-size:62px; font-weight:900; line-height:1; color:#fff;
+      min-width:86px; text-align:center; padding-right:14px;
+      border-right:2px solid rgba(255,255,255,.12);
+      margin-right:14px; flex-shrink:0;
+    }
+    .lt-info { flex:1; min-width:0; }
+    .lt-surname {
+      font-size:28px; font-weight:800; color:#fff;
+      letter-spacing:.5px; line-height:1.1; text-transform:uppercase;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .lt-firstname { font-size:15px; color:rgba(255,255,255,.65); margin-top:2px; }
+    .lt-team      { font-size:13px; color:rgba(255,255,255,.5);  margin-top:3px; }
+    .lt-meta      {
+      display:flex; gap:10px; margin-top:3px;
+      font-size:10px; color:rgba(255,255,255,.35);
+      text-transform:uppercase; letter-spacing:1px;
+    }
+
+    /* ── Footer (orario transito) ── */
+    .lt-footer {
+      display:flex; align-items:center; justify-content:flex-end; gap:10px;
+      padding:6px 16px;
+      background:rgba(0,0,0,.72);
+      backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+      border-top:1px solid rgba(255,255,255,.07);
+    }
+    .lt-footer.lt-footer-hidden { display:none; }
+    .lt-time-label {
+      font-size:9px; font-weight:700; letter-spacing:2px;
+      text-transform:uppercase; color:rgba(255,255,255,.4);
+    }
+    .lt-time {
+      font-family:monospace; font-size:22px; font-weight:700;
+      color:#55aaff; letter-spacing:1px;
+    }
+
+    /* Flash su arrivo */
+    @keyframes ltFlash {
+      0%  { box-shadow:inset 0 0 0 0 rgba(255,255,255,0); }
+      25% { box-shadow:inset 0 0 0 4px rgba(255,255,255,.4); }
+      100%{ box-shadow:inset 0 0 0 0 rgba(255,255,255,0); }
+    }
+    .lower-third.lt-flash { animation:ltFlash .75s ease-out; }
+
+    /* ══════════════════════════════════════════════════════
+       ARRIVALS PANEL — tabella arrivi (destra)
+    ══════════════════════════════════════════════════════ */
+    .arrivals-panel {
+      position:absolute; top:58px; right:0;
+      width:300px; max-height:calc(100vh - 100px);
+      display:flex; flex-direction:column;
+      background:rgba(6,6,6,.80);
+      backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+      border-left:1px solid rgba(255,255,255,.07);
+      z-index:30;
+      /* Slide da destra */
+      transform:translateX(100%); opacity:0;
+      transition:transform .45s cubic-bezier(.22,1,.36,1), opacity .3s ease;
+    }
+    .arrivals-panel.arr-visible { transform:translateX(0); opacity:1; }
+    body.view-anagrafica .arrivals-panel,
+    body.view-nascosto   .arrivals-panel { display:none; }
+
+    .arr-title {
+      padding:6px 10px; flex-shrink:0;
+      font-size:9px; font-weight:800; letter-spacing:3px; text-transform:uppercase;
+      color:rgba(255,255,255,.4);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .arr-scroll { flex:1; overflow-y:auto; min-height:0; }
+    .arr-scroll::-webkit-scrollbar { width:3px; }
+    .arr-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,.15); border-radius:3px; }
+
+    /* ── Tabella arrivi ── */
+    #event-table { width:100%; border-collapse:collapse; }
+    #event-table thead tr { cursor:pointer; user-select:none; }
+    #event-table th {
+      padding:5px 5px; font-size:9px; font-weight:700;
+      letter-spacing:.5px; text-transform:uppercase;
+      color:rgba(255,255,255,.4); background:rgba(0,0,0,.5);
+      border-bottom:1px solid rgba(255,255,255,.07);
+      position:sticky; top:0; z-index:1; text-align:left; white-space:nowrap;
+      transition:background .15s;
+    }
+    #event-table thead tr:hover th { background:rgba(255,255,255,.06); }
+    #event-table th:first-child::after { content:" ⚙"; font-size:8px; opacity:.4; }
+    #event-table td {
+      padding:4px 5px; font-size:10px;
+      border-bottom:1px solid rgba(255,255,255,.04);
+      color:rgba(255,255,255,.78); text-align:center; vertical-align:middle;
+    }
+    #event-table tbody tr:nth-child(even) { background:rgba(255,255,255,.03); }
+    #event-table tbody tr:hover           { background:rgba(255,255,255,.08) !important; }
+    .col-index { width:20px; color:rgba(255,255,255,.28); font-size:9px; }
+    .col-line  { width:18px; font-weight:700; font-size:9px; border-radius:2px; }
+    .col-comp  { font-weight:700; }
+    td.timestamp, td.delta-time, td.elapsed-time {
+      font-family:monospace; font-size:9px; color:rgba(255,255,255,.45);
+    }
+    @keyframes rowIn { from{opacity:0;transform:translateX(6px)} to{opacity:1;transform:none} }
+    #event-table tbody tr.row-new { animation:rowIn .4s ease-out; }
+
+    /* ══════════════════════════════════════════════════════
+       SETTINGS OVERLAY
+    ══════════════════════════════════════════════════════ */
+    #settingsOverlay .fullscreen-popup {
+      background:var(--s-ovl-bg); color:var(--s-ovl-fg);
+      border:1px solid var(--s-border-3); max-height:92vh; overflow-y:auto;
+    }
+    #settingsOverlay h2    { color:var(--s-ovl-h2); margin-bottom:4px; }
+    #settingsOverlay .settings-section {
+      font-size:11px; font-weight:700; letter-spacing:2px;
+      text-transform:uppercase; color:var(--s-text-4); margin:14px 0 8px;
+    }
+    #settingsOverlay .toggle-row > span { color:var(--s-ovl-span); font-size:15px; }
+    #settingsOverlay input[type="text"] {
+      background:var(--s-ovl-ibg); color:var(--s-ovl-ifg);
+      border:1px solid var(--s-ovl-ibrd); border-radius:6px;
+      padding:6px 10px; flex:1; font-size:14px;
+    }
+    #settingsOverlay select {
+      background:var(--s-ovl-ibg); color:var(--s-ovl-ifg);
+      border:1px solid var(--s-ovl-ibrd); border-radius:6px;
+      padding:6px 8px; font-size:14px; width:200px;
+    }
+    #settingsOverlay textarea {
+      width:100%; box-sizing:border-box;
+      background:var(--s-ovl-ibg); color:var(--s-ovl-ifg);
+      border:1px solid var(--s-ovl-ibrd); border-radius:6px;
+      padding:8px; font-size:12px; font-family:monospace;
+      resize:vertical; min-height:80px; max-height:150px; margin-top:6px;
+    }
+    .settings-hint { font-size:11px; color:var(--s-text-5); margin:4px 0 0; }
+    .file-label-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      background:var(--s-ovl-ibg); color:var(--s-ovl-ifg);
+      border:1px solid var(--s-ovl-ibrd); border-radius:6px;
+      padding:6px 14px; font-size:14px; cursor:pointer; transition:background .15s;
+    }
+    .file-label-btn:hover { background:var(--s-border-3); }
+
+    /* ── Table column overlay ── */
+    #tableColOverlay .fullscreen-popup {
+      background:var(--s-ovl-bg); color:var(--s-ovl-fg);
+      border:1px solid var(--s-border-3); max-width:320px; width:90%;
+    }
+    #tableColOverlay h2 { color:var(--s-ovl-h2); }
+    #tableColOverlay .toggle-row > span { color:var(--s-ovl-span); }
+    #tableColOverlay select {
+      background:var(--s-ovl-ibg); color:var(--s-ovl-ifg);
+      border:1px solid var(--s-ovl-ibrd); border-radius:6px;
+      padding:4px 8px; font-size:14px;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       CONNECTION POPUP
+    ══════════════════════════════════════════════════════ */
+    .popup { background:#c0392b !important; }
+  </style>
+</head>
+<body class="theme-dark view-anagrafica">
+
+  <div id="splash"><img src="/sponsor.png" alt="Logo"></div>
+  <div id="popup"        class="popup hidden">Nessuna connessione al dispositivo</div>
+  <div id="generalPopup" class="popup hidden"><span id="generalPopupText"></span></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SETTINGS OVERLAY
+  ══════════════════════════════════════════════════════ -->
+  <div id="settingsOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>⚙️ Impostazioni Broadcast</h2>
+
+      <p class="settings-section">Stream video</p>
+      <div class="toggle-row">
+        <span>URL</span>
+        <input type="text" id="streamUrl" placeholder="http://192.168.x.x/stream" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="toggle-row">
+        <span>Tipo</span>
+        <select id="streamType">
+          <option value="auto">Auto-detect</option>
+          <option value="mjpeg">MJPEG (ESP32-CAM / IP cam)</option>
+          <option value="hls">HLS (.m3u8)</option>
+          <option value="direct">Video diretto (mp4, webm…)</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+
+      <p class="settings-section">Linea da monitorare</p>
+      <div class="toggle-row">
+        <span>Linea</span>
+        <select id="lineSelect">
+          <option value="1">Line 1</option>
+          <option value="2">Line 2</option>
+          <option value="3">Line 3</option>
+          <option value="4">Line 4</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+
+      <p class="settings-section">Overlay</p>
+      <div class="toggle-row">
+        <span>Mostra</span>
+        <select id="viewModeSelect">
+          <option value="anagrafica">Solo anagrafica competitor</option>
+          <option value="griglia">Solo tabella arrivi</option>
+          <option value="entrambi">Anagrafica + tabella</option>
+          <option value="nascosto">Nessun overlay (solo video)</option>
+        </select>
+      </div>
+
+      <p class="settings-section" style="margin-top:12px;">Colonne tabella</p>
+      <div class="toggle-row">
+        <span>Orario evento</span>
+        <label class="switch"><input type="checkbox" id="toggle-timestamp" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Delta Δ</span>
+        <label class="switch"><input type="checkbox" id="toggle-delta" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Tempo elapsed</span>
+        <label class="switch"><input type="checkbox" id="toggle-elapsed"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Precisione</span>
+        <select id="time-precision">
+          <option value="1">Decimi (0.0)</option>
+          <option value="2">Centesimi (0.00)</option>
+          <option value="3" selected>Millisecondi (0.000)</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+
+      <p class="settings-section">Aspetto</p>
+      <div class="toggle-row">
+        <span>Tema chiaro (UI settings)</span>
+        <label class="switch"><input type="checkbox" id="themeCheck" onchange="onThemeCheckChange(this)"><span class="slider"></span></label>
+      </div>
+
+      <hr class="divider">
+
+      <p class="settings-section">Registro atleti</p>
+      <div class="toggle-row">
+        <span>Carica file</span>
+        <label for="athleteFile" class="file-label-btn">📁 Sfoglia…</label>
+        <input type="file" id="athleteFile" accept=".json,.csv" style="display:none">
+      </div>
+      <p class="settings-hint">JSON (array) o CSV separato da ; — oppure incolla JSON qui sotto:</p>
+      <textarea id="athleteJson" placeholder='[{"competitor":1,"name":"Mario","surname":"Rossi","team":"ASD X"},...]'></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+        <button class="big-button" id="clearAthleteRegistry" style="background:#c0392b;padding:6px 14px;font-size:13px;">Svuota registro</button>
+      </div>
+
+      <hr class="divider">
+
+      <div class="button-row">
+        <button class="big-button" id="cancelSettings">Annulla</button>
+        <button class="big-button" id="confirmSettings">Applica</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TABLE COLUMN SETTINGS OVERLAY
+  ══════════════════════════════════════════════════════ -->
+  <div id="tableColOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>⚙️ Colonne tabella</h2>
+      <div class="toggle-row">
+        <span>Orario evento</span>
+        <label class="switch"><input type="checkbox" id="tco-timestamp" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Delta Δ</span>
+        <label class="switch"><input type="checkbox" id="tco-delta" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Tempo elapsed</span>
+        <label class="switch"><input type="checkbox" id="tco-elapsed"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Precisione</span>
+        <select id="tco-precision">
+          <option value="1">Decimi (0.0)</option>
+          <option value="2">Centesimi (0.00)</option>
+          <option value="3" selected>Millisecondi (0.000)</option>
+        </select>
+      </div>
+      <div class="button-row" style="justify-content:flex-end;margin-top:16px;">
+        <button class="big-button" id="closeTcoOverlay">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       BROADCAST CONTAINER
+  ══════════════════════════════════════════════════════ -->
+  <div id="bc-container">
+
+    <!-- Video sfondo -->
+    <div id="videoSection">
+      <video id="streamVideo" autoplay muted playsinline></video>
+      <img   id="streamImg"   alt="Live stream">
+      <div id="videoPlaceholder" class="video-placeholder">
+        <div class="placeholder-icon">📺</div>
+        <p class="placeholder-text">Nessuno stream configurato</p>
+        <p class="placeholder-sub">Premi ⚙️ per configurare</p>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="bc-hud">
+      <div id="bc-logo">
+        <img src="/logo-black.png" alt="Logo" class="logo-for-light">
+        <img src="/logo.webp"      alt="Logo" class="logo-for-dark">
+      </div>
+      <div id="bc-top-right">
+        <div id="bc-clock">--:--:--.---</div>
+        <button id="openSettings" title="Impostazioni">⚙️</button>
+      </div>
+      <div id="bc-sponsor">
+        <img src="/sponsor.png" alt="Sponsor">
+      </div>
+    </div>
+
+    <!-- Lower Third — anagrafica competitor -->
+    <div class="lower-third" id="lowerThird">
+      <div class="lt-header" id="ltHeader">
+        <span id="ltLineLabel">LINE 1</span>
+        <span id="ltStatus">IN ATTESA</span>
+      </div>
+      <div class="lt-body">
+        <div class="lt-number" id="ltNumber">—</div>
+        <div class="lt-info">
+          <div class="lt-surname"   id="ltSurname">—</div>
+          <div class="lt-firstname" id="ltFirstName"></div>
+          <div class="lt-team"      id="ltTeam"></div>
+          <div class="lt-meta">
+            <span id="ltCategory"></span>
+            <span id="ltExtra"></span>
+          </div>
+        </div>
+      </div>
+      <div class="lt-footer" id="ltFooter">
+        <span class="lt-time-label">TRANSITO</span>
+        <span class="lt-time" id="ltTime">—</span>
+      </div>
+    </div>
+
+    <!-- Arrivals Panel — tabella arrivi -->
+    <div class="arrivals-panel" id="arrivalsPanel">
+      <div class="arr-title">Arrivi</div>
+      <div class="arr-scroll">
+        <table id="event-table">
+          <thead>
+            <tr>
+              <th class="col-index">#</th>
+              <th class="col-line">L</th>
+              <th>Comp.</th>
+              <th class="timestamp-col">Evento</th>
+              <th class="delta-col">Δ</th>
+              <th class="elapsed-col">Elapsed</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /bc-container -->
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+  <script src="/broadcast.js"></script>
+</body>
+</html>

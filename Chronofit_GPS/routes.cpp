@@ -481,6 +481,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serveGzipped(request, "/stream.js", "application/javascript");
   });
 
+  server.on("/broadcast", HTTP_GET, [](AsyncWebServerRequest *request){
+    serveGzipped(request, "/broadcast.html", "text/html");
+  });
+
+  server.on("/broadcast.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    serveGzipped(request, "/broadcast.js", "application/javascript");
+  });
+
   server.onNotFound([](AsyncWebServerRequest *req){
     String url = req->url();
     if (url == "/index.html" || url == "/") {
