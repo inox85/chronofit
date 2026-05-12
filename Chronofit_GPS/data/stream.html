@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronofit Stream</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta name="theme-color" content="#000000">
+  <style>
+    /* ══════════════════════════════════════════════════════════
+       CSS VARIABLES
+    ══════════════════════════════════════════════════════════ */
+    :root {
+      --s-bg-page:    #0a0a0a; --s-bg-header:  #111111;
+      --s-bg-video:   #000000; --s-bg-sidebar: #111111;
+      --s-bg-card:    #171717; --s-bg-input:   #222222;
+      --s-bg-input2:  #2a2a2a;
+      --s-border-1:   #1e1e1e; --s-border-2:   #2a2a2a;
+      --s-border-3:   #333333; --s-border-4:   #444444;
+      --s-text-1: #ffffff; --s-text-2: #dddddd;
+      --s-text-3: #aaaaaa; --s-text-4: #888888;
+      --s-text-5: #666666; --s-text-6: #555555;
+      --s-text-7: #3a3a3a;
+      --s-time-color: #55aaff;
+      --s-ovl-bg: #1a1a1a; --s-ovl-fg: #eeeeee;
+      --s-ovl-h2: #ffffff; --s-ovl-span: #bbbbbb;
+      --s-ovl-ibg: #2a2a2a; --s-ovl-ifg: #eeeeee;
+      --s-ovl-ibrd: #444444;
+    }
+    body.theme-light {
+      --s-bg-page:    #ebebeb; --s-bg-header:  #ffffff;
+      --s-bg-video:   #000000; --s-bg-sidebar: #f5f5f5;
+      --s-bg-card:    #ffffff; --s-bg-input:   #f0f0f0;
+      --s-bg-input2:  #ffffff;
+      --s-border-1:   #e0e0e0; --s-border-2:   #d0d0d0;
+      --s-border-3:   #cccccc; --s-border-4:   #bbbbbb;
+      --s-text-1: #111111; --s-text-2: #222222;
+      --s-text-3: #444444; --s-text-4: #666666;
+      --s-text-5: #888888; --s-text-6: #999999;
+      --s-text-7: #cccccc;
+      --s-time-color: #1a56b8;
+      --s-ovl-bg: #ffffff; --s-ovl-fg: #222222;
+      --s-ovl-h2: #111111; --s-ovl-span: #444444;
+      --s-ovl-ibg: #f5f5f5; --s-ovl-ifg: #111111;
+      --s-ovl-ibrd: #cccccc;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       BASE
+    ══════════════════════════════════════════════════════════ */
+    body { background:var(--s-bg-page); color:var(--s-text-1); margin:0; padding:0; overflow:hidden; }
+    #stream-container { display:flex; flex-direction:column; height:100vh; width:100vw; background:var(--s-bg-page); }
+
+    /* ══════════════════════════════════════════════════════════
+       HEADER
+    ══════════════════════════════════════════════════════════ */
+    .stream-header {
+      display:grid; grid-template-columns:1fr auto 1fr;
+      align-items:center; padding:0 12px;
+      background:var(--s-bg-header); border-bottom:1px solid var(--s-border-1);
+      flex-shrink:0; height:52px; box-sizing:border-box;
+    }
+    .header-left   { display:flex; align-items:center; justify-content:flex-start; min-width:0; overflow:hidden; }
+    .header-center { display:flex; align-items:center; justify-content:center; padding:0 8px; }
+    .header-right  { display:flex; align-items:center; justify-content:flex-end; gap:8px; min-width:0; overflow:hidden; }
+    .sponsor-logo,.sponsor-img { height:34px; max-width:120px; object-fit:contain; }
+    .logo-for-dark  { display:block; }
+    .logo-for-light { display:none;  }
+    body.theme-light .logo-for-dark  { display:none;  }
+    body.theme-light .logo-for-light { display:block; }
+    #stream-clock { font-size:26px; font-family:monospace; color:var(--s-text-2); margin:0; white-space:nowrap; letter-spacing:1px; }
+    .settings-btn { background:none; border:1px solid var(--s-border-3); border-radius:6px; color:var(--s-text-3); font-size:18px; padding:3px 8px; cursor:pointer; flex-shrink:0; line-height:1; transition:background .2s,color .2s; }
+    .settings-btn:hover { background:var(--s-bg-input); color:var(--s-text-1); }
+
+    /* ══════════════════════════════════════════════════════════
+       BODY + VIDEO
+    ══════════════════════════════════════════════════════════ */
+    .stream-body { display:flex; flex:1; overflow:hidden; min-height:0; }
+    .video-section { flex:1; position:relative; background:var(--s-bg-video); min-width:0; display:flex; align-items:center; justify-content:center; }
+    #streamVideo,#streamImg { width:100%; height:100%; object-fit:contain; display:none; }
+    .video-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--s-text-5); text-align:center; padding:24px; pointer-events:none; }
+    .placeholder-icon { font-size:64px; margin-bottom:14px; }
+    .placeholder-text { font-size:18px; margin:0; }
+    .placeholder-sub  { font-size:13px; margin:6px 0 0; color:var(--s-text-6); }
+
+    /* ══════════════════════════════════════════════════════════
+       SIDE PANEL — larghezza adattiva per modalità
+    ══════════════════════════════════════════════════════════ */
+    .side-panel {
+      width:300px; flex-shrink:0;
+      background:var(--s-bg-sidebar);
+      display:flex; flex-direction:column;
+      padding:12px 12px 8px;
+      border-left:1px solid var(--s-border-1);
+      gap:10px; overflow:hidden; box-sizing:border-box;
+    }
+    body.view-griglia   .side-panel { width:360px; }
+    body.view-entrambi  .side-panel { width:340px; }
+
+    /* ══════════════════════════════════════════════════════════
+       COMPETITOR CARD
+    ══════════════════════════════════════════════════════════ */
+    .competitor-card {
+      flex:1; border:2px solid var(--s-border-2); border-radius:12px;
+      overflow:hidden; background:var(--s-bg-card);
+      display:flex; flex-direction:column; transition:border-color .4s;
+    }
+    /* In "entrambi": card compatta */
+    body.view-entrambi .competitor-card { flex:0 0 auto; max-height:260px; }
+    body.view-griglia  .competitor-card { display:none; }
+
+    .comp-line-bar { padding:6px 14px; font-size:11px; font-weight:800; letter-spacing:3px; text-transform:uppercase; background:var(--s-border-2); color:#000; display:flex; align-items:center; justify-content:space-between; }
+    #compLineLabel  { opacity:.85; }
+    #compLineStatus { font-size:10px; letter-spacing:1px; opacity:.7; }
+    .comp-number { font-size:76px; font-weight:900; text-align:center; color:var(--s-text-1); line-height:1; padding:18px 8px 10px; }
+    body.view-entrambi .comp-number { font-size:48px; padding:10px 8px 6px; }
+    .comp-name-block { padding:0 14px 8px; text-align:center; }
+    .comp-surname  { font-size:28px; font-weight:700; color:var(--s-text-1); letter-spacing:1px; line-height:1.1; }
+    .comp-firstname{ font-size:17px; color:var(--s-text-3); margin-top:3px; }
+    body.view-entrambi .comp-surname  { font-size:20px; }
+    body.view-entrambi .comp-firstname{ font-size:13px; }
+    .comp-team     { font-size:14px; text-align:center; color:var(--s-text-4); padding:6px 14px 2px; }
+    .comp-category { font-size:12px; text-align:center; color:var(--s-text-5); padding:2px 14px; text-transform:uppercase; letter-spacing:1px; }
+    .comp-extra    { font-size:12px; text-align:center; color:var(--s-text-6); padding:2px 14px; }
+    .comp-divider  { height:1px; background:var(--s-border-1); margin:8px 14px; }
+    .comp-time-row { display:flex; align-items:center; justify-content:center; gap:8px; padding:0 14px 12px; }
+    .comp-time-label { font-size:11px; color:var(--s-text-6); text-transform:uppercase; letter-spacing:1px; }
+    .comp-time       { font-size:18px; font-family:monospace; color:var(--s-time-color); }
+
+    .comp-waiting { flex:1; display:flex; align-items:center; justify-content:center; text-align:center; padding:24px 16px; font-size:13px; color:var(--s-text-7); font-style:italic; }
+    .comp-info-content { display:none; flex-direction:column; }
+    .competitor-card.state-arrived .comp-waiting      { display:none; }
+    .competitor-card.state-arrived .comp-info-content { display:flex; }
+    .competitor-card.state-waiting .comp-waiting      { display:flex; }
+    .competitor-card.state-waiting .comp-info-content { display:none; }
+
+    @keyframes arrivalPulse {
+      0%  { box-shadow:inset 0 0 0 0 rgba(255,255,255,.30); }
+      30% { box-shadow:inset 0 0 40px 10px rgba(255,255,255,.18); }
+      100%{ box-shadow:inset 0 0 0 0 rgba(255,255,255,0); }
+    }
+    .competitor-card.arrival-anim { animation:arrivalPulse .8s ease-out; }
+    @keyframes incomingPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    #compLineStatus.status-prossimo { animation:incomingPulse 1.4s ease-in-out infinite; font-weight:700; }
+
+    /* ══════════════════════════════════════════════════════════
+       ARRIVAL TABLE SECTION
+    ══════════════════════════════════════════════════════════ */
+    .table-section {
+      display:none; /* default: nascosta */
+      flex-direction:column; flex:1; min-height:0;
+      border:1px solid var(--s-border-2); border-radius:8px; overflow:hidden;
+    }
+    body.view-griglia  .table-section { display:flex; }
+    body.view-entrambi .table-section { display:flex; }
+
+    .table-title-bar {
+      padding:5px 10px; background:var(--s-bg-input);
+      font-size:10px; font-weight:700; letter-spacing:2px;
+      text-transform:uppercase; color:var(--s-text-4);
+      flex-shrink:0;
+    }
+    .table-scroll { flex:1; overflow-y:auto; min-height:0; }
+
+    /* ── Table styling (match view.html) ── */
+    #event-table {
+      width:100%; border-collapse:collapse;
+      border-radius:8px; overflow:hidden;
+    }
+    #event-table thead tr {
+      cursor:pointer; user-select:none;
+    }
+    #event-table th {
+      padding:7px 6px; font-size:10px; font-weight:700;
+      letter-spacing:.5px; text-transform:uppercase;
+      color:#eeeeee; background:#222222;
+      border-bottom:2px solid #000;
+      position:sticky; top:0; z-index:1; text-align:left;
+      white-space:nowrap;
+      transition:background .15s;
+    }
+    #event-table thead tr:hover th { background:#2d2d2d; }
+    /* hint visivo: "clicca header per colonne" */
+    #event-table th:first-child::after {
+      content:" ⚙";
+      font-size:9px;
+      opacity:.45;
+    }
+    body.theme-light #event-table th           { background:#333333; }
+    body.theme-light #event-table thead tr:hover th { background:#444444; }
+
+    #event-table td {
+      padding:5px 6px; font-size:11px;
+      border-bottom:1px solid var(--s-border-1);
+      color:var(--s-text-2); text-align:center;
+      vertical-align:middle;
+    }
+    #event-table tbody tr:nth-child(even) { background:var(--s-bg-input); }
+    #event-table tbody tr:hover           { background:var(--s-border-2) !important; }
+
+    .col-index { width:22px; color:var(--s-text-5); font-size:10px; text-align:center !important; }
+    .col-line  { width:20px; text-align:center !important; font-weight:700; font-size:10px; border-radius:3px; }
+    .col-comp  { font-weight:700; }
+    td.timestamp, td.delta-time, td.elapsed-time {
+      font-family:monospace; font-size:10px; color:var(--s-text-3);
+    }
+
+    /* row enter animation */
+    @keyframes rowIn {
+      from { opacity:0; transform:translateY(-6px); }
+      to   { opacity:1; transform:none; }
+    }
+    #event-table tbody tr.row-new { animation:rowIn .4s ease-out; }
+
+    /* ── Table column overlay ── */
+    #tableColOverlay .fullscreen-popup {
+      background:var(--s-ovl-bg); color:var(--s-ovl-fg);
+      border:1px solid var(--s-border-3);
+      max-width:320px; width:90%;
+    }
+    #tableColOverlay h2  { color:var(--s-ovl-h2); }
+    #tableColOverlay .toggle-row > span { color:var(--s-ovl-span); }
+    #tableColOverlay select {
+      background:var(--s-ovl-ibg); color:var(--s-ovl-ifg);
+      border:1px solid var(--s-ovl-ibrd); border-radius:6px;
+      padding:4px 8px; font-size:14px;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       REGISTRY STATUS
+    ══════════════════════════════════════════════════════════ */
+    .registry-status { font-size:11px; color:var(--s-text-6); text-align:center; flex-shrink:0; }
+
+    /* ══════════════════════════════════════════════════════════
+       SETTINGS OVERLAY
+    ══════════════════════════════════════════════════════════ */
+    #settingsOverlay .fullscreen-popup { background:var(--s-ovl-bg); color:var(--s-ovl-fg); border:1px solid var(--s-border-3); max-height:92vh; overflow-y:auto; }
+    #settingsOverlay h2  { color:var(--s-ovl-h2); margin-bottom:4px; }
+    #settingsOverlay .settings-section { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--s-text-4); margin:14px 0 8px; }
+    #settingsOverlay .toggle-row > span { color:var(--s-ovl-span); font-size:15px; }
+    #settingsOverlay input[type="text"] { background:var(--s-ovl-ibg); color:var(--s-ovl-ifg); border:1px solid var(--s-ovl-ibrd); border-radius:6px; padding:6px 10px; flex:1; font-size:14px; }
+    #settingsOverlay select { background:var(--s-ovl-ibg); color:var(--s-ovl-ifg); border:1px solid var(--s-ovl-ibrd); border-radius:6px; padding:6px 8px; font-size:14px; width:200px; }
+    #settingsOverlay textarea { width:100%; box-sizing:border-box; background:var(--s-ovl-ibg); color:var(--s-ovl-ifg); border:1px solid var(--s-ovl-ibrd); border-radius:6px; padding:8px; font-size:12px; font-family:monospace; resize:vertical; min-height:80px; max-height:150px; margin-top:6px; }
+    .settings-hint { font-size:11px; color:var(--s-text-5); margin:4px 0 0; }
+
+    /* pulsante 📁 per file input */
+    .file-label-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      background:var(--s-ovl-ibg); color:var(--s-ovl-ifg);
+      border:1px solid var(--s-ovl-ibrd); border-radius:6px;
+      padding:6px 14px; font-size:14px; cursor:pointer;
+      transition:background .15s;
+    }
+    .file-label-btn:hover { background:var(--s-border-3); }
+
+    /* ══════════════════════════════════════════════════════════
+       CONNECTION POPUP
+    ══════════════════════════════════════════════════════════ */
+    .popup { background:#c0392b !important; }
+
+    /* ══════════════════════════════════════════════════════════
+       RESIZE HANDLE
+    ══════════════════════════════════════════════════════════ */
+    .resize-handle {
+      width:6px; flex-shrink:0; cursor:col-resize;
+      background:var(--s-border-2);
+      transition:background .15s;
+      position:relative; z-index:2;
+    }
+    .resize-handle:hover,
+    .resize-handle.dragging { background:var(--s-border-4); }
+    /* maniglietta centrale decorativa */
+    .resize-handle::after {
+      content:"";
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:2px; height:32px;
+      border-radius:2px;
+      background:var(--s-border-4);
+      opacity:.5;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════════════════════ */
+    @media (max-width:620px) {
+      .stream-body { flex-direction:column; }
+      .resize-handle { display:none; }
+      .side-panel { width:100% !important; border-left:none; border-top:1px solid var(--s-border-1); max-height:45vh; }
+      .comp-number { font-size:44px; padding:10px 6px 6px; }
+      .comp-surname{ font-size:18px; } .comp-firstname{ font-size:13px; }
+      #stream-clock { font-size:18px; }
+      .sponsor-logo,.sponsor-img { height:26px; }
+    }
+  </style>
+</head>
+<body class="theme-dark view-anagrafica">
+
+  <div id="splash"><img src="/sponsor.png" alt="Logo"></div>
+  <div id="popup"        class="popup hidden">Nessuna connessione al dispositivo</div>
+  <div id="generalPopup" class="popup hidden"><span id="generalPopupText"></span></div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SETTINGS OVERLAY
+  ══════════════════════════════════════════════════════════ -->
+  <div id="settingsOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>⚙️ Impostazioni</h2>
+
+      <!-- STREAM -->
+      <p class="settings-section">Stream video</p>
+      <div class="toggle-row">
+        <span>URL</span>
+        <input type="text" id="streamUrl" placeholder="http://192.168.x.x/stream" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="toggle-row">
+        <span>Tipo</span>
+        <select id="streamType">
+          <option value="auto">Auto-detect</option>
+          <option value="mjpeg">MJPEG (ESP32-CAM / IP cam)</option>
+          <option value="hls">HLS (.m3u8)</option>
+          <option value="direct">Video diretto (mp4, webm…)</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+
+      <!-- LINEA -->
+      <p class="settings-section">Linea da monitorare</p>
+      <div class="toggle-row">
+        <span>Linea</span>
+        <select id="lineSelect">
+          <option value="1">Line 1</option>
+          <option value="2">Line 2</option>
+          <option value="3">Line 3</option>
+          <option value="4">Line 4</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+
+      <!-- VISUALIZZAZIONE -->
+      <p class="settings-section">Visualizzazione</p>
+      <div class="toggle-row">
+        <span>Mostra</span>
+        <select id="viewModeSelect">
+          <option value="anagrafica">Solo anagrafica competitor</option>
+          <option value="griglia">Solo griglia arrivi</option>
+          <option value="entrambi">Anagrafica + griglia</option>
+        </select>
+      </div>
+
+      <p class="settings-section" style="margin-top:12px;">Colonne tabella</p>
+      <div class="toggle-row">
+        <span>Orario evento</span>
+        <label class="switch"><input type="checkbox" id="toggle-timestamp" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Delta Δ</span>
+        <label class="switch"><input type="checkbox" id="toggle-delta" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Tempo elapsed</span>
+        <label class="switch"><input type="checkbox" id="toggle-elapsed"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Precisione</span>
+        <select id="time-precision">
+          <option value="1">Decimi (0.0)</option>
+          <option value="2">Centesimi (0.00)</option>
+          <option value="3" selected>Millisecondi (0.000)</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+
+      <!-- ASPETTO -->
+      <p class="settings-section">Aspetto</p>
+      <div class="toggle-row">
+        <span>Tema chiaro</span>
+        <label class="switch"><input type="checkbox" id="themeCheck" onchange="onThemeCheckChange(this)"><span class="slider"></span></label>
+      </div>
+
+      <hr class="divider">
+
+      <!-- ATLETI -->
+      <p class="settings-section">Registro atleti</p>
+      <div class="toggle-row">
+        <span>Carica file</span>
+        <label for="athleteFile" class="file-label-btn">📁 Sfoglia…</label>
+        <input type="file" id="athleteFile" accept=".json,.csv" style="display:none">
+      </div>
+      <p class="settings-hint">JSON (array) o CSV separato da ; — oppure incolla JSON qui sotto:</p>
+      <textarea id="athleteJson" placeholder='[{"competitor":1,"name":"Mario","surname":"Rossi","team":"ASD X"},...]'></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+        <button class="big-button" id="clearAthleteRegistry" style="background:#c0392b;padding:6px 14px;font-size:13px;">Svuota registro</button>
+      </div>
+
+      <hr class="divider">
+
+      <div class="button-row">
+        <button class="big-button" id="cancelSettings">Annulla</button>
+        <button class="big-button" id="confirmSettings">Applica</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TABLE COLUMN SETTINGS OVERLAY
+  ══════════════════════════════════════════════════════════ -->
+  <div id="tableColOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2>⚙️ Colonne tabella</h2>
+
+      <div class="toggle-row">
+        <span>Orario evento</span>
+        <label class="switch"><input type="checkbox" id="tco-timestamp" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Delta Δ</span>
+        <label class="switch"><input type="checkbox" id="tco-delta" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Tempo elapsed</span>
+        <label class="switch"><input type="checkbox" id="tco-elapsed"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Precisione</span>
+        <select id="tco-precision">
+          <option value="1">Decimi (0.0)</option>
+          <option value="2">Centesimi (0.00)</option>
+          <option value="3" selected>Millisecondi (0.000)</option>
+        </select>
+      </div>
+
+      <div class="button-row" style="justify-content:flex-end; margin-top:16px;">
+        <button class="big-button" id="closeTcoOverlay">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       MAIN
+  ══════════════════════════════════════════════════════════ -->
+  <div id="stream-container">
+
+    <div class="stream-header">
+      <div class="header-left">
+        <img src="/logo-black.png" alt="Logo" class="sponsor-logo logo-for-light">
+        <img src="/logo.webp"      alt="Logo" class="sponsor-logo logo-for-dark">
+      </div>
+      <div class="header-center">
+        <p id="stream-clock">--:--:--.---</p>
+      </div>
+      <div class="header-right">
+        <button class="settings-btn" id="openSettings" title="Impostazioni">⚙️</button>
+        <img src="/sponsor.png" alt="Sponsor" class="sponsor-img">
+      </div>
+    </div>
+
+    <div class="stream-body">
+
+      <div class="video-section" id="videoSection">
+        <video id="streamVideo" autoplay muted playsinline></video>
+        <img   id="streamImg"   alt="Live stream">
+        <div id="videoPlaceholder" class="video-placeholder">
+          <div class="placeholder-icon">📺</div>
+          <p class="placeholder-text">Nessuno stream configurato</p>
+          <p class="placeholder-sub">Premi ⚙️ per configurare</p>
+        </div>
+      </div>
+
+      <div class="resize-handle" id="resizeHandle" title="Trascina per ridimensionare"></div>
+
+      <div class="side-panel" id="sidePanel">
+
+        <!-- Competitor card -->
+        <div class="competitor-card state-waiting" id="competitorCard">
+          <div class="comp-line-bar" id="compLineBar">
+            <span id="compLineLabel">LINE 1</span>
+            <span id="compLineStatus">IN ATTESA</span>
+          </div>
+          <div class="comp-waiting">In attesa del prossimo atleta sulla linea selezionata…</div>
+          <div class="comp-info-content">
+            <div class="comp-number" id="compNumber">—</div>
+            <div class="comp-name-block">
+              <div class="comp-surname"   id="compName">—</div>
+              <div class="comp-firstname" id="compFirstName"></div>
+            </div>
+            <div class="comp-team"     id="compTeam"></div>
+            <div class="comp-category" id="compCategory"></div>
+            <div class="comp-extra"    id="compExtra"></div>
+            <div class="comp-divider"></div>
+            <div class="comp-time-row">
+              <span class="comp-time-label">TRANSITO</span>
+              <span class="comp-time" id="compTime">--:--:--.---</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrival table -->
+        <div class="table-section" id="tableSection">
+          <div class="table-title-bar">Arrivi</div>
+          <div class="table-scroll">
+            <table id="event-table">
+              <thead>
+                <tr>
+                  <th class="col-index">#</th>
+                  <th class="col-line">L</th>
+                  <th>Comp.</th>
+                  <th class="timestamp-col">Evento</th>
+                  <th class="delta-col">Δ</th>
+                  <th class="elapsed-col">Elapsed</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="registry-status" id="registryStatus">Registro non caricato</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+  <script src="/stream.js"></script>
+</body>
+</html>

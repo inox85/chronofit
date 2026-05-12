@@ -473,6 +473,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serveGzipped(request, "/admin.html", "text/html");
   });
 
+  server.on("/stream", HTTP_GET, [](AsyncWebServerRequest *request){
+    serveGzipped(request, "/stream.html", "text/html");
+  });
+
+  server.on("/stream.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    serveGzipped(request, "/stream.js", "application/javascript");
+  });
+
   server.onNotFound([](AsyncWebServerRequest *req){
     String url = req->url();
     if (url == "/index.html" || url == "/") {
