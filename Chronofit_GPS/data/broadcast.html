@@ -21,6 +21,8 @@
       --s-ovl-bg:#1a1a1a; --s-ovl-fg:#eee; --s-ovl-h2:#fff;
       --s-ovl-span:#bbb;  --s-ovl-ibg:#2a2a2a; --s-ovl-ifg:#eee;
       --s-ovl-ibrd:#444;
+      /* Trasparenza globale overlay broadcast (0.0–1.0) */
+      --bc-alpha: 0.82;
     }
     body.theme-light {
       --s-bg-page:#ebebeb; --s-bg-card:#fff; --s-bg-input:#f0f0f0;
@@ -98,14 +100,14 @@
     #bc-clock {
       font-family:monospace; font-size:26px; font-weight:700;
       color:#fff; letter-spacing:1px;
-      background:rgba(0,0,0,.45);
+      background:rgba(0,0,0,var(--bc-alpha));
       padding:4px 14px; border-radius:5px;
       backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
       text-shadow:0 1px 6px rgba(0,0,0,.8);
       white-space:nowrap; pointer-events:none;
     }
     #openSettings {
-      background:rgba(0,0,0,.45);
+      background:rgba(0,0,0,var(--bc-alpha));
       border:1px solid rgba(255,255,255,.18);
       border-radius:8px; color:rgba(255,255,255,.7);
       font-size:18px; padding:4px 10px; cursor:pointer;
@@ -158,7 +160,7 @@
     /* ── Corpo principale ── */
     .lt-body {
       display:flex; align-items:center;
-      background:rgba(6,6,6,.84);
+      background:rgba(6,6,6,var(--bc-alpha));
       backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
       padding:10px 16px 10px 14px; gap:0;
     }
@@ -186,7 +188,7 @@
     .lt-footer {
       display:flex; align-items:center; justify-content:flex-end; gap:10px;
       padding:6px 16px;
-      background:rgba(0,0,0,.72);
+      background:rgba(0,0,0,var(--bc-alpha));
       backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
       border-top:1px solid rgba(255,255,255,.07);
     }
@@ -216,7 +218,7 @@
       position:absolute; top:58px; right:0;
       width:300px; max-height:calc(100vh - 100px);
       display:flex; flex-direction:column;
-      background:rgba(6,6,6,.80);
+      background:rgba(6,6,6,var(--bc-alpha));
       backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
       border-left:1px solid rgba(255,255,255,.07);
       z-index:30;
@@ -250,7 +252,7 @@
     #event-table th {
       padding:5px 5px; font-size:9px; font-weight:700;
       letter-spacing:.5px; text-transform:uppercase;
-      color:rgba(255,255,255,.4); background:rgba(0,0,0,.5);
+      color:rgba(255,255,255,.4); background:rgba(0,0,0,var(--bc-alpha));
       border-bottom:1px solid rgba(255,255,255,.07);
       position:sticky; top:0; z-index:1; text-align:left; white-space:nowrap;
       transition:background .15s;
@@ -330,6 +332,86 @@
        CONNECTION POPUP
     ══════════════════════════════════════════════════════ */
     .popup { background:#c0392b !important; }
+
+    /* ══════════════════════════════════════════════════════
+       LIGHT THEME — broadcast overlay overrides
+    ══════════════════════════════════════════════════════ */
+
+    /* Lower-third body */
+    body.theme-light .lt-body {
+      background: rgba(252,252,252,var(--bc-alpha));
+    }
+    body.theme-light .lt-number {
+      color: #111;
+      border-right-color: rgba(0,0,0,.12);
+    }
+    body.theme-light .lt-surname   { color: #111; }
+    body.theme-light .lt-firstname { color: rgba(0,0,0,.6); }
+    body.theme-light .lt-team      { color: rgba(0,0,0,.5); }
+    body.theme-light .lt-meta      { color: rgba(0,0,0,.38); }
+
+    /* Lower-third footer */
+    body.theme-light .lt-footer {
+      background: rgba(235,235,235,var(--bc-alpha));
+      border-top-color: rgba(0,0,0,.08);
+    }
+    body.theme-light .lt-time-label { color: rgba(0,0,0,.45); }
+    body.theme-light .lt-time        { color: #1a6fd4; }
+
+    /* Arrivals panel */
+    body.theme-light .arrivals-panel {
+      background: rgba(248,248,248,var(--bc-alpha));
+      border-left-color: rgba(0,0,0,.1);
+    }
+    body.theme-light .arr-title {
+      color: rgba(0,0,0,.45);
+      border-bottom-color: rgba(0,0,0,.08);
+    }
+    body.theme-light .arr-scroll::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,.18);
+    }
+
+    /* Tabella arrivi */
+    body.theme-light #event-table th {
+      color: rgba(0,0,0,.55);
+      background: rgba(215,215,215,var(--bc-alpha));
+      border-bottom-color: rgba(0,0,0,.1);
+    }
+    body.theme-light #event-table thead tr:hover th {
+      background: rgba(0,0,0,.1);
+    }
+    body.theme-light #event-table td {
+      color: rgba(0,0,0,.82);
+      border-bottom-color: rgba(0,0,0,.06);
+    }
+    body.theme-light #event-table tbody tr:nth-child(even) {
+      background: rgba(0,0,0,.04);
+    }
+    body.theme-light #event-table tbody tr:hover {
+      background: rgba(0,0,0,.09) !important;
+    }
+    body.theme-light .col-index { color: rgba(0,0,0,.3); }
+    body.theme-light td.timestamp,
+    body.theme-light td.delta-time,
+    body.theme-light td.elapsed-time { color: rgba(0,0,0,.48); }
+
+    /* Clock HUD */
+    body.theme-light #bc-clock {
+      color: #111;
+      background: rgba(255,255,255,var(--bc-alpha));
+      text-shadow: 0 1px 3px rgba(0,0,0,.12);
+    }
+
+    /* Pulsante impostazioni */
+    body.theme-light #openSettings {
+      background: rgba(255,255,255,var(--bc-alpha));
+      border-color: rgba(0,0,0,.22);
+      color: rgba(0,0,0,.7);
+    }
+    body.theme-light #openSettings:hover {
+      background: rgba(255,255,255,.98);
+      color: #000;
+    }
   </style>
 </head>
 <body class="theme-dark view-anagrafica">
@@ -450,6 +532,14 @@
       <div class="toggle-row">
         <span>Tema chiaro (UI settings)</span>
         <label class="switch"><input type="checkbox" id="themeCheck" onchange="onThemeCheckChange(this)"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Trasparenza overlay</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="range" id="overlayAlphaSlider" min="0.2" max="1.0" step="0.05" value="0.82"
+                 style="width:110px;accent-color:#3b82f6;" oninput="onAlphaSliderInput(this)">
+          <small id="overlayAlphaVal" style="color:var(--s-text-4);min-width:34px;font-size:12px;">82%</small>
+        </div>
       </div>
 
       <hr class="divider">

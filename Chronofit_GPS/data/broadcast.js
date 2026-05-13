@@ -13,6 +13,20 @@ const lineColors = {
   1: "#ffcccc", 2: "#ccffcc", 3: "#ccccff", 4: "#fff5cc", 5: "#808080"
 };
 
+// ── Overlay alpha ─────────────────────────────────────────────
+let overlayAlpha = 0.82;
+
+function applyOverlayAlpha(val) {
+  overlayAlpha = Math.max(0.2, Math.min(1.0, parseFloat(val) || 0.82));
+  document.documentElement.style.setProperty("--bc-alpha", overlayAlpha);
+}
+
+function onAlphaSliderInput(slider) {
+  applyOverlayAlpha(parseFloat(slider.value));
+  const lbl = document.getElementById("overlayAlphaVal");
+  if (lbl) lbl.textContent = Math.round(overlayAlpha * 100) + "%";
+}
+
 // ── Theme ─────────────────────────────────────────────────────
 let currentTheme = "dark";
 
@@ -445,6 +459,7 @@ function saveBroadcastPrefs() {
     colElapsed:    document.getElementById("toggle-elapsed")?.checked    ?? false,
     splitsMode:    document.getElementById("toggle-splits")?.checked     ?? false,
     ltTimeMode:    ltTimeMode,
+    overlayAlpha:  overlayAlpha,
   };
   localStorage.setItem(BROADCAST_PREFS_KEY, JSON.stringify(prefs));
 }
@@ -456,6 +471,7 @@ function restoreBroadcastPrefs() {
     const prefs = JSON.parse(raw);
 
     if (prefs.theme)    applyTheme(prefs.theme);
+    if (prefs.overlayAlpha !== undefined) applyOverlayAlpha(prefs.overlayAlpha);
     if (prefs.viewMode)    applyViewMode(prefs.viewMode);
     if (prefs.ltTimeMode) {
       ltTimeMode = prefs.ltTimeMode;
@@ -643,6 +659,12 @@ function openSettings() {
   document.getElementById("time-precision").value     = timePrecision;
   document.getElementById("athleteJson").value        = "";
   document.getElementById("athleteFile").value        = "";
+  const slider = document.getElementById("overlayAlphaSlider");
+  if (slider) {
+    slider.value = overlayAlpha;
+    const lbl = document.getElementById("overlayAlphaVal");
+    if (lbl) lbl.textContent = Math.round(overlayAlpha * 100) + "%";
+  }
   document.getElementById("settingsOverlay").style.display = "flex";
 }
 
@@ -665,6 +687,9 @@ function applySettings() {
 
   applyViewMode(document.getElementById("viewModeSelect").value);
   ltTimeMode = document.getElementById("ltTimeModeSelect").value;
+
+  const alphaSlider = document.getElementById("overlayAlphaSlider");
+  if (alphaSlider) applyOverlayAlpha(parseFloat(alphaSlider.value));
 
   const prec = Math.max(1, Math.min(3, parseInt(document.getElementById("time-precision").value) || 3));
   timePrecision = prec;
