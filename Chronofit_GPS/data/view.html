@@ -177,9 +177,57 @@
       <h2>Table column settings</h2>
 
       <div class="toggle-row">
+        <span>Show # column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-index" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show Line column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-line" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show Line ID column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-line-id" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
         <span>Show event time column</span>
         <label class="switch">
           <input type="checkbox" id="toggle-timestamp" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show Race time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-race-time">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show Name column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-name">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show Surname column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-surname">
           <span class="slider"></span>
         </label>
       </div>
@@ -195,7 +243,7 @@
       <div class="toggle-row">
         <span>Show elapsed time column</span>
         <label class="switch">
-          <input type="checkbox" id="toggle-elapsed-time" unchecked>
+          <input type="checkbox" id="toggle-elapsed-time">
           <span class="slider"></span>
         </label>
       </div>
@@ -203,14 +251,22 @@
       <div class="toggle-row">
         <span>Show penality column</span>
         <label class="switch">
-          <input type="checkbox" id="toggle-penality" unchecked>
+          <input type="checkbox" id="toggle-penality">
           <span class="slider"></span>
         </label>
       </div>
 
       <hr class="divider">
-      
+
       <h2>Table row settings</h2>
+
+      <div class="toggle-row">
+        <span>Competitor splits mode</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-splits">
+          <span class="slider"></span>
+        </label>
+      </div>
 
       <div class="toggle-row">
         <span>Show sync test rows</span>
@@ -367,11 +423,14 @@
       <table id="event-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Line</th>
-            <th>ID</th>
+            <th class="col-index-col">#</th>
+            <th class="col-line-col">Line</th>
+            <th class="col-id-col">ID</th>
             <th>Comp.</th>
+            <th class="col-name-col">Name</th>
+            <th class="col-surname-col">Surname</th>
             <th class="timestamp-col">Event ⏱️</th>
+            <th class="race-time-col">Race ⏱️</th>
             <th class="delta-time-col">Δ ⏱️</th>
             <th class="elapsed-time-col">Elapsed ⏱️</th>
             <th class="penality-col">❌</th>

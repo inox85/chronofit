@@ -127,7 +127,10 @@ function addEventToTable(rowIndex, lineNumber, competitor, h, m, s, ms) {
     `<td class="col-index">${ri}</td>` +
     `<td class="col-line" style="background:${lineColor}">${ln}</td>` +
     `<td class="col-comp">${comp}</td>` +
+    `<td class="col-name">${getAthleteName(comp)}</td>` +
+    `<td class="col-surname">${getAthleteSurname(comp)}</td>` +
     `<td class="timestamp">${formatTime(fh, fm, fs, fms)}</td>` +
+    `<td class="race-time">—</td>` +
     `<td class="delta-time"></td>` +
     `<td class="elapsed-time"></td>`;
 
@@ -193,29 +196,124 @@ function recalcElapsedTimes() {
   });
 }
 
+// ── rowToMsExact (senza troncamento) ──────────────────────────
+function rowToMsExact(row) {
+  const h  = parseInt(row.dataset.hour    ?? 0);
+  const m  = parseInt(row.dataset.minute  ?? 0);
+  const s  = parseInt(row.dataset.seconds ?? 0);
+  const ms = parseInt(row.dataset.msRaw   ?? 0);
+  return ((h * 3600 + m * 60 + s) * 1000) + ms;
+}
+
+// ── Rounded corners sulle TH visibili ────────────────────────
+function updateTableCorners() {
+  const ths = Array.from(document.querySelectorAll("#event-table thead th"));
+  ths.forEach(th => { th.style.borderTopLeftRadius = ""; th.style.borderTopRightRadius = ""; });
+  const visible = ths.filter(th => getComputedStyle(th).display !== "none");
+  if (visible.length > 0) {
+    visible[0].style.borderTopLeftRadius = "8px";
+    visible[visible.length - 1].style.borderTopRightRadius = "8px";
+  }
+}
+
+// ── Competitor splits ─────────────────────────────────────────
+function clearCompetitorSplits() {
+  document.querySelectorAll("#event-table tbody .diff-row").forEach(r => r.remove());
+  document.querySelectorAll("#event-table tbody .diff-hidden").forEach(r => {
+    r.classList.remove("diff-hidden");
+    r.style.display = "";
+  });
+  recalcDeltaTimes();
+  recalcElapsedTimes();
+  updateVisibleColumns();
+}
+
+function applyCompetitorSplits() {
+  clearCompetitorSplits();
+  const tbody = document.querySelector("#event-table tbody");
+  const allRows = Array.from(tbody.querySelectorAll("tr:not(.diff-row)"));
+  const groups = {};
+  allRows.forEach(row => {
+    const comp = (row.dataset.competitor ?? "").trim();
+    if (!comp || comp === "0") return;
+    if (!groups[comp]) groups[comp] = [];
+    groups[comp].push(row);
+  });
+  Object.values(groups).forEach(compRows => {
+    compRows.sort((a, b) => rowToMsExact(a) - rowToMsExact(b));
+    if (compRows.length >= 2) {
+      for (let i = 0; i < compRows.length - 1; i++) {
+        const r1 = compRows[i];
+        const r2 = compRows[i + 1];
+        const diffMs = rowToMsExact(r2) - rowToMsExact(r1);
+        const dH  = Math.floor(diffMs / 3600000);
+        const dM  = Math.floor((diffMs % 3600000) / 60000);
+        const dS  = Math.floor((diffMs % 60000) / 1000);
+        const dMs = diffMs % 1000;
+        const diffRow = document.createElement("tr");
+        diffRow.className = "diff-row";
+        diffRow.dataset.competitor = r1.dataset.competitor;
+        diffRow.innerHTML =
+          `<td class="col-index">—</td>` +
+          `<td class="col-line">L${r1.dataset.line}→L${r2.dataset.line}</td>` +
+          `<td class="col-comp">${r1.dataset.competitor}</td>` +
+          `<td class="col-name">${getAthleteName(r1.dataset.competitor)}</td>` +
+          `<td class="col-surname">${getAthleteSurname(r1.dataset.competitor)}</td>` +
+          `<td class="timestamp">—</td>` +
+          `<td class="race-time diff-time">${formatTime(dH, dM, dS, dMs)}</td>` +
+          `<td class="delta-time">—</td>` +
+          `<td class="elapsed-time">—</td>`;
+        tbody.insertBefore(diffRow, r2);
+      }
+    }
+    compRows.forEach(r => { r.classList.add("diff-hidden"); r.style.display = "none"; });
+  });
+  allRows.forEach(row => {
+    const comp = (row.dataset.competitor ?? "").trim();
+    if (!comp || comp === "0") { row.classList.add("diff-hidden"); row.style.display = "none"; }
+  });
+  updateVisibleColumns();
+}
+
 // ── Column visibility ─────────────────────────────────────────
 function updateVisibleColumns() {
-  const showTs = document.getElementById("toggle-timestamp")?.checked ?? true;
-  const showDt = document.getElementById("toggle-delta")?.checked     ?? true;
-  const showEl = document.getElementById("toggle-elapsed")?.checked   ?? false;
+  const showIdx  = document.getElementById("toggle-index")?.checked     ?? true;
+  const showLn   = document.getElementById("toggle-line")?.checked      ?? true;
+  const showTs   = document.getElementById("toggle-timestamp")?.checked ?? true;
+  const showRt   = document.getElementById("toggle-race-time")?.checked ?? false;
+  const showName = document.getElementById("toggle-name")?.checked      ?? false;
+  const showSur  = document.getElementById("toggle-surname")?.checked   ?? false;
+  const showDt   = document.getElementById("toggle-delta")?.checked     ?? true;
+  const showEl   = document.getElementById("toggle-elapsed")?.checked   ?? false;
 
   const setCol = (thClass, tdClass, show) => {
-    const d = show ? "" : "none";
+    const d = show ? "table-cell" : "none";
     document.querySelectorAll("th." + thClass).forEach(el => el.style.display = d);
     document.querySelectorAll("td." + tdClass).forEach(el => el.style.display = d);
   };
-  setCol("timestamp-col", "timestamp",    showTs);
-  setCol("delta-col",     "delta-time",   showDt);
-  setCol("elapsed-col",   "elapsed-time", showEl);
+  setCol("col-index-col",   "col-index",   showIdx);
+  setCol("col-line-col",    "col-line",    showLn);
+  setCol("timestamp-col",   "timestamp",   showTs);
+  setCol("race-time-col",   "race-time",   showRt);
+  setCol("col-name-col",    "col-name",    showName);
+  setCol("col-surname-col", "col-surname", showSur);
+  setCol("delta-col",       "delta-time",  showDt);
+  setCol("elapsed-col",     "elapsed-time", showEl);
+  updateTableCorners();
 }
 
 // ── Table column overlay ──────────────────────────────────────
 function openTableColOverlay() {
-  // Sincronizza i controlli dell'overlay con lo stato corrente
+  document.getElementById("tco-index").checked     = document.getElementById("toggle-index")?.checked     ?? true;
+  document.getElementById("tco-line").checked      = document.getElementById("toggle-line")?.checked      ?? true;
   document.getElementById("tco-timestamp").checked = document.getElementById("toggle-timestamp")?.checked ?? true;
+  document.getElementById("tco-race-time").checked = document.getElementById("toggle-race-time")?.checked ?? false;
+  document.getElementById("tco-name").checked      = document.getElementById("toggle-name")?.checked      ?? false;
+  document.getElementById("tco-surname").checked   = document.getElementById("toggle-surname")?.checked   ?? false;
   document.getElementById("tco-delta").checked     = document.getElementById("toggle-delta")?.checked     ?? true;
   document.getElementById("tco-elapsed").checked   = document.getElementById("toggle-elapsed")?.checked   ?? false;
   document.getElementById("tco-precision").value   = timePrecision;
+  document.getElementById("tco-splits").checked    = document.getElementById("toggle-splits")?.checked    ?? false;
   document.getElementById("tableColOverlay").style.display = "flex";
 }
 
@@ -225,17 +323,22 @@ function closeTableColOverlay() {
 
 // Chiamata live ad ogni cambio nei controlli dell'overlay
 function onTcoChange() {
-  // Risincronizza i toggle "nascosti" nel settings overlay (fonte di verità per saveStreamPrefs)
-  document.getElementById("toggle-timestamp").checked = document.getElementById("tco-timestamp").checked;
-  document.getElementById("toggle-delta").checked     = document.getElementById("tco-delta").checked;
-  document.getElementById("toggle-elapsed").checked   = document.getElementById("tco-elapsed").checked;
+  // Risincronizza i toggle nel settings overlay (fonte di verità per saveStreamPrefs)
+  document.getElementById("toggle-index").checked      = document.getElementById("tco-index").checked;
+  document.getElementById("toggle-line").checked       = document.getElementById("tco-line").checked;
+  document.getElementById("toggle-timestamp").checked  = document.getElementById("tco-timestamp").checked;
+  document.getElementById("toggle-race-time").checked  = document.getElementById("tco-race-time").checked;
+  document.getElementById("toggle-name").checked       = document.getElementById("tco-name").checked;
+  document.getElementById("toggle-surname").checked    = document.getElementById("tco-surname").checked;
+  document.getElementById("toggle-delta").checked      = document.getElementById("tco-delta").checked;
+  document.getElementById("toggle-elapsed").checked    = document.getElementById("tco-elapsed").checked;
+  document.getElementById("toggle-splits").checked     = document.getElementById("tco-splits").checked;
 
-  // Aggiorna precisione
   const prec = Math.max(1, Math.min(3, parseInt(document.getElementById("tco-precision").value) || 3));
   timePrecision = prec;
   document.getElementById("time-precision").value = prec;
 
-  // Ricalcola timestamp esistenti
+  // Ricalcola timestamp esistenti con nuova precisione
   document.querySelectorAll("#event-table tbody tr").forEach(row => {
     const tsCell = row.querySelector(".timestamp");
     if (!tsCell) return;
@@ -249,6 +352,12 @@ function onTcoChange() {
   recalcDeltaTimes();
   recalcElapsedTimes();
   updateVisibleColumns();
+
+  // Splits mode
+  const splitsOn = document.getElementById("tco-splits").checked;
+  if (splitsOn) applyCompetitorSplits();
+  else clearCompetitorSplits();
+
   saveStreamPrefs();
 }
 
@@ -265,9 +374,15 @@ function saveStreamPrefs() {
     theme:         currentTheme,
     viewMode:      currentViewMode,
     timePrecision: timePrecision,
+    colIndex:      document.getElementById("toggle-index")?.checked      ?? true,
+    colLine:       document.getElementById("toggle-line")?.checked       ?? true,
     colTimestamp:  document.getElementById("toggle-timestamp")?.checked  ?? true,
+    colRaceTime:   document.getElementById("toggle-race-time")?.checked  ?? false,
+    colName:       document.getElementById("toggle-name")?.checked       ?? false,
+    colSurname:    document.getElementById("toggle-surname")?.checked    ?? false,
     colDelta:      document.getElementById("toggle-delta")?.checked      ?? true,
     colElapsed:    document.getElementById("toggle-elapsed")?.checked    ?? false,
+    splitsMode:    document.getElementById("toggle-splits")?.checked     ?? false,
   };
   localStorage.setItem(STREAM_PREFS_KEY, JSON.stringify(prefs));
 }
@@ -299,16 +414,21 @@ function restoreStreamPrefs() {
       const el = document.getElementById(id);
       if (el && val !== undefined) el.checked = val;
     };
-    setChk("toggle-timestamp", prefs.colTimestamp);
-    setChk("toggle-delta",     prefs.colDelta);
-    setChk("toggle-elapsed",   prefs.colElapsed);
+    setChk("toggle-index",      prefs.colIndex     ?? true);
+    setChk("toggle-line",       prefs.colLine      ?? true);
+    setChk("toggle-timestamp",  prefs.colTimestamp ?? true);
+    setChk("toggle-race-time",  prefs.colRaceTime  ?? false);
+    setChk("toggle-name",       prefs.colName      ?? false);
+    setChk("toggle-surname",    prefs.colSurname   ?? false);
+    setChk("toggle-delta",      prefs.colDelta     ?? true);
+    setChk("toggle-elapsed",    prefs.colElapsed   ?? false);
+    setChk("toggle-splits",     prefs.splitsMode   ?? false);
     updateVisibleColumns();
+    if (prefs.splitsMode) applyCompetitorSplits();
 
     if (prefs.streamUrl) {
       activeStreamUrl  = prefs.streamUrl;
       activeStreamType = prefs.streamType || "auto";
-      // NON chiamare loadStream qui: la policy autoplay blocca la riproduzione
-      // senza gesto utente (specialmente su iOS). Si mostra un hint "tap to play".
       showPlayHint(prefs.streamUrl);
     }
   } catch (e) { console.warn("Errore ripristino prefs:", e); }
@@ -316,6 +436,18 @@ function restoreStreamPrefs() {
 
 // ── Athlete registry ──────────────────────────────────────────
 const ATHLETES_KEY = "chronofit_athletes";
+
+function getAthleteName(competitorNum) {
+  const a = findAthlete(competitorNum);
+  if (!a) return "";
+  return a.name || a.firstname || a.nome || "";
+}
+
+function getAthleteSurname(competitorNum) {
+  const a = findAthlete(competitorNum);
+  if (!a) return "";
+  return a.surname || a.lastname || a.cognome || "";
+}
 
 function loadAthleteRegistry() {
   const raw = localStorage.getItem(ATHLETES_KEY);
@@ -492,6 +624,10 @@ function applySettings() {
 
   // ── colonne tabella ──────────────────────────────────────────
   updateVisibleColumns();
+
+  // ── splits mode ──────────────────────────────────────────────
+  if (document.getElementById("toggle-splits")?.checked) applyCompetitorSplits();
+  else clearCompetitorSplits();
 
   // ── atleti: salva solo se c'è contenuto nel textarea ────────
   const raw = document.getElementById("athleteJson").value.trim();
@@ -702,6 +838,7 @@ function handleMessage(data) {
         displayAthlete(data.c, parseInt(data.ln), data, "TRANSITO");
       // Aggiunge sempre alla tabella arrivi (tutte le linee)
       addEventToTable(data.id, data.ln, data.c, data.h, data.m, data.s, data.ms);
+      if (document.getElementById("toggle-splits")?.checked) applyCompetitorSplits();
       break;
 
     // Aggiornamento linea: competitor assegnato dall'interfaccia principale
@@ -863,9 +1000,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   // Live update su ogni cambio nei controlli dell'overlay
-  ["tco-timestamp", "tco-delta", "tco-elapsed", "tco-precision"].forEach(id => {
+  ["tco-index", "tco-line", "tco-timestamp", "tco-race-time",
+   "tco-name", "tco-surname",
+   "tco-delta", "tco-elapsed", "tco-precision", "tco-splits"].forEach(id => {
     document.getElementById(id).addEventListener("change", onTcoChange);
   });
+
+  updateTableCorners();
 });
 
 window.addEventListener("load", () => {

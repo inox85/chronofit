@@ -166,7 +166,6 @@
     /* ── Table styling (match view.html) ── */
     #event-table {
       width:100%; border-collapse:collapse;
-      border-radius:8px; overflow:hidden;
     }
     #event-table thead tr {
       cursor:pointer; user-select:none;
@@ -207,6 +206,12 @@
     }
 
     /* row enter animation */
+    .race-time-col, td.race-time   { display:none; }
+    .col-name-col,  td.col-name    { display:none; }
+    .col-surname-col, td.col-surname { display:none; }
+    #event-table tbody tr.diff-row td { font-style:italic; }
+    #event-table tbody tr.diff-row .diff-time { font-weight:700; }
+
     @keyframes rowIn {
       from { opacity:0; transform:translateY(-6px); }
       to   { opacity:1; transform:none; }
@@ -218,6 +223,7 @@
       background:var(--s-ovl-bg); color:var(--s-ovl-fg);
       border:1px solid var(--s-border-3);
       max-width:320px; width:90%;
+      max-height:90vh; overflow-y:auto;
     }
     #tableColOverlay h2  { color:var(--s-ovl-h2); }
     #tableColOverlay .toggle-row > span { color:var(--s-ovl-span); }
@@ -353,8 +359,28 @@
 
       <p class="settings-section" style="margin-top:12px;">Colonne tabella</p>
       <div class="toggle-row">
+        <span>Mostra # (indice)</span>
+        <label class="switch"><input type="checkbox" id="toggle-index" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Mostra Linea</span>
+        <label class="switch"><input type="checkbox" id="toggle-line" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
         <span>Orario evento</span>
         <label class="switch"><input type="checkbox" id="toggle-timestamp" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Race time (splits)</span>
+        <label class="switch"><input type="checkbox" id="toggle-race-time"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Nome competitor</span>
+        <label class="switch"><input type="checkbox" id="toggle-name"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Cognome competitor</span>
+        <label class="switch"><input type="checkbox" id="toggle-surname"><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
         <span>Delta Δ</span>
@@ -371,6 +397,12 @@
           <option value="2">Centesimi (0.00)</option>
           <option value="3" selected>Millisecondi (0.000)</option>
         </select>
+      </div>
+
+      <p class="settings-section" style="margin-top:12px;">Modalità righe</p>
+      <div class="toggle-row">
+        <span>Competitor splits</span>
+        <label class="switch"><input type="checkbox" id="toggle-splits"><span class="slider"></span></label>
       </div>
 
       <hr class="divider">
@@ -414,8 +446,28 @@
       <h2>⚙️ Colonne tabella</h2>
 
       <div class="toggle-row">
+        <span>Mostra # (indice)</span>
+        <label class="switch"><input type="checkbox" id="tco-index" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Mostra Linea</span>
+        <label class="switch"><input type="checkbox" id="tco-line" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
         <span>Orario evento</span>
         <label class="switch"><input type="checkbox" id="tco-timestamp" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Race time (splits)</span>
+        <label class="switch"><input type="checkbox" id="tco-race-time"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Nome competitor</span>
+        <label class="switch"><input type="checkbox" id="tco-name"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Cognome competitor</span>
+        <label class="switch"><input type="checkbox" id="tco-surname"><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
         <span>Delta Δ</span>
@@ -432,6 +484,13 @@
           <option value="2">Centesimi (0.00)</option>
           <option value="3" selected>Millisecondi (0.000)</option>
         </select>
+      </div>
+
+      <hr class="divider">
+
+      <div class="toggle-row">
+        <span>Competitor splits</span>
+        <label class="switch"><input type="checkbox" id="tco-splits"><span class="slider"></span></label>
       </div>
 
       <div class="button-row" style="justify-content:flex-end; margin-top:16px;">
@@ -506,10 +565,13 @@
             <table id="event-table">
               <thead>
                 <tr>
-                  <th class="col-index">#</th>
-                  <th class="col-line">L</th>
+                  <th class="col-index col-index-col">#</th>
+                  <th class="col-line col-line-col">L</th>
                   <th>Comp.</th>
+                  <th class="col-name-col">Nome</th>
+                  <th class="col-surname-col">Cognome</th>
                   <th class="timestamp-col">Evento</th>
+                  <th class="race-time-col">Race ⏱️</th>
                   <th class="delta-col">Δ</th>
                   <th class="elapsed-col">Elapsed</th>
                 </tr>

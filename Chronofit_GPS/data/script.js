@@ -235,6 +235,28 @@ function updateTimeOffset(){
 
 const VIEW_PREFS_KEY = "chronofit_view_prefs";
 
+// ── Athlete registry (read-only — caricato da stream/broadcast) ──
+const ATHLETES_KEY = "chronofit_athletes";
+
+function findAthlete(competitorNum) {
+  try {
+    const registry = JSON.parse(localStorage.getItem(ATHLETES_KEY) || "[]");
+    return registry.find(a => String(a.competitor) === String(competitorNum)) ?? null;
+  } catch (e) { return null; }
+}
+
+function getAthleteName(competitorNum) {
+  const a = findAthlete(competitorNum);
+  if (!a) return "";
+  return a.name || a.firstname || a.nome || "";
+}
+
+function getAthleteSurname(competitorNum) {
+  const a = findAthlete(competitorNum);
+  if (!a) return "";
+  return a.surname || a.lastname || a.cognome || "";
+}
+
 let reverseOrder = false;
 
 function saveViewPrefs() {
@@ -249,6 +271,8 @@ function saveViewPrefs() {
     showLine:      document.getElementById("toggle-line").checked,
     showLineId:    document.getElementById("toggle-lineid").checked,
     showRaceTime:  document.getElementById("toggle-race-time").checked,
+    showName:      document.getElementById("toggle-name")?.checked    ?? false,
+    showSurname:   document.getElementById("toggle-surname")?.checked ?? false,
     showEditBtn:   document.getElementById("toggle-edit-btn").checked,
     showSendBtn:   document.getElementById("toggle-send-btn").checked,
     splitsMode:    document.getElementById("toggle-splits").checked,
@@ -285,6 +309,8 @@ function restoreViewPrefs() {
     setChk("toggle-line",          prefs.showLine     ?? true);
     setChk("toggle-lineid",        prefs.showLineId   ?? true);
     setChk("toggle-race-time",     prefs.showRaceTime ?? false);
+    setChk("toggle-name",          prefs.showName     ?? false);
+    setChk("toggle-surname",       prefs.showSurname  ?? false);
     setChk("toggle-edit-btn",      prefs.showEditBtn  ?? true);
     setChk("toggle-send-btn",      prefs.showSendBtn  ?? true);
     setChk("toggle-splits",        prefs.splitsMode   ?? false);
@@ -1026,6 +1052,8 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}" class="col-line">${lineNumber}</td>
     <td class="col-id">${lineId}</td>
     <td class="col-competitor">${competitor}</td>
+    <td class="col-name">${getAthleteName(competitor)}</td>
+    <td class="col-surname">${getAthleteSurname(competitor)}</td>
     <td class="timestamp">${timestamp}</td>
     <td class="race-time">—</td>
     <td class="delta-time"></td>
@@ -1300,23 +1328,20 @@ function sendUpdatedCheckPointRow(row) {
 
   const cells = row.querySelectorAll("td");
   const lineNumber = cells[1].textContent.trim();
-  const lineId = cells[2].textContent.trim();
+  const lineId     = cells[2].textContent.trim();
   const competitor = cells[3].textContent.trim();
-  const timestamp = cells[4].textContent.trim();
-  const [timePart, millisPart] = timestamp.split(".");
-  const [hour, minute, second] = timePart.split(":");
-   // ✅ valore reale
+  // Usa i dataset aggiornati da saveRow (robusto all'aggiunta di nuove colonne)
   const penality = Number(row.dataset.penality) || 0;
 
   const messageObj = {
     index,
     lineNumber: parseInt(lineNumber),
-    lineId: lineId,
+    lineId:     lineId,
     competitor: parseInt(competitor),
-    hour: parseInt(hour),
-    minute: parseInt(minute),
-    second: parseInt(second),
-    millis: parseInt(millisPart),
+    hour:       parseInt(row.dataset.hour    ?? 0),
+    minute:     parseInt(row.dataset.minute  ?? 0),
+    second:     parseInt(row.dataset.seconds ?? 0),
+    millis:     parseInt(row.dataset.msRaw   ?? 0),
     penality
   };
 
@@ -1339,14 +1364,14 @@ function sendRow(button) {
   // 🔹 Usa il numero effettivo della prima cella come indice
   const index = parseInt(row.cells[0].textContent.trim());
 
-  // 🔹 Legge i valori visibili nella tabella (così funziona anche dopo edit)
+  // 🔹 Legge i valori visibili nella tabella (robusto all'aggiunta di nuove colonne)
   const cells = row.querySelectorAll("td");
   const lineNumber = cells[1].textContent.trim();
-  const lineId = cells[2].textContent.trim();
+  const lineId     = cells[2].textContent.trim();
   const competitor = cells[3].textContent.trim();
-  const timestamp = cells[4].textContent.trim();
+  const timestamp  = row.querySelector(".timestamp").textContent.trim();
 
-  // Estrai hour, minute, millis dal timestamp (es. "10:23.456")
+  // Estrai hour, minute, millis dal timestamp (es. "10:23:45.678")
   const [timePart, millisPart] = timestamp.split(".");
   const [hour, minute, second] = timePart.split(":");
 
@@ -1950,6 +1975,20 @@ function updateTableCorners() {
   }
 }
 
+function toggleNameColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-name-col").forEach(el => el.style.display = d);
+  document.querySelectorAll("td.col-name").forEach(el => el.style.display = d);
+  updateTableCorners();
+}
+
+function toggleSurnameColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-surname-col").forEach(el => el.style.display = d);
+  document.querySelectorAll("td.col-surname").forEach(el => el.style.display = d);
+  updateTableCorners();
+}
+
 function updateVisibleColumns(){
   toggleTimestampColumn(document.getElementById("toggle-timestamp").checked);
   toggleElapsedTimeColumn(document.getElementById("toggle-elapsed-time").checked);
@@ -1959,6 +1998,8 @@ function updateVisibleColumns(){
   toggleLineColumn(document.getElementById("toggle-line").checked);
   toggleLineIdColumn(document.getElementById("toggle-lineid").checked);
   toggleRaceTimeColumn(document.getElementById("toggle-race-time").checked);
+  toggleNameColumn(document.getElementById("toggle-name")?.checked ?? false);
+  toggleSurnameColumn(document.getElementById("toggle-surname")?.checked ?? false);
   toggleEditColumn(document.getElementById("toggle-edit-btn").checked);
   toggleSendColumn(document.getElementById("toggle-send-btn").checked);
   updateTableCorners();
@@ -2015,6 +2056,8 @@ function applyCompetitorSplits() {
           <td class="col-line">L${line1}→L${line2}</td>
           <td class="col-id">—</td>
           <td class="col-competitor">${comp}</td>
+          <td class="col-name">${getAthleteName(comp)}</td>
+          <td class="col-surname">${getAthleteSurname(comp)}</td>
           <td class="timestamp">—</td>
           <td class="race-time diff-time">${formatTime(dH, dM, dS, dMs)}</td>
           <td class="delta-time">—</td>
@@ -2119,6 +2162,12 @@ document.getElementById("toggle-splits")
 document.getElementById("toggle-race-time")
 .addEventListener("change", e => { toggleRaceTimeColumn(e.target.checked); saveViewPrefs(); });
 
+document.getElementById("toggle-name")
+.addEventListener("change", e => { toggleNameColumn(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-surname")
+.addEventListener("change", e => { toggleSurnameColumn(e.target.checked); saveViewPrefs(); });
+
 document.getElementById("toggle-edit-btn")
 .addEventListener("change", e => { toggleEditColumn(e.target.checked); saveViewPrefs(); });
 
@@ -2179,6 +2228,10 @@ function updateRowFromBroadcas(data) {
   const competitorCell = row.querySelector(".col-competitor");
   if (competitorCell && data.c !== undefined) {
     competitorCell.textContent = data.c;
+    const nc = row.querySelector(".col-name");
+    const sc = row.querySelector(".col-surname");
+    if (nc) nc.textContent = getAthleteName(data.c);
+    if (sc) sc.textContent = getAthleteSurname(data.c);
   }
 
   // aggiorna event time

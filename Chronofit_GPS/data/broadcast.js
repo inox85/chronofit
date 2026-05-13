@@ -32,6 +32,10 @@ function onThemeCheckChange(chk) {
 // anagrafica | griglia | entrambi | nascosto
 let currentViewMode = "anagrafica";
 
+// ── Lower-third time mode ─────────────────────────────────────
+// event | delta | elapsed | race-time
+let ltTimeMode = "event";
+
 function applyViewMode(mode) {
   currentViewMode = mode;
   document.body.classList.remove(
@@ -106,6 +110,58 @@ function formatDelta(ms, signed) {
     String(seconds).padStart(2, "0") + "." + msStr;
 }
 
+// ── Duration formatter (riutilizza formatTime per la precisione) ──
+function formatDuration(totalMs) {
+  totalMs = Math.max(0, totalMs);
+  const h  = Math.floor(totalMs / 3600000); totalMs %= 3600000;
+  const m  = Math.floor(totalMs / 60000);   totalMs %= 60000;
+  const s  = Math.floor(totalMs / 1000);
+  const ms = totalMs % 1000;
+  return formatTime(h, m, s, ms);
+}
+
+// ── Calcola il tempo da mostrare nel footer del lower-third ───
+function computeLtTime(competitorNum, eventData) {
+  if (ltTimeMode === "event" || !eventData) {
+    return {
+      label: "TRANSITO",
+      text:  formatTime(eventData?.h ?? 0, eventData?.m ?? 0,
+                        eventData?.s ?? 0, eventData?.ms ?? 0)
+    };
+  }
+
+  const allRows = Array.from(
+    document.querySelectorAll("#event-table tbody tr:not(.diff-row)")
+  ).filter(r => String(r.dataset.competitor) === String(competitorNum))
+   .sort((a, b) => rowToMsExact(a) - rowToMsExact(b));
+
+  if (ltTimeMode === "delta") {
+    if (allRows.length < 2) return { label: "DELTA", text: "—" };
+    const diffMs = rowToMsExact(allRows[allRows.length - 1])
+                 - rowToMsExact(allRows[allRows.length - 2]);
+    return { label: "DELTA", text: formatDuration(diffMs) };
+  }
+
+  if (ltTimeMode === "elapsed") {
+    if (allRows.length < 2) return { label: "ELAPSED", text: "—" };
+    const diffMs = rowToMsExact(allRows[allRows.length - 1])
+                 - rowToMsExact(allRows[0]);
+    return { label: "ELAPSED", text: formatDuration(diffMs) };
+  }
+
+  if (ltTimeMode === "race-time") {
+    const diffRows = Array.from(
+      document.querySelectorAll("#event-table tbody tr.diff-row")
+    ).filter(r => String(r.dataset.competitor) === String(competitorNum));
+    if (diffRows.length === 0) return { label: "RACE TIME", text: "—" };
+    const lastDiff = diffRows[diffRows.length - 1];
+    const cell = lastDiff.querySelector(".race-time");
+    return { label: "RACE TIME", text: cell ? cell.textContent.trim() : "—" };
+  }
+
+  return { label: "TRANSITO", text: "—" };
+}
+
 // ── Arrival table ─────────────────────────────────────────────
 function clearEventTableRows() {
   document.querySelector("#event-table tbody").innerHTML = "";
@@ -137,7 +193,10 @@ function addEventToTable(rowIndex, lineNumber, competitor, h, m, s, ms) {
     `<td class="col-index">${ri}</td>` +
     `<td class="col-line" style="background:${lineColor};color:#000">${ln}</td>` +
     `<td class="col-comp">${comp}</td>` +
+    `<td class="col-name">${getAthleteName(comp)}</td>` +
+    `<td class="col-surname">${getAthleteSurname(comp)}</td>` +
     `<td class="timestamp">${formatTime(fh, fm, fs, fms)}</td>` +
+    `<td class="race-time">—</td>` +
     `<td class="delta-time"></td>` +
     `<td class="elapsed-time"></td>`;
 
@@ -202,28 +261,124 @@ function recalcElapsedTimes() {
   });
 }
 
+// ── rowToMsExact (senza troncamento) ──────────────────────────
+function rowToMsExact(row) {
+  const h  = parseInt(row.dataset.hour    ?? 0);
+  const m  = parseInt(row.dataset.minute  ?? 0);
+  const s  = parseInt(row.dataset.seconds ?? 0);
+  const ms = parseInt(row.dataset.msRaw   ?? 0);
+  return ((h * 3600 + m * 60 + s) * 1000) + ms;
+}
+
+// ── Rounded corners sulle TH visibili ────────────────────────
+function updateTableCorners() {
+  const ths = Array.from(document.querySelectorAll("#event-table thead th"));
+  ths.forEach(th => { th.style.borderTopLeftRadius = ""; th.style.borderTopRightRadius = ""; });
+  const visible = ths.filter(th => getComputedStyle(th).display !== "none");
+  if (visible.length > 0) {
+    visible[0].style.borderTopLeftRadius = "8px";
+    visible[visible.length - 1].style.borderTopRightRadius = "8px";
+  }
+}
+
+// ── Competitor splits ─────────────────────────────────────────
+function clearCompetitorSplits() {
+  document.querySelectorAll("#event-table tbody .diff-row").forEach(r => r.remove());
+  document.querySelectorAll("#event-table tbody .diff-hidden").forEach(r => {
+    r.classList.remove("diff-hidden");
+    r.style.display = "";
+  });
+  recalcDeltaTimes();
+  recalcElapsedTimes();
+  updateVisibleColumns();
+}
+
+function applyCompetitorSplits() {
+  clearCompetitorSplits();
+  const tbody = document.querySelector("#event-table tbody");
+  const allRows = Array.from(tbody.querySelectorAll("tr:not(.diff-row)"));
+  const groups = {};
+  allRows.forEach(row => {
+    const comp = (row.dataset.competitor ?? "").trim();
+    if (!comp || comp === "0") return;
+    if (!groups[comp]) groups[comp] = [];
+    groups[comp].push(row);
+  });
+  Object.values(groups).forEach(compRows => {
+    compRows.sort((a, b) => rowToMsExact(a) - rowToMsExact(b));
+    if (compRows.length >= 2) {
+      for (let i = 0; i < compRows.length - 1; i++) {
+        const r1 = compRows[i];
+        const r2 = compRows[i + 1];
+        const diffMs = rowToMsExact(r2) - rowToMsExact(r1);
+        const dH  = Math.floor(diffMs / 3600000);
+        const dM  = Math.floor((diffMs % 3600000) / 60000);
+        const dS  = Math.floor((diffMs % 60000) / 1000);
+        const dMs = diffMs % 1000;
+        const diffRow = document.createElement("tr");
+        diffRow.className = "diff-row";
+        diffRow.dataset.competitor = r1.dataset.competitor;
+        diffRow.innerHTML =
+          `<td class="col-index">—</td>` +
+          `<td class="col-line">L${r1.dataset.line}→L${r2.dataset.line}</td>` +
+          `<td class="col-comp">${r1.dataset.competitor}</td>` +
+          `<td class="col-name">${getAthleteName(r1.dataset.competitor)}</td>` +
+          `<td class="col-surname">${getAthleteSurname(r1.dataset.competitor)}</td>` +
+          `<td class="timestamp">—</td>` +
+          `<td class="race-time diff-time">${formatTime(dH, dM, dS, dMs)}</td>` +
+          `<td class="delta-time">—</td>` +
+          `<td class="elapsed-time">—</td>`;
+        tbody.insertBefore(diffRow, r2);
+      }
+    }
+    compRows.forEach(r => { r.classList.add("diff-hidden"); r.style.display = "none"; });
+  });
+  allRows.forEach(row => {
+    const comp = (row.dataset.competitor ?? "").trim();
+    if (!comp || comp === "0") { row.classList.add("diff-hidden"); row.style.display = "none"; }
+  });
+  updateVisibleColumns();
+}
+
 // ── Column visibility ─────────────────────────────────────────
 function updateVisibleColumns() {
-  const showTs = document.getElementById("toggle-timestamp")?.checked ?? true;
-  const showDt = document.getElementById("toggle-delta")?.checked     ?? true;
-  const showEl = document.getElementById("toggle-elapsed")?.checked   ?? false;
+  const showIdx  = document.getElementById("toggle-index")?.checked     ?? true;
+  const showLn   = document.getElementById("toggle-line")?.checked      ?? true;
+  const showTs   = document.getElementById("toggle-timestamp")?.checked ?? true;
+  const showRt   = document.getElementById("toggle-race-time")?.checked ?? false;
+  const showName = document.getElementById("toggle-name")?.checked      ?? false;
+  const showSurn = document.getElementById("toggle-surname")?.checked   ?? false;
+  const showDt   = document.getElementById("toggle-delta")?.checked     ?? true;
+  const showEl   = document.getElementById("toggle-elapsed")?.checked   ?? false;
 
   const setCol = (thClass, tdClass, show) => {
-    const d = show ? "" : "none";
+    const d = show ? "table-cell" : "none";
     document.querySelectorAll("th." + thClass).forEach(el => el.style.display = d);
     document.querySelectorAll("td." + tdClass).forEach(el => el.style.display = d);
   };
-  setCol("timestamp-col", "timestamp",    showTs);
-  setCol("delta-col",     "delta-time",   showDt);
-  setCol("elapsed-col",   "elapsed-time", showEl);
+  setCol("col-index-col",   "col-index",    showIdx);
+  setCol("col-line-col",    "col-line",     showLn);
+  setCol("col-name-col",    "col-name",     showName);
+  setCol("col-surname-col", "col-surname",  showSurn);
+  setCol("timestamp-col",   "timestamp",    showTs);
+  setCol("race-time-col",   "race-time",    showRt);
+  setCol("delta-col",       "delta-time",   showDt);
+  setCol("elapsed-col",     "elapsed-time", showEl);
+  updateTableCorners();
 }
 
 // ── Table column overlay ──────────────────────────────────────
 function openTableColOverlay() {
+  document.getElementById("tco-index").checked     = document.getElementById("toggle-index")?.checked     ?? true;
+  document.getElementById("tco-line").checked      = document.getElementById("toggle-line")?.checked      ?? true;
   document.getElementById("tco-timestamp").checked = document.getElementById("toggle-timestamp")?.checked ?? true;
+  document.getElementById("tco-race-time").checked = document.getElementById("toggle-race-time")?.checked ?? false;
+  document.getElementById("tco-name").checked      = document.getElementById("toggle-name")?.checked      ?? false;
+  document.getElementById("tco-surname").checked   = document.getElementById("toggle-surname")?.checked   ?? false;
   document.getElementById("tco-delta").checked     = document.getElementById("toggle-delta")?.checked     ?? true;
   document.getElementById("tco-elapsed").checked   = document.getElementById("toggle-elapsed")?.checked   ?? false;
   document.getElementById("tco-precision").value   = timePrecision;
+  document.getElementById("tco-splits").checked    = document.getElementById("toggle-splits")?.checked    ?? false;
   document.getElementById("tableColOverlay").style.display = "flex";
 }
 
@@ -232,9 +387,15 @@ function closeTableColOverlay() {
 }
 
 function onTcoChange() {
-  document.getElementById("toggle-timestamp").checked = document.getElementById("tco-timestamp").checked;
-  document.getElementById("toggle-delta").checked     = document.getElementById("tco-delta").checked;
-  document.getElementById("toggle-elapsed").checked   = document.getElementById("tco-elapsed").checked;
+  document.getElementById("toggle-index").checked      = document.getElementById("tco-index").checked;
+  document.getElementById("toggle-line").checked       = document.getElementById("tco-line").checked;
+  document.getElementById("toggle-timestamp").checked  = document.getElementById("tco-timestamp").checked;
+  document.getElementById("toggle-race-time").checked  = document.getElementById("tco-race-time").checked;
+  document.getElementById("toggle-name").checked       = document.getElementById("tco-name").checked;
+  document.getElementById("toggle-surname").checked    = document.getElementById("tco-surname").checked;
+  document.getElementById("toggle-delta").checked      = document.getElementById("tco-delta").checked;
+  document.getElementById("toggle-elapsed").checked    = document.getElementById("tco-elapsed").checked;
+  document.getElementById("toggle-splits").checked     = document.getElementById("tco-splits").checked;
 
   const prec = Math.max(1, Math.min(3, parseInt(document.getElementById("tco-precision").value) || 3));
   timePrecision = prec;
@@ -253,6 +414,11 @@ function onTcoChange() {
   recalcDeltaTimes();
   recalcElapsedTimes();
   updateVisibleColumns();
+
+  const splitsOn = document.getElementById("tco-splits").checked;
+  if (splitsOn) applyCompetitorSplits();
+  else clearCompetitorSplits();
+
   saveBroadcastPrefs();
 }
 
@@ -269,9 +435,16 @@ function saveBroadcastPrefs() {
     theme:         currentTheme,
     viewMode:      currentViewMode,
     timePrecision: timePrecision,
+    colIndex:      document.getElementById("toggle-index")?.checked      ?? true,
+    colLine:       document.getElementById("toggle-line")?.checked       ?? true,
     colTimestamp:  document.getElementById("toggle-timestamp")?.checked  ?? true,
+    colRaceTime:   document.getElementById("toggle-race-time")?.checked  ?? false,
+    colName:       document.getElementById("toggle-name")?.checked       ?? false,
+    colSurname:    document.getElementById("toggle-surname")?.checked    ?? false,
     colDelta:      document.getElementById("toggle-delta")?.checked      ?? true,
     colElapsed:    document.getElementById("toggle-elapsed")?.checked    ?? false,
+    splitsMode:    document.getElementById("toggle-splits")?.checked     ?? false,
+    ltTimeMode:    ltTimeMode,
   };
   localStorage.setItem(BROADCAST_PREFS_KEY, JSON.stringify(prefs));
 }
@@ -283,7 +456,12 @@ function restoreBroadcastPrefs() {
     const prefs = JSON.parse(raw);
 
     if (prefs.theme)    applyTheme(prefs.theme);
-    if (prefs.viewMode) applyViewMode(prefs.viewMode);
+    if (prefs.viewMode)    applyViewMode(prefs.viewMode);
+    if (prefs.ltTimeMode) {
+      ltTimeMode = prefs.ltTimeMode;
+      const sel = document.getElementById("ltTimeModeSelect");
+      if (sel) sel.value = ltTimeMode;
+    }
 
     if (prefs.streamUrl)  document.getElementById("streamUrl").value  = prefs.streamUrl;
     if (prefs.streamType) document.getElementById("streamType").value = prefs.streamType;
@@ -303,10 +481,17 @@ function restoreBroadcastPrefs() {
       const el = document.getElementById(id);
       if (el && val !== undefined) el.checked = val;
     };
-    setChk("toggle-timestamp", prefs.colTimestamp);
-    setChk("toggle-delta",     prefs.colDelta);
-    setChk("toggle-elapsed",   prefs.colElapsed);
+    setChk("toggle-index",      prefs.colIndex     ?? true);
+    setChk("toggle-line",       prefs.colLine      ?? true);
+    setChk("toggle-timestamp",  prefs.colTimestamp ?? true);
+    setChk("toggle-race-time",  prefs.colRaceTime  ?? false);
+    setChk("toggle-name",       prefs.colName      ?? false);
+    setChk("toggle-surname",    prefs.colSurname   ?? false);
+    setChk("toggle-delta",      prefs.colDelta     ?? true);
+    setChk("toggle-elapsed",    prefs.colElapsed   ?? false);
+    setChk("toggle-splits",     prefs.splitsMode   ?? false);
     updateVisibleColumns();
+    if (prefs.splitsMode) applyCompetitorSplits();
 
     if (prefs.streamUrl) {
       activeStreamUrl  = prefs.streamUrl;
@@ -332,6 +517,18 @@ function saveAthleteRegistry(data) {
 
 function findAthlete(competitorNum) {
   return loadAthleteRegistry().find(a => String(a.competitor) === String(competitorNum)) ?? null;
+}
+
+function getAthleteName(competitorNum) {
+  const a = findAthlete(competitorNum);
+  if (!a) return "";
+  return a.name || a.firstname || a.nome || "";
+}
+
+function getAthleteSurname(competitorNum) {
+  const a = findAthlete(competitorNum);
+  if (!a) return "";
+  return a.surname || a.lastname || a.cognome || "";
 }
 
 function updateRegistryStatus() {
@@ -440,11 +637,12 @@ function showStreamError(msg) {
 
 // ── Settings overlay ──────────────────────────────────────────
 function openSettings() {
-  document.getElementById("themeCheck").checked     = (currentTheme === "light");
-  document.getElementById("viewModeSelect").value   = currentViewMode;
-  document.getElementById("time-precision").value   = timePrecision;
-  document.getElementById("athleteJson").value      = "";
-  document.getElementById("athleteFile").value      = "";
+  document.getElementById("themeCheck").checked       = (currentTheme === "light");
+  document.getElementById("viewModeSelect").value     = currentViewMode;
+  document.getElementById("ltTimeModeSelect").value   = ltTimeMode;
+  document.getElementById("time-precision").value     = timePrecision;
+  document.getElementById("athleteJson").value        = "";
+  document.getElementById("athleteFile").value        = "";
   document.getElementById("settingsOverlay").style.display = "flex";
 }
 
@@ -466,6 +664,7 @@ function applySettings() {
   resetToWaiting();
 
   applyViewMode(document.getElementById("viewModeSelect").value);
+  ltTimeMode = document.getElementById("ltTimeModeSelect").value;
 
   const prec = Math.max(1, Math.min(3, parseInt(document.getElementById("time-precision").value) || 3));
   timePrecision = prec;
@@ -480,6 +679,10 @@ function applySettings() {
   recalcDeltaTimes();
   recalcElapsedTimes();
   updateVisibleColumns();
+
+  // ── splits mode ──────────────────────────────────────────────
+  if (document.getElementById("toggle-splits")?.checked) applyCompetitorSplits();
+  else clearCompetitorSplits();
 
   const raw = document.getElementById("athleteJson").value.trim();
   if (raw) {
@@ -592,14 +795,13 @@ function displayAthlete(competitorNum, lineNum, data, status) {
   // Footer orario: visibile solo per TRANSITO
   const footer = document.getElementById("ltFooter");
   if (status === "TRANSITO" && data) {
-    const h  = String(data.h  ?? 0).padStart(2, "0");
-    const m  = String(data.m  ?? 0).padStart(2, "0");
-    const s  = String(data.s  ?? 0).padStart(2, "0");
-    const ms = String(data.ms ?? 0).padStart(3, "0");
-    document.getElementById("ltTime").textContent = `${h}:${m}:${s}.${ms}`;
+    const { label, text } = computeLtTime(competitorNum, data);
+    document.getElementById("ltTime").textContent      = text;
+    document.querySelector(".lt-time-label").textContent = label;
     footer.classList.remove("lt-footer-hidden");
   } else {
     document.getElementById("ltTime").textContent = "—";
+    document.querySelector(".lt-time-label").textContent = "TRANSITO";
     footer.classList.add("lt-footer-hidden");
   }
 
@@ -682,9 +884,11 @@ function handleMessage(data) {
   switch (data.t) {
 
     case TYPE_CHECKPOINT:
+      // Inserisci prima la riga (e ricalcola splits) così computeLtTime trova già tutti i dati
+      addEventToTable(data.id, data.ln, data.c, data.h, data.m, data.s, data.ms);
+      if (document.getElementById("toggle-splits")?.checked) applyCompetitorSplits();
       if (parseInt(data.ln) === sel)
         displayAthlete(data.c, parseInt(data.ln), data, "TRANSITO");
-      addEventToTable(data.id, data.ln, data.c, data.h, data.m, data.s, data.ms);
       break;
 
     case TYPE_LINE_UPDATED:
@@ -775,9 +979,13 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("click", e => {
       if (e.target === document.getElementById("tableColOverlay")) closeTableColOverlay();
     });
-  ["tco-timestamp", "tco-delta", "tco-elapsed", "tco-precision"].forEach(id => {
+  ["tco-index", "tco-line", "tco-timestamp", "tco-race-time",
+   "tco-name", "tco-surname",
+   "tco-delta", "tco-elapsed", "tco-precision", "tco-splits"].forEach(id => {
     document.getElementById(id).addEventListener("change", onTcoChange);
   });
+
+  updateTableCorners();
 });
 
 window.addEventListener("load", () => {
