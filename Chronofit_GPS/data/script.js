@@ -2431,6 +2431,14 @@ document.getElementById("wifi-notify").addEventListener("click", () => {
       console.log(data);
       document.getElementById("wifi-ssid").value = data.ssid;
       document.getElementById("wifi-password").value = data.pw;
+      const ipRow = document.getElementById("sta-ip-row");
+      const ipVal = document.getElementById("sta-ip-value");
+      if (data.staConnected && data.staIp && data.staIp !== "0.0.0.0") {
+        ipVal.textContent = data.staIp;
+        ipRow.style.display = "block";
+      } else {
+        ipRow.style.display = "none";
+      }
     })
   .catch(err => console.error("Errore:", err));
 
@@ -2445,6 +2453,12 @@ function closeWiFiPopup(){
 function stopWifiReconnect() {
   fetch('/wifiStop').catch(e => console.error(e));
   document.getElementById("stopReconnectBtn").style.display = "none";
+  document.getElementById("wifiOverlay").style.display = "none";
+}
+
+function disconnectWifi() {
+  fetch('/wifiStop').catch(e => console.error(e));
+  document.getElementById("sta-ip-row").style.display = "none";
   document.getElementById("wifiOverlay").style.display = "none";
 }
 
@@ -2771,18 +2785,33 @@ let athleteTargetLine = null;
 function addLongPress(el, callback, ms = 600) {
   let timer = null;
   let moved = false;
+  let startX = 0, startY = 0;
 
-  el.addEventListener("pointerdown", e => {
+  // Blocca il menu nativo Android prima che appaia
+  el.style.webkitUserSelect = "none";
+  el.style.userSelect = "none";
+  el.style.webkitTouchCallout = "none";
+
+  el.addEventListener("touchstart", e => {
+    e.preventDefault(); // blocca context menu nativo Android
     moved = false;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
     timer = setTimeout(() => {
       timer = null;
       if (!moved) callback(e);
     }, ms);
-  });
-  el.addEventListener("pointermove", () => { moved = true; });
-  el.addEventListener("pointerup",   () => { if (timer) { clearTimeout(timer); timer = null; } });
-  el.addEventListener("pointerleave",() => { if (timer) { clearTimeout(timer); timer = null; } });
-  el.addEventListener("contextmenu", e => { if (!moved) e.preventDefault(); });
+  }, { passive: false });
+
+  el.addEventListener("touchmove", e => {
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (dx * dx + dy * dy > 100) moved = true;
+  }, { passive: true });
+
+  el.addEventListener("touchend",    () => { if (timer) { clearTimeout(timer); timer = null; } });
+  el.addEventListener("touchcancel", () => { if (timer) { clearTimeout(timer); timer = null; } });
+  el.addEventListener("contextmenu", e => e.preventDefault());
 }
 
 // Attach long press to c1..c4

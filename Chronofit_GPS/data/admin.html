@@ -385,6 +385,64 @@
     #toast.ok  { background: #2e7d32; }
     #toast.err { background: #c62828; }
 
+    /* ─── login overlay ─── */
+    #login-overlay {
+      display: flex;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+    }
+    #login-overlay.hidden { display: none; }
+    .login-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 32px 32px 28px;
+      max-width: 320px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    }
+    .login-box img { height: 40px; margin-bottom: 16px; }
+    .login-box h2 { margin: 0 0 6px; font-size: 20px; color: #111; }
+    .login-box p  { margin: 0 0 20px; font-size: 13px; color: #888; }
+    .login-box input[type=password] {
+      font-family: 'Nunito', sans-serif;
+      font-weight: bold;
+      font-size: 16px;
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+      outline: none;
+      margin-bottom: 10px;
+      text-align: center;
+      letter-spacing: 4px;
+    }
+    .login-box input[type=password]:focus { border-color: var(--primary-color); }
+    .login-box button {
+      width: 100%;
+      padding: 11px;
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .login-box button:hover { opacity: 0.85; }
+    .login-error {
+      font-size: 13px;
+      color: #c62828;
+      min-height: 18px;
+      margin-top: 8px;
+    }
+
     /* ─── confirm overlay ─── */
     #confirm-overlay {
       display: none;
@@ -419,6 +477,18 @@
   </style>
 </head>
 <body>
+
+  <!-- LOGIN OVERLAY -->
+  <div id="login-overlay">
+    <div class="login-box">
+      <img src="/logo.png" alt="Chronofit" onerror="this.style.display='none'"/>
+      <h2>Area Admin</h2>
+      <p>Inserisci la password per accedere</p>
+      <input type="password" id="login-pwd" placeholder="••••••" onkeydown="if(event.key==='Enter') doLogin()"/>
+      <button onclick="doLogin()">Accedi</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
 
   <!-- NAVBAR -->
   <div class="navbar">
@@ -561,6 +631,50 @@
       </table>
     </div>
 
+    <!-- ── ACCESS POINT PASSWORD ── -->
+    <div class="section-title">Access Point WiFi</div>
+
+    <div class="storage-bar-wrap" style="max-width:480px;">
+      <div style="font-size:13px;color:#555;margin-bottom:14px;">
+        Cambia la password dell'access point WiFi del dispositivo.<br>
+        <span style="color:#888;">La password di fabbrica corrisponde al Chip ID del dispositivo.</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">PASSWORD ATTUALE</label>
+          <input type="password" id="ap-current-pwd" placeholder="Password attuale"
+            style="font-family:'Nunito',sans-serif;font-weight:bold;font-size:14px;width:100%;padding:9px 12px;
+                   border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;outline:none;background:#fafafa;"
+            onfocus="this.style.borderColor='var(--primary-color)'"
+            onblur="this.style.borderColor='#ddd'"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">NUOVA PASSWORD (min. 8 caratteri)</label>
+          <input type="password" id="ap-new-pwd" placeholder="Nuova password"
+            style="font-family:'Nunito',sans-serif;font-weight:bold;font-size:14px;width:100%;padding:9px 12px;
+                   border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;outline:none;background:#fafafa;"
+            onfocus="this.style.borderColor='var(--primary-color)'"
+            onblur="this.style.borderColor='#ddd'"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">CONFERMA NUOVA PASSWORD</label>
+          <input type="password" id="ap-confirm-pwd" placeholder="Conferma nuova password"
+            style="font-family:'Nunito',sans-serif;font-weight:bold;font-size:14px;width:100%;padding:9px 12px;
+                   border:1.5px solid #ddd;border-radius:7px;box-sizing:border-box;outline:none;background:#fafafa;"
+            onfocus="this.style.borderColor='var(--primary-color)'"
+            onblur="this.style.borderColor='#ddd'"/>
+        </div>
+        <button onclick="changeApPassword()"
+          style="align-self:flex-start;padding:10px 22px;background:var(--primary-color);color:#fff;
+                 border:none;border-radius:7px;font-family:'Nunito',sans-serif;font-weight:bold;
+                 font-size:14px;cursor:pointer;transition:opacity 0.15s;"
+          onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+          Aggiorna password AP
+        </button>
+      </div>
+    </div>
+
   </div>
 
   <!-- Confirm delete -->
@@ -579,6 +693,29 @@
   <div id="toast"></div>
 
   <script>
+    const ADMIN_PWD = '190285';
+
+    function checkLogin() {
+      if (sessionStorage.getItem('admin_auth') === '1') {
+        document.getElementById('login-overlay').classList.add('hidden');
+      }
+    }
+
+    function doLogin() {
+      const val = document.getElementById('login-pwd').value;
+      if (val === ADMIN_PWD) {
+        sessionStorage.setItem('admin_auth', '1');
+        document.getElementById('login-overlay').classList.add('hidden');
+        document.getElementById('login-error').textContent = '';
+      } else {
+        document.getElementById('login-error').textContent = 'Password errata. Riprova.';
+        document.getElementById('login-pwd').value = '';
+        document.getElementById('login-pwd').focus();
+      }
+    }
+
+    checkLogin();
+
    let data = {};
 
     async function loadData() {
@@ -841,6 +978,41 @@
         xhr.send(fd);
       });
 
+    }
+
+    /* ── CAMBIO PASSWORD ACCESS POINT ── */
+    async function changeApPassword() {
+      const current = document.getElementById('ap-current-pwd').value;
+      const newpwd  = document.getElementById('ap-new-pwd').value;
+      const confirm = document.getElementById('ap-confirm-pwd').value;
+
+      if (!current || !newpwd || !confirm) {
+        showToast('Compila tutti i campi', 'err'); return;
+      }
+      if (newpwd !== confirm) {
+        showToast('Le nuove password non coincidono', 'err'); return;
+      }
+      if (newpwd.length < 8) {
+        showToast('La password deve essere di almeno 8 caratteri', 'err'); return;
+      }
+
+      try {
+        const res = await fetch(
+          '/setApPassword?current=' + encodeURIComponent(current) +
+          '&newpwd=' + encodeURIComponent(newpwd)
+        );
+        if (res.ok) {
+          showToast('Password AP aggiornata ✓', 'ok');
+          document.getElementById('ap-current-pwd').value = '';
+          document.getElementById('ap-new-pwd').value = '';
+          document.getElementById('ap-confirm-pwd').value = '';
+        } else {
+          const msg = await res.text();
+          showToast(msg || 'Errore aggiornamento', 'err');
+        }
+      } catch(e) {
+        showToast('Errore di rete', 'err');
+      }
     }
 
     function loop() {

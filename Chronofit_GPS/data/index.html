@@ -382,6 +382,14 @@
     <div class="fullscreen-popup">
       <h2>Connect to Wi-Fi for internet access</h2>
 
+      <div id="sta-ip-row" style="display:none; background:#f0f8f0; border:1px solid #c3e6cb;
+           border-radius:8px; padding:10px 14px; margin-bottom:14px; text-align:center;">
+        <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Already connected with IP address</div>
+        <div id="sta-ip-value" style="font-size:22px; font-weight:bold; color:#2e7d32; letter-spacing:2px;">—</div>
+        <button class="big-button" onclick="disconnectWifi()"
+          style="margin-top:10px; background:#c0392b; width:100%;">⛔ Disconnect</button>
+      </div>
+
       <div class="input-row">
         <label for="wifi-ssid">SSID</label>
         <input type="text" id="wifi-ssid" placeholder="Enter Wi-Fi SSID">

@@ -50,7 +50,9 @@ void activateAccessPoint(){
   // Crea l'SSID con il chipId
   String ssid_sn = String(ssid) + "_" + chipIdStr; 
 
-  WiFi.softAP(ssid_sn.c_str(), nullptr, 6, false, 10);
+  String apPwd = readStringFromSettings("ap_password", "");
+  if (apPwd.isEmpty()) apPwd = chipIdStr;
+  WiFi.softAP(ssid_sn.c_str(), apPwd.c_str(), 6, false, 10);
 
   esp_wifi_set_ps(WIFI_PS_NONE);
 
@@ -628,6 +630,45 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     wifiRxActivity();
   });
 
+  // --- Cambio password Access Point ---
+  server.on("/setApPassword", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
+
+    String current = request->hasParam("current") ? request->getParam("current")->value() : "";
+    String newpwd  = request->hasParam("newpwd")  ? request->getParam("newpwd")->value()  : "";
+
+    String stored = readStringFromSettings("ap_password", "");
+    if (stored.isEmpty()) stored = chipIdStr;
+
+    if (current != stored) {
+      request->send(401, "text/plain", "Password attuale errata");
+      return;
+    }
+    if (newpwd.length() < 8) {
+      request->send(400, "text/plain", "La password deve essere di almeno 8 caratteri");
+      return;
+    }
+
+    writeStringToSettings("ap_password", newpwd);
+
+    String ssid_sn = String(ssid) + "_" + chipIdStr;
+    WiFi.softAP(ssid_sn.c_str(), newpwd.c_str(), 6, false, 10);
+
+    request->send(200, "text/plain", "Password AP aggiornata");
+    wifiRxActivity();
+  });
+
+  // --- Ripristino password AP (route di emergenza, nessuna auth) ---
+  server.on("/resetApPassword", HTTP_GET, [](AsyncWebServerRequest *request) {
+    writeStringToSettings("ap_password", "");
+
+    String ssid_sn = String(ssid) + "_" + chipIdStr;
+    WiFi.softAP(ssid_sn.c_str(), chipIdStr.c_str(), 6, false, 10);
+
+    request->send(200, "text/plain", "Password AP ripristinata al chip ID");
+    wifiRxActivity();
+  });
+
     // --- JSON completo ---
   server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
 
@@ -666,8 +707,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     StaticJsonDocument<256> doc;
     
-    doc["ssid"] = readStringFromSettings("ssid", "");
-    doc["pw"] = readStringFromSettings("pw", "");
+    doc["ssid"]        = readStringFromSettings("ssid", "");
+    doc["pw"]          = readStringFromSettings("pw", "");
+    doc["staConnected"] = (WiFi.status() == WL_CONNECTED);
+    doc["staIp"]       = WiFi.localIP().toString();
 
     String json;
     serializeJson(doc, json);
