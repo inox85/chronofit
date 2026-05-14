@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E54FDDDB-1DF8-921D-FBE7-A930CE328815}|MqttMonitor.csproj|c:\\src\\chronofit\\software\\mqttmonitor\\mqttmonitor\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E54FDDDB-1DF8-921D-FBE7-A930CE328815}|MqttMonitor.csproj|solutionrelative:mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E54FDDDB-1DF8-921D-FBE7-A930CE328815}|MqttMonitor.csproj|c:\\src\\chronofit\\software\\mqttmonitor\\mqttmonitor\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{E54FDDDB-1DF8-921D-FBE7-A930CE328815}|MqttMonitor.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E54FDDDB-1DF8-921D-FBE7-A930CE328815}|MqttMonitor.csproj|c:\\src\\chronofit\\software\\mqttmonitor\\mqttmonitor\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E54FDDDB-1DF8-921D-FBE7-A930CE328815}|MqttMonitor.csproj|solutionrelative:mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E54FDDDB-1DF8-921D-FBE7-A930CE328815}|MqttMonitor.csproj|c:\\src\\chronofit\\software\\mqttmonitor\\mqttmonitor\\models\\mqttmessage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -26,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -38,7 +38,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "MainWindow.xaml",
               "DocumentMoniker": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\MainWindow.xaml",
               "RelativeDocumentMoniker": "MainWindow.xaml",
@@ -63,13 +63,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "MainWindow.xaml.cs",
               "DocumentMoniker": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\MainWindow.xaml.cs",
               "RelativeDocumentMoniker": "MainWindow.xaml.cs",
-              "ToolTip": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\MainWindow.xaml.cs*",
-              "RelativeToolTip": "MainWindow.xaml.cs*",
-              "ViewState": "AgIAAGAAAAAAAAAAAAAnwHQAAAAAAAAAAAAAAA==",
+              "ToolTip": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\MainWindow.xaml.cs",
+              "RelativeToolTip": "MainWindow.xaml.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAkwCQAAAAcAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-14T10:12:59.705Z",
               "EditorCaption": ""

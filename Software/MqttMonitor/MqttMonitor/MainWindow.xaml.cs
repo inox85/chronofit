@@ -69,8 +69,6 @@ public partial class MainWindow : Window
     {
         _messages.Clear();
         _counter = 0;
-        TxtJsonDetail.Text = "";
-        TxtCount.Text = "0 messaggi ricevuti";
     }
 
     // ── Ricezione messaggi ───────────────────────────────────────────────────
@@ -81,12 +79,21 @@ public partial class MainWindow : Window
         {
             dynamic message = JsonConvert.DeserializeObject(payload);
 
+            int id = message.id;
+            int line = message.ln;
+            string lineID = message.lId;
+            string TimeStamp = $"{message.h}:{message.m}:{message.s}:{message.ms}";
+
             var msg = new MqttMessage
             {
                 Index      = ++_counter,
                 Topic      = topic,
                 Payload    = payload,
                 ReceivedAt = DateTime.Now,
+                ID         = id,
+                LineNumber = line,
+                LineID     = lineID,
+                TimeStamp  = TimeStamp,
             };
 
             // Parsing JSON opzionale per i campi
@@ -108,7 +115,6 @@ public partial class MainWindow : Window
             if (_messages.Count > 500)
                 _messages.RemoveAt(_messages.Count - 1);
 
-            TxtCount.Text = $"{_counter} messaggi ricevuti";
         });
     }
 
@@ -142,11 +148,11 @@ public partial class MainWindow : Window
         try
         {
             var parsed = JsonConvert.DeserializeObject(msg.Payload);
-            TxtJsonDetail.Text = JsonConvert.SerializeObject(parsed, Formatting.Indented);
+
         }
         catch
         {
-            TxtJsonDetail.Text = msg.Payload;
+
         }
     }
 

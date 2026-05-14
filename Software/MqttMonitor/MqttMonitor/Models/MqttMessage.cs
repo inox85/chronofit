@@ -9,6 +9,10 @@ public class MqttMessage : INotifyPropertyChanged
     public int Index           { get; set; }
     public string Topic        { get; set; } = "";
     public string Payload      { get; set; } = "";
+    public int ID              { get; set; }
+    public int LineNumber { get; set; }
+    public string LineID       { get; set; } = "";
+    public string TimeStamp    { get; set; } = "";
     public DateTime ReceivedAt { get; set; }
     public string QoS          { get; set; } = "";
 

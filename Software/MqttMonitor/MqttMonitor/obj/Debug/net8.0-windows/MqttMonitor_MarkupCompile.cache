@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-C:\Users\innocenti\Downloads\MqttMonitor_1\MqttMonitor\obj\Debug\net8.0-windows\
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\obj\Debug\net8.0-windows\
 MqttMonitor
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
-C:\Users\innocenti\Downloads\MqttMonitor_1\MqttMonitor\App.xaml
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\App.xaml
 11407045341
 
 4-71693517
-200-727973062
+200-864297136
 MainWindow.xaml;
 
 False
