@@ -435,7 +435,7 @@ input:checked + .slider:before {
 }
 
 .card.table-card {
-  min-height: 526px;
+  min-height: 552px;
   display: flex;
   flex-direction: column;
   flex: 1 1 350px;
@@ -535,7 +535,6 @@ input:checked + .slider:before {
 }
 
 .toggle-row span {
-  flex: 1;
   text-align: left;
   font-weight: bold;
 }

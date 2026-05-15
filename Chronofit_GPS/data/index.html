@@ -225,39 +225,46 @@
   <!-- Overlay e popup per Edit Time -->
   <div id="tableSettingsOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Table column settings</h2>
 
-      <div class="toggle-row">
-        <span>Show event time column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-timestamp" checked>
+
+    <div class="toggle-row" style="cursor:pointer;" onclick="toggleSortPanel()">
+        <span>↕ Row sort rules</span>
+        <span id="sort-arrow" style="font-size:12px; color:#888;">▼</span>
+      </div>
+      <div id="sort-panel" style="display:none; margin-top:10px;">
+        <div class="input-row">
+          <label for="sort-col" style="font-size:12px;">Ordina per</label>
+          <select id="sort-col" onchange="onSortChange()">
+            <option value="arrival">Arrival(default)</option>
+            <option value="line">Line</option>
+            <option value="competitor">Competitor</option>
+            <option value="name">Name</option>
+            <option value="surname">Surname</option>
+            <option value="event-time">Event time</option>
+            <option value="race-time">Race time</option>
+            <option value="delta-time">Δ time</option>
+            <option value="elapsed-time">Elapsed</option>
+          </select>
+        </div>
+
+        <div class="toggle-row">
+          <span>Reverse row order</span>
+            <label class="switch">
+            <input type="checkbox" id="toggle-reverse-order">
           <span class="slider"></span>
         </label>
-      </div>
 
-      <div class="toggle-row">
-        <span>Show incremental Δ column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-delta-time" checked>
-          <span class="slider"></span>
-        </label>
       </div>
+      </div>
+      
 
-      <div class="toggle-row">
-        <span>Show elapsed time column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-elapsed-time" unchecked>
-          <span class="slider"></span>
-        </label>
+      <hr style="border-color:#eee; margin:10px 0;">
+      
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleColPanel()">
+        <span>📊 Visible columns</span>
+        <span id="col-arrow" style="font-size:12px;color:#888;">▼</span>
       </div>
-
-      <div class="toggle-row">
-        <span>Show penality column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-penality" unchecked>
-          <span class="slider"></span>
-        </label>
-      </div>
+      <div id="col-panel">
 
       <div class="toggle-row">
         <span>Show index column</span>
@@ -284,14 +291,6 @@
       </div>
 
       <div class="toggle-row">
-        <span>Show race time column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-race-time">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
         <span>Show name column</span>
         <label class="switch">
           <input type="checkbox" id="toggle-name">
@@ -303,6 +302,46 @@
         <span>Show surname column</span>
         <label class="switch">
           <input type="checkbox" id="toggle-surname">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show event time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-timestamp" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show race time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-race-time">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show incremental Δ column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-delta-time" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show elapsed time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-elapsed-time">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show penality column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-penality">
           <span class="slider"></span>
         </label>
       </div>
@@ -332,9 +371,15 @@
         </select>
       </div>
 
+      </div><!-- /col-panel -->
+
       <hr class="divider">
-      
-      <h2>Table row settings</h2>
+
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleRowPanel()">
+        <span>☰ Visible rows</span>
+        <span id="row-arrow" style="font-size:12px;color:#888;">▼</span>
+      </div>
+      <div id="row-panel">
 
       <div class="toggle-row">
         <span>Show sync test rows</span>
@@ -352,13 +397,7 @@
         </label>
       </div>
 
-      <div class="toggle-row">
-        <span>Reverse row order</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-reverse-order">
-          <span class="slider"></span>
-        </label>
-      </div>
+
 
       <div class="toggle-row">
         <span>Competitor splits mode</span>
@@ -368,11 +407,13 @@
         </label>
       </div>
 
+      </div><!-- /row-panel -->
+
       <div class="button-row">
         <!--<button class="big-button">Clear session</button>-->
         <button class="big-button" id="closeTablePopup">Close</button>
       </div>
-      
+
       <p id="time-settings-field"></p>
     </div>
   </div>

@@ -570,7 +570,12 @@
   ══════════════════════════════════════════════════════ -->
   <div id="tableColOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>⚙️ Colonne tabella</h2>
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleColPanel()">
+        <span>📊 Colonne</span>
+        <span id="col-arrow" style="font-size:12px;color:#888;">▼</span>
+      </div>
+      <div id="col-panel">
+
       <div class="toggle-row">
         <span>Mostra # (indice)</span>
         <label class="switch"><input type="checkbox" id="tco-index" checked><span class="slider"></span></label>
@@ -580,20 +585,20 @@
         <label class="switch"><input type="checkbox" id="tco-line" checked><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
-        <span>Orario evento</span>
-        <label class="switch"><input type="checkbox" id="tco-timestamp" checked><span class="slider"></span></label>
-      </div>
-      <div class="toggle-row">
-        <span>Race time (splits)</span>
-        <label class="switch"><input type="checkbox" id="tco-race-time"><span class="slider"></span></label>
-      </div>
-      <div class="toggle-row">
         <span>Nome competitor</span>
         <label class="switch"><input type="checkbox" id="tco-name"><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
         <span>Cognome competitor</span>
         <label class="switch"><input type="checkbox" id="tco-surname"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Orario evento</span>
+        <label class="switch"><input type="checkbox" id="tco-timestamp" checked><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Race time (splits)</span>
+        <label class="switch"><input type="checkbox" id="tco-race-time"><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
         <span>Delta Δ</span>
@@ -611,11 +616,50 @@
           <option value="3" selected>Millisecondi (0.000)</option>
         </select>
       </div>
+
+      </div><!-- /col-panel -->
+
       <hr class="divider">
+
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleRowPanel()">
+        <span>☰ Righe</span>
+        <span id="row-arrow" style="font-size:12px;color:#888;">▼</span>
+      </div>
+      <div id="row-panel">
+
       <div class="toggle-row">
         <span>Competitor splits</span>
         <label class="switch"><input type="checkbox" id="tco-splits"><span class="slider"></span></label>
       </div>
+      <div class="toggle-row">
+        <span>Reverse row order</span>
+        <label class="switch"><input type="checkbox" id="tco-reverse-order"><span class="slider"></span></label>
+      </div>
+
+      </div><!-- /row-panel -->
+
+      <hr style="border-color:#eee; margin:10px 0;">
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleSortPanel()">
+        <span>↕ Ordinamento tabella</span>
+        <span id="sort-arrow" style="font-size:12px; color:#888;">▼</span>
+      </div>
+      <div id="sort-panel" style="display:none; margin-top:10px;">
+        <div class="input-row">
+          <label for="sort-col">Ordina per</label>
+          <select id="sort-col" onchange="onSortChange()">
+            <option value="arrival">Arrivo (default)</option>
+            <option value="line">Linea</option>
+            <option value="competitor">Competitor</option>
+            <option value="name">Nome</option>
+            <option value="surname">Cognome</option>
+            <option value="event-time">Orario evento</option>
+            <option value="race-time">Race time</option>
+            <option value="delta">Δ tempo</option>
+            <option value="elapsed">Elapsed</option>
+          </select>
+        </div>
+      </div>
+
       <div class="button-row" style="justify-content:flex-end;margin-top:16px;">
         <button class="big-button" id="closeTcoOverlay">Chiudi</button>
       </div>

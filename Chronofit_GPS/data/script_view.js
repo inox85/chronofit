@@ -110,6 +110,76 @@ function getAthleteSurname(competitorNum) {
   return a.surname || a.lastname || a.cognome || "";
 }
 
+let sortCol = 'arrival';
+let reverseOrder = false;
+let insertSeq = 0;
+
+function parseTimeMs(txt) {
+  if (!txt || txt === '—' || txt.trim() === '') return Infinity;
+  txt = txt.trim().replace(/[+\-\s]/g, '');
+  const parts = txt.split(':');
+  if (parts.length === 2) return parseInt(parts[0]) * 60000 + parseFloat(parts[1]) * 1000;
+  return parseFloat(txt) * 1000;
+}
+
+function getRowSortVal(row) {
+  switch (sortCol) {
+    case 'arrival':      return Number(row.dataset.rowId || row.dataset.seq || 0);
+    case 'line':         return Number(row.dataset.line) || 0;
+    case 'competitor':   return Number(row.dataset.competitor) || 0;
+    case 'name':         return (row.querySelector('.col-name')?.textContent  || '').toLowerCase();
+    case 'surname':      return (row.querySelector('.col-surname')?.textContent || '').toLowerCase();
+    case 'event-time':   return (Number(row.dataset.hour||0)*3600 + Number(row.dataset.minute||0)*60 + Number(row.dataset.seconds||0))*1000 + Number(row.dataset.msRaw||0);
+    case 'race-time':    return parseTimeMs(row.querySelector('.race-time')?.textContent);
+    case 'delta-time':   return parseTimeMs(row.querySelector('.delta-time')?.textContent);
+    case 'elapsed-time': return parseTimeMs(row.querySelector('.elapsed-time')?.textContent);
+    default:             return 0;
+  }
+}
+
+function applyTableSort() {
+  const tbody = document.querySelector('#event-table tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr:not(.diff-row)'));
+  rows.sort((a, b) => {
+    const av = getRowSortVal(a);
+    const bv = getRowSortVal(b);
+    let cmp = typeof av === 'string' ? av.localeCompare(bv) : (av - bv);
+    return reverseOrder ? cmp : -cmp;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+function toggleColPanel() {
+  const panel = document.getElementById('col-panel');
+  const arrow = document.getElementById('col-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function toggleRowPanel() {
+  const panel = document.getElementById('row-panel');
+  const arrow = document.getElementById('row-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function toggleSortPanel() {
+  const panel = document.getElementById('sort-panel');
+  const arrow = document.getElementById('sort-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function onSortChange() {
+  sortCol = document.getElementById('sort-col').value;
+  applyTableSort();
+  saveViewPrefs();
+}
+
 function saveViewPrefs() {
   const prefs = {
     timestamp:     document.getElementById("toggle-timestamp").checked,
@@ -124,6 +194,8 @@ function saveViewPrefs() {
     showName:      document.getElementById("toggle-name")?.checked     ?? false,
     showSurname:   document.getElementById("toggle-surname")?.checked  ?? false,
     splitsMode:    document.getElementById("toggle-splits")?.checked   ?? false,
+    reverseOrder:  document.getElementById("toggle-reverse-order")?.checked ?? false,
+    sortCol:       sortCol,
     lines: {}
   };
   document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
@@ -154,7 +226,9 @@ function restoreViewPrefs() {
     setChk("toggle-race-time",    prefs.showRaceTime ?? false);
     setChk("toggle-name",         prefs.showName     ?? false);
     setChk("toggle-surname",      prefs.showSurname  ?? false);
-    setChk("toggle-splits",       prefs.splitsMode   ?? false);
+    setChk("toggle-splits",          prefs.splitsMode   ?? false);
+    setChk("toggle-reverse-order",   prefs.reverseOrder ?? false);
+    if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
 
     if (prefs.timePrecision !== undefined) {
       timePrecision = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
@@ -171,6 +245,8 @@ function restoreViewPrefs() {
         }
       });
     }
+
+    if (prefs.sortCol) { sortCol = prefs.sortCol; const el = document.getElementById('sort-col'); if (el) el.value = sortCol; }
 
     updateVisibleColumns();
     applyLineFilter();
@@ -568,6 +644,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-seconds",    seconds);
   row.setAttribute("data-ms-raw",     millis);
   row.setAttribute("data-penality",   0);
+  row.dataset.seq = ++insertSeq;
 
   row.innerHTML = `
     <td class="col-index">${rowIndex}</td>
@@ -587,6 +664,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.offsetHeight;
   row.classList.add("row-enter-active");
   setTimeout(() => { row.classList.remove("row-enter", "row-enter-active"); }, 1500);
+  applyTableSort();
   applyLineFilter();
 }
 
@@ -1008,6 +1086,12 @@ document.getElementById("toggle-penality").addEventListener("change", e => {
 document.getElementById("toggle-splits").addEventListener("change", e => {
   if (e.target.checked) applyCompetitorSplits();
   else clearCompetitorSplits();
+  saveViewPrefs();
+});
+document.getElementById("toggle-reverse-order").addEventListener("change", e => {
+  reverseOrder = e.target.checked;
+  applyTableSort();
+  applyLineFilter();
   saveViewPrefs();
 });
 

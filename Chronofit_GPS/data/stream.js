@@ -95,6 +95,77 @@ function formatDelta(ms, signed) {
     String(seconds).padStart(2, "0") + "." + msStr;
 }
 
+// ── Sort state ────────────────────────────────────────────────
+let sortCol = 'arrival';
+let reverseOrder = false;
+let insertSeq = 0;
+
+function parseTimeMs(txt) {
+  if (!txt || txt === '—' || txt.trim() === '') return Infinity;
+  txt = txt.trim().replace(/[+\-\s]/g, '');
+  const parts = txt.split(':');
+  if (parts.length === 2) return parseInt(parts[0]) * 60000 + parseFloat(parts[1]) * 1000;
+  return parseFloat(txt) * 1000;
+}
+
+function getRowSortVal(row) {
+  switch (sortCol) {
+    case 'arrival':    return Number(row.dataset.seq) || 0;
+    case 'line':       return Number(row.dataset.line) || 0;
+    case 'competitor': return Number(row.dataset.competitor) || 0;
+    case 'name':       return (row.querySelector('.col-name')?.textContent  || '').toLowerCase();
+    case 'surname':    return (row.querySelector('.col-surname')?.textContent || '').toLowerCase();
+    case 'event-time': return (Number(row.dataset.hour||0)*3600 + Number(row.dataset.minute||0)*60 + Number(row.dataset.seconds||0))*1000 + Number(row.dataset.msRaw||0);
+    case 'race-time':  return parseTimeMs(row.querySelector('.race-time')?.textContent);
+    case 'delta':      return parseTimeMs(row.querySelector('.delta-time')?.textContent);
+    case 'elapsed':    return parseTimeMs(row.querySelector('.elapsed-time')?.textContent);
+    default:           return 0;
+  }
+}
+
+function applyTableSort() {
+  const tbody = document.querySelector('#event-table tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr:not(.diff-row)'));
+  rows.sort((a, b) => {
+    const av = getRowSortVal(a);
+    const bv = getRowSortVal(b);
+    let cmp = typeof av === 'string' ? av.localeCompare(bv) : (av - bv);
+    return reverseOrder ? cmp : -cmp;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+function toggleColPanel() {
+  const panel = document.getElementById('col-panel');
+  const arrow = document.getElementById('col-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function toggleRowPanel() {
+  const panel = document.getElementById('row-panel');
+  const arrow = document.getElementById('row-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function toggleSortPanel() {
+  const panel = document.getElementById('sort-panel');
+  const arrow = document.getElementById('sort-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function onSortChange() {
+  sortCol = document.getElementById('sort-col').value;
+  applyTableSort();
+  saveStreamPrefs();
+}
+
 // ── Arrival table ─────────────────────────────────────────────
 function clearEventTableRows() {
   document.querySelector("#event-table tbody").innerHTML = "";
@@ -120,6 +191,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, h, m, s, ms) {
   row.setAttribute("data-minute",     fm);
   row.setAttribute("data-seconds",    fs);
   row.setAttribute("data-ms-raw",     fms);
+  row.dataset.seq = ++insertSeq;
 
   const lineColor = lineColors[ln] || "#ccc";
 
@@ -139,6 +211,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, h, m, s, ms) {
 
   recalcDeltaTimes();
   recalcElapsedTimes();
+  applyTableSort();
   updateVisibleColumns();
 }
 
@@ -313,7 +386,8 @@ function openTableColOverlay() {
   document.getElementById("tco-delta").checked     = document.getElementById("toggle-delta")?.checked     ?? true;
   document.getElementById("tco-elapsed").checked   = document.getElementById("toggle-elapsed")?.checked   ?? false;
   document.getElementById("tco-precision").value   = timePrecision;
-  document.getElementById("tco-splits").checked    = document.getElementById("toggle-splits")?.checked    ?? false;
+  document.getElementById("tco-splits").checked         = document.getElementById("toggle-splits")?.checked ?? false;
+  document.getElementById("tco-reverse-order").checked  = reverseOrder;
   document.getElementById("tableColOverlay").style.display = "flex";
 }
 
@@ -333,6 +407,7 @@ function onTcoChange() {
   document.getElementById("toggle-delta").checked      = document.getElementById("tco-delta").checked;
   document.getElementById("toggle-elapsed").checked    = document.getElementById("tco-elapsed").checked;
   document.getElementById("toggle-splits").checked     = document.getElementById("tco-splits").checked;
+  reverseOrder = document.getElementById("tco-reverse-order").checked;
 
   const prec = Math.max(1, Math.min(3, parseInt(document.getElementById("tco-precision").value) || 3));
   timePrecision = prec;
@@ -383,6 +458,8 @@ function saveStreamPrefs() {
     colDelta:      document.getElementById("toggle-delta")?.checked      ?? true,
     colElapsed:    document.getElementById("toggle-elapsed")?.checked    ?? false,
     splitsMode:    document.getElementById("toggle-splits")?.checked     ?? false,
+    reverseOrder:  reverseOrder,
+    sortCol:       sortCol,
   };
   localStorage.setItem(STREAM_PREFS_KEY, JSON.stringify(prefs));
 }
@@ -423,6 +500,10 @@ function restoreStreamPrefs() {
     setChk("toggle-delta",      prefs.colDelta     ?? true);
     setChk("toggle-elapsed",    prefs.colElapsed   ?? false);
     setChk("toggle-splits",     prefs.splitsMode   ?? false);
+
+    if (prefs.reverseOrder !== undefined) { reverseOrder = prefs.reverseOrder; setChk("tco-reverse-order", reverseOrder); }
+    if (prefs.sortCol) { sortCol = prefs.sortCol; const el = document.getElementById('sort-col'); if (el) el.value = sortCol; }
+
     updateVisibleColumns();
     if (prefs.splitsMode) applyCompetitorSplits();
 

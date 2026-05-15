@@ -174,7 +174,11 @@
   <!-- Overlay e popup per Edit Time -->
   <div id="tableSettingsOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Table column settings</h2>
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleColPanel()">
+        <span>📊 Colonne</span>
+        <span id="col-arrow" style="font-size:12px;color:#888;">▼</span>
+      </div>
+      <div id="col-panel">
 
       <div class="toggle-row">
         <span>Show # column</span>
@@ -201,22 +205,6 @@
       </div>
 
       <div class="toggle-row">
-        <span>Show event time column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-timestamp" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show Race time column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-race-time">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
         <span>Show Name column</span>
         <label class="switch">
           <input type="checkbox" id="toggle-name">
@@ -228,6 +216,22 @@
         <span>Show Surname column</span>
         <label class="switch">
           <input type="checkbox" id="toggle-surname">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show event time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-timestamp" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span>Show Race time column</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-race-time">
           <span class="slider"></span>
         </label>
       </div>
@@ -256,9 +260,15 @@
         </label>
       </div>
 
+      </div><!-- /col-panel -->
+
       <hr class="divider">
 
-      <h2>Table row settings</h2>
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleRowPanel()">
+        <span>☰ Righe</span>
+        <span id="row-arrow" style="font-size:12px;color:#888;">▼</span>
+      </div>
+      <div id="row-panel">
 
       <div class="toggle-row">
         <span>Competitor splits mode</span>
@@ -276,6 +286,16 @@
         </label>
       </div>
 
+      <div class="toggle-row">
+        <span>Reverse row order</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-reverse-order">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      </div><!-- /row-panel -->
+
       <hr class="divider">
 
       <h2>Time precision</h2>
@@ -289,11 +309,33 @@
         </select>
       </div>
 
+      <hr style="border-color:#eee; margin:10px 0;">
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleSortPanel()">
+        <span>↕ Ordinamento tabella</span>
+        <span id="sort-arrow" style="font-size:12px; color:#888;">▼</span>
+      </div>
+      <div id="sort-panel" style="display:none; margin-top:10px;">
+        <div class="input-row">
+          <label for="sort-col">Ordina per</label>
+          <select id="sort-col" onchange="onSortChange()">
+            <option value="arrival">Arrivo (default)</option>
+            <option value="line">Linea</option>
+            <option value="competitor">Competitor</option>
+            <option value="name">Nome</option>
+            <option value="surname">Cognome</option>
+            <option value="event-time">Orario evento</option>
+            <option value="race-time">Race time</option>
+            <option value="delta-time">Δ tempo</option>
+            <option value="elapsed-time">Elapsed</option>
+          </select>
+        </div>
+      </div>
+
       <div class="button-row">
         <!--<button class="big-button">Clear session</button>-->
         <button class="big-button" id="closeTablePopup">Close</button>
       </div>
-      
+
       <p id="time-settings-field"></p>
     </div>
   </div>

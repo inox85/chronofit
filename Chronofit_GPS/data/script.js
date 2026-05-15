@@ -258,6 +258,73 @@ function getAthleteSurname(competitorNum) {
 }
 
 let reverseOrder = false;
+let sortCol = 'arrival';
+
+function parseTimeMs(txt) {
+  if (!txt || txt === '—' || txt.trim() === '') return Infinity;
+  txt = txt.trim().replace(/[+\-\s]/g, '');
+  const parts = txt.split(':');
+  if (parts.length === 2) return parseInt(parts[0]) * 60000 + parseFloat(parts[1]) * 1000;
+  return parseFloat(txt) * 1000;
+}
+
+function getRowSortVal(row) {
+  switch (sortCol) {
+    case 'arrival':      return Number(row.dataset.rowId || row.dataset.seq || 0);
+    case 'line':         return Number(row.dataset.line) || 0;
+    case 'competitor':   return Number(row.dataset.competitor) || 0;
+    case 'name':         return (row.querySelector('.col-name')?.textContent  || '').toLowerCase();
+    case 'surname':      return (row.querySelector('.col-surname')?.textContent || '').toLowerCase();
+    case 'event-time':   return (Number(row.dataset.hour||0)*3600 + Number(row.dataset.minute||0)*60 + Number(row.dataset.seconds||0))*1000 + Number(row.dataset.msRaw||0);
+    case 'race-time':    return parseTimeMs(row.querySelector('.race-time')?.textContent);
+    case 'delta-time':   return parseTimeMs(row.querySelector('.delta-time')?.textContent);
+    case 'elapsed-time': return parseTimeMs(row.querySelector('.elapsed-time')?.textContent);
+    default:             return 0;
+  }
+}
+
+function applyTableSort() {
+  const tbody = document.querySelector('#event-table tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr:not(.diff-row)'));
+  rows.sort((a, b) => {
+    const av = getRowSortVal(a);
+    const bv = getRowSortVal(b);
+    let cmp = typeof av === 'string' ? av.localeCompare(bv) : (av - bv);
+    return reverseOrder ? cmp : -cmp;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+function toggleColPanel() {
+  const panel = document.getElementById('col-panel');
+  const arrow = document.getElementById('col-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function toggleRowPanel() {
+  const panel = document.getElementById('row-panel');
+  const arrow = document.getElementById('row-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function toggleSortPanel() {
+  const panel = document.getElementById('sort-panel');
+  const arrow = document.getElementById('sort-arrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  arrow.textContent   = open ? '▲' : '▼';
+}
+
+function onSortChange() {
+  sortCol = document.getElementById('sort-col').value;
+  applyTableSort();
+  saveViewPrefs();
+}
 
 function saveViewPrefs() {
   const prefs = {
@@ -277,6 +344,7 @@ function saveViewPrefs() {
     showSendBtn:   document.getElementById("toggle-send-btn").checked,
     splitsMode:    document.getElementById("toggle-splits").checked,
     timePrecision: document.getElementById("time-precision").value,
+    sortCol:       sortCol,
     lines: {}
   };
   document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
@@ -340,6 +408,8 @@ function restoreViewPrefs() {
         }
       });
     }
+
+    if (prefs.sortCol) { sortCol = prefs.sortCol; const el = document.getElementById('sort-col'); if (el) el.value = sortCol; }
 
     updateVisibleColumns();
     if (prefs.splitsMode) applyCompetitorSplits();
@@ -1919,17 +1989,7 @@ function togglePenalityColumn(show) {
 
 
 function reorderTable() {
-  const tbody = document.querySelector("#event-table tbody");
-
-  let rows = Array.from(tbody.querySelectorAll("tr"));
-  rows.sort((a, b) => {
-    const ia = Number(a.dataset.rowId) || 0;
-    const ib = Number(b.dataset.rowId) || 0;
-    return reverseOrder ? ia - ib : ib - ia;
-  });
-
-  rows.forEach(row => tbody.appendChild(row));
-
+  applyTableSort();
   applyLineFilter();
 }
 
