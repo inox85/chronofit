@@ -727,6 +727,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["prefix"]      = readStringFromSettings("mqttPrefix", "chronofit");
     doc["stationName"] = stationName;
     doc["chipId"]      = chipIdStr;
+    doc["brokerHost"]  = readStringFromSettings("mqttBrokerHost", "broker.hivemq.com");
+    doc["brokerPort"]  = readStringFromSettings("mqttBrokerPort", "1883").toInt();
+    doc["brokerUser"]  = readStringFromSettings("mqttBrokerUser", "");
+    doc["brokerPass"]  = readStringFromSettings("mqttBrokerPass", "");
     doc["showPopup"]     = mqttShowPopup;
     doc["acquireRow"]    = mqttAcquireRow;
     doc["immediateMode"] = mqttImmediateMode;
@@ -757,6 +761,22 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       writeStringToSettings("mqttImmediateMode", String(mqttImmediateMode));
     }
     mqttUpdateSettings(sub, evt, prefix);
+    request->send(200, "text/plain", "OK");
+    wifiRxActivity();
+  });
+
+  server.on("/mqttBrokerSave", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String host = request->hasParam("host") ? request->getParam("host")->value() : "broker.hivemq.com";
+    int    port = request->hasParam("port") ? request->getParam("port")->value().toInt() : 1883;
+    String user = request->hasParam("user") ? request->getParam("user")->value() : "";
+    String pass = request->hasParam("pass") ? request->getParam("pass")->value() : "";
+    if (host.isEmpty()) host = "broker.hivemq.com";
+    if (port <= 0)      port = 1883;
+    writeStringToSettings("mqttBrokerHost", host);
+    writeStringToSettings("mqttBrokerPort", String(port));
+    writeStringToSettings("mqttBrokerUser", user);
+    writeStringToSettings("mqttBrokerPass", pass);
+    mqttUpdateBroker(host, port, user, pass);
     request->send(200, "text/plain", "OK");
     wifiRxActivity();
   });

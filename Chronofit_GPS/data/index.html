@@ -498,6 +498,52 @@
         </div>
       </div>
 
+      <hr style="border-color:#333; margin:10px 0;">
+
+      <!-- Broker settings toggle -->
+      <div class="toggle-row" style="cursor:pointer;" onclick="toggleBrokerPanel()">
+        <span>⚙️ Broker settings</span>
+        <span id="broker-arrow" style="font-size:12px; color:#888;">▼</span>
+      </div>
+
+      <div id="broker-panel" style="display:none; margin-top:10px;">
+        <div class="input-row">
+          <label for="mqtt-broker-host">Indirizzo broker</label>
+          <input type="text" id="mqtt-broker-host" placeholder="broker.hivemq.com">
+        </div>
+        <div class="input-row">
+          <label for="mqtt-broker-port">Porta</label>
+          <input type="number" id="mqtt-broker-port" placeholder="1883" min="1" max="65535">
+        </div>
+
+        <div class="toggle-row">
+          <span>Usa credenziali</span>
+          <label class="switch">
+            <input type="checkbox" id="mqttUseCredentials"
+                   onchange="updateBrokerCredentialsUI()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div id="broker-credentials" style="display:none;">
+          <div class="input-row">
+            <label for="mqtt-broker-user">Username</label>
+            <input type="text" id="mqtt-broker-user" placeholder="username"
+                   autocomplete="off">
+          </div>
+          <div class="input-row">
+            <label for="mqtt-broker-pass">Password</label>
+            <input type="password" id="mqtt-broker-pass" placeholder="password"
+                   autocomplete="off">
+          </div>
+        </div>
+
+        <div class="button-row" style="margin-top:10px;">
+          <button class="big-button" onclick="saveBrokerSettings()">Save broker</button>
+        </div>
+        <p id="broker-status-field" style="font-size:0.85em; margin:4px 0 0;"></p>
+      </div>
+
       <div class="button-row">
         <button class="big-button" onclick="saveMqttSettings()">Save</button>
         <button class="big-button" onclick="closeMqttPopup()">Cancel</button>

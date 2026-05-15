@@ -8,17 +8,12 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
-static const char* MQTT_SERVER = "broker.hivemq.com";
-static const int   MQTT_PORT   = 1883;
+static const char* MQTT_SERVER_DEFAULT = "broker.hivemq.com";
+static const int   MQTT_PORT_DEFAULT   = 1883;
 static const int   QUEUE_SIZE  = 50;
 
-struct MqttMesGFrage {
-struct MqttMesGFapaapprage {
-struct MqttMesGFapaapprage {
-struct MqttMesGFapaapprage {
-struct MqttMesGFapaapprage {
-struct MqttMesGFapaapprage {
-struct MqttMesGFapaapprGNFD   char topic[80];
+struct MqttMessage {
+    char topic[80];
     char payload[300];
     bool retained;  // aggiungi questo
 };
@@ -29,6 +24,10 @@ static QueueHandle_t mqttQueue = nullptr;
 static String mqttSubTopic;
 static String mqttEventName;
 static String mqttTopicPrefix;
+static String mqttBrokerHost;
+static int    mqttBrokerPort;
+static String mqttBrokerUser;
+static String mqttBrokerPass;
 
 static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     String msg;
@@ -72,16 +71,18 @@ static void connectBlocking() {
         }
 
         IPAddress brokerIp;
-        if (!WiFi.hostByName(MQTT_SERVER, brokerIp)) {
-            //Serial.println("[MQTT] DNS fallito per " + String(MQTT_SERVER) + ", riprovo tra 5s");
+        if (!WiFi.hostByName(mqttBrokerHost.c_str(), brokerIp)) {
             vTaskDelay(pdMS_TO_TICKS(5000));
             continue;
         }
-        Serial.printf("[MQTT] %s risolto in %s\n", MQTT_SERVER, brokerIp.toString().c_str());
+        Serial.printf("[MQTT] %s risolto in %s\n", mqttBrokerHost.c_str(), brokerIp.toString().c_str());
 
         String clientId = "chronofit-" + chipIdStr;
         Serial.print("[MQTT] Connessione...");
-        if (mqtt.connect(clientId.c_str())) {
+        bool connected = mqttBrokerUser.isEmpty()
+            ? mqtt.connect(clientId.c_str())
+            : mqtt.connect(clientId.c_str(), mqttBrokerUser.c_str(), mqttBrokerPass.c_str());
+        if (connected) {
             Serial.println(" OK");
             mqttConnected = true;
             subscribe();
@@ -118,13 +119,17 @@ void mqttSetup() {
     mqttSubTopic     = readStringFromSettings("mqttSubTopic", "");
     mqttEventName    = readStringFromSettings("mqttEvent", "");
     mqttTopicPrefix  = readStringFromSettings("mqttPrefix", "chronofit");
+    mqttBrokerHost   = readStringFromSettings("mqttBrokerHost", MQTT_SERVER_DEFAULT);
+    mqttBrokerPort   = readStringFromSettings("mqttBrokerPort", String(MQTT_PORT_DEFAULT)).toInt();
+    mqttBrokerUser   = readStringFromSettings("mqttBrokerUser", "");
+    mqttBrokerPass   = readStringFromSettings("mqttBrokerPass", "");
     mqttAcquireRow    = readStringFromSettings("mqttAcquireRow",    "0").toInt();
     mqttImmediateMode = readStringFromSettings("mqttImmediateMode","0").toInt();
     mqttShowPopup     = readStringFromSettings("mqttShowPopup",     "1").toInt();
     initPendingIndex();
     mqttQueue = xQueueCreate(QUEUE_SIZE, sizeof(MqttMessage));
     wifiClient.setTimeout(1);
-    mqtt.setServer(MQTT_SERVER, MQTT_PORT);
+    mqtt.setServer(mqttBrokerHost.c_str(), mqttBrokerPort);
     mqtt.setCallback(onMqttMessage);
     xTaskCreatePinnedToCore(mqttTask, "mqtt", 4096, nullptr, 1, nullptr, 1);
 }
@@ -138,6 +143,19 @@ void mqttUpdateSettings(const String& newSubTopic, const String& newEventName, c
     mqttConnected = false;
     Serial.printf("[MQTT] Settings aggiornati — prefix: %s, evento: %s, sub: %s\n",
                   mqttTopicPrefix.c_str(), mqttEventName.c_str(), mqttSubTopic.c_str());
+}
+
+void mqttUpdateBroker(const String& host, int port, const String& user, const String& pass) {
+    mqttBrokerHost = host.isEmpty() ? MQTT_SERVER_DEFAULT : host;
+    mqttBrokerPort = (port <= 0)    ? MQTT_PORT_DEFAULT   : port;
+    mqttBrokerUser = user;
+    mqttBrokerPass = pass;
+    mqtt.disconnect();
+    mqttConnected = false;
+    mqtt.setServer(mqttBrokerHost.c_str(), mqttBrokerPort);
+    Serial.printf("[MQTT] Broker aggiornato — %s:%d user:%s\n",
+                  mqttBrokerHost.c_str(), mqttBrokerPort,
+                  mqttBrokerUser.isEmpty() ? "(nessuno)" : mqttBrokerUser.c_str());
 }
 
 void mqttPublishCheckpoint(const String& jsonPayload) {

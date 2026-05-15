@@ -2638,6 +2638,15 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
       document.getElementById("mqttTimeoutInput").value             = localStorage.getItem("mqttTimeout")    || "5";
       document.getElementById("mqttOnTimeoutSelect").value          = localStorage.getItem("mqttOnTimeout")  || "accept";
       document.getElementById("mqtt-status-field").innerText = "";
+      // broker
+      document.getElementById("mqtt-broker-host").value = data.brokerHost || "broker.hivemq.com";
+      document.getElementById("mqtt-broker-port").value = data.brokerPort || 1883;
+      const hasCreds = !!(data.brokerUser);
+      document.getElementById("mqttUseCredentials").checked = hasCreds;
+      document.getElementById("mqtt-broker-user").value = data.brokerUser || "";
+      document.getElementById("mqtt-broker-pass").value = data.brokerPass || "";
+      document.getElementById("broker-credentials").style.display = hasCreds ? "" : "none";
+      document.getElementById("broker-status-field").innerText = "";
       updateMqttPreview();
       updateMqttModeUI();
     })
@@ -2676,6 +2685,40 @@ function saveMqttSettings() {
 
 function closeMqttPopup() {
   document.getElementById("mqttOverlay").style.display = "none";
+}
+
+function toggleBrokerPanel() {
+  const panel = document.getElementById("broker-panel");
+  const arrow = document.getElementById("broker-arrow");
+  const open  = panel.style.display === "none";
+  panel.style.display = open ? "" : "none";
+  arrow.textContent   = open ? "▲" : "▼";
+}
+
+function updateBrokerCredentialsUI() {
+  const show = document.getElementById("mqttUseCredentials").checked;
+  document.getElementById("broker-credentials").style.display = show ? "" : "none";
+}
+
+function saveBrokerSettings() {
+  const host = encodeURIComponent(document.getElementById("mqtt-broker-host").value.trim() || "broker.hivemq.com");
+  const port = document.getElementById("mqtt-broker-port").value || 1883;
+  const useCreds = document.getElementById("mqttUseCredentials").checked;
+  const user = useCreds ? encodeURIComponent(document.getElementById("mqtt-broker-user").value.trim()) : "";
+  const pass = useCreds ? encodeURIComponent(document.getElementById("mqtt-broker-pass").value) : "";
+  const sf   = document.getElementById("broker-status-field");
+
+  fetch(`/mqttBrokerSave?host=${host}&port=${port}&user=${user}&pass=${pass}`)
+    .then(r => r.text())
+    .then(() => {
+      sf.style.color   = "green";
+      sf.innerText     = "✅ Broker salvato";
+      setTimeout(() => { sf.innerText = ""; }, 2500);
+    })
+    .catch(() => {
+      sf.style.color = "#c62828";
+      sf.innerText   = "❌ Errore salvataggio";
+    });
 }
 
 

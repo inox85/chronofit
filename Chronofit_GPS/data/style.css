@@ -190,7 +190,7 @@ hr {
 }
 
 .card #time {
-  font-size: 40px;
+  font-size: 60px;
   text-align: center;
   cursor: pointer;
 }
@@ -545,7 +545,6 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: space-between;
   margin: 10px 0;
-  gap: 8px;
 }
 
 .input-row label {
@@ -556,8 +555,9 @@ input:checked + .slider:before {
 
 .input-row input,
 .input-row select {
-  flex-shrink: 0;
+  width: 300;
 }
+
 
 /* --- MQTT overlay: label 20px e controlli larghezza fissa --- */
 #mqttOverlay .toggle-row span,
@@ -565,14 +565,19 @@ input:checked + .slider:before {
   font-size: 20px;
 }
 
+#mqtt-broker-port {
+  width: 300px;
+  text-align: center;
+}
+
 #mqttOverlay .input-row input[type="number"],
 #mqttOverlay .input-row select {
-  width: 160px;
+    width: 300px;
+    text-align: center;
 }
 
 #mqttOverlay .input-row input[type="text"] {
-  flex: 1;
-  min-width: 0;
+    width: 300px;
 }
 
 /* --- WiFi overlay: password row con toggle inline --- */
@@ -1128,3 +1133,7 @@ input:checked + .slider:before {
 }
 .mqtt-notif-accept-desc strong { color: #e0e0e0; }
 .mqtt-countdown { font-size: 0.85em; opacity: 0.75; }
+
+input#mqtt-broker-pass {
+    width: 300px;
+}
