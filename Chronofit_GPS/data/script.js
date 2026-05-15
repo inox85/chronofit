@@ -2603,11 +2603,12 @@ let mqttChipId      = "";
 const mqttCfg       = { acquireRow: false, immediateMode: false };
 
 function updateMqttPreview() {
-  const evt     = document.getElementById("mqtt-event").value.trim() || "<event>";
+  const prefix  = document.getElementById("mqtt-prefix").value.trim() || "chronofit";
+  const evt     = document.getElementById("mqtt-event").value.trim()  || "<event>";
   const station = mqttStationName || "<stationName>";
   const chip    = mqttChipId      || "<chipId>";
   document.getElementById("mqtt-pub-preview").innerText =
-    "📤 chronofit/" + evt + "/" + station + "/" + chip + "/checkpoint";
+    "📤 " + prefix + "/" + evt + "/" + station + "/" + chip + "/checkpoint";
 }
 
 function updateMqttModeUI() {
@@ -2622,6 +2623,7 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
     .then(data => {
       mqttStationName = data.stationName || "";
       mqttChipId      = data.chipId      || "";
+      document.getElementById("mqtt-prefix").value         = data.prefix    || "chronofit";
       document.getElementById("mqtt-event").value          = data.eventName || "";
       document.getElementById("mqtt-sub").value            = data.subTopic  || "";
       document.getElementById("mqttShowPopupToggle").checked        = (data.showPopup    !== 0);
@@ -2644,6 +2646,7 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
 });
 
 function saveMqttSettings() {
+  const prefix    = encodeURIComponent(document.getElementById("mqtt-prefix").value.trim() || "chronofit");
   const evt       = encodeURIComponent(document.getElementById("mqtt-event").value.trim());
   const sub       = encodeURIComponent(document.getElementById("mqtt-sub").value.trim());
   const showPopup = document.getElementById("mqttShowPopupToggle").checked ? 1 : 0;
@@ -2656,7 +2659,7 @@ function saveMqttSettings() {
 
   const acquireRow    = document.getElementById("mqttAcquireRowToggle").checked ? 1 : 0;
   const immediateMode = document.getElementById("mqttAcqModeSelect").value === "immediate" ? 1 : 0;
-  fetch(`/mqttSave?eventName=${evt}&subTopic=${sub}&showPopup=${showPopup}&acquireRow=${acquireRow}&immediateMode=${immediateMode}`)
+  fetch(`/mqttSave?prefix=${prefix}&eventName=${evt}&subTopic=${sub}&showPopup=${showPopup}&acquireRow=${acquireRow}&immediateMode=${immediateMode}`)
     .then(r => r.text())
     .then(() => {
       const f = document.getElementById("mqtt-status-field");

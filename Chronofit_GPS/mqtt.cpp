@@ -12,8 +12,13 @@ static const char* MQTT_SERVER = "broker.hivemq.com";
 static const int   MQTT_PORT   = 1883;
 static const int   QUEUE_SIZE  = 50;
 
-struct MqttMessage {
-    char topic[80];
+struct MqttMesGFrage {
+struct MqttMesGFapaapprage {
+struct MqttMesGFapaapprage {
+struct MqttMesGFapaapprage {
+struct MqttMesGFapaapprage {
+struct MqttMesGFapaapprage {
+struct MqttMesGFapaapprGNFD   char topic[80];
     char payload[300];
     bool retained;  // aggiungi questo
 };
@@ -23,6 +28,7 @@ static PubSubClient  mqtt(wifiClient);
 static QueueHandle_t mqttQueue = nullptr;
 static String mqttSubTopic;
 static String mqttEventName;
+static String mqttTopicPrefix;
 
 static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     String msg;
@@ -111,6 +117,7 @@ static void mqttTask(void*) {
 void mqttSetup() {
     mqttSubTopic     = readStringFromSettings("mqttSubTopic", "");
     mqttEventName    = readStringFromSettings("mqttEvent", "");
+    mqttTopicPrefix  = readStringFromSettings("mqttPrefix", "chronofit");
     mqttAcquireRow    = readStringFromSettings("mqttAcquireRow",    "0").toInt();
     mqttImmediateMode = readStringFromSettings("mqttImmediateMode","0").toInt();
     mqttShowPopup     = readStringFromSettings("mqttShowPopup",     "1").toInt();
@@ -122,21 +129,21 @@ void mqttSetup() {
     xTaskCreatePinnedToCore(mqttTask, "mqtt", 4096, nullptr, 1, nullptr, 1);
 }
 
-void mqttUpdateSettings(const String& newSubTopic, const String& newEventName) {
-    mqttSubTopic  = newSubTopic;
-    mqttEventName = newEventName;
+void mqttUpdateSettings(const String& newSubTopic, const String& newEventName, const String& newPrefix) {
+    mqttSubTopic    = newSubTopic;
+    mqttEventName   = newEventName;
+    mqttTopicPrefix = newPrefix.isEmpty() ? "chronofit" : newPrefix;
     // Forza riconnessione per aggiornare la subscribe
     mqtt.disconnect();
     mqttConnected = false;
-    Serial.printf("[MQTT] Settings aggiornati — evento: %s, sub: %s\n",
-                  mqttEventName.c_str(), mqttSubTopic.c_str());
+    Serial.printf("[MQTT] Settings aggiornati — prefix: %s, evento: %s, sub: %s\n",
+                  mqttTopicPrefix.c_str(), mqttEventName.c_str(), mqttSubTopic.c_str());
 }
 
 void mqttPublishCheckpoint(const String& jsonPayload) {
     if (mqttQueue == nullptr) return;
 
-    String topic = "chronofit/" + mqttEventName + "/" + stationName + "/" + chipIdStr + "/checkpoint";
-
+    String topic = mqttTopicPrefix + "/" + mqttEventName + "/" + stationName + "/" + chipIdStr + "/checkpoint";
     MqttMessage msg;
     topic.toCharArray(msg.topic, sizeof(msg.topic));
     jsonPayload.toCharArray(msg.payload, sizeof(msg.payload));

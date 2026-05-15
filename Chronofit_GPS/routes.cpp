@@ -724,6 +724,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     StaticJsonDocument<256> doc;
     doc["subTopic"]    = readStringFromSettings("mqttSubTopic", "");
     doc["eventName"]   = readStringFromSettings("mqttEvent", "");
+    doc["prefix"]      = readStringFromSettings("mqttPrefix", "chronofit");
     doc["stationName"] = stationName;
     doc["chipId"]      = chipIdStr;
     doc["showPopup"]     = mqttShowPopup;
@@ -736,10 +737,13 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/mqttSave", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String sub = request->hasParam("subTopic")  ? request->getParam("subTopic")->value()  : "";
-    String evt = request->hasParam("eventName") ? request->getParam("eventName")->value() : "";
+    String sub    = request->hasParam("subTopic")  ? request->getParam("subTopic")->value()  : "";
+    String evt    = request->hasParam("eventName") ? request->getParam("eventName")->value() : "";
+    String prefix = request->hasParam("prefix")    ? request->getParam("prefix")->value()    : "chronofit";
+    if (prefix.isEmpty()) prefix = "chronofit";
     writeStringToSettings("mqttSubTopic", sub);
     writeStringToSettings("mqttEvent", evt);
+    writeStringToSettings("mqttPrefix", prefix);
     if (request->hasParam("showPopup")) {
       mqttShowPopup = request->getParam("showPopup")->value().toInt();
       writeStringToSettings("mqttShowPopup", String(mqttShowPopup));
@@ -752,7 +756,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       mqttImmediateMode = request->getParam("immediateMode")->value().toInt();
       writeStringToSettings("mqttImmediateMode", String(mqttImmediateMode));
     }
-    mqttUpdateSettings(sub, evt);
+    mqttUpdateSettings(sub, evt, prefix);
     request->send(200, "text/plain", "OK");
     wifiRxActivity();
   });

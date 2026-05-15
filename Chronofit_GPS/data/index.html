@@ -425,6 +425,11 @@
       <h2>Messages settings</h2>
 
       <div class="input-row">
+        <label for="mqtt-prefix">Topic prefix</label>
+        <input type="text" id="mqtt-prefix" placeholder="chronofit" oninput="updateMqttPreview()">
+      </div>
+
+      <div class="input-row">
         <label for="mqtt-event">Event name</label>
         <input type="text" id="mqtt-event" placeholder="e.g. race2024" oninput="updateMqttPreview()">
       </div>

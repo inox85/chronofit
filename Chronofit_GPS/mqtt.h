@@ -3,4 +3,4 @@
 
 void mqttSetup();
 void mqttPublishCheckpoint(const String& jsonPayload);
-void mqttUpdateSettings(const String& newSubTopic, const String& newEventName);
+void mqttUpdateSettings(const String& newSubTopic, const String& newEventName, const String& newPrefix);
