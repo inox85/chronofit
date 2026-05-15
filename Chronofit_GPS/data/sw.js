@@ -1,63 +1,66 @@
-// Nome della cache
-const CACHE_NAME = 'pwa-cache-v2';
+const CACHE_NAME = 'chronofit-v3';
 
-// Lista dei file da memorizzare
-const FILES_TO_CACHE = [
-        '/index.html',
-        '/manifest.json',
-        '/icon-192.png',
-        '/icon-512.png',
-        '/script.js',
-        '/style.css',
-        '/favicon.png',
-        '/Nunito-Bold.ttf',
-        '/logo.png',
+const STATIC_ASSETS = [
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/script.js',
+  '/style.css',
+  '/favicon.png',
+  '/Nunito-Bold.ttf',
+  '/logo.webp',
+  '/logo-black.png',
+  '/sound1.mp3',
+  '/sound2.mp3',
+  '/sound3.mp3',
+  '/sound4.mp3'
+];
 
-        // 🎵 Aggiungi qui i tuoi suoni
-        '/sound1.mp3',
-        '/sound2.mp3',
-        '/sound3.mp3',
-        '/sound4.mp3'
-      ];
+// Riconosce asset statici da cachare (hanno un'estensione file nota)
+function isStaticAsset(url) {
+  return /\.(html|js|css|png|webp|ico|ttf|woff2?|mp3|json|svg|gif)$/i.test(url.pathname);
+}
 
-// Installazione del service worker → memorizza i file
 self.addEventListener('install', e => {
-  console.log('[SW] Installazione...');
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('[SW] Caching dei file...');
-      return cache.addAll(FILES_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
+  self.skipWaiting();
 });
 
-// Attivazione → elimina vecchie cache
 self.addEventListener('activate', e => {
-  console.log('[SW] Attivazione...');
   e.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.map(k => {
-          if (k !== CACHE_NAME) {
-            console.log('[SW] Cancello cache vecchia:', k);
-            return caches.delete(k);
-          }
-        })
-      );
-    })
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Intercetta tutte le fetch → serve prima dalla cache
 self.addEventListener('fetch', e => {
+  // Il SW non può intercettare WebSocket (mode === 'websocket' non è fetchabile)
+  if (e.request.mode === 'websocket') return;
+
+  const url = new URL(e.request.url);
+
+  // Tutto ciò che non ha estensione statica è una chiamata API dinamica:
+  // va sempre alla rete, mai dalla cache
+  if (!isStaticAsset(url)) {
+    e.respondWith(
+      fetch(e.request).catch(() => new Response('', { status: 503, statusText: 'Offline' }))
+    );
+    return;
+  }
+
+  // Asset statici: cache-first, poi rete (e aggiorna la cache)
   e.respondWith(
-    caches.match(e.request).then(response => {
-      // Se il file è nella cache lo usa, altrimenti lo scarica e lo mette in cache
-      return response || fetch(e.request).then(fetchRes => {
-        return caches.open(CACHE_NAME).then(cache => {
-          cache.put(e.request, fetchRes.clone());
-          return fetchRes;
-        });
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(response => {
+        if (response && response.ok) {
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, response.clone()));
+        }
+        return response;
       });
     })
   );
