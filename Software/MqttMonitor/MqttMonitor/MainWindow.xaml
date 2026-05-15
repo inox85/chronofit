@@ -2,6 +2,7 @@
     x:Class="MqttMonitor.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Icon="/Resources/favicon.ico"
     Title="MQTT Monitor"
     Width="1552"
     Height="650"
@@ -75,10 +76,12 @@
         </Style>
     </Window.Resources>
 
-    <DockPanel>
+    <DockPanel
+        LastChildFill="True"
+        >
         <!--  Toolbar  -->
         <Border
-            Height="69"
+            Height="60"
             Padding="12,8"
             Background="#16161E"
             BorderBrush="#22223A"
@@ -89,7 +92,7 @@
                     Width="147"
                     Height="26"
                     Margin="6,6,12,6"
-                    Source="C:\Users\innocenti\Documents\src\chronofit\Chronofit_GPS\data\logo.png" />
+                    Source="/Resources/logo.png"/>
                 <TextBlock
                     Margin="6,0,6,0"
                     VerticalAlignment="Center"
@@ -159,6 +162,12 @@
                     Foreground="#AAAACC" />
 
                 <!--  Status indicator  -->
+                
+            </WrapPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Height="30" Background="#16161E">
+            <WrapPanel VerticalAlignment="Center" Orientation="Horizontal">
                 <Ellipse
                     x:Name="StatusDot"
                     Width="16"
@@ -166,7 +175,7 @@
                     Margin="6,0,6,0"
                     VerticalAlignment="Center"
                     Fill="#993C1D" />
-                <TextBlock
+                                <TextBlock
                     x:Name="StatusText"
                     VerticalAlignment="Center"
                     FontSize="22"
@@ -175,11 +184,6 @@
             </WrapPanel>
         </Border>
 
-        <!--  Detail / JSON panel at bottom  -->
-
-        <!--  Message count bar  -->
-
-        <!--  Main DataGrid  -->
         <DataGrid
             x:Name="GridMessages"
             AutoGenerateColumns="False"
@@ -235,5 +239,7 @@
 
             </DataGrid.Columns>
         </DataGrid>
+
+
     </DockPanel>
 </Window>

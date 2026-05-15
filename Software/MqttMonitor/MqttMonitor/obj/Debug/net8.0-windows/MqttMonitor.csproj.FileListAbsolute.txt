@@ -45,3 +45,10 @@ C:\src\chronofit\Software\MqttMonitor\MqttMonitor\obj\Debug\net8.0-windows\refin
 C:\src\chronofit\Software\MqttMonitor\MqttMonitor\obj\Debug\net8.0-windows\MqttMonitor.pdb
 C:\src\chronofit\Software\MqttMonitor\MqttMonitor\obj\Debug\net8.0-windows\MqttMonitor.genruntimeconfig.cache
 C:\src\chronofit\Software\MqttMonitor\MqttMonitor\obj\Debug\net8.0-windows\ref\MqttMonitor.dll
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\obj\Debug\net8.0-windows\MqttMonitor.Properties.Resources.resources
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\obj\Debug\net8.0-windows\MqttMonitor.csproj.GenerateResource.cache
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\bin\Debug\net8.0-windows\Microsoft.Win32.SystemEvents.dll
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\bin\Debug\net8.0-windows\System.Drawing.Common.dll
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\bin\Debug\net8.0-windows\System.Private.Windows.Core.dll
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\bin\Debug\net8.0-windows\System.Private.Windows.GdiPlus.dll
+C:\src\chronofit\Software\MqttMonitor\MqttMonitor\bin\Debug\net8.0-windows\runtimes\win\lib\net8.0\Microsoft.Win32.SystemEvents.dll
