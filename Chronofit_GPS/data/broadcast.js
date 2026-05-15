@@ -1092,6 +1092,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   updateTableCorners();
+
+  // Fix mobile: touchend su div con onclick dentro popup scrollabile
+  document.querySelectorAll('.toggle-row[onclick]').forEach(el => {
+    el.addEventListener('touchend', e => {
+      e.preventDefault();
+      el.click();
+    }, { passive: false });
+  });
 });
 
 window.addEventListener("load", () => {
