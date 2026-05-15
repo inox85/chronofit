@@ -539,6 +539,14 @@ input:checked + .slider:before {
   font-weight: bold;
 }
 
+/* Header collassabili: touch-action evita che il browser
+   interpreti il tap come inizio di uno scroll nel popup */
+.toggle-row[onclick] {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .input-row {
   display: flex;
   align-items: center;
