@@ -1017,10 +1017,30 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
                     line, lineIds[idx].c_str(), competitors[idx], delays[idx], lineEnabled[idx]);
     #endif
     // E qui elabori o invii via seriale, BLE, ecc.
-    request->send(200, "text/plain", "Saved sucessfully"); 
+    request->send(200, "text/plain", "Saved sucessfully");
     wifiRxActivity();
   });
 
+  server.on("/checkPointFields", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!request->hasParam("l")) {
+      request->send(400, "text/plain", "Missing parameter: l (line number)");
+      return;
+    }
+    int line = request->getParam("l")->value().toInt();
+    if (line < 1 || line > 4) {
+      request->send(400, "text/plain", "Parameter l must be 1–4");
+      return;
+    }
+    int idx = line - 1;
+    if (request->hasParam("ld")) lineIds[idx]     = request->getParam("ld")->value();
+    if (request->hasParam("c"))  competitors[idx] = request->getParam("c")->value().toInt();
+    if (request->hasParam("d"))  delays[idx]      = request->getParam("d")->value().toInt();
+    if (request->hasParam("e"))  lineEnabled[idx] = request->getParam("e")->value().toInt();
+
+    broadcastLineUpdate(idx);
+    request->send(200, "text/plain", "Saved successfully");
+    wifiRxActivity();
+  });
 
   server.on("/sendCheckPointRow", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {

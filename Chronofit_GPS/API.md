@@ -146,8 +146,25 @@ Cancella l'intera sessione corrente (elimina `session.json`). Notifica tutti i c
 
 ---
 
+### `GET /checkPointFields`
+Aggiorna la configurazione di una linea tramite query string. Solo `l` è obbligatorio; gli altri parametri sono facoltativi — vengono modificati solo i campi presenti.
+
+**Parametri:**
+
+| Parametro | Tipo | Obbligatorio | Descrizione |
+|---|---|---|---|
+| `l` | int | ✅ | Numero linea (1–4) |
+| `ld` | string | — | ID linea |
+| `c` | int | — | Numero competitor assegnato |
+| `d` | int | — | Delay linea in millisecondi |
+| `e` | int | — | Abilitato: `1` / `0` |
+
+**Esempio:** `GET /checkPointFields?l=2&c=7&e=1`
+
+---
+
 ### `POST /checkPointFields`
-Aggiorna la configurazione di una linea (competitor, ID linea, delay, stato).
+Aggiorna la configurazione di una linea (competitor, ID linea, delay, stato). Tutti i campi sono inviati nel body.
 
 **Body JSON:**
 ```json
