@@ -189,8 +189,8 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
   StaticJsonDocument<64> wifiDoc;
   wifiDoc["t"] = TYPE_WIFI_CONNECTING;
   wifiDoc["ssid"] = ssid;
-  String wifiMsg;
-  serializeJson(wifiDoc, wifiMsg);
+  char wifiMsg[128];
+  serializeJson(wifiDoc, wifiMsg, sizeof(wifiMsg));
   ws.textAll(wifiMsg);
   delay(100); // lascia tempo al browser di ricevere il messaggio prima del disconnect
 
@@ -250,8 +250,8 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
                 StaticJsonDocument<128> errDoc;
                 errDoc["t"] = TYPE_WIFI_ERROR;
                 errDoc["msg"] = "Wrong credentials";
-                String errJson;
-                serializeJson(errDoc, errJson);
+                char errJson[128];
+                serializeJson(errDoc, errJson, sizeof(errJson));
                 ws.textAll(errJson);
               }
               break;
@@ -264,8 +264,8 @@ bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
                 StaticJsonDocument<128> errDoc;
                 errDoc["t"] = TYPE_WIFI_ERROR;
                 errDoc["msg"] = "Network not found";
-                String errJson;
-                serializeJson(errDoc, errJson);
+                char errJson[128];
+                serializeJson(errDoc, errJson, sizeof(errJson));
                 ws.textAll(errJson);
               } else {
                 // Durante reconnect: AP temporaneamente assente, riprova
@@ -363,19 +363,16 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 }
 
 // Ritorna false e invia 401 se il token non corrisponde.
+// Accetta il token sia come header X-Token che come query parameter ?token=
 // Se nessun token è configurato in NVS, lascia passare tutto (retrocompatibilità).
 bool isAuthorized(AsyncWebServerRequest *request) {
   String token = readStringFromSettings("api_token", "");
   if (token.isEmpty()) return true;
-  if (!request->hasHeader("X-Token")) {
-    request->send(401, "text/plain", "Unauthorized");
-    return false;
-  }
-  if (request->header("X-Token") != token) {
-    request->send(401, "text/plain", "Unauthorized");
-    return false;
-  }
-  return true;
+  // Controlla prima il query parameter ?token=, poi l'header X-Token
+  if (request->hasParam("token") && request->getParam("token")->value() == token) return true;
+  if (request->hasHeader("X-Token") && request->header("X-Token") == token) return true;
+  request->send(401, "text/plain", "Unauthorized");
+  return false;
 }
 
 static void serveGzipped(AsyncWebServerRequest *request, const char* path, const char* mime) {
@@ -672,8 +669,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     // --- JSON completo ---
   server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
 
-    StaticJsonDocument<512> doc;
-    
+    StaticJsonDocument<64> doc;
+
     PreciseTime t = getPreciseTime();
 
     doc["hh"] = t.hh;
@@ -681,8 +678,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["ss"] = t.ss;
     doc["ms"] = t.ms;
 
-    String json;
-    serializeJson(doc, json);
+    char json[64];
+    serializeJson(doc, json, sizeof(json));
 
     request->send(200, "application/json", json);
     wifiRxActivity();
@@ -888,11 +885,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         Serial.println("Sessione cancellata dal filesystem.");
         sessionRowIndex = 0;
         clearPendingFile();
-        StaticJsonDocument<512> doc;
+        StaticJsonDocument<32> doc;
         doc["t"] = TYPE_SESSION_CLEARED;
 
-        String message;
-        serializeJson(doc, message);
+        char message[32];
+        serializeJson(doc, message, sizeof(message));
 
         ws.textAll(message);
         wifiTxActivity();
@@ -1000,8 +997,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     for (size_t i = 0; i < len; i++) body += (char)data[i];
     debug("Ricevuti nuovi settings: " + body);
 
-    // Puoi poi parsarlo con ArduinoJson
-    JsonDocument doc;
+    StaticJsonDocument<128> doc;
     deserializeJson(doc, body);
     int line = doc["l"].as<int>();
     int idx = line - 1;
@@ -1049,8 +1045,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     for (size_t i = 0; i < len; i++) body += (char)data[i];
     debug("Ricevuto JSON per stampa riga : " + body);
 
-    // Puoi poi parsarlo con ArduinoJson
-    JsonDocument doc;
+    StaticJsonDocument<256> doc;
     deserializeJson(doc, body);
     int lineNumber = doc["lineNumber"];
     int id  = doc["index"];
@@ -1083,8 +1078,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         mqttDoc["s"]   = second;
         mqttDoc["ms"]  = millis;
         mqttDoc["x"]   = 0;
-        String mqttPayload;
-        serializeJson(mqttDoc, mqttPayload);
+        char mqttPayload[256];
+        serializeJson(mqttDoc, mqttPayload, sizeof(mqttPayload));
         mqttPublishCheckpoint(mqttPayload);
     }
 
@@ -1096,7 +1091,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
 
         // --- Parse JSON ricevuto ---
-        JsonDocument doc;
+        StaticJsonDocument<256> doc;
         DeserializationError err = deserializeJson(doc, data, len);
         if (err) {
             request->send(400, "text/plain", "JSON non valido");
@@ -1139,12 +1134,15 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
         bool updated = false;
 
+        char lineBuf[384];
+        char outLineBuf[384];
         while (inFile.available()) {
-            String lineStr = inFile.readStringUntil('\n');
-            if (lineStr.isEmpty()) continue;
+            int n = inFile.readBytesUntil('\n', lineBuf, sizeof(lineBuf) - 1);
+            if (n == 0) continue;
+            lineBuf[n] = '\0';
 
-            JsonDocument entry;
-            if (deserializeJson(entry, lineStr)) continue;
+            StaticJsonDocument<256> entry;
+            if (deserializeJson(entry, lineBuf, n)) continue;
 
             int currentIndex = entry[INDEX_FIELD].as<int>();
 
@@ -1158,20 +1156,18 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
                 entry[SECOND_FIELD] = second;
                 entry[MILLIS_FIELD] = millis;
                 entry[PENALITY_FIELD] = penality;
-                
+
                 updated = true;
                 debug("Riga aggiornata");
                 broadCastRowEdited(entry);
             }
 
-            String outLine;
-            serializeJson(entry, outLine);
-            outFile.println(outLine);
-            
+            serializeJson(entry, outLineBuf, sizeof(outLineBuf));
+            outFile.println(outLineBuf);
         }
         // --- Se non trovato, aggiungi alla fine ---
         if (!updated) {
-            JsonDocument newEntry;
+            StaticJsonDocument<256> newEntry;
             newEntry[INDEX_FIELD] = entryIndex;
             newEntry[LINE_NUMBER_FIELD] = lineNumber;
             newEntry[LINE_ID_FIELD] = lineId;
@@ -1182,9 +1178,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
             newEntry[MILLIS_FIELD] = millis;
             newEntry[PENALITY_FIELD] = penality;
 
-            String newLine;
-            serializeJson(newEntry, newLine);
-            outFile.println(newLine);
+            serializeJson(newEntry, outLineBuf, sizeof(outLineBuf));
+            outFile.println(outLineBuf);
             debug("Riga aggiunta");
         }
 
@@ -1564,24 +1559,6 @@ String hexToBase64(const String& hex) {
 
     return result;
 }
-
-
-String fileToBase64(const char *path) {
-  File file = LittleFS.open(path, "r");
-  if (!file) return "";
-
-  String encoded;
-  uint8_t buf[96];  // multiplo di 3
-
-  while (file.available()) {
-    int len = file.read(buf, sizeof(buf));
-    encoded += base64::encode(buf, len);
-  }
-
-  file.close();
-  return encoded;
-}
-
 
 
 void smtpCallback(SMTP_Status status) {

@@ -118,21 +118,24 @@ void initGPS(){
 
   // Leggi ACK
   unsigned long start = millis();
-  String line = "";
+  char lineBuf[128];
+  uint8_t lineLen = 0;
   bool success = false;
 
   while (millis() - start < 3000) {
     while (ServicesSerial.available()) {
       char c = ServicesSerial.read();
-      line += c;
       if (c == '\n') {
+        lineBuf[lineLen] = '\0';
         Serial.print("GPS risponde: ");
-        Serial.print(line);
-        if (line.indexOf("PCAS001") >= 0) {
-          success = line.indexOf(",0") >= 0;
-          Serial.println(success ? "✅ ACK OK" : "❌ ACK errore");
+        Serial.println(lineBuf);
+        if (strstr(lineBuf, "PCAS001") != nullptr) {
+          success = strstr(lineBuf, ",0") != nullptr;
+          Serial.println(success ? "ACK OK" : "ACK errore");
         }
-        line = "";
+        lineLen = 0;
+      } else if (lineLen < sizeof(lineBuf) - 1) {
+        lineBuf[lineLen++] = c;
       }
     }
   }

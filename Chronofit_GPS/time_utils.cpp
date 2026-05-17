@@ -212,20 +212,19 @@ void checkPointRoutine(int i) {
   StaticJsonDocument<256> wsDoc = ordered;
   wsDoc["t"] = TYPE_CHECKPOINT;
 
-  String jsonMessage;
-  serializeJson(wsDoc, jsonMessage);
-  //ws.cleanupClients(); // rimuove client chiusi
+  char jsonMessage[300];
+  serializeJson(wsDoc, jsonMessage, sizeof(jsonMessage));
   ws.textAll(jsonMessage);
 
   // 🔹 Pubblica su MQTT
-  String mqttPayload;
-  serializeJson(ordered, mqttPayload);
+  char mqttPayload[256];
+  serializeJson(ordered, mqttPayload, sizeof(mqttPayload));
   mqttPublishCheckpoint(mqttPayload);
 }
 
 
 // ----------------------------------------
-void writeCheckpointFromMqtt(const String& jsonPayload) {
+void writeCheckpointFromMqtt(const char* jsonPayload) {
   StaticJsonDocument<256> src;
   if (deserializeJson(src, jsonPayload) != DeserializationError::Ok) return;
 
@@ -265,8 +264,8 @@ void writeCheckpointFromMqtt(const String& jsonPayload) {
 
   StaticJsonDocument<256> wsDoc = ordered;
   wsDoc["t"] = TYPE_CHECKPOINT;
-  String jsonMessage;
-  serializeJson(wsDoc, jsonMessage);
+  char jsonMessage[300];
+  serializeJson(wsDoc, jsonMessage, sizeof(jsonMessage));
   ws.textAll(jsonMessage);
 }
 
@@ -275,12 +274,13 @@ void initPendingIndex() {
   pendingRowIndex = 0;
   File file = LittleFS.open("/mqtt_pending.json", "r");
   if (!file) return;
+  char lineBuf[512];
   while (file.available()) {
-    String line = file.readStringUntil('\n');
-    line.trim();
-    if (line.length() == 0) continue;
+    int n = file.readBytesUntil('\n', lineBuf, sizeof(lineBuf) - 1);
+    if (n == 0) continue;
+    lineBuf[n] = '\0';
     StaticJsonDocument<256> entry;
-    if (deserializeJson(entry, line) == DeserializationError::Ok) {
+    if (deserializeJson(entry, lineBuf, n) == DeserializationError::Ok) {
       int id = entry["id"] | 0;
       if (id > pendingRowIndex) pendingRowIndex = id;
     }
@@ -312,20 +312,21 @@ bool processPending(int id, bool confirm) {
   File tmpFile = LittleFS.open("/mqtt_pending_tmp.json", "w");
   if (!tmpFile) { inFile.close(); return false; }
 
-  bool   found    = false;
-  String foundData;
+  bool found = false;
+  char foundData[512] = "";
 
+  char lineBuf[512];
   while (inFile.available()) {
-    String line = inFile.readStringUntil('\n');
-    line.trim();
-    if (line.length() == 0) continue;
+    int n = inFile.readBytesUntil('\n', lineBuf, sizeof(lineBuf) - 1);
+    if (n == 0) continue;
+    lineBuf[n] = '\0';
     StaticJsonDocument<512> entry;
-    if (deserializeJson(entry, line) == DeserializationError::Ok && (int)(entry["id"] | 0) == id) {
+    if (deserializeJson(entry, lineBuf, n) == DeserializationError::Ok && (int)(entry["id"] | 0) == id) {
       found = true;
-      if (confirm) serializeJson(entry["data"], foundData);
+      if (confirm) serializeJson(entry["data"], foundData, sizeof(foundData));
       continue;
     }
-    tmpFile.println(line);
+    tmpFile.println(lineBuf);
   }
   inFile.close();
   tmpFile.close();
@@ -333,7 +334,7 @@ bool processPending(int id, bool confirm) {
   if (found) {
     LittleFS.remove("/mqtt_pending.json");
     LittleFS.rename("/mqtt_pending_tmp.json", "/mqtt_pending.json");
-    if (confirm && foundData.length() > 0) writeCheckpointFromMqtt(foundData);
+    if (confirm && foundData[0] != '\0') writeCheckpointFromMqtt(foundData);
   } else {
     LittleFS.remove("/mqtt_pending_tmp.json");
   }
@@ -343,20 +344,21 @@ bool processPending(int id, bool confirm) {
 void broadcastPendingItems(AsyncWebSocketClient* client) {
   File file = LittleFS.open("/mqtt_pending.json", "r");
   if (!file) return;
+  char lineBuf[512];
+  char outBuf[512];
   while (file.available()) {
-    String line = file.readStringUntil('\n');
-    line.trim();
-    if (line.length() == 0) continue;
+    int n = file.readBytesUntil('\n', lineBuf, sizeof(lineBuf) - 1);
+    if (n == 0) continue;
+    lineBuf[n] = '\0';
     StaticJsonDocument<512> entry;
-    if (deserializeJson(entry, line) != DeserializationError::Ok) continue;
+    if (deserializeJson(entry, lineBuf, n) != DeserializationError::Ok) continue;
     StaticJsonDocument<512> msg;
     msg["t"]         = TYPE_MQTT_PENDING;
     msg["topic"]     = entry["topic"];
     msg["data"]      = entry["data"];
     msg["pendingId"] = entry["id"];
-    String out;
-    serializeJson(msg, out);
-    client->text(out);
+    serializeJson(msg, outBuf, sizeof(outBuf));
+    client->text(outBuf);
   }
   file.close();
 }
@@ -460,11 +462,13 @@ int getLastSessionRowIndex() {
   int lastIdx = 0;
   File file = LittleFS.open("/session.json", "r");
   if (file) {
+    char lineBuf[256];
     while (file.available()) {
-      String line = file.readStringUntil('\n');
-      JsonDocument tmp;
-      DeserializationError err = deserializeJson(tmp, line);
-      if (!err) {
+      int n = file.readBytesUntil('\n', lineBuf, sizeof(lineBuf) - 1);
+      if (n == 0) continue;
+      lineBuf[n] = '\0';
+      StaticJsonDocument<128> tmp;
+      if (!deserializeJson(tmp, lineBuf, n)) {
         int idx = tmp[INDEX_FIELD] | 0;
         if (idx > lastIdx) lastIdx = idx;
       }
@@ -535,10 +539,10 @@ void broadcastTime() {
     #endif
   }
 
-  String json;
-  serializeJson(doc, json);
-  ws.cleanupClients();  // rimuove client chiusi
-  ws.textAll(json);     // 🔹 invia a tutti i client connessi
+  char buf[256];
+  serializeJson(doc, buf, sizeof(buf));
+  ws.cleanupClients();
+  ws.textAll(buf);
   //wifiTxActivity();
 }
 

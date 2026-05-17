@@ -262,10 +262,14 @@ let sortCol = 'arrival';
 
 function parseTimeMs(txt) {
   if (!txt || txt === '—' || txt.trim() === '') return Infinity;
-  txt = txt.trim().replace(/[+\-\s]/g, '');
+  txt = txt.trim().replace(/[+\s]/g, '');
+  const neg = txt.startsWith('-'); if (neg) txt = txt.slice(1);
   const parts = txt.split(':');
-  if (parts.length === 2) return parseInt(parts[0]) * 60000 + parseFloat(parts[1]) * 1000;
-  return parseFloat(txt) * 1000;
+  let ms;
+  if (parts.length === 3) ms = parseInt(parts[0]) * 3600000 + parseInt(parts[1]) * 60000 + parseFloat(parts[2]) * 1000;
+  else if (parts.length === 2) ms = parseInt(parts[0]) * 60000 + parseFloat(parts[1]) * 1000;
+  else ms = parseFloat(txt) * 1000;
+  return neg ? -ms : ms;
 }
 
 function getRowSortVal(row) {
@@ -286,14 +290,21 @@ function getRowSortVal(row) {
 function applyTableSort() {
   const tbody = document.querySelector('#event-table tbody');
   if (!tbody) return;
-  const rows = Array.from(tbody.querySelectorAll('tr:not(.diff-row)'));
+  const splitsMode = document.getElementById("toggle-splits")?.checked;
+  // In splits mode ordina le diff-row visibili; altrimenti le righe normali
+  const selector = splitsMode ? 'tr.diff-row' : 'tr:not(.diff-row)';
+  const rows = Array.from(tbody.querySelectorAll(selector));
+  // Per colonne temporali il verso naturale è crescente (tempo minore = rank migliore)
+  const naturalAsc = ['race-time', 'delta-time', 'elapsed-time', 'event-time'].includes(sortCol);
   rows.sort((a, b) => {
     const av = getRowSortVal(a);
     const bv = getRowSortVal(b);
     let cmp = typeof av === 'string' ? av.localeCompare(bv) : (av - bv);
-    return reverseOrder ? cmp : -cmp;
+    // XOR: reverseOrder inverte il verso naturale della colonna
+    return (!reverseOrder !== naturalAsc) ? cmp : -cmp;
   });
   rows.forEach(r => tbody.appendChild(r));
+  updateRankColumn();
 }
 
 function toggleColPanel() {
@@ -334,10 +345,11 @@ function saveViewPrefs() {
     penality:      document.getElementById("toggle-penality").checked,
     showDisabled:  document.getElementById("toggle-disabled-rows").checked,
     reverseOrder:  document.getElementById("toggle-reverse-order").checked,
+    showRank:      document.getElementById("toggle-rank").checked,
     showIndex:     document.getElementById("toggle-index").checked,
     showLine:      document.getElementById("toggle-line").checked,
     showLineId:    document.getElementById("toggle-lineid").checked,
-    showRaceTime:  document.getElementById("toggle-race-time").checked,
+
     showName:      document.getElementById("toggle-name")?.checked    ?? false,
     showSurname:   document.getElementById("toggle-surname")?.checked ?? false,
     showEditBtn:   document.getElementById("toggle-edit-btn").checked,
@@ -373,10 +385,11 @@ function restoreViewPrefs() {
     setChk("toggle-penality",      prefs.penality);
     setChk("toggle-disabled-rows", prefs.showDisabled);
     setChk("toggle-reverse-order", prefs.reverseOrder);
+    setChk("toggle-rank",          prefs.showRank     ?? false);
     setChk("toggle-index",         prefs.showIndex    ?? true);
     setChk("toggle-line",          prefs.showLine     ?? true);
     setChk("toggle-lineid",        prefs.showLineId   ?? true);
-    setChk("toggle-race-time",     prefs.showRaceTime ?? false);
+
     setChk("toggle-name",          prefs.showName     ?? false);
     setChk("toggle-surname",       prefs.showSurname  ?? false);
     setChk("toggle-edit-btn",      prefs.showEditBtn  ?? true);
@@ -1118,6 +1131,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-row-id", rowIndex);
 
   row.innerHTML = `
+    <td class="col-rank"></td>
     <td class="col-index">${index}</td>
     <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}" class="col-line">${lineNumber}</td>
     <td class="col-id">${lineId}</td>
@@ -1143,6 +1157,7 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   sendBtn.onclick = () => sendRow(sendBtn);
 
   tbody.appendChild(row);
+  updateRankColumn();
 
   // forza reflow (FONDAMENTALE per animazione)
   row.offsetHeight;
@@ -1265,6 +1280,7 @@ function applyLineFilter() {
   const rows = document.querySelectorAll("#event-table tbody tr");
 
   rows.forEach(row => {
+    if (row.classList.contains("diff-row")) return; // gestite da applyCompetitorSplits
     const line    = String(row.getAttribute("data-line"));
     const enabled = row.getAttribute("data-enabled") !== "0";
     const lineOk     = activeLines.includes(line);
@@ -1276,6 +1292,7 @@ function applyLineFilter() {
   recalcDeltaTimes();
   recalcElapsedTimes();
   updateVisibleColumns();
+  updateRankColumn();
 }
 
 function editRow(button) {
@@ -1742,13 +1759,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateTableCorners();
 
-    // Fix mobile: touchend su div con onclick dentro popup scrollabile
-    document.querySelectorAll('.toggle-row[onclick]').forEach(el => {
-      el.addEventListener('touchend', e => {
-        e.preventDefault();
-        el.click();
-      }, { passive: false });
-    });
+    // Long press su c1..c4 per aprire il registro competitor
+    for (let n = 1; n <= 4; n++) {
+      const el = document.getElementById(`c${n}`);
+      if (el) addLongPress(el, () => openAthleteModal(n));
+    }
 });
 
 
@@ -2006,6 +2021,21 @@ function toggleIndexColumn(show) {
   document.querySelectorAll("th.col-index-col, td.col-index").forEach(el => el.style.display = d);
 }
 
+function toggleRankColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-rank-col, td.col-rank").forEach(el => el.style.display = d);
+}
+
+function updateRankColumn() {
+  const rows = Array.from(document.querySelectorAll("#event-table tbody tr"));
+  let rank = 0;
+  rows.forEach(row => {
+    const td = row.querySelector("td.col-rank");
+    if (!td) return;
+    td.textContent = row.style.display === "none" ? "" : ++rank;
+  });
+}
+
 function toggleLineColumn(show) {
   const d = show ? "table-cell" : "none";
   document.querySelectorAll("th.col-line-col, td.col-line").forEach(el => el.style.display = d);
@@ -2065,7 +2095,8 @@ function updateVisibleColumns(){
   toggleIndexColumn(document.getElementById("toggle-index").checked);
   toggleLineColumn(document.getElementById("toggle-line").checked);
   toggleLineIdColumn(document.getElementById("toggle-lineid").checked);
-  toggleRaceTimeColumn(document.getElementById("toggle-race-time").checked);
+  toggleRaceTimeColumn(document.getElementById("toggle-splits").checked);
+  toggleRankColumn(document.getElementById("toggle-rank").checked);
   toggleNameColumn(document.getElementById("toggle-name")?.checked ?? false);
   toggleSurnameColumn(document.getElementById("toggle-surname")?.checked ?? false);
   toggleEditColumn(document.getElementById("toggle-edit-btn").checked);
@@ -2120,6 +2151,7 @@ function applyCompetitorSplits() {
         diffRow.className = "diff-row";
         diffRow.dataset.competitor = comp;
         diffRow.innerHTML = `
+          <td class="col-rank"></td>
           <td class="col-index">—</td>
           <td class="col-line">L${line1}→L${line2}</td>
           <td class="col-id">—</td>
@@ -2156,6 +2188,7 @@ function applyCompetitorSplits() {
   });
 
   updateVisibleColumns();
+  applyTableSort();   // applica l'ordinamento corrente sulle diff-row appena create
 }
 
 function clearCompetitorSplits() {
@@ -2211,6 +2244,9 @@ document
   saveViewPrefs();
 });
 
+document.getElementById("toggle-rank")
+.addEventListener("change", e => { toggleRankColumn(e.target.checked); saveViewPrefs(); });
+
 document.getElementById("toggle-index")
 .addEventListener("change", e => { toggleIndexColumn(e.target.checked); saveViewPrefs(); });
 
@@ -2222,13 +2258,11 @@ document.getElementById("toggle-lineid")
 
 document.getElementById("toggle-splits")
 .addEventListener("change", e => {
+  toggleRaceTimeColumn(e.target.checked);
   if (e.target.checked) applyCompetitorSplits();
   else clearCompetitorSplits();
   saveViewPrefs();
 });
-
-document.getElementById("toggle-race-time")
-.addEventListener("change", e => { toggleRaceTimeColumn(e.target.checked); saveViewPrefs(); });
 
 document.getElementById("toggle-name")
 .addEventListener("change", e => { toggleNameColumn(e.target.checked); saveViewPrefs(); });
@@ -2901,38 +2935,37 @@ function addLongPress(el, callback, ms = 600) {
   let moved = false;
   let startX = 0, startY = 0;
 
-  // Blocca il menu nativo Android prima che appaia
-  el.style.webkitUserSelect = "none";
   el.style.userSelect = "none";
+  el.style.webkitUserSelect = "none";
   el.style.webkitTouchCallout = "none";
 
-  el.addEventListener("touchstart", e => {
-    e.preventDefault(); // blocca context menu nativo Android
+  function startTimer(x, y) {
     moved = false;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    timer = setTimeout(() => {
-      timer = null;
-      if (!moved) callback(e);
-    }, ms);
-  }, { passive: false });
+    startX = x; startY = y;
+    timer = setTimeout(() => { timer = null; if (!moved) callback(); }, ms);
+  }
+  function cancelTimer() { if (timer) { clearTimeout(timer); timer = null; } }
+  function checkMove(x, y) {
+    const dx = x - startX, dy = y - startY;
+    if (dx * dx + dy * dy > 100) { moved = true; cancelTimer(); }
+  }
 
-  el.addEventListener("touchmove", e => {
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
-    if (dx * dx + dy * dy > 100) moved = true;
-  }, { passive: true });
+  // Touch
+  el.addEventListener("touchstart",  e => startTimer(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  el.addEventListener("touchmove",   e => checkMove(e.touches[0].clientX, e.touches[0].clientY),  { passive: true });
+  el.addEventListener("touchend",    cancelTimer);
+  el.addEventListener("touchcancel", cancelTimer);
 
-  el.addEventListener("touchend",    () => { if (timer) { clearTimeout(timer); timer = null; } });
-  el.addEventListener("touchcancel", () => { if (timer) { clearTimeout(timer); timer = null; } });
+  // Mouse
+  el.addEventListener("mousedown",  e => { if (e.button === 0) startTimer(e.clientX, e.clientY); });
+  el.addEventListener("mousemove",  e => checkMove(e.clientX, e.clientY));
+  el.addEventListener("mouseup",    cancelTimer);
+  el.addEventListener("mouseleave", cancelTimer);
+
   el.addEventListener("contextmenu", e => e.preventDefault());
 }
 
-// Attach long press to c1..c4
-for (let n = 1; n <= 4; n++) {
-  const el = document.getElementById(`c${n}`);
-  if (el) addLongPress(el, () => openAthleteModal(n));
-}
+// (registrazione long press spostata in DOMContentLoaded)
 
 // ── Modal open / close ──
 function openAthleteModal(lineNumber) {
@@ -2956,11 +2989,21 @@ function closeAthleteModal() {
 
 // ── Tab switching ──
 function switchAthleteTab(tab) {
-  document.querySelectorAll(".tab-btn").forEach(btn =>
+  const overlay = document.getElementById("athleteOverlay");
+  overlay.querySelectorAll(".tab-btn").forEach(btn =>
     btn.classList.toggle("active", btn.dataset.tab === tab));
-  document.querySelectorAll(".tab-content").forEach(c =>
+  overlay.querySelectorAll(".tab-content").forEach(c =>
     c.style.display = "none");
   document.getElementById(`tab-${tab}`).style.display = "";
+}
+
+function switchSettingsTab(tab) {
+  const overlay = document.getElementById("tableSettingsOverlay");
+  overlay.querySelectorAll(".tab-btn").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.tab === tab));
+  overlay.querySelectorAll(".tab-content").forEach(c =>
+    c.style.display = "none");
+  document.getElementById(`stab-${tab}`).style.display = "";
 }
 
 // ── Athlete list rendering ──

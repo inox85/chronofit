@@ -534,6 +534,10 @@ input:checked + .slider:before {
   gap: 8px;
 }
 
+#tableSettingsOverlay .toggle-row {
+  margin: 5px 0;
+}
+
 .toggle-row span {
   text-align: left;
   font-weight: bold;

@@ -28,6 +28,12 @@ static String mqttBrokerHost;
 static int    mqttBrokerPort;
 static String mqttBrokerUser;
 static String mqttBrokerPass;
+static char   mqttPublishTopic[128];
+
+static void buildPublishTopic() {
+    snprintf(mqttPublishTopic, sizeof(mqttPublishTopic), "%s/%s/%s/%s/checkpoint",
+             mqttTopicPrefix.c_str(), mqttEventName.c_str(), stationName.c_str(), chipIdStr.c_str());
+}
 
 static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     String msg;
@@ -37,7 +43,7 @@ static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     int pendingId = -1;
     if (mqttAcquireRow) {
         if (mqttImmediateMode) {
-            writeCheckpointFromMqtt(msg);
+            writeCheckpointFromMqtt(msg.c_str());
         } else {
             pendingId = appendToPending(String(topic), msg);
         }
@@ -131,6 +137,7 @@ void mqttSetup() {
     wifiClient.setTimeout(1);
     mqtt.setServer(mqttBrokerHost.c_str(), mqttBrokerPort);
     mqtt.setCallback(onMqttMessage);
+    buildPublishTopic();
     xTaskCreatePinnedToCore(mqttTask, "mqtt", 4096, nullptr, 1, nullptr, 1);
 }
 
@@ -138,6 +145,7 @@ void mqttUpdateSettings(const String& newSubTopic, const String& newEventName, c
     mqttSubTopic    = newSubTopic;
     mqttEventName   = newEventName;
     mqttTopicPrefix = newPrefix.isEmpty() ? "chronofit" : newPrefix;
+    buildPublishTopic();
     // Forza riconnessione per aggiornare la subscribe
     mqtt.disconnect();
     mqttConnected = false;
@@ -158,13 +166,12 @@ void mqttUpdateBroker(const String& host, int port, const String& user, const St
                   mqttBrokerUser.isEmpty() ? "(nessuno)" : mqttBrokerUser.c_str());
 }
 
-void mqttPublishCheckpoint(const String& jsonPayload) {
+void mqttPublishCheckpoint(const char* jsonPayload) {
     if (mqttQueue == nullptr) return;
 
-    String topic = mqttTopicPrefix + "/" + mqttEventName + "/" + stationName + "/" + chipIdStr + "/checkpoint";
     MqttMessage msg;
-    topic.toCharArray(msg.topic, sizeof(msg.topic));
-    jsonPayload.toCharArray(msg.payload, sizeof(msg.payload));
+    strlcpy(msg.topic,   mqttPublishTopic, sizeof(msg.topic));
+    strlcpy(msg.payload, jsonPayload,      sizeof(msg.payload));
 
     if (xQueueSend(mqttQueue, &msg, 0) != pdTRUE) {
         Serial.println("[MQTT] Coda piena, messaggio scartato");

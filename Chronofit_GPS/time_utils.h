@@ -51,7 +51,7 @@ void updateCalibrationFactor(double driftPPM);
 
 void setExtimatedDriftParams(int us);
 
-void writeCheckpointFromMqtt(const String& jsonPayload);
+void writeCheckpointFromMqtt(const char* jsonPayload);
 
 int  appendToPending(const String& topic, const String& jsonPayload);
 bool processPending(int id, bool confirm);

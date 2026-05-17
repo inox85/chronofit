@@ -224,16 +224,25 @@
 
   <!-- Overlay e popup per Edit Time -->
   <div id="tableSettingsOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup">
+    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:85vh;">
 
-
-    <div class="toggle-row" style="cursor:pointer;" onclick="toggleSortPanel()">
-        <span>↕ Row sort rules</span>
-        <span id="sort-arrow" style="font-size:12px; color:#888;">▼</span>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="sort"    onclick="switchSettingsTab('sort')">↕ Sort</button>
+        <button class="tab-btn"        data-tab="columns" onclick="switchSettingsTab('columns')">📊 Columns</button>
+        <button class="tab-btn"        data-tab="rows"    onclick="switchSettingsTab('rows')">☰ Rows</button>
       </div>
-      <div id="sort-panel" style="display:none; margin-top:10px;">
+
+      <!-- Tab: Sort -->
+      <div id="stab-sort" class="tab-content" style="overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span>Show rank column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-rank">
+            <span class="slider"></span>
+          </label>
+        </div>
         <div class="input-row">
-          <label for="sort-col" style="font-size:20px;">Ordina per</label>
+          <label for="sort-col" style="font-size:20px;">Order by</label>
           <select id="sort-col" onchange="onSortChange()">
             <option value="arrival">Arrival(default)</option>
             <option value="line">Line</option>
@@ -246,171 +255,130 @@
             <option value="elapsed-time">Elapsed</option>
           </select>
         </div>
-
         <div class="toggle-row">
           <span>Reverse row order</span>
-            <label class="switch">
+          <label class="switch">
             <input type="checkbox" id="toggle-reverse-order">
-          <span class="slider"></span>
-        </label>
-
-      </div>
-      </div>
-      
-
-      <hr style="border-color:#eee; margin:10px 0;">
-      
-      <div class="toggle-row" style="cursor:pointer;" onclick="toggleColPanel()">
-        <span>📊 Visible columns</span>
-        <span id="col-arrow" style="font-size:12px;color:#888;">▼</span>
-      </div>
-      <div id="col-panel">
-
-      <div class="toggle-row">
-        <span>Show index column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-index" checked>
-          <span class="slider"></span>
-        </label>
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
 
-      <div class="toggle-row">
-        <span>Show line column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-line" checked>
-          <span class="slider"></span>
-        </label>
+      <!-- Tab: Columns -->
+      <div id="stab-columns" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span>Show index column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-index" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show line column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-line" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show line ID column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-lineid" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show name column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-name">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show surname column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-surname">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show event time column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-timestamp" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show incremental Δ column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-delta-time" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show elapsed time column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-elapsed-time">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show penality column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-penality">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show edit button</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-edit-btn" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show send button</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-send-btn" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Time precision decimals</span>
+          <select id="time-precision" onchange="onTimePrecisionChange(this.value)">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+          </select>
+        </div>
       </div>
 
-      <div class="toggle-row">
-        <span>Show line ID column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-lineid" checked>
-          <span class="slider"></span>
-        </label>
+      <!-- Tab: Rows -->
+      <div id="stab-rows" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span>Show sync test rows</span>
+          <label class="switch">
+            <input type="checkbox" class="toggle-btn" data-line="5">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Show disabled line rows</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-disabled-rows" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Competitor splits mode</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-splits">
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
-
-      <div class="toggle-row">
-        <span>Show name column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-name">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show surname column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-surname">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show event time column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-timestamp" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show race time column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-race-time">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show incremental Δ column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-delta-time" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show elapsed time column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-elapsed-time">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show penality column</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-penality">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show edit button</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-edit-btn" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show send button</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-send-btn" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Time precision decimals</span>
-        <select id="time-precision" onchange="onTimePrecisionChange(this.value)">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3" selected>3</option>
-        </select>
-      </div>
-
-      </div><!-- /col-panel -->
-
-      <hr class="divider">
-
-      <div class="toggle-row" style="cursor:pointer;" onclick="toggleRowPanel()">
-        <span>☰ Visible rows</span>
-        <span id="row-arrow" style="font-size:12px;color:#888;">▼</span>
-      </div>
-      <div id="row-panel">
-
-      <div class="toggle-row">
-        <span>Show sync test rows</span>
-        <label class="switch">
-          <input type="checkbox" class="toggle-btn" data-line="5">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span>Show disabled line rows</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-disabled-rows" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-
-
-      <div class="toggle-row">
-        <span>Competitor splits mode</span>
-        <label class="switch">
-          <input type="checkbox" id="toggle-splits">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      </div><!-- /row-panel -->
 
       <div class="button-row">
-        <!--<button class="big-button">Clear session</button>-->
         <button class="big-button" id="closeTablePopup">Close</button>
       </div>
 
@@ -821,6 +789,7 @@
       <table id="event-table">
         <thead>
           <tr>
+            <th class="col-rank-col">🏅</th>
             <th class="col-index-col">#</th>
             <th class="col-line-col">Line</th>
             <th class="col-id-col">ID</th>
