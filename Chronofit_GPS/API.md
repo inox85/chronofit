@@ -1,6 +1,6 @@
 # Chronofit GPS — API Reference
 
-Tutte le route sono esposte dal server HTTP AsyncWebServer sull'ESP32, raggiungibili sia via rete AP (`192.168.4.1`) che via STA (IP assegnato dal router).
+Tutte le route sono esposte dal server HTTP AsyncWebServer sull'ESP32, raggiungibili sia via rete AP (`192.168.10.1`) che via STA (IP assegnato dal router).
 
 ---
 
