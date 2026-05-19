@@ -48,7 +48,7 @@
             this.cbPorts.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cbPorts.FormattingEnabled = true;
             this.cbPorts.Location = new System.Drawing.Point(271, 4);
-            this.cbPorts.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cbPorts.Margin = new System.Windows.Forms.Padding(4);
             this.cbPorts.Name = "cbPorts";
             this.cbPorts.Size = new System.Drawing.Size(860, 44);
             this.cbPorts.TabIndex = 3;
@@ -72,7 +72,7 @@
             this.btnDownload.Dock = System.Windows.Forms.DockStyle.Fill;
             this.btnDownload.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnDownload.Location = new System.Drawing.Point(4, 4);
-            this.btnDownload.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnDownload.Margin = new System.Windows.Forms.Padding(4);
             this.btnDownload.Name = "btnDownload";
             this.btnDownload.Size = new System.Drawing.Size(1135, 115);
             this.btnDownload.TabIndex = 1;
@@ -98,7 +98,7 @@
             this.btnFlash.Enabled = false;
             this.btnFlash.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnFlash.Location = new System.Drawing.Point(4, 263);
-            this.btnFlash.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnFlash.Margin = new System.Windows.Forms.Padding(4);
             this.btnFlash.Name = "btnFlash";
             this.btnFlash.Size = new System.Drawing.Size(1135, 115);
             this.btnFlash.TabIndex = 7;
@@ -118,7 +118,7 @@
             this.tableLayoutPanel1.Controls.Add(this.tbLog, 0, 4);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 5;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 123F));
@@ -138,7 +138,7 @@
             this.tableLayoutPanel2.Controls.Add(this.cbPorts, 1, 0);
             this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel2.Location = new System.Drawing.Point(4, 201);
-            this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
             this.tableLayoutPanel2.RowCount = 1;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -150,7 +150,7 @@
             this.tbLog.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tbLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tbLog.Location = new System.Drawing.Point(4, 386);
-            this.tbLog.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tbLog.Margin = new System.Windows.Forms.Padding(4);
             this.tbLog.Multiline = true;
             this.tbLog.Name = "tbLog";
             this.tbLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
@@ -167,7 +167,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1143, 1042);
             this.Controls.Add(this.tableLayoutPanel1);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmMain";
             this.Text = "Firmware updater";
             this.Load += new System.EventHandler(this.frmMain_Load);

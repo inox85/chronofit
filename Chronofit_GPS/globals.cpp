@@ -87,6 +87,9 @@ unsigned long lastBroadcast = 0;
 
 int printEnabled = 1;
 
+bool serialDebug    = false;  // stampa su Serial tutto ciò che arriva da ServicesSerial (default OFF)
+bool nmeaDeltaDebug = false;  // stampa il delta (µs) tra sentence NMEA consecutive (default OFF)
+
 int temp_hh = 0;
 int temp_mm = 0;
 int temp_ss = 0;

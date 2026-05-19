@@ -32,7 +32,7 @@ set BUILD_MERGED=build\esp32.esp32.esp32\Chronofit_GPS.ino.merged.bin
 set BUILD_OTADATA=build\esp32.esp32.esp32\boot_app0.bin
 set BUILD_FS=build\esp32.esp32.esp32\fs.bin
 
-set SIZE=0x1E0000
+set SIZE=0xBE0000
 
 @REM REM ==================================================
 
@@ -57,6 +57,8 @@ echo.
 echo ================================================
 echo  Generazione LittleFS
 echo ================================================
+
+python compress_assets.py
 
 REM Controllo mklittlefs
 where %MKLITTLEFS% >nul 2>&1

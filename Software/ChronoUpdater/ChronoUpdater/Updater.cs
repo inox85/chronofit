@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Configuration;
+using System.Windows.Forms;
 
 namespace ChronoUpdater
 {
@@ -70,6 +71,8 @@ namespace ChronoUpdater
 
         public static Task<bool> FlashMergedAndFS(string comport)
         {
+            Log("INIZIO PROGRAMMAZIONE MERGED E FS... (CANCELLAZIONE TOTALE DI SETTINGS E CALIBRAZIONI)");
+
             return Task.Run(() =>
             {
                 string mergedPath = Path.Combine(AppConstants.UpdateFiles, "merged.bin");
@@ -81,12 +84,18 @@ namespace ChronoUpdater
                 string mergedArgs = $"--chip esp32 --port {comport} --baud 921600 " +
                               $"write_flash 0x0 \"{mergedPath}\"";
 
+                Log("PROGRAMMAZIONE MERGED...");
+
                 bool mergedSuccess = RunEspTool(mergedArgs);
 
                 string fsArgs = $"--chip esp32 --port {comport} --baud 921600 " +
-                              $"write_flash 0x210000 \"{fsPath}\"";
+                              $"write_flash 0x420000 \"{fsPath}\"";
+
+                Log("PROGRAMMAZIONE FS...");
 
                 bool fsSucess = RunEspTool(fsArgs);
+
+                MessageBox.Show("Cancellazione e programmazione terminate!");
 
                 return mergedSuccess && fsSucess;
             });
@@ -94,6 +103,8 @@ namespace ChronoUpdater
 
         public static Task<bool> FlashAppAndFS(string comport)
         {
+            Log("INIZIO PROGRAMMAZIONE APP E FS...");
+
             return Task.Run(() =>
             {
                 string appPath = Path.Combine(AppConstants.UpdateFiles, "fw.bin");
@@ -102,15 +113,21 @@ namespace ChronoUpdater
                 if (!File.Exists(appPath)) { Log("App file non trovato!"); return false; }
                 if (!File.Exists(fsPath)) { Log("Filesystem non trovato!"); return false; }
 
+                Log("PROGRAMMAZIONE APP...");
+
                 string appArgs = $"--chip esp32 --port {comport} --baud 921600 " +
                               $"write_flash 0x10000 \"{appPath}\"";
 
                 bool appSuccess = RunEspTool(appArgs);
 
+                Log("PROGRAMMAZIONE FS...");
+
                 string fsArgs = $"--chip esp32 --port {comport} --baud 921600 " +
-                              $"write_flash 0x210000 \"{fsPath}\"";
+                              $"write_flash 0x420000 \"{fsPath}\"";
 
                 bool fsSucess = RunEspTool(fsArgs);
+
+                MessageBox.Show("Programmazione terminata!");
 
                 return appSuccess && fsSucess;
             });

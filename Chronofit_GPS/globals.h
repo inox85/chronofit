@@ -88,6 +88,8 @@ extern volatile uint32_t ppsCounter;
 extern unsigned long lastBroadcast;
 
 extern int printEnabled;
+extern bool serialDebug;
+extern bool nmeaDeltaDebug;
 
 extern int temp_hh;
 extern int temp_mm;

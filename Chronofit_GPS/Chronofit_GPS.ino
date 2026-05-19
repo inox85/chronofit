@@ -378,8 +378,16 @@ void loop() {
   if (localPpsTriggered) {
     lastPPSDetected = thisPpsUs;
 
+    if (nmeaDeltaDebug) {
+      if (lastNmeaValid > 0 && thisPpsUs >= lastNmeaValid) {
+        Serial.printf("[PPS-NMEA delta] %llu µs  (%.3f ms)  validNmea=%d  timeUpdated=%d\n",
+          delta, delta / 1000.0f, validNmea, gps.time.isUpdated());
+      } else {
+        Serial.printf("[PPS-NMEA delta] N/A — nessun NMEA valido ricevuto\n");
+      }
+    }
     // Sincronizzazione iniziale — richiede NMEA fresco
-    if ((delta >= 300000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
+    if ((delta >= 200000 && delta <= 700000) && validNmea && gps.time.isUpdated() && syncMode == MODE_SYNC_GPS) {
       validNmea = false;
 
       if (syncStatus == SYNC_WAIT_GPS || syncStatus == SYNC_FIRST_GPS_SYNC) {
@@ -529,6 +537,7 @@ bool processServicesSerial() {
 
   while (ServicesSerial.available()) {
     char c = ServicesSerial.read();
+    
 
     if (c == '$') {
       // Inizio nuova sentence
@@ -541,6 +550,7 @@ bool processServicesSerial() {
         nmeaBuffer[nmeaLen++] = c;
       } else {
         // Sentenza troppo lunga: scarta e attendi la prossima
+        if (serialDebug) Serial.println("[NMEA] WARN: sentence too long, discarded");
         inSentence = false;
         nmeaLen = 0;
       }
@@ -549,6 +559,11 @@ bool processServicesSerial() {
         // Sentence completa
         nmeaBuffer[nmeaLen] = '\0';
         inSentence = false;
+
+        if (serialDebug) {
+          Serial.print(isUsefulSentence(nmeaBuffer) ? "[NMEA] " : "[NMEA][skip] ");
+          Serial.print(nmeaBuffer);
+        }
 
         if (isUsefulSentence(nmeaBuffer)) {
           // Passa solo RMC e GGA alla libreria

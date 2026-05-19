@@ -176,7 +176,31 @@ namespace ChronoUpdater
             btnFlash.Enabled = true;
 
             createFlashMenu();
+
+            ContextMenuStrip menu = new ContextMenuStrip();
+
+            menu.Items.Add("Prima programmazone (cancellazione totale)", null, First_prog);
+            //menu.Items.Add("Salva", null, Salva_Click);
+            //menu.Items.Add(new ToolStripSeparator());
+            //menu.Items.Add("Esci", null, Esci_Click);
+
+            btnFlash.ContextMenuStrip = menu;
         }
+
+        private void First_prog(object sender, EventArgs e)
+        {
+            beginEraseAndFlash(cbPorts.SelectedValue.ToString());
+        }
+
+        //private void Salva_Click(object sender, EventArgs e)
+        //{
+        //    MessageBox.Show("Salva");
+        //}
+
+        //private void Esci_Click(object sender, EventArgs e)
+        //{
+        //    Application.Exit();
+        //}
 
 
         private async void btnFlash_Click(object sender, EventArgs e)
@@ -184,8 +208,20 @@ namespace ChronoUpdater
             beginFlash(cbPorts.SelectedValue.ToString());
         }
 
-        async void beginFlash(string port)
+
+        async void beginEraseAndFlash(string port)
         {
+            if (cbPorts.InvokeRequired)
+            {
+                cbPorts.Invoke(new Action<string>(beginEraseAndFlash), port);
+                return;
+            }
+            await Task.Run(() => Updater.FlashMergedAndFS(port));
+            //await Task.Run(() => Updater.FlashMergedAndFS(port));
+        }
+
+        async void beginFlash(string port)
+        {   
             if (cbPorts.InvokeRequired)
             {
                 cbPorts.Invoke(new Action<string>(beginFlash), port);

@@ -497,6 +497,28 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     }
   });
 
+  server.on("/setNmeaDeltaDebug", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
+    if (request->hasParam("enabled")) {
+      nmeaDeltaDebug = request->getParam("enabled")->value().toInt() != 0;
+    } else {
+      nmeaDeltaDebug = !nmeaDeltaDebug;  // toggle se nessun parametro
+    }
+    Serial.printf("[nmeaDeltaDebug] %s\n", nmeaDeltaDebug ? "ON" : "OFF");
+    request->send(200, "text/plain", nmeaDeltaDebug ? "nmeaDeltaDebug ON" : "nmeaDeltaDebug OFF");
+  });
+
+  server.on("/setSerialDebug", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
+    if (request->hasParam("enabled")) {
+      serialDebug = request->getParam("enabled")->value().toInt() != 0;
+    } else {
+      serialDebug = !serialDebug;  // toggle se nessun parametro
+    }
+    Serial.printf("[serialDebug] %s\n", serialDebug ? "ON" : "OFF");
+    request->send(200, "text/plain", serialDebug ? "serialDebug ON" : "serialDebug OFF");
+  });
+
   server.on("/setOffset", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!isAuthorized(request)) return;
     if (request->hasParam("offset")) {
