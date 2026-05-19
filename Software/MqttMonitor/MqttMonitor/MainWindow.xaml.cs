@@ -1,7 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
+using Microsoft.Win32;
 using MqttMonitor.Models;
 using MqttMonitor.Services;
 using Newtonsoft.Json;
@@ -148,7 +150,6 @@ public partial class MainWindow : Window
         try
         {
             var parsed = JsonConvert.DeserializeObject(msg.Payload);
-
         }
         catch
         {
@@ -169,5 +170,40 @@ public partial class MainWindow : Window
     {
         _mqtt.Dispose();
         base.OnClosed(e);
+    }
+
+    private void BtnExport_Click(object sender, RoutedEventArgs e)
+    {
+        SaveFileDialog saveFileDialog = new SaveFileDialog
+        {
+            Filter = "CSV (*.csv)|*.csv|File di testo (*.txt)|*.txt|Tutti i file (*.*)|*.*",
+            DefaultExt = "csv",
+            FileName = "output.csv",
+            InitialDirectory = @"C:\",
+            Title = "Salva file",
+            OverwritePrompt = true,
+            AddExtension = true
+        };
+
+        bool? result = saveFileDialog.ShowDialog();
+
+        if (result == true)
+        {
+            using StreamWriter sw = new StreamWriter(
+                new FileStream(saveFileDialog.FileName,
+                FileMode.Create,
+                FileAccess.Write));
+
+            // Header CSV
+            sw.WriteLine("ID;LineNumber;LineID;TimeStamp");
+
+            foreach (var item in _messages)
+            {
+                string line =
+                    $"{item.ID};{item.LineNumber};{item.LineID};{item.TimeStamp}";
+
+                sw.WriteLine(line);
+            }
+        }
     }
 }

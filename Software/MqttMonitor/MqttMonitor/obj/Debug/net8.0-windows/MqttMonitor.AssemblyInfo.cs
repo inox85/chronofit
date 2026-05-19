@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MqttMonitor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d46759c41678636c7606e0ef819863affe8cd92a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8d0c02aeb206c5ef2a8727b172333b21ae76eb8b")]
 [assembly: System.Reflection.AssemblyProductAttribute("MqttMonitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MqttMonitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

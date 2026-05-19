@@ -12,8 +12,9 @@
       }
     ],
     "additionalProbingPaths": [
-      "C:\\Users\\inox8\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\inox8\\.nuget\\packages"
+      "C:\\Users\\innocenti\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\innocenti\\.nuget\\packages",
+      "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
     ],
     "configProperties": {
       "CSWINRT_USE_WINDOWS_UI_XAML_PROJECTIONS": false,
