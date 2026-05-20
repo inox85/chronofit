@@ -375,9 +375,100 @@ pre {
   height: 40px;
 }
 
+/* ── Navbar right group ───────────────────────────────────────────────────── */
+.navbar-right {
+  margin-left: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Discipline navbar button ─────────────────────────────────────────────── */
+.navbar-icon-btn {
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 3px;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+}
+
+#discipline-nav-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.navbar-icon-btn:hover  { opacity: 1; border-color: rgba(255,255,255,0.4); }
+.navbar-icon-btn.active { opacity: 1; border-color: #fff; }
+
+/* ── Discipline selection overlay ─────────────────────────────────────────── */
+.discipline-popup {
+  background: #1c1c1e;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  padding: 22px 20px 18px;
+  width: 92%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease;
+}
+
+.discipline-popup h2 {
+  color: #f0f0f0;
+  font-family: 'Nunito';
+  text-align: center;
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.discipline-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.discipline-card {
+  background: #2c2c2e;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 14px 8px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s, border-color 0.15s;
+  width: auto;
+}
+
+.disc-emoji {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.disc-label {
+  color: #bbb;
+  font-family: 'Nunito';
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.discipline-card:hover { background: #3a3a3c; }
+.discipline-card.active { border-color: #4a9eff; background: #1a2d44; }
+.discipline-card.active .disc-label { color: #fff; }
+
 /* ── Language switcher ────────────────────────────────────────────────────── */
 #lang-switcher {
-  margin-left: auto;
   margin-right: 30px;
   display: flex;
   flex-direction: row;

@@ -165,6 +165,9 @@ const TRANSLATIONS = {
     'fullscreen.title':    'Fullscreen Mode',
     'fullscreen.question': 'Would you like to enable fullscreen mode for a better experience?',
 
+    // ── Discipline overlay ────────────────────────────────────────────────────
+    'discipline.title': 'Select discipline',
+
     // ── About overlay ─────────────────────────────────────────────────────────
     'about.manual':   '📄 Manual',
     'about.wifi_fix': '🖥️ WiFi fix tool',
@@ -367,6 +370,9 @@ const TRANSLATIONS = {
     // ── Fullscreen overlay ────────────────────────────────────────────────────
     'fullscreen.title':    'Modalità schermo intero',
     'fullscreen.question': 'Vuoi abilitare la modalità schermo intero per una migliore esperienza?',
+
+    // ── Discipline overlay ────────────────────────────────────────────────────
+    'discipline.title': 'Seleziona disciplina',
 
     // ── About overlay ─────────────────────────────────────────────────────────
     'about.manual':   '📄 Manuale',

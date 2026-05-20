@@ -432,6 +432,86 @@ function restoreViewPrefs() {
   }
 }
 
+// ── Discipline presets ────────────────────────────────────────────────────────
+
+const DISCIPLINE_KEY = 'chronofit_discipline';
+let activeDisciplineId = localStorage.getItem(DISCIPLINE_KEY) || 'generic';
+
+function updateDisciplineNavBtn() {
+  const disc = DISCIPLINES.find(d => d.id === activeDisciplineId) ?? DISCIPLINES[0];
+  const btn  = document.getElementById('discipline-btn');
+  if (btn && disc) btn.dataset.emoji = disc.emoji;
+  const span = document.getElementById('discipline-nav-emoji');
+  if (span && disc) span.textContent = disc.emoji;
+}
+
+function applyDisciplinePreset(prefs) {
+  const setChk = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.checked = val; };
+  setChk("toggle-timestamp",     prefs.timestamp);
+  setChk("toggle-delta-time",    prefs.deltaTime);
+  setChk("toggle-elapsed-time",  prefs.elapsedTime);
+  setChk("toggle-penality",      prefs.penality);
+  setChk("toggle-disabled-rows", prefs.showDisabled);
+  setChk("toggle-reverse-order", prefs.reverseOrder);
+  setChk("toggle-rank",          prefs.showRank   ?? false);
+  setChk("toggle-index",         prefs.showIndex  ?? true);
+  setChk("toggle-line",          prefs.showLine   ?? true);
+  setChk("toggle-lineid",        prefs.showLineId ?? true);
+  setChk("toggle-name",          prefs.showName   ?? false);
+  setChk("toggle-surname",       prefs.showSurname ?? false);
+  setChk("toggle-edit-btn",      prefs.showEditBtn ?? true);
+  setChk("toggle-send-btn",      prefs.showSendBtn ?? true);
+  setChk("toggle-splits",        prefs.splitsMode  ?? false);
+  if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
+  if (prefs.timePrecision !== undefined) {
+    const val = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
+    timePrecision = val;
+    document.getElementById("time-precision").value = val;
+  }
+  if (prefs.sortCol) {
+    sortCol = prefs.sortCol;
+    const el = document.getElementById('sort-col');
+    if (el) el.value = sortCol;
+  }
+  updateVisibleColumns();
+  if (prefs.splitsMode) applyCompetitorSplits(); else { clearCompetitorSplits(); applyLineFilter(); }
+  saveViewPrefs();
+}
+
+function renderDisciplineCards() {
+  const grid = document.getElementById('discipline-grid');
+  if (!grid) return;
+  const lang = currentLang();
+  grid.innerHTML = DISCIPLINES.map(d => `
+    <button class="discipline-card${d.id === activeDisciplineId ? ' active' : ''}"
+            onclick="selectDiscipline('${d.id}')">
+      <span class="disc-emoji">${d.emoji}</span>
+      <span class="disc-label">${d.label[lang] ?? d.label.en}</span>
+    </button>
+  `).join('');
+}
+
+function openDisciplineOverlay() {
+  renderDisciplineCards();
+  document.getElementById('disciplineOverlay').style.display = 'flex';
+}
+
+function closeDisciplineOverlay() {
+  document.getElementById('disciplineOverlay').style.display = 'none';
+}
+
+function selectDiscipline(id) {
+  const disc = DISCIPLINES.find(d => d.id === id);
+  if (!disc) return;
+  activeDisciplineId = id;
+  localStorage.setItem(DISCIPLINE_KEY, id);
+  applyDisciplinePreset(disc.prefs);
+  updateDisciplineNavBtn();
+  // refresh active highlight without closing
+  renderDisciplineCards();
+  closeDisciplineOverlay();
+}
+
 // ======= FINE LOCALSTORAGE =======
 
 function updateParams() {
@@ -1750,6 +1830,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Ripristino preferenze visualizzazione...");
     restoreViewPrefs();
+    updateDisciplineNavBtn();
 
     updateTableCorners();
 

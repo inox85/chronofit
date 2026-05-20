@@ -11,6 +11,7 @@
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/manifest.json">
   <script src="/i18n.js"></script>
+  <script src="/disciplines.js"></script>
 </head>
 <body>
 
@@ -633,15 +634,31 @@
     </div>
   </div>
 
+  <!-- Discipline selection overlay -->
+  <div id="disciplineOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeDisciplineOverlay()">
+    <div class="discipline-popup">
+      <h2 data-i18n="discipline.title">Select discipline</h2>
+      <div id="discipline-grid" class="discipline-grid"></div>
+      <div class="button-row" style="justify-content:center; margin-top:8px;">
+        <button class="big-button" data-i18n="btn.close" onclick="closeDisciplineOverlay()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div class="navbar">
     <img src="/logo.png" alt="Logo" style="cursor:pointer;" onclick="document.getElementById('aboutOverlay').style.display='flex'">
-    <div id="lang-switcher">
-      <button class="lang-flag" data-lang="en" onclick="setLanguage('en')" title="English">
-        <img src="/gb.webp" alt="English">
+    <div class="navbar-right">
+      <button id="discipline-btn" class="navbar-icon-btn" onclick="openDisciplineOverlay()" title="Select discipline">
+        <span id="discipline-nav-emoji">⏱️</span>
       </button>
-      <button class="lang-flag" data-lang="it" onclick="setLanguage('it')" title="Italiano">
-        <img src="/it.webp" alt="Italiano">
-      </button>
+      <div id="lang-switcher">
+        <button class="lang-flag" data-lang="en" onclick="setLanguage('en')" title="English">
+          <img src="/gb.webp" alt="English">
+        </button>
+        <button class="lang-flag" data-lang="it" onclick="setLanguage('it')" title="Italiano">
+          <img src="/it.webp" alt="Italiano">
+        </button>
+      </div>
     </div>
   </div>
   

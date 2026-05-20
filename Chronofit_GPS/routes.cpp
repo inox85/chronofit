@@ -480,6 +480,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     request->send(r);
   });
 
+  server.on("/disciplines.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    serveGzipped(request, "/disciplines.js", "application/javascript");
+  });
+
   server.on("/admin", HTTP_GET, [](AsyncWebServerRequest *request){
     serveGzipped(request, "/admin.html", "text/html");
   });
