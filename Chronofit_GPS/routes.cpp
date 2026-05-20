@@ -1035,20 +1035,21 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     for (size_t i = 0; i < len; i++) body += (char)data[i];
     debug("Ricevuti nuovi settings: " + body);
 
-    StaticJsonDocument<128> doc;
+    StaticJsonDocument<256> doc;
     deserializeJson(doc, body);
     int line = doc["l"].as<int>();
     int idx = line - 1;
-    lineIds[idx]     = doc["ld"].as<String>();
     competitors[idx] = doc["c"].as<int>();
     delays[idx]      = doc["d"].as<int>();
     lineEnabled[idx] = doc["e"].as<int>();
+    if (doc.containsKey("t1")) lineDevice[idx] = doc["t1"].as<int>();
+    if (doc.containsKey("t2")) lineMode[idx]   = doc["t2"].as<int>();
 
     broadcastLineUpdate(idx);
 
     #ifdef DEBUG
-    Serial.printf("Ricevuti: %d, %s, %d, %d, %d\n",
-                    line, lineIds[idx].c_str(), competitors[idx], delays[idx], lineEnabled[idx]);
+    Serial.printf("Ricevuti: %d, %d, %d, %d\n",
+                    line, competitors[idx], delays[idx], lineEnabled[idx]);
     #endif
     // E qui elabori o invii via seriale, BLE, ecc.
     request->send(200, "text/plain", "Saved sucessfully");
@@ -1066,10 +1067,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       return;
     }
     int idx = line - 1;
-    if (request->hasParam("ld")) lineIds[idx]     = request->getParam("ld")->value();
     if (request->hasParam("c"))  competitors[idx] = request->getParam("c")->value().toInt();
     if (request->hasParam("d"))  delays[idx]      = request->getParam("d")->value().toInt();
     if (request->hasParam("e"))  lineEnabled[idx] = request->getParam("e")->value().toInt();
+    if (request->hasParam("t1")) lineDevice[idx]  = request->getParam("t1")->value().toInt();
+    if (request->hasParam("t2")) lineMode[idx]    = request->getParam("t2")->value().toInt();
 
     broadcastLineUpdate(idx);
     request->send(200, "text/plain", "Saved successfully");
@@ -1087,7 +1089,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     deserializeJson(doc, body);
     int lineNumber = doc["lineNumber"];
     int id  = doc["index"];
-    String lineId = doc["lineId"];
     int competitor = doc["competitor"];
     int hour = doc["hour"];
     int minute = doc["minute"];
@@ -1095,21 +1096,20 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     int millis = doc["millis"];
 
     if(printEnabled){
-      printFormatted(id, lineId, competitor, hour, minute, second, millis, 1);
+      printFormatted(id, String(lineNumber), competitor, hour, minute, second, millis, 1);
     }
 
     char buffer[40];
 
-    sprintf(buffer, "%03d-%05d-%02d%02d%02d%03d-000-000", lineId, competitor, hour, minute, second, millis);
+    sprintf(buffer, "%03d-%05d-%02d%02d%02d%03d-000-000", lineNumber, competitor, hour, minute, second, millis);
 
     String timeString = String(buffer);
 
-    Serial.println(timeString);  // stampa "007-00042"
+    Serial.println(timeString);
 
     {
         StaticJsonDocument<256> mqttDoc;
         mqttDoc["ln"] = lineNumber;
-        mqttDoc["lId"] = lineId;
         mqttDoc["c"]   = competitor;
         mqttDoc["h"]   = hour;
         mqttDoc["m"]   = minute;
@@ -1138,7 +1138,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
         int entryIndex = doc["index"].as<int>();
         int lineNumber = doc["lineNumber"].as<int>();
-        String lineId = doc["lineId"].as<String>();
         int competitor = doc["competitor"].as<int>();
         int hour = doc["hour"].as<int>();
         int minute = doc["minute"].as<int>();
@@ -1147,13 +1146,13 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         int penality = doc["penality"].as<int>();
 
         #ifdef DEBUG
-          Serial.printf("Aggiorno riga index=%d,  lineNumber=%d, lineId=%s, competitor=%d, %02d:%02d.%d\n",
-                      entryIndex, lineNumber, lineId, competitor, hour, minute, millis);
+          Serial.printf("Aggiorno riga index=%d, lineNumber=%d, competitor=%d, %02d:%02d.%d\n",
+                      entryIndex, lineNumber, competitor, hour, minute, millis);
         #endif
 
-        if(printEnabled){ 
+        if(printEnabled){
           printOnPrinter("Row edited:", 1);
-          printFormatted(entryIndex, lineId, competitor, hour, minute, second, millis, 1);
+          printFormatted(entryIndex, String(lineNumber), competitor, hour, minute, second, millis, 1);
         }
 
         // --- Apri file originale e temporaneo ---
@@ -1187,7 +1186,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
             // --- Aggiorna se l'index corrisponde ---
             if (currentIndex == entryIndex) {
                 entry[LINE_NUMBER_FIELD] = lineNumber;
-                entry[LINE_ID_FIELD] = lineId;
                 entry[COMPETITOR_FIELD] = competitor;
                 entry[HOUR_FIELD] = hour;
                 entry[MINUTE_FIELD] = minute;
@@ -1208,7 +1206,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
             StaticJsonDocument<256> newEntry;
             newEntry[INDEX_FIELD] = entryIndex;
             newEntry[LINE_NUMBER_FIELD] = lineNumber;
-            newEntry[LINE_ID_FIELD] = lineId;
             newEntry[COMPETITOR_FIELD] = competitor;
             newEntry[HOUR_FIELD] = hour;
             newEntry[MINUTE_FIELD] = minute;
@@ -1463,17 +1460,12 @@ server.on("/upload", HTTP_POST,
 }
 
 String serializeSettings(){
-  StaticJsonDocument<768> doc;
+  StaticJsonDocument<1024> doc;
   doc["t"] = TYPE_PARAMS_UPDATED;
   doc["c1"] = competitors[0];
   doc["c2"] = competitors[1];
   doc["c3"] = competitors[2];
   doc["c4"] = competitors[3];
-
-  doc["l1"] = lineIds[0];
-  doc["l2"] = lineIds[1];
-  doc["l3"] = lineIds[2];
-  doc["l4"] = lineIds[3];
 
   doc["d1"] = delays[0];
   doc["d2"] = delays[1];
@@ -1484,6 +1476,16 @@ String serializeSettings(){
   doc["e2"] = lineEnabled[1];
   doc["e3"] = lineEnabled[2];
   doc["e4"] = lineEnabled[3];
+
+  doc["lt1_1"] = lineDevice[0];
+  doc["lt1_2"] = lineDevice[1];
+  doc["lt1_3"] = lineDevice[2];
+  doc["lt1_4"] = lineDevice[3];
+
+  doc["lt2_1"] = lineMode[0];
+  doc["lt2_2"] = lineMode[1];
+  doc["lt2_3"] = lineMode[2];
+  doc["lt2_4"] = lineMode[3];
 
   doc["utc"] = utcOffset;
   doc["print"] = printEnabled;
@@ -1521,13 +1523,14 @@ void broadCastSettings(){
 }
 
 void broadcastLineUpdate(int idx) {
-  StaticJsonDocument<128> doc;
+  StaticJsonDocument<256> doc;
   doc["t"]  = TYPE_LINE_UPDATED;
   doc["l"]  = idx + 1;
-  doc["ld"] = lineIds[idx];
   doc["c"]  = competitors[idx];
   doc["d"]  = delays[idx];
   doc["e"]  = lineEnabled[idx];
+  doc["t1"] = lineDevice[idx];
+  doc["t2"] = lineMode[idx];
   String msg;
   serializeJson(doc, msg);
   ws.textAll(msg);
@@ -1540,7 +1543,6 @@ void broadCastRowEdited(const JsonDocument& entry){
   doc["t"] = TYPE_ROW_UPDATED;
   doc[INDEX_FIELD] = entry[INDEX_FIELD];
   doc[LINE_NUMBER_FIELD] = entry[LINE_NUMBER_FIELD];
-  doc[LINE_ID_FIELD] = entry[LINE_ID_FIELD];
   doc[COMPETITOR_FIELD] = entry[COMPETITOR_FIELD];
   doc[HOUR_FIELD] = entry[HOUR_FIELD];
   doc[MINUTE_FIELD] = entry[MINUTE_FIELD];

@@ -348,12 +348,12 @@ function saveViewPrefs() {
     showRank:      document.getElementById("toggle-rank").checked,
     showIndex:     document.getElementById("toggle-index").checked,
     showLine:      document.getElementById("toggle-line").checked,
-    showLineId:    document.getElementById("toggle-lineid").checked,
-
     showName:      document.getElementById("toggle-name")?.checked    ?? false,
     showSurname:   document.getElementById("toggle-surname")?.checked ?? false,
     showEditBtn:   document.getElementById("toggle-edit-btn").checked,
     showSendBtn:   document.getElementById("toggle-send-btn").checked,
+    showDevice:    document.getElementById("toggle-device")?.checked ?? false,
+    showMode:      document.getElementById("toggle-mode")?.checked   ?? false,
     splitsMode:    document.getElementById("toggle-splits").checked,
     timePrecision: document.getElementById("time-precision").value,
     sortCol:       sortCol,
@@ -388,12 +388,12 @@ function restoreViewPrefs() {
     setChk("toggle-rank",          prefs.showRank     ?? false);
     setChk("toggle-index",         prefs.showIndex    ?? true);
     setChk("toggle-line",          prefs.showLine     ?? true);
-    setChk("toggle-lineid",        prefs.showLineId   ?? true);
-
     setChk("toggle-name",          prefs.showName     ?? false);
     setChk("toggle-surname",       prefs.showSurname  ?? false);
     setChk("toggle-edit-btn",      prefs.showEditBtn  ?? true);
     setChk("toggle-send-btn",      prefs.showSendBtn  ?? true);
+    setChk("toggle-device",        prefs.showDevice   ?? false);
+    setChk("toggle-mode",          prefs.showMode     ?? false);
     setChk("toggle-splits",        prefs.splitsMode   ?? false);
     if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
 
@@ -426,7 +426,7 @@ function restoreViewPrefs() {
 
     updateVisibleColumns();
     if (prefs.splitsMode) applyCompetitorSplits();
-    else applyLineFilter();
+    else reorderTable();
   } catch(e) {
     console.warn("Errore ripristino preferenze:", e);
   }
@@ -456,11 +456,12 @@ function applyDisciplinePreset(prefs) {
   setChk("toggle-rank",          prefs.showRank   ?? false);
   setChk("toggle-index",         prefs.showIndex  ?? true);
   setChk("toggle-line",          prefs.showLine   ?? true);
-  setChk("toggle-lineid",        prefs.showLineId ?? true);
   setChk("toggle-name",          prefs.showName   ?? false);
   setChk("toggle-surname",       prefs.showSurname ?? false);
   setChk("toggle-edit-btn",      prefs.showEditBtn ?? true);
   setChk("toggle-send-btn",      prefs.showSendBtn ?? true);
+  setChk("toggle-device",        prefs.showDevice  ?? false);
+  setChk("toggle-mode",          prefs.showMode    ?? false);
   setChk("toggle-splits",        prefs.splitsMode  ?? false);
   if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
   if (prefs.timePrecision !== undefined) {
@@ -474,7 +475,7 @@ function applyDisciplinePreset(prefs) {
     if (el) el.value = sortCol;
   }
   updateVisibleColumns();
-  if (prefs.splitsMode) applyCompetitorSplits(); else { clearCompetitorSplits(); applyLineFilter(); }
+  if (prefs.splitsMode) applyCompetitorSplits(); else { clearCompetitorSplits(); reorderTable(); }
   saveViewPrefs();
 }
 
@@ -512,6 +513,161 @@ function selectDiscipline(id) {
   closeDisciplineOverlay();
 }
 
+// ── Line edit overlay ─────────────────────────────────────────────────────────
+
+const LINE_TIPO_KEY = 'chronofit_line_tipo';
+let lineTipoConfig  = JSON.parse(localStorage.getItem(LINE_TIPO_KEY) || '{}');
+
+// i18n key maps for tipo values (keys are numeric)
+const TIPO1_I18N = { 0: 'cp.tipo1_fpc', 1: 'cp.tipo1_none' };
+const TIPO2_I18N = { 0: 'cp.tipo2_auto', 1: 'cp.tipo2_manual' };
+
+function translateDevice(v) { return t(TIPO1_I18N[Number(v)] ?? '') || String(v); }
+function translateMode(v)   { return t(TIPO2_I18N[Number(v)] ?? '') || String(v); }
+
+let _lineEditTarget = null;
+
+function getLineTipo(line) {
+  return lineTipoConfig[line] ?? { tipo1: 0, tipo2: 0 };
+}
+
+function updateTipoDisplays(line) {
+  const cfg = getLineTipo(line);
+  const el1 = document.getElementById(`tipo1-display-${line}`);
+  const el2 = document.getElementById(`tipo2-display-${line}`);
+  if (el1) el1.textContent = t(TIPO1_I18N[cfg.tipo1] ?? cfg.tipo1);
+  if (el2) el2.textContent = t(TIPO2_I18N[cfg.tipo2] ?? cfg.tipo2);
+}
+
+function updateCompDisplay(line) {
+  const el = document.getElementById(`comp-display-${line}`);
+  if (el) el.textContent = document.getElementById(`c${line}`)?.value ?? '—';
+}
+
+function updateDelayDisplay(line) {
+  const el = document.getElementById(`delay-display-${line}`);
+  if (el) el.textContent = document.getElementById(`d${line}`)?.value ?? '0';
+}
+
+function updateAllLineDisplays() {
+  for (let n = 1; n <= 4; n++) {
+    updateTipoDisplays(n);
+    updateCompDisplay(n);
+    updateDelayDisplay(n);
+  }
+}
+
+// ── Line edit overlay helpers ─────────────────────────────────────────
+
+function _syncLeEye(n) {
+  const actual = document.querySelector(`.toggle-btn[data-line="${n}"]`);
+  const btn    = document.getElementById(`le-eye-${n}`);
+  if (!actual || !btn) return;
+  const color    = lineColors[n] || '#e0e0e0';
+  const inactive = actual.classList.contains('inactive');
+  btn.style.backgroundColor = inactive ? '#aaa' : color;
+  btn.style.opacity          = inactive ? '0.5' : '1';
+}
+
+function _syncLeEnable(n) {
+  const actual = document.querySelector(`.line-enable-btn[data-line="${n}"]`);
+  const btn    = document.getElementById(`le-enbl-${n}`);
+  if (!actual || !btn) return;
+  const color   = lineColors[n] || '#e0e0e0';
+  const enabled = (actual.dataset.enabled ?? '1') !== '0';
+  btn.style.backgroundColor = enabled ? color : '#888';
+  btn.style.opacity          = enabled ? '1'  : '0.5';
+}
+
+function leToggle(n) {
+  const actual = document.querySelector(`.toggle-btn[data-line="${n}"]`);
+  if (actual) actual.click();
+  _syncLeEye(n);
+}
+
+function leEnable(n) {
+  toggleLineEnable(n);
+  _syncLeEnable(n);
+}
+
+function leSend(n) {
+  sendCheckPoint(n);
+}
+
+// ── open / close / save ───────────────────────────────────────────────
+
+function openLineEdit(line, focusField) {
+  _lineEditTarget = line;
+
+  // Populate all 4 rows from hidden inputs + tipo config
+  for (let n = 1; n <= 4; n++) {
+    document.getElementById(`le-c-${n}`).value  = document.getElementById(`c${n}`)?.value ?? '';
+    document.getElementById(`le-d-${n}`).value  = document.getElementById(`d${n}`)?.value ?? '0';
+    const tipo = getLineTipo(n);
+    document.getElementById(`le-t1-${n}`).value = tipo.tipo1;
+    document.getElementById(`le-t2-${n}`).value = tipo.tipo2;
+    // Sync send button color
+    const snd = document.getElementById(`le-snd-${n}`);
+    if (snd) snd.style.backgroundColor = lineColors[n] || '#e0e0e0';
+    _syncLeEye(n);
+    _syncLeEnable(n);
+  }
+
+  document.getElementById('lineEditOverlay').style.display = 'flex';
+
+  // Focus the field in the row that was clicked
+  const focusMap = {
+    tipo1:  `le-t1-${line}`,
+    tipo2:  `le-t2-${line}`,
+    comp:   `le-c-${line}`,
+    delay:  `le-d-${line}`
+  };
+  const focusId = focusMap[focusField];
+  if (focusId) setTimeout(() => {
+    const el = document.getElementById(focusId);
+    if (!el) return;
+    el.focus();
+    if (el.tagName === 'INPUT' && typeof el.select === 'function') el.select();
+  }, 80);
+}
+
+function closeLineEdit() {
+  document.getElementById('lineEditOverlay').style.display = 'none';
+  _lineEditTarget = null;
+}
+
+function saveLineEdit() {
+  // Save all 4 lines
+  for (let line = 1; line <= 4; line++) {
+    const cEl = document.getElementById(`c${line}`);
+    const dEl = document.getElementById(`d${line}`);
+    if (cEl) cEl.value = document.getElementById(`le-c-${line}`).value;
+    if (dEl) dEl.value = document.getElementById(`le-d-${line}`).value;
+
+    lineTipoConfig[line] = {
+      tipo1: Number(document.getElementById(`le-t1-${line}`).value),
+      tipo2: Number(document.getElementById(`le-t2-${line}`).value)
+    };
+
+    updateTipoDisplays(line);
+    updateCompDisplay(line);
+    updateDelayDisplay(line);
+
+    const enableBtn = document.querySelector(`.line-enable-btn[data-line="${line}"]`);
+    sendSettingsRowData({
+      l:  Number(line),
+      c:  Number(cEl?.value) || 0,
+      d:  Number(dEl?.value) || 0,
+      e:  Number(enableBtn?.dataset.enabled ?? 1),
+      t1: lineTipoConfig[line].tipo1,
+      t2: lineTipoConfig[line].tipo2
+    });
+  }
+
+  localStorage.setItem(LINE_TIPO_KEY, JSON.stringify(lineTipoConfig));
+  closeLineEdit();
+}
+
 // ======= FINE LOCALSTORAGE =======
 
 function updateParams() {
@@ -535,11 +691,6 @@ function fillSettingsFields(data){
   document.getElementById("c2").value = data.c2 ?? "";
   document.getElementById("c3").value = data.c3 ?? "";
   document.getElementById("c4").value = data.c4 ?? "";
-
-  document.getElementById("l1").value = data.l1 ?? "";
-  document.getElementById("l2").value = data.l2 ?? "";
-  document.getElementById("l3").value = data.l3 ?? "";
-  document.getElementById("l4").value = data.l4 ?? "";
 
   document.getElementById("d1").value = data.d1 ?? 0;
   document.getElementById("d2").value = data.d2 ?? 0;
@@ -570,6 +721,20 @@ function fillSettingsFields(data){
 
   if (data.mqttAcquireRow    !== undefined) mqttCfg.acquireRow    = (data.mqttAcquireRow    == 1);
   if (data.mqttImmediateMode !== undefined) mqttCfg.immediateMode = (data.mqttImmediateMode == 1);
+
+  // Leggi tipo config dal server e aggiorna localStorage + display
+  for (let n = 1; n <= 4; n++) {
+    const t1 = data[`lt1_${n}`];
+    const t2 = data[`lt2_${n}`];
+    if (t1 !== undefined || t2 !== undefined) {
+      lineTipoConfig[n] = {
+        tipo1: t1 ?? lineTipoConfig[n]?.tipo1 ?? 0,
+        tipo2: t2 ?? lineTipoConfig[n]?.tipo2 ?? 0
+      };
+    }
+  }
+  localStorage.setItem(LINE_TIPO_KEY, JSON.stringify(lineTipoConfig));
+  updateAllLineDisplays();
 
   // Riapplica preferenze visive — il server non deve sovrascriverle
   restoreViewPrefs();
@@ -797,14 +962,15 @@ function handleMessage(data) {
       addEventToTable(
         data.id,
         data.ln,
-        data.lId,
         data.c,
         data.h,
         data.m,
         data.s,
         data.ms,
         0,
-        data.e ?? 1
+        data.e ?? 1,
+        data.td ?? '',
+        data.tm ?? ''
       );
       reorderTable();
       if (document.getElementById("toggle-splits").checked) applyCompetitorSplits();
@@ -1154,10 +1320,9 @@ function sendToPrinter(text, cr) {
 
 // Overload compatibile: accetta un oggetto checkpoint
 function addEventToTableFromCheckpoint(checkpoint) {
-  // checkpoint deve avere: index, lineNumber, lineId, competitor, hour, minute, millis
+  // checkpoint deve avere: index, lineNumber, competitor, hour, minute, millis
   const rowIndex = checkpoint.id;
   const lineNumber = checkpoint.ln;
-  const lineId = checkpoint.lId; // correggiamo qui: "lineId", non "line"
   const competitor = checkpoint.c;
   const hour = checkpoint.h;
   const minute = checkpoint.m;
@@ -1165,14 +1330,16 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const millis = checkpoint.ms;
   const penality = checkpoint.x;
   const enabled = checkpoint.e ?? 1;
+  const device = checkpoint.td ?? '';
+  const mode   = checkpoint.tm ?? '';
 
   // Richiama la funzione originale
-  addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, second, millis, penality, enabled);
+  addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, device, mode);
 }
 
 
-function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis, penality, enabled = 1) {
-  console.log(rowIndex, lineNumber, lineId, competitor, hour, minute, seconds, millis, penality, enabled);
+function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, device = '', mode = '') {
+  console.log(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled);
   const tbody = document.querySelector("#event-table tbody");
   const row = document.createElement("tr");
 
@@ -1191,7 +1358,6 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   
   // Crea la riga HTML
   row.setAttribute("data-line", lineNumber);
-  row.setAttribute("data-lineId", lineId);
   row.setAttribute("data-competitor", competitor);
   row.setAttribute("data-hour", hour);
   row.setAttribute("data-minute", minute);
@@ -1200,13 +1366,16 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
   row.setAttribute("data-penality", 0);
   row.setAttribute("data-enabled", enabled ? "1" : "0");
   row.setAttribute("data-row-id", rowIndex);
+  row.setAttribute("data-device", device);
+  row.setAttribute("data-mode", mode);
 
   row.innerHTML = `
     <td class="col-rank"></td>
     <td class="col-index">${index}</td>
     <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}" class="col-line">${lineNumber}</td>
-    <td class="col-id">${lineId}</td>
     <td class="col-competitor">${competitor}</td>
+    <td class="col-device">${translateDevice(device)}</td>
+    <td class="col-mode">${translateMode(mode)}</td>
     <td class="col-name">${getAthleteName(competitor)}</td>
     <td class="col-surname">${getAthleteSurname(competitor)}</td>
     <td class="timestamp">${timestamp}</td>
@@ -1371,7 +1540,7 @@ function editRow(button) {
 
   // colonne editabili
   const editableCells = row.querySelectorAll(
-    ".col-id, .col-competitor, .timestamp"
+    ".col-competitor, .timestamp"
   );
 
   editableCells.forEach(cell => {
@@ -1379,13 +1548,8 @@ function editRow(button) {
 
     const value = cell.textContent.trim();
 
-    // ID → numero
-    if (cell.classList.contains("col-id")) {
-      cell.innerHTML = `<input type="text" value="${value}" style="width:90%">`;
-    }
-
     // Event Time → orario mascherato
-    else if (cell.classList.contains("timestamp")) {
+    if (cell.classList.contains("timestamp")) {
       cell.innerHTML = `
         <input type="text" value="${value}" style="width:90%"
           maxlength="12"
@@ -1441,9 +1605,8 @@ function saveRow(button) {
     cell.textContent = newValue;
 
     switch(i) {
-      case 0: row.dataset.lineId = Number(newValue); break;
-      case 1: row.dataset.competitor = newValue; break;
-      case 2: {
+      case 0: row.dataset.competitor = newValue; break;
+      case 1: {
         // timestamp → hh:mm:ss.mmm
         const [hms, ms] = newValue.split(".");
         const [h, m, s] = hms.split(":");
@@ -1481,25 +1644,19 @@ function saveRow(button) {
 }
 
 function sendUpdatedCheckPointRow(row) {
-  // Usa il numero effettivo della prima cella come indice
-  const index = parseInt(row.cells[0].textContent.trim());
-
-  const cells = row.querySelectorAll("td");
-  const lineNumber = cells[1].textContent.trim();
-  const lineId     = cells[2].textContent.trim();
-  const competitor = cells[3].textContent.trim();
-  // Usa i dataset aggiornati da saveRow (robusto all'aggiunta di nuove colonne)
-  const penality = Number(row.dataset.penality) || 0;
+  const index      = parseInt(row.dataset.rowId ?? 0);
+  const lineNumber = parseInt(row.dataset.line  ?? 0);
+  const competitor = parseInt(row.dataset.competitor ?? 0);
+  const penality   = Number(row.dataset.penality) || 0;
 
   const messageObj = {
     index,
-    lineNumber: parseInt(lineNumber),
-    lineId:     lineId,
-    competitor: parseInt(competitor),
-    hour:       parseInt(row.dataset.hour    ?? 0),
-    minute:     parseInt(row.dataset.minute  ?? 0),
-    second:     parseInt(row.dataset.seconds ?? 0),
-    millis:     parseInt(row.dataset.msRaw   ?? 0),
+    lineNumber,
+    competitor,
+    hour:   parseInt(row.dataset.hour    ?? 0),
+    minute: parseInt(row.dataset.minute  ?? 0),
+    second: parseInt(row.dataset.seconds ?? 0),
+    millis: parseInt(row.dataset.msRaw   ?? 0),
     penality
   };
 
@@ -1517,41 +1674,21 @@ function sendUpdatedCheckPointRow(row) {
 
 function sendRow(button) {
   const row = button.closest("tr");
-  const tbody = document.querySelector("#event-table tbody");
 
-  // 🔹 Usa il numero effettivo della prima cella come indice
-  const index = parseInt(row.cells[0].textContent.trim());
-
-  // 🔹 Legge i valori visibili nella tabella (robusto all'aggiunta di nuove colonne)
-  const cells = row.querySelectorAll("td");
-  const lineNumber = cells[1].textContent.trim();
-  const lineId     = cells[2].textContent.trim();
-  const competitor = cells[3].textContent.trim();
-  const timestamp  = row.querySelector(".timestamp").textContent.trim();
-
-  // Estrai hour, minute, millis dal timestamp (es. "10:23:45.678")
-  const [timePart, millisPart] = timestamp.split(".");
-  const [hour, minute, second] = timePart.split(":");
-
-  // const INDEX_FIELD = "id";
-  // const LINE_NUMBER_FIELD = "ln";
-  // const LINE_ID_FIELD = "lId";
-  // const COMPETITOR_FIELD = "c";
-  // const HOUR_FIELD = "h";
-  // const MINUTE_FIELD = "m";
-  // const SECOND_FIELD = "s";
-  // const MILLIS_FIELD = "ms";
+  // 🔹 Legge i dati dal dataset della riga (robusto al cambio di colonne visibili)
+  const index      = parseInt(row.dataset.rowId      ?? 0);
+  const lineNumber = parseInt(row.dataset.line       ?? 0);
+  const competitor = parseInt(row.dataset.competitor ?? 0);
 
   // 🔹 Crea l'oggetto messaggio
   const messageObj = {
     index,
-    lineNumber: parseInt(lineNumber),
-    lineId,
+    lineNumber,
     competitor,
-    hour: parseInt(hour),
-    minute: parseInt(minute),
-    second: parseInt(second),
-    millis: parseInt(millisPart)
+    hour:   parseInt(row.dataset.hour    ?? 0),
+    minute: parseInt(row.dataset.minute  ?? 0),
+    second: parseInt(row.dataset.seconds ?? 0),
+    millis: parseInt(row.dataset.msRaw   ?? 0)
   };
 
   console.log("Invio:", messageObj);
@@ -1676,8 +1813,8 @@ function jsonToCsvTimeStamp(array) {
 
   const keys = Object.keys(array[0]);
 
-  // Header CSV: prime 4 colonne + timestamp
-  const header = `ID;Line number;Line ID;Competitor;Timestamp`;
+  // Header CSV: prime 3 colonne + timestamp
+  const header = `ID;Line number;Competitor;Timestamp`;
 
   const rows = array.map(obj => {
     
@@ -1716,10 +1853,10 @@ function resetLineCompetitor(lineNumber) {
   const cEl = document.getElementById(`c${lineNumber}`);
   if (!cEl) return;
   cEl.value = 0;
+  updateCompDisplay(lineNumber);
   const enableBtn = document.querySelector(`.line-enable-btn[data-line="${lineNumber}"]`);
   sendSettingsRowData({
     l:  lineNumber,
-    ld: document.getElementById(`l${lineNumber}`)?.value ?? "",
     c:  0,
     d:  Number(document.getElementById(`d${lineNumber}`)?.value) || 0,
     e:  Number(enableBtn?.dataset.enabled ?? 1)
@@ -1734,7 +1871,6 @@ function handleInputUpdate(e) {
   const enableBtn = document.querySelector(`.line-enable-btn[data-line="${lineNumber}"]`);
   const data = {
     l:  Number(lineNumber),
-    ld: String(document.querySelector(`#l${lineNumber}`).value),
     c:  Number(document.querySelector(`#c${lineNumber}`).value),
     d:  Number(document.querySelector(`#d${lineNumber}`).value) || 0,
     e:  Number(enableBtn?.dataset.enabled ?? 1)
@@ -1750,14 +1886,22 @@ function applyLineEnableState(btn, enabled) {
 
 function applyLineUpdate(data) {
   const n = data.l;
-  const lEl = document.getElementById(`l${n}`);
   const cEl = document.getElementById(`c${n}`);
   const dEl = document.getElementById(`d${n}`);
   const btn = document.querySelector(`.line-enable-btn[data-line="${n}"]`);
-  if (lEl) lEl.value = data.ld ?? lEl.value;
   if (cEl) cEl.value = data.c  ?? cEl.value;
   if (dEl) dEl.value = data.d  ?? dEl.value;
   if (btn && data.e !== undefined) applyLineEnableState(btn, data.e);
+  if (data.t1 !== undefined || data.t2 !== undefined) {
+    lineTipoConfig[n] = {
+      tipo1: data.t1 ?? lineTipoConfig[n]?.tipo1 ?? 0,
+      tipo2: data.t2 ?? lineTipoConfig[n]?.tipo2 ?? 0
+    };
+    localStorage.setItem(LINE_TIPO_KEY, JSON.stringify(lineTipoConfig));
+  }
+  updateTipoDisplays(n);
+  updateCompDisplay(n);
+  updateDelayDisplay(n);
 }
 
 function toggleLineEnable(line) {
@@ -1766,7 +1910,6 @@ function toggleLineEnable(line) {
   const newEnabled = currentEnabled ? 0 : 1;
   const data = {
     l:  line,
-    ld: document.querySelector(`#l${line}`).value,
     c:  Number(document.querySelector(`#c${line}`).value),
     d:  Number(document.querySelector(`#d${line}`).value) || 0,
     e:  newEnabled
@@ -1831,6 +1974,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Ripristino preferenze visualizzazione...");
     restoreViewPrefs();
     updateDisciplineNavBtn();
+    updateAllLineDisplays();
 
     updateTableCorners();
 
@@ -2116,10 +2260,6 @@ function toggleLineColumn(show) {
   document.querySelectorAll("th.col-line-col, td.col-line").forEach(el => el.style.display = d);
 }
 
-function toggleLineIdColumn(show) {
-  const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-id-col, td.col-id").forEach(el => el.style.display = d);
-}
 
 function toggleRaceTimeColumn(show) {
   const d = show ? "table-cell" : "none";
@@ -2162,6 +2302,16 @@ function toggleSurnameColumn(show) {
   updateTableCorners();
 }
 
+function toggleDeviceColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-device-col, td.col-device").forEach(el => el.style.display = d);
+}
+
+function toggleModeColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.col-mode-col, td.col-mode").forEach(el => el.style.display = d);
+}
+
 function updateVisibleColumns(){
   toggleTimestampColumn(document.getElementById("toggle-timestamp").checked);
   toggleElapsedTimeColumn(document.getElementById("toggle-elapsed-time").checked);
@@ -2169,13 +2319,14 @@ function updateVisibleColumns(){
   togglePenalityColumn(document.getElementById("toggle-penality").checked);
   toggleIndexColumn(document.getElementById("toggle-index").checked);
   toggleLineColumn(document.getElementById("toggle-line").checked);
-  toggleLineIdColumn(document.getElementById("toggle-lineid").checked);
   toggleRaceTimeColumn(document.getElementById("toggle-splits").checked);
   toggleRankColumn(document.getElementById("toggle-rank").checked);
   toggleNameColumn(document.getElementById("toggle-name")?.checked ?? false);
   toggleSurnameColumn(document.getElementById("toggle-surname")?.checked ?? false);
   toggleEditColumn(document.getElementById("toggle-edit-btn").checked);
   toggleSendColumn(document.getElementById("toggle-send-btn").checked);
+  toggleDeviceColumn(document.getElementById("toggle-device")?.checked ?? false);
+  toggleModeColumn(document.getElementById("toggle-mode")?.checked ?? false);
   updateTableCorners();
 }
 
@@ -2229,7 +2380,6 @@ function applyCompetitorSplits() {
           <td class="col-rank"></td>
           <td class="col-index">—</td>
           <td class="col-line">L${line1}→L${line2}</td>
-          <td class="col-id">—</td>
           <td class="col-competitor">${comp}</td>
           <td class="col-name">${getAthleteName(comp)}</td>
           <td class="col-surname">${getAthleteSurname(comp)}</td>
@@ -2328,9 +2478,6 @@ document.getElementById("toggle-index")
 document.getElementById("toggle-line")
 .addEventListener("change", e => { toggleLineColumn(e.target.checked); saveViewPrefs(); });
 
-document.getElementById("toggle-lineid")
-.addEventListener("change", e => { toggleLineIdColumn(e.target.checked); saveViewPrefs(); });
-
 document.getElementById("toggle-splits")
 .addEventListener("change", e => {
   toggleRaceTimeColumn(e.target.checked);
@@ -2350,6 +2497,12 @@ document.getElementById("toggle-edit-btn")
 
 document.getElementById("toggle-send-btn")
 .addEventListener("change", e => { toggleSendColumn(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-device")
+.addEventListener("change", e => { toggleDeviceColumn(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-mode")
+.addEventListener("change", e => { toggleModeColumn(e.target.checked); saveViewPrefs(); });
 
 
 
@@ -2393,12 +2546,6 @@ function updateRowFromBroadcas(data) {
   if (row.querySelector("input")) {
     console.warn("Row in edit, skipped:", index);
     return;
-  }
-
-  // aggiorna ID
-  const idCell = row.querySelector(".col-id");
-  if (idCell && data.lId !== undefined) {
-    idCell.textContent = data.lId;
   }
 
   // aggiorna competitor
@@ -2710,7 +2857,7 @@ function showMqttCard(topic, d, doAcquire, onDiscard, timeoutSec, onTimeout, acq
   const ms = String(d?.ms ?? "--").padStart(3, "0");
 
   const parts2 = [];
-  if (acquireRow)        parts2.push(`row L${lineNum ?? "?"}&thinsp;·&thinsp;${d?.lId ?? "—"}`);
+  if (acquireRow)        parts2.push(`row L${lineNum ?? "?"}`);
   if (acquireCompetitor) parts2.push(`competitor <strong>${competitor || "—"}</strong>`);
   const verb = immediateMode ? "Acquired" : "Will acquire";
   const desc = parts2.length > 0 ? `${verb}: ${parts2.join(" + ")}` : "(info only)";
@@ -2731,7 +2878,7 @@ function showMqttCard(topic, d, doAcquire, onDiscard, timeoutSec, onTimeout, acq
     <div class="mqtt-notif-header">
       <span class="mqtt-notif-source">📡 ${source}</span>
     </div>
-    <div class="mqtt-notif-row">L${lineNum ?? "?"}&nbsp;·&nbsp;${d?.lId ?? "—"}&nbsp;·&nbsp;#${competitor || "—"}</div>
+    <div class="mqtt-notif-row">L${lineNum ?? "?"}&nbsp;·&nbsp;#${competitor || "—"}</div>
     <div class="mqtt-notif-time">${hh}:${mm}:${ss}.${ms}</div>
     <div class="mqtt-notif-accept-desc">${desc}</div>
     <div class="mqtt-notif-actions">${actionsHtml}</div>

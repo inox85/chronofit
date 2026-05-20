@@ -281,13 +281,6 @@
           </label>
         </div>
         <div class="toggle-row">
-          <span data-i18n="table.show_lineid">Show line ID column</span>
-          <label class="switch">
-            <input type="checkbox" id="toggle-lineid" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="toggle-row">
           <span data-i18n="table.show_name">Show name column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-name">
@@ -340,6 +333,20 @@
           <span data-i18n="table.show_send">Show send button</span>
           <label class="switch">
             <input type="checkbox" id="toggle-send-btn" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_device">Show device column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-device">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_mode">Show mode column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-mode">
             <span class="slider"></span>
           </label>
         </div>
@@ -634,6 +641,132 @@
     </div>
   </div>
 
+  <!-- Line edit overlay — full 4-line settings table -->
+  <div id="lineEditOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeLineEdit()">
+    <div class="fullscreen-popup line-edit-popup">
+      <h2 id="lineEditTitle" data-i18n="cp.settings_title">Checkpoint settings</h2>
+      <div class="le-scroll-wrapper">
+        <table class="line-edit-table">
+          <thead>
+            <tr>
+              <th data-i18n="cp.line">Line</th>
+              <th data-i18n="cp.tipo_device">Device</th>
+              <th data-i18n="cp.tipo_mode">Mode</th>
+              <th data-i18n="cp.competitor">Comp.</th>
+              <th data-i18n="cp.ms">ms</th>
+              <th>👁</th>
+              <th>✓</th>
+              <th>➡</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- Line 1 -->
+            <tr style="background-color:#ffcccc">
+              <td class="le-linenum-cell">
+                <div class="le-linenum">1</div>
+              </td>
+              <td class="le-select-cell">
+                <select id="le-t1-1">
+                  <option value="0" data-i18n="cp.tipo1_fpc" >FPC 102</option>
+                  <option value="1" data-i18n="cp.tipo1_none">Non gestita</option>
+                </select>
+              </td>
+              <td class="le-select-cell">
+                <select id="le-t2-1">
+                  <option value="0" data-i18n="cp.tipo2_auto"  >Automatica</option>
+                  <option value="1" data-i18n="cp.tipo2_manual">Manuale</option>
+                </select>
+              </td>
+              <td><input type="number" id="le-c-1" inputmode="numeric" autocomplete="off"></td>
+              <td><input type="number" id="le-d-1" inputmode="numeric" autocomplete="off"></td>
+              <td><button id="le-eye-1"  class="le-action-btn" onclick="leToggle(1)">👁</button></td>
+              <td><button id="le-enbl-1" class="le-action-btn" onclick="leEnable(1)">✓</button></td>
+              <td><button id="le-snd-1"  class="le-action-btn" onclick="leSend(1)">➡</button></td>
+            </tr>
+
+            <!-- Line 2 -->
+            <tr style="background-color:#ccffcc">
+              <td class="le-linenum-cell">
+                <div class="le-linenum">2</div>
+              </td>
+              <td class="le-select-cell">
+                <select id="le-t1-2">
+                  <option value="0" data-i18n="cp.tipo1_fpc" >FPC 102</option>
+                  <option value="1" data-i18n="cp.tipo1_none">Non gestita</option>
+                </select>
+              </td>
+              <td class="le-select-cell">
+                <select id="le-t2-2">
+                  <option value="0" data-i18n="cp.tipo2_auto"  >Automatica</option>
+                  <option value="1" data-i18n="cp.tipo2_manual">Manuale</option>
+                </select>
+              </td>
+              <td><input type="number" id="le-c-2" inputmode="numeric" autocomplete="off"></td>
+              <td><input type="number" id="le-d-2" inputmode="numeric" autocomplete="off"></td>
+              <td><button id="le-eye-2"  class="le-action-btn" onclick="leToggle(2)">👁</button></td>
+              <td><button id="le-enbl-2" class="le-action-btn" onclick="leEnable(2)">✓</button></td>
+              <td><button id="le-snd-2"  class="le-action-btn" onclick="leSend(2)">➡</button></td>
+            </tr>
+
+            <!-- Line 3 -->
+            <tr style="background-color:#ccccff">
+              <td class="le-linenum-cell">
+                <div class="le-linenum">3</div>
+              </td>
+              <td class="le-select-cell">
+                <select id="le-t1-3">
+                  <option value="0" data-i18n="cp.tipo1_fpc" >FPC 102</option>
+                  <option value="1" data-i18n="cp.tipo1_none">Non gestita</option>
+                </select>
+              </td>
+              <td class="le-select-cell">
+                <select id="le-t2-3">
+                  <option value="0" data-i18n="cp.tipo2_auto"  >Automatica</option>
+                  <option value="1" data-i18n="cp.tipo2_manual">Manuale</option>
+                </select>
+              </td>
+              <td><input type="number" id="le-c-3" inputmode="numeric" autocomplete="off"></td>
+              <td><input type="number" id="le-d-3" inputmode="numeric" autocomplete="off"></td>
+              <td><button id="le-eye-3"  class="le-action-btn" onclick="leToggle(3)">👁</button></td>
+              <td><button id="le-enbl-3" class="le-action-btn" onclick="leEnable(3)">✓</button></td>
+              <td><button id="le-snd-3"  class="le-action-btn" onclick="leSend(3)">➡</button></td>
+            </tr>
+
+            <!-- Line 4 -->
+            <tr style="background-color:#fff5cc">
+              <td class="le-linenum-cell">
+                <div class="le-linenum">4</div>
+              </td>
+              <td class="le-select-cell">
+                <select id="le-t1-4">
+                  <option value="0" data-i18n="cp.tipo1_fpc" >FPC 102</option>
+                  <option value="1" data-i18n="cp.tipo1_none">Non gestita</option>
+                </select>
+              </td>
+              <td class="le-select-cell">
+                <select id="le-t2-4">
+                  <option value="0" data-i18n="cp.tipo2_auto"  >Automatica</option>
+                  <option value="1" data-i18n="cp.tipo2_manual">Manuale</option>
+                </select>
+              </td>
+              <td><input type="number" id="le-c-4" inputmode="numeric" autocomplete="off"></td>
+              <td><input type="number" id="le-d-4" inputmode="numeric" autocomplete="off"></td>
+              <td><button id="le-eye-4"  class="le-action-btn" onclick="leToggle(4)">👁</button></td>
+              <td><button id="le-enbl-4" class="le-action-btn" onclick="leEnable(4)">✓</button></td>
+              <td><button id="le-snd-4"  class="le-action-btn" onclick="leSend(4)">➡</button></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+      <div class="button-row" style="justify-content:center; gap:16px; margin-top:12px;">
+        <button class="big-button" data-i18n="btn.save"   onclick="saveLineEdit()">Save</button>
+        <button class="big-button" data-i18n="btn.cancel" onclick="closeLineEdit()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Discipline selection overlay -->
   <div id="disciplineOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeDisciplineOverlay()">
     <div class="discipline-popup">
@@ -710,8 +843,8 @@
       <thead>
         <tr>
           <th data-i18n="cp.line">Line</th>
-          <th data-i18n="cp.id">ID</th>
-          <th data-i18n="cp.competitor">Competitor</th>
+          <th data-i18n="cp.tipo">Type</th>
+          <th data-i18n="cp.comp_abbr">Comp.</th>
           <th data-i18n="cp.ms">ms</th>
           <th>👁</th>
           <th>✓</th>
@@ -722,46 +855,74 @@
 
         <tr>
           <td>1</td>
-          <td><input type="text" autocomplete="off" id="l1" data-line="1" placeholder="line1 ID" value="001"></td>
-          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c1" data-line="1" placeholder="Competitor 1" value="000000"></td>
-          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d1" data-line="1" placeholder="0" value="0"></td>
-          <td><button data-color= "#ffcccc"  class="toggle-btn" data-line="1">👁</button></td>
-          <td><button data-color= "#ffcccc"  class="line-enable-btn" data-line="1" onclick="toggleLineEnable(1)">✓</button></td>
-          <td><button style="background-color: #ffcccc" onclick="sendCheckPoint(1)">➡</button></td>
+          <td class="cp-tipo-cell" onclick="openLineEdit(1,'tipo1')">
+            <span id="tipo1-display-1">FPC 102</span>
+            <hr class="cp-tipo-sep">
+            <span id="tipo2-display-1">Automatica</span>
+          </td>
+          <td class="cp-val-cell" onclick="openLineEdit(1,'comp')"><span id="comp-display-1">000000</span></td>
+          <td class="cp-val-cell" onclick="openLineEdit(1,'delay')"><span id="delay-display-1">0</span></td>
+          <td><button data-color="#ffcccc" class="toggle-btn" data-line="1">👁</button></td>
+          <td><button data-color="#ffcccc" class="line-enable-btn" data-line="1" onclick="toggleLineEnable(1)">✓</button></td>
+          <td><button style="background-color:#ffcccc" onclick="sendCheckPoint(1)">➡</button></td>
         </tr>
 
         <tr>
           <td>2</td>
-          <td><input type="text" autocomplete="off" id="l2" data-line="2" placeholder="line2 ID" value="002"></td>
-          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c2" data-line="2" placeholder="Competitor 2" value="000000"></td>
-          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d2" data-line="2" placeholder="0" value="0"></td>
-          <td><button data-color= "#ccffcc" class="toggle-btn" data-line="2">👁</button></td>
-          <td><button data-color= "#ccffcc"  class="line-enable-btn" data-line="2" onclick="toggleLineEnable(2)">✓</button></td>
-          <td><button style="background-color: #ccffcc" onclick="sendCheckPoint(2)">➡</button></td>
+          <td class="cp-tipo-cell" onclick="openLineEdit(2,'tipo1')">
+            <span id="tipo1-display-2">FPC 102</span>
+            <hr class="cp-tipo-sep">
+            <span id="tipo2-display-2">Automatica</span>
+          </td>
+          <td class="cp-val-cell" onclick="openLineEdit(2,'comp')"><span id="comp-display-2">000000</span></td>
+          <td class="cp-val-cell" onclick="openLineEdit(2,'delay')"><span id="delay-display-2">0</span></td>
+          <td><button data-color="#ccffcc" class="toggle-btn" data-line="2">👁</button></td>
+          <td><button data-color="#ccffcc" class="line-enable-btn" data-line="2" onclick="toggleLineEnable(2)">✓</button></td>
+          <td><button style="background-color:#ccffcc" onclick="sendCheckPoint(2)">➡</button></td>
         </tr>
 
         <tr>
           <td>3</td>
-          <td><input type="text" autocomplete="off" id="l3" data-line="3" placeholder="line3 ID" value="003"></td>
-          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c3" data-line="3" placeholder="Competitor 3" value="000000"></td>
-          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="d3" data-line="3" placeholder="0" value="0"></td>
-          <td><button data-color= "#ccccff" class="toggle-btn" data-line="3">👁</button></td> 
-          <td><button data-color= "#ccccff"  class="line-enable-btn" data-line="3" onclick="toggleLineEnable(3)">✓</button></td>
-          <td><button style="background-color: #ccccff" onclick="sendCheckPoint(3)">➡</button></td>
+          <td class="cp-tipo-cell" onclick="openLineEdit(3,'tipo1')">
+            <span id="tipo1-display-3">FPC 102</span>
+            <hr class="cp-tipo-sep">
+            <span id="tipo2-display-3">Automatica</span>
+          </td>
+          <td class="cp-val-cell" onclick="openLineEdit(3,'comp')"><span id="comp-display-3">000000</span></td>
+          <td class="cp-val-cell" onclick="openLineEdit(3,'delay')"><span id="delay-display-3">0</span></td>
+          <td><button data-color="#ccccff" class="toggle-btn" data-line="3">👁</button></td>
+          <td><button data-color="#ccccff" class="line-enable-btn" data-line="3" onclick="toggleLineEnable(3)">✓</button></td>
+          <td><button style="background-color:#ccccff" onclick="sendCheckPoint(3)">➡</button></td>
         </tr>
 
         <tr>
           <td>4</td>
-          <td><input type="text" autocomplete="off" id="l4" data-line="4" placeholder="line4 ID" value="004"></td>
-          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="c4" data-line="4" placeholder="Competitor 4" value="000000"></td>
-          <td><input type="number" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-line="4" id="d4" placeholder="0" value="0"></td>
-          <td><button data-color= "#fff5cc" class="toggle-btn" data-line="4">👁</button></td>
-          <td><button data-color= "#fff5cc"  class="line-enable-btn" data-line="4" onclick="toggleLineEnable(4)">✓</button></td>
-          <td><button style="background-color: #fff5cc" onclick="sendCheckPoint(4)">➡</button></td>
+          <td class="cp-tipo-cell" onclick="openLineEdit(4,'tipo1')">
+            <span id="tipo1-display-4">FPC 102</span>
+            <hr class="cp-tipo-sep">
+            <span id="tipo2-display-4">Automatica</span>
+          </td>
+          <td class="cp-val-cell" onclick="openLineEdit(4,'comp')"><span id="comp-display-4">000000</span></td>
+          <td class="cp-val-cell" onclick="openLineEdit(4,'delay')"><span id="delay-display-4">0</span></td>
+          <td><button data-color="#fff5cc" class="toggle-btn" data-line="4">👁</button></td>
+          <td><button data-color="#fff5cc" class="line-enable-btn" data-line="4" onclick="toggleLineEnable(4)">✓</button></td>
+          <td><button style="background-color:#fff5cc" onclick="sendCheckPoint(4)">➡</button></td>
         </tr>
 
       </tbody>
     </table>
+  </div>
+
+  <!-- Hidden inputs — keep server communication intact -->
+  <div style="display:none">
+    <input type="number" id="c1" data-line="1" value="000000">
+    <input type="number" id="d1" data-line="1" value="0">
+    <input type="number" id="c2" data-line="2" value="000000">
+    <input type="number" id="d2" data-line="2" value="0">
+    <input type="number" id="c3" data-line="3" value="000000">
+    <input type="number" id="d3" data-line="3" value="0">
+    <input type="number" id="c4" data-line="4" value="000000">
+    <input type="number" id="d4" data-line="4" value="0">
   </div>
 
   <p id="fields-msg"></p>
@@ -812,8 +973,9 @@
             <th class="col-rank-col">🏅</th>
             <th class="col-index-col">#</th>
             <th class="col-line-col"      data-i18n="th.line">Line</th>
-            <th class="col-id-col"        data-i18n="th.id">ID</th>
             <th                           data-i18n="th.competitor">Comp.</th>
+            <th class="col-device-col"    data-i18n="th.device">Device</th>
+            <th class="col-mode-col"      data-i18n="th.mode">Mode</th>
             <th class="col-name-col"      data-i18n="th.name">Name</th>
             <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
             <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>

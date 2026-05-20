@@ -38,7 +38,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Bookmark",
@@ -47,19 +47,6 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "README.md",
-              "DocumentMoniker": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\README.md",
-              "RelativeDocumentMoniker": "README.md",
-              "ToolTip": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\README.md",
-              "RelativeToolTip": "README.md",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-05-18T10:11:55.518Z",
-              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -119,9 +106,22 @@
               "RelativeDocumentMoniker": "MainWindow.xaml.cs",
               "ToolTip": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\MainWindow.xaml.cs",
               "RelativeToolTip": "MainWindow.xaml.cs",
-              "ViewState": "AgIAALAAAAAAAAAAAAAAAMIAAAAQAAAAAAAAAA==",
+              "ViewState": "AgIAALwAAAAAAAAAAAAAANEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-14T10:12:59.705Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "README.md",
+              "DocumentMoniker": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\README.md",
+              "RelativeDocumentMoniker": "README.md",
+              "ToolTip": "C:\\src\\chronofit\\Software\\MqttMonitor\\MqttMonitor\\README.md",
+              "RelativeToolTip": "README.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-05-18T10:11:55.518Z",
               "EditorCaption": ""
             },
             {

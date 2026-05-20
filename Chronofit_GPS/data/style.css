@@ -195,8 +195,138 @@ hr {
   cursor: pointer;
 }
 
-.checkpoint-settings td{
-    text-align: center;
+.checkpoint-settings {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.checkpoint-settings th,
+.checkpoint-settings td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* ── Tipo cell (two-row display) ─────────────────────────────────────── */
+.cp-tipo-cell,
+.cp-val-cell {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+  padding: 4px 6px !important;
+}
+
+.cp-tipo-cell:hover,
+.cp-val-cell:hover { background: rgba(0,0,0,0.06); }
+
+.cp-tipo-cell {
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.cp-tipo-cell span {
+  font-size: 12px;
+  display: block;
+}
+
+.cp-val-cell span {
+  font-size: inherit;
+  display: block;
+}
+
+.cp-tipo-sep {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 2px 4px;
+}
+
+/* ── Line edit overlay ───────────────────────────────────────────────── */
+#lineEditOverlay .fullscreen-popup.line-edit-popup {
+  width: min(98vw, 720px);
+  max-width: 98vw;
+  padding: 18px 14px;
+}
+
+.le-scroll-wrapper {
+  overflow-x: auto;
+  margin: 10px 0 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* table */
+.line-edit-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 520px;
+}
+
+.line-edit-table th {
+  background: #f0f0f0;
+  color: #333;
+  font-size: 13px;
+  padding: 6px 6px;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 2px solid #ccc;
+}
+
+.line-edit-table td {
+  padding: 6px 5px;
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+
+/* inputs inside the table */
+.line-edit-table input[type="text"],
+.line-edit-table input[type="number"] {
+  font-size: 16px;
+  min-height: 34px;
+  width: 100%;
+  margin: 0;
+  padding: 2px 4px;
+}
+
+/* selects inside the table */
+.line-edit-table select {
+  font-family: 'Nunito';
+  font-size: 15px;
+  min-height: 36px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 2px 4px;
+  background: #fff;
+}
+
+/* line number cell */
+.le-linenum-cell {
+  min-width: 54px;
+  white-space: nowrap;
+}
+
+.le-linenum {
+  font-size: 22px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+/* select cells keep a reasonable min-width */
+.le-select-cell {
+  min-width: 110px;
+}
+
+/* action buttons (eye / enable / send) */
+.le-action-btn {
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  background: #e0e0e0;
+  white-space: nowrap;
+  min-width: 36px;
 }
 
 

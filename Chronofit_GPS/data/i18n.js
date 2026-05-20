@@ -106,7 +106,6 @@ const TRANSLATIONS = {
     'table.reverse_order':   'Reverse row order',
     'table.show_index':      'Show index column',
     'table.show_line':       'Show line column',
-    'table.show_lineid':     'Show line ID column',
     'table.show_name':       'Show name column',
     'table.show_surname':    'Show surname column',
     'table.show_event_time': 'Show event time column',
@@ -115,6 +114,8 @@ const TRANSLATIONS = {
     'table.show_penalty':    'Show penality column',
     'table.show_edit':       'Show edit button',
     'table.show_send':       'Show send button',
+    'table.show_device':     'Show device column',
+    'table.show_mode':       'Show mode column',
     'table.time_precision':  'Time precision decimals',
     'table.show_sync_test':  'Show sync test rows',
     'table.show_disabled':   'Show disabled line rows',
@@ -184,20 +185,32 @@ const TRANSLATIONS = {
     'main.error_send':       'Error sending data',
 
     // ── Checkpoint settings table headers ─────────────────────────────────────
-    'cp.line':       'Line',
-    'cp.id':         'ID',
-    'cp.competitor': 'Competitor',
-    'cp.ms':         'ms',
+    'cp.line':        'Line',
+    'cp.tipo':        'Type',
+    'cp.competitor':  'Competitor',
+    'cp.comp_abbr':   'Comp.',
+    'cp.ms':          'ms',
+    'cp.edit_title':       'Line {0} — Settings',
+    'cp.settings_title':   'Checkpoint settings',
+    'cp.line_id':     'Line ID',
+    'cp.tipo_device': 'Device',
+    'cp.tipo_mode':   'Mode',
+    'cp.delay_ms':    'Delay (ms)',
+    'cp.tipo1_fpc':   'FPC 102',
+    'cp.tipo1_none':  'Unmanaged',
+    'cp.tipo2_auto':  'Automatic',
+    'cp.tipo2_manual':'Manual',
 
     // ── Event table headers ───────────────────────────────────────────────────
     'th.line':       'Line',
-    'th.id':         'ID',
     'th.competitor': 'Comp.',
     'th.name':       'Name',
     'th.surname':    'Surname',
     'th.event_time': 'Event ⏱️',
     'th.race_time':  'Race time',
     'th.elapsed':    'Elapsed ⏱️',
+    'th.device':     'Device',
+    'th.mode':       'Mode',
     'th.edit':       'Edit',
     'th.send':       'Send',
 
@@ -312,7 +325,6 @@ const TRANSLATIONS = {
     'table.reverse_order':   'Ordine inverso',
     'table.show_index':      'Mostra colonna indice',
     'table.show_line':       'Mostra colonna linea',
-    'table.show_lineid':     'Mostra colonna ID linea',
     'table.show_name':       'Mostra colonna nome',
     'table.show_surname':    'Mostra colonna cognome',
     'table.show_event_time': 'Mostra colonna ora evento',
@@ -321,6 +333,8 @@ const TRANSLATIONS = {
     'table.show_penalty':    'Mostra colonna penalità',
     'table.show_edit':       'Mostra pulsante modifica',
     'table.show_send':       'Mostra pulsante invia',
+    'table.show_device':     'Mostra colonna dispositivo',
+    'table.show_mode':       'Mostra colonna modalità',
     'table.time_precision':  'Decimali precisione tempo',
     'table.show_sync_test':  'Mostra righe test sync',
     'table.show_disabled':   'Mostra righe linee disabilitate',
@@ -390,20 +404,32 @@ const TRANSLATIONS = {
     'main.error_send':       'Errore invio dati',
 
     // ── Checkpoint settings table headers ─────────────────────────────────────
-    'cp.line':       'Linea',
-    'cp.id':         'ID',
-    'cp.competitor': 'Competitore',
-    'cp.ms':         'ms',
+    'cp.line':        'Linea',
+    'cp.tipo':        'Tipo',
+    'cp.competitor':  'Competitore',
+    'cp.comp_abbr':   'Conc.',
+    'cp.ms':          'ms',
+    'cp.edit_title':       'Linea {0} — Impostazioni',
+    'cp.settings_title':   'Impostazioni checkpoint',
+    'cp.line_id':     'ID Linea',
+    'cp.tipo_device': 'Dispositivo',
+    'cp.tipo_mode':   'Modalità',
+    'cp.delay_ms':    'Ritardo (ms)',
+    'cp.tipo1_fpc':   'FPC 102',
+    'cp.tipo1_none':  'Non gestita',
+    'cp.tipo2_auto':  'Automatica',
+    'cp.tipo2_manual':'Manuale',
 
     // ── Event table headers ───────────────────────────────────────────────────
     'th.line':       'Linea',
-    'th.id':         'ID',
     'th.competitor': 'Comp.',
     'th.name':       'Nome',
     'th.surname':    'Cognome',
     'th.event_time': 'Evento ⏱️',
     'th.race_time':  'T. gara',
     'th.elapsed':    'Trascorso ⏱️',
+    'th.device':     'Dispositivo',
+    'th.mode':       'Modalità',
     'th.edit':       'Modifica',
     'th.send':       'Invia',
 
@@ -460,6 +486,8 @@ function applyTranslations() {
     btn.classList.toggle('active', btn.dataset.lang === _lang);
   });
   document.documentElement.lang = _lang;
+  // Refresh any dynamic displays that use t() at runtime
+  if (typeof updateAllLineDisplays === 'function') updateAllLineDisplays();
 }
 
 /**

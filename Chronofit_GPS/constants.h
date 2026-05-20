@@ -78,5 +78,7 @@ constexpr const char SECOND_FIELD[] = "s";
 constexpr const char MILLIS_FIELD[] = "ms";
 constexpr const char PENALITY_FIELD[] = "x";
 constexpr const char ENABLED_FIELD[]  = "e";
+constexpr const char LINE_DEVICE_FIELD[] = "td";
+constexpr const char LINE_MODE_FIELD[]   = "tm";
 
 #endif

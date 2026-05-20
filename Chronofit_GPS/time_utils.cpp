@@ -164,9 +164,8 @@ void checkPointRoutine(int i) {
     setExtimatedDriftParams(us_drift);
   }
   // 🔹 Crea il JSON base
-  StaticJsonDocument<256> checkpoint;
+  StaticJsonDocument<384> checkpoint;
   checkpoint[LINE_NUMBER_FIELD] = i + 1;
-  checkpoint[LINE_ID_FIELD]     = lineIds[i];
   checkpoint[COMPETITOR_FIELD]  = competitors[i];
   checkpoint[HOUR_FIELD]        = hh;
   checkpoint[MINUTE_FIELD]      = mm;
@@ -174,22 +173,23 @@ void checkPointRoutine(int i) {
   checkpoint[MILLIS_FIELD]      = ms;
   checkpoint[PENALITY_FIELD]    = 0;
   checkpoint[ENABLED_FIELD]     = lineEnabled[i];
+  checkpoint[LINE_DEVICE_FIELD] = lineDevice[i];
+  checkpoint[LINE_MODE_FIELD]   = lineMode[i];
 
   // 🔹 Calcola nuovo index
   sessionRowIndex = sessionRowIndex + 1;
   checkpoint[INDEX_FIELD] = sessionRowIndex;
 
   if (printEnabled) {
-    printFormatted(sessionRowIndex, lineIds[i], competitors[i], hh, mm, ss, ms, 1);
+    printFormatted(sessionRowIndex, String(i + 1), competitors[i], hh, mm, ss, ms, 1);
   }
 
   // 🔹 Crea una copia ordinata del JSON (index per primo)
-  StaticJsonDocument<256> ordered;
+  StaticJsonDocument<384> ordered;
   ordered[INDEX_FIELD] = sessionRowIndex;
 
   // Copia i campi principali in ordine desiderato
   if (checkpoint.containsKey(LINE_NUMBER_FIELD)) ordered[LINE_NUMBER_FIELD] = checkpoint[LINE_NUMBER_FIELD];
-  if (checkpoint.containsKey(LINE_ID_FIELD))     ordered[LINE_ID_FIELD]     = checkpoint[LINE_ID_FIELD];
   if (checkpoint.containsKey(COMPETITOR_FIELD))  ordered[COMPETITOR_FIELD]  = checkpoint[COMPETITOR_FIELD];
   if (checkpoint.containsKey(HOUR_FIELD))        ordered[HOUR_FIELD]        = checkpoint[HOUR_FIELD];
   if (checkpoint.containsKey(MINUTE_FIELD))      ordered[MINUTE_FIELD]      = checkpoint[MINUTE_FIELD];
@@ -197,6 +197,8 @@ void checkPointRoutine(int i) {
   if (checkpoint.containsKey(MILLIS_FIELD))      ordered[MILLIS_FIELD]      = checkpoint[MILLIS_FIELD];
   if (checkpoint.containsKey(PENALITY_FIELD))    ordered[PENALITY_FIELD]    = checkpoint[PENALITY_FIELD];
   if (checkpoint.containsKey(ENABLED_FIELD))     ordered[ENABLED_FIELD]     = checkpoint[ENABLED_FIELD];
+  if (checkpoint.containsKey(LINE_DEVICE_FIELD)) ordered[LINE_DEVICE_FIELD] = checkpoint[LINE_DEVICE_FIELD];
+  if (checkpoint.containsKey(LINE_MODE_FIELD))   ordered[LINE_MODE_FIELD]   = checkpoint[LINE_MODE_FIELD];
 
   // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
   File file = LittleFS.open("/session.json", "a");
@@ -209,15 +211,15 @@ void checkPointRoutine(int i) {
   file.close();
 
   // 🔹 Invia sul WebSocket
-  StaticJsonDocument<256> wsDoc = ordered;
+  StaticJsonDocument<384> wsDoc = ordered;
   wsDoc["t"] = TYPE_CHECKPOINT;
 
-  char jsonMessage[300];
+  char jsonMessage[450];
   serializeJson(wsDoc, jsonMessage, sizeof(jsonMessage));
   ws.textAll(jsonMessage);
 
   // 🔹 Pubblica su MQTT
-  char mqttPayload[256];
+  char mqttPayload[384];
   serializeJson(ordered, mqttPayload, sizeof(mqttPayload));
   mqttPublishCheckpoint(mqttPayload);
 }
@@ -225,15 +227,14 @@ void checkPointRoutine(int i) {
 
 // ----------------------------------------
 void writeCheckpointFromMqtt(const char* jsonPayload) {
-  StaticJsonDocument<256> src;
+  StaticJsonDocument<384> src;
   if (deserializeJson(src, jsonPayload) != DeserializationError::Ok) return;
 
   sessionRowIndex++;
 
-  StaticJsonDocument<256> ordered;
+  StaticJsonDocument<384> ordered;
   ordered[INDEX_FIELD]       = sessionRowIndex;
   ordered[LINE_NUMBER_FIELD] = src[LINE_NUMBER_FIELD];
-  ordered[LINE_ID_FIELD]     = src[LINE_ID_FIELD];
   ordered[COMPETITOR_FIELD]  = src[COMPETITOR_FIELD];
   ordered[HOUR_FIELD]        = src[HOUR_FIELD];
   ordered[MINUTE_FIELD]      = src[MINUTE_FIELD];
@@ -241,11 +242,13 @@ void writeCheckpointFromMqtt(const char* jsonPayload) {
   ordered[MILLIS_FIELD]      = src[MILLIS_FIELD];
   ordered[PENALITY_FIELD]    = src[PENALITY_FIELD] | 0;
   ordered[ENABLED_FIELD]     = src[ENABLED_FIELD]  | 1;
+  if (src.containsKey(LINE_DEVICE_FIELD)) ordered[LINE_DEVICE_FIELD] = src[LINE_DEVICE_FIELD];
+  if (src.containsKey(LINE_MODE_FIELD))   ordered[LINE_MODE_FIELD]   = src[LINE_MODE_FIELD];
 
   if (printEnabled) {
     printFormatted(
       sessionRowIndex,
-      src[LINE_ID_FIELD].as<String>(),
+      src[LINE_NUMBER_FIELD].as<String>(),
       src[COMPETITOR_FIELD].as<int>(),
       src[HOUR_FIELD].as<int>(),
       src[MINUTE_FIELD].as<int>(),
@@ -262,9 +265,9 @@ void writeCheckpointFromMqtt(const char* jsonPayload) {
     file.close();
   }
 
-  StaticJsonDocument<256> wsDoc = ordered;
+  StaticJsonDocument<384> wsDoc = ordered;
   wsDoc["t"] = TYPE_CHECKPOINT;
-  char jsonMessage[300];
+  char jsonMessage[450];
   serializeJson(wsDoc, jsonMessage, sizeof(jsonMessage));
   ws.textAll(jsonMessage);
 }

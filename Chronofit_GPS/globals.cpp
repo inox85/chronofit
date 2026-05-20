@@ -59,7 +59,9 @@ double compFactor = 0.03;
 int syncEnabled = 1;
 
 // --- Sensori ---
-String lineIds[5] = {"1", "2", "3", "4", "Sync-test"};
+String lineIds[5]    = {"1", "2", "3", "4", "Sync-test"};
+int lineDevice[5] = {0, 0, 0, 0, 0};   // 0=fpc102 | 1=nongestita
+int lineMode[5]   = {0, 0, 0, 0, 0};   // 0=auto   | 1=manuale
 int competitors[5] = {0, 0, 0, 0, 0};
 unsigned long delays[5] = {0, 0, 0, 0, 0};
 int lineEnabled[5] = {1, 1, 1, 1, 1};
