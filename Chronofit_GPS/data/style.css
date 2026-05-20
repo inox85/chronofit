@@ -375,6 +375,39 @@ pre {
   height: 40px;
 }
 
+/* ── Language switcher ────────────────────────────────────────────────────── */
+#lang-switcher {
+  margin-left: auto;
+  margin-right: 30px;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+.lang-flag {
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  padding: 2px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lang-flag img {
+  height: 24px;
+  width: auto;
+  display: block;
+  border-radius: 3px;
+}
+
+.lang-flag:hover  { opacity: 0.8; }
+.lang-flag.active { opacity: 1; border-color: #fff; }
+
 /* ======= TOGGLE SWITCH ======= */
 
 .switch {

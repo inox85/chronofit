@@ -196,7 +196,7 @@ function setSettings(){
       setTimeout(() => { document.getElementById("settings-field").innerText = ""; }, 3000);
     })
     .catch(err => {
-      document.getElementById("settings-field").innerText = "Errore invio dati";
+      document.getElementById("settings-field").innerText = t('main.error_send');
       console.error(err);
     });
 
@@ -210,8 +210,8 @@ const popup = document.getElementById("popup");
 function showPopup() {
   if (!popup.classList.contains("show")) {
     popup.innerText = wifiConnecting
-      ? "⏳ Connecting to WiFi, please wait..."
-      : "No connection to Chronofit device";
+      ? t('main.wifi_connecting')
+      : t('main.no_connection');
     popup.classList.remove("hidden");
     setTimeout(() => popup.classList.add("show"), 10);
   }
@@ -776,7 +776,7 @@ function handleMessage(data) {
       wifiConnecting = false;
       const statusField = document.getElementById("wifi-status-field");
       if (statusField) {
-        statusField.innerText = "❌ " + (data.msg || "Connection error");
+        statusField.innerText = data.msg ? "❌ " + data.msg : t('wifi.conn_error');
         statusField.style.color = "#c0392b";
       }
       document.getElementById("wifiOverlay").style.display = "flex";
@@ -933,62 +933,53 @@ function updateClockFromData(data) {
 
     if(syncStatus === SYNC_NONE){
       document.getElementById("time").innerText = "00:00:00.000";
-      statusElem.innerText = "Sync mode: Manual — Status: 🔴 not set";
+      statusElem.innerText = t('status.manual_not_set');
     }
     if(syncStatus === SYNC_MANUAL_SET){
-      statusElem.innerText = "Sync mode: Manual — Status: 🟢 OK"
+      statusElem.innerText = t('status.manual_ok');
     }
     if(syncStatus === SYNC_WAIT_LINE_SIGNAL){
       document.getElementById("time").innerText = "00:00:00.000";
-      statusElem.innerText = "Sync mode: Line — Status: ⏳ waiting for trigger..."
+      statusElem.innerText = t('status.line_waiting');
     }
     if(syncStatus === SYNC_SET_BY_LINE_SIGNAL){
-      statusElem.innerText = "Sync mode: Line — Status: 🟢 synced";
+      statusElem.innerText = t('status.line_synced');
     }
     if(syncStatus === SYNC_FIRST_GPS_SYNC || syncStatus === SYNC_WAIT_GPS){
-      statusElem.innerText = "Sync mode: GPS — Status: ⏳ waiting for signal..."
+      statusElem.innerText = t('status.gps_waiting');
     }if(syncStatus === SYNC_GPS_SYNCED && ppsDetected){
       const lastSync = data.ls;
       const GPSRefreshInterval = data.lg;
       const nextSync = data.lg - data.ls;
       syncTestIcon.classList.remove("disabled");
 
-      if(data.ts == GPS_TEST_DONE)
-      {
+      if(data.ts == GPS_TEST_DONE) {
         if(data.lg != 0){
-          
-          if(nextSync > 86400)
-          {
-            statusElem.innerText = "Sync mode: GPS — Status: 🟢 One shot-sync";
+          if(nextSync > 86400) {
+            statusElem.innerText = t('status.gps_one_shot');
+          } else if(nextSync < 60) {
+            statusElem.innerText = t('status.gps_synced_s', nextSync);
+          } else {
+            statusElem.innerText = t('status.gps_synced_m', Math.trunc(nextSync/60));
           }
-          else if(nextSync < 60)
-          {
-            statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync " + String(nextSync) + "s)";
-          }
-          else
-          {
-            statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync " + String(Math.trunc(nextSync/60)) + "m)";
-          }
-
-        }else{
-          statusElem.innerText = "Sync mode: GPS — Status: 🟢 synced (resync 1s)";
+        } else {
+          statusElem.innerText = t('status.gps_synced_1s');
         }
-      }else{
-        statusElem.innerText = "Sync test: ⏱️ Waiting for the next minute to start... ";
+      } else {
+        statusElem.innerText = t('status.sync_test');
       }
-
     }
     if(syncStatus == ELAPSED_WAITING_START){
       elapsedTimeControls.classList.remove("hidden");
       const startButton = document.getElementById("startButton");
-      startButton.innerText = "Start";
+      startButton.innerText = t('btn.start');
       document.getElementById("time").innerText = "00:00:00.000";
-      statusElem.innerText = "🟢 Waiting for timing start...";
+      statusElem.innerText = t('status.elapsed_waiting');
     }if(syncStatus == ELAPSED_TIME_STARTED){
       elapsedTimeControls.classList.remove("hidden");
       const startButton = document.getElementById("startButton");
-      startButton.innerText = "Stop";
-      statusElem.innerText = "⏱️ Timing started! ";
+      startButton.innerText = t('btn.stop');
+      statusElem.innerText = t('status.elapsed_running');
     }
     
   
@@ -1735,6 +1726,9 @@ function toggleFullscreen(checkbox) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
+    // Apply translations immediately so the UI starts in the saved language
+    applyTranslations();
+
     // Connessione WebSocket immediata, appena il DOM è pronto
     console.log("Connetto webSocket...");
     connectWebSocket();
@@ -1864,7 +1858,7 @@ function onSyncTestAction(){
       setTimeout(() => { document.getElementById("settings-field").innerText = ""; }, 3000);
     })
     .catch(err => {
-      document.getElementById("settings-field").innerText = "Errore invio dati";
+      document.getElementById("settings-field").innerText = t('main.error_send');
       console.error(err);
     });
 
@@ -1895,14 +1889,14 @@ function updateTimeSettingsVisibility() {
   // Mostra solo quelli corretti
   if (method === "1") {   
     document.querySelectorAll('.manual-sync').forEach(el => el.classList.remove('hidden'));
-    document.querySelector('.time-set-fields').textContent = "Time to sync";
+    document.querySelector('.time-set-fields').textContent = t('time.time_to_sync');
   } else if (method === "2") {
     document.querySelectorAll('.gps-sync').forEach(el => el.classList.remove('hidden'));
     const message = document.getElementById("time-settings-field");
     message.textContent = "";
   } else if (method === "0") {
     document.querySelectorAll('.manual-sync').forEach(el => el.classList.remove('hidden'));
-    document.querySelector('.time-set-fields').textContent = "Time to set";
+    document.querySelector('.time-set-fields').textContent = t('time.time_to_set');
   }
 }
 
@@ -1935,7 +1929,7 @@ function onApplyClick() {
   } else {
     console.log("Tempo non impostato!");
     // mostra messaggio di errore
-    message.textContent = "Enter a valid hour and minute.";
+    message.textContent = t('status.valid_time');
     message.style.color = "red";
   }
 }
@@ -2774,13 +2768,13 @@ function saveMqttSettings() {
     .then(r => r.text())
     .then(() => {
       const f = document.getElementById("mqtt-status-field");
-      f.innerText = "✅ Saved";
+      f.innerText = t('mqtt.saved');
       f.style.color = "green";
       setTimeout(() => { document.getElementById("mqttOverlay").style.display = "none"; }, 800);
     })
     .catch(() => {
       const f = document.getElementById("mqtt-status-field");
-      f.innerText = "❌ Error saving";
+      f.innerText = t('mqtt.save_error');
       f.style.color = "#c0392b";
     });
 }
@@ -2814,12 +2808,12 @@ function saveBrokerSettings() {
     .then(r => r.text())
     .then(() => {
       sf.style.color   = "green";
-      sf.innerText     = "✅ Broker salvato";
+      sf.innerText     = t('mqtt.broker_saved');
       setTimeout(() => { sf.innerText = ""; }, 2500);
     })
     .catch(() => {
       sf.style.color = "#c62828";
-      sf.innerText   = "❌ Errore salvataggio";
+      sf.innerText   = t('mqtt.save_error');
     });
 }
 
@@ -2872,20 +2866,20 @@ async function confirmEmail() {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    status.textContent = "Invalid email format";
+    status.textContent = t('email.invalid');
     status.style.color = "red";
     return;
   }
 
-  status.textContent = "Email confirmed ✔";
+  status.textContent = t('email.confirmed');
   status.style.color = "green";
 try {
     await sendEmail(email);   // 👈 aspetta
-    status.textContent = "Request sent ✔";
+    status.textContent = t('email.sent');
     status.style.color = "green";
     setTimeout(closeEmailPopup, 1000);
   } catch (err) {
-    status.textContent = "Error request sending email";
+    status.textContent = t('email.error');
     status.style.color = "red";
   }
 }
@@ -3024,7 +3018,7 @@ function renderAthleteList(filter) {
 
   if (filtered.length === 0) {
     list.innerHTML = `<p class="athlete-empty">${
-      athleteRegistry.length === 0 ? "No athletes loaded" : "No match found"
+      athleteRegistry.length === 0 ? t('athlete.none_loaded') : t('athlete.no_results')
     }</p>`;
     return;
   }
@@ -3090,7 +3084,7 @@ function clearAthleteRegistry() {
   document.getElementById("athlete-json-input").value = "";
   const status = document.getElementById("athlete-load-status");
   status.style.color = "#888";
-  status.textContent = "Registry cleared";
+  status.textContent = t('athlete.cleared');
   renderAthleteList(document.getElementById("athlete-search").value);
 }
 
@@ -3105,7 +3099,7 @@ function loadAthleteRegistry() {
     athleteRegistry = data;
     localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
     status.style.color = "green";
-    status.textContent = `✅ ${athleteRegistry.length} athletes loaded`;
+    status.textContent = t('athlete.loaded', athleteRegistry.length);
     renderAthleteList(document.getElementById("athlete-search").value);
   } catch (e) {
     status.style.color = "red";
@@ -3147,7 +3141,7 @@ document.getElementById("athlete-file-input").addEventListener("change", e => {
         athleteRegistry = data;
         localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
         status.style.color = "green";
-        status.textContent = `✅ ${athleteRegistry.length} athletes loaded from CSV`;
+        status.textContent = t('athlete.loaded_csv', athleteRegistry.length);
         renderAthleteList(document.getElementById("athlete-search").value);
       } catch (err) {
         status.style.color = "red";

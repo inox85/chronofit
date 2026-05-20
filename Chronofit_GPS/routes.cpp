@@ -468,6 +468,18 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     request->send(r);
   });
 
+  server.on("/en.png", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/en.png", "image/png");
+    r->addHeader("Cache-Control", "public, max-age=2592000");
+    request->send(r);
+  });
+
+  server.on("/it.png", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/it.png", "image/png");
+    r->addHeader("Cache-Control", "public, max-age=2592000");
+    request->send(r);
+  });
+
   server.on("/admin", HTTP_GET, [](AsyncWebServerRequest *request){
     serveGzipped(request, "/admin.html", "text/html");
   });

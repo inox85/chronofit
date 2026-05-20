@@ -10,6 +10,7 @@
   <!-- COLORE DELLA STATUS BAR SU ANDROID -->
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/manifest.json">
+  <script src="/i18n.js"></script>
 </head>
 <body>
 
@@ -19,18 +20,18 @@
       <div class="splash-divider"></div>
       <img src="/sponsor.png" alt="Sponsor">
     </div>
-    <p class="splash-label">Loading session...</p>
+    <p class="splash-label" data-i18n="splash.loading">Loading session...</p>
   </div>
 
 
   <!-- Overlay Conferma Clear Session -->
   <div id="clearSessionOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Confirm</h2>
-      <p>Delete entire session?</p>
+      <h2 data-i18n="clear.title">Confirm</h2>
+      <p data-i18n="clear.message">Delete entire session?</p>
       <div class="button-row">
-        <button class="big-button" id="clearSessionCancel">Cancel</button>
-        <button class="big-button" id="clearSessionConfirm">Confirm</button>
+        <button class="big-button" id="clearSessionCancel"  data-i18n="btn.cancel">Cancel</button>
+        <button class="big-button" id="clearSessionConfirm" data-i18n="btn.confirm">Confirm</button>
       </div>
     </div>
   </div>
@@ -38,9 +39,8 @@
   <!-- Overlay Messaggio OK -->
   <div id="okMessageOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Message</h2>
-      <p id="okMessageText">Operazione completata con successo.</p>
-
+      <h2 data-i18n="message.title">Message</h2>
+      <p id="okMessageText"></p>
       <div class="button-row" style="justify-content:center;">
         <button class="big-button" id="okMessageButton">OK</button>
       </div>
@@ -49,12 +49,11 @@
 
   <div id="assingPenality" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Assign penalty</h2>
+      <h2 data-i18n="penalty.title">Assign penalty</h2>
       <input type="number" inputmode="numeric" pattern="[0-9]*"
             id="penalty-input" placeholder="0" value="0">
-
       <div class="button-row" style="justify-content:center;">
-        <button class="big-button" id="confirmPenalityButton">Confirm</button>
+        <button class="big-button" id="confirmPenalityButton" data-i18n="btn.confirm">Confirm</button>
       </div>
     </div>
   </div>
@@ -66,19 +65,19 @@
 
         <span id="incon-time-setup" class="icon-button" onclick="onTimeSettingsAction()" title="Confirm">
           <span class="icon">⚙️</span>
-          <span class="label">Setup</span>
+          <span class="label" data-i18n="time_choice.setup">Setup</span>
         </span>
 
         <span id="incon-sync-test" class="icon-button" onclick="onSyncTestAction()" title="Cancel">
           <span class="icon">⏱️</span>
-          <span class="label">Sync test</span>
+          <span class="label" data-i18n="time_choice.sync_test">Sync test</span>
         </span>
 
         <span id="incon-undo" class="icon-button" onclick="onGoHomeAction()" title="Cancel">
           <span class="icon">↩️</span>
-          <span class="label">Home</span>
+          <span class="label" data-i18n="time_choice.home">Home</span>
         </span>
-        
+
       </div>
     </div>
   </div>
@@ -86,24 +85,24 @@
   <!-- Overlay e popup per Edit Time -->
   <div id="settingsOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Time settings</h2>
+      <h2 data-i18n="time.title">Time settings</h2>
       <p id="pos" onclick="printFixInfos()">Lat: --, Lng: --, Sat: --, Fix: --</p>
-          
+
       <div class="toggle-row">
-        <span>Sync method</span>
+        <span data-i18n="time.sync_method">Sync method</span>
         <select id="sync-method-select" onchange="updateTimeSettingsVisibility()">
-          <option value="0">Manual sync</option>
-          <option value="1">Line closure sync</option>
-          <option value="2">GPS sync</option>
-          <option value="3">Elapsed mode (no sync)</option>
+          <option value="0" data-i18n="time.manual_sync">Manual sync</option>
+          <option value="1" data-i18n="time.line_sync">Line closure sync</option>
+          <option value="2" data-i18n="time.gps_sync">GPS sync</option>
+          <option value="3" data-i18n="time.elapsed_mode">Elapsed mode (no sync)</option>
         </select>
       </div>
 
       <!-- Setting 2: Timezone -->
       <div class="toggle-row gps-sync hidden">
-        <span>GPS Sync interval</span>
+        <span data-i18n="time.gps_interval">GPS Sync interval</span>
         <select id="sync-interval-select">
-          <option value="32768">One-shot sync</option>
+          <option value="32768" data-i18n="time.one_shot">One-shot sync</option>
           <option value="1">1 Minute</option>
           <option value="5">5 Minutes</option>
           <option value="10">10 Minutes</option>
@@ -124,7 +123,7 @@
 
       <!-- Setting 2: Timezone -->
       <div class="toggle-row gps-sync hidden">
-        <span>Timezone</span>
+        <span data-i18n="time.timezone">Timezone</span>
         <select id="timezone-select">
           <option value="-12">UTC-12: Baker Island</option>
           <option value="-11">UTC-11: Niue, Samoa</option>
@@ -157,7 +156,7 @@
       </div>
 
       <div class="toggle-row manual-sync">
-        <span class="time-set-fields">Time to set</span>
+        <span class="time-set-fields" data-i18n="time.time_to_set">Time to set</span>
         <input class="manual-inputs" type="number" id="hour" placeholder="HH" min="0" max="23" onfocus="this.select()">
         <input class="manual-inputs" type="number" id="minute" placeholder="MM" min="0" max="59" onfocus="this.select()">
         <input class="manual-inputs" type="number" id="second" placeholder="SS" min="0" max="59" onfocus="this.select()">
@@ -165,8 +164,8 @@
 
       <div class="button-row">
         <!--<button class="big-button">Clear session</button>-->
-        <button class="big-button" id="closeTimePopup">Close</button>
-        <button class="big-button" id="confirmTimePopup" onclick="onApplyClick()">Apply</button>
+        <button class="big-button" id="closeTimePopup"   data-i18n="btn.close">Close</button>
+        <button class="big-button" id="confirmTimePopup" data-i18n="btn.apply" onclick="onApplyClick()">Apply</button>
       </div>
       
       <p id="time-settings-field"></p>
@@ -177,44 +176,44 @@
   <!-- Overlay Athlete Registry -->
   <div id="athleteOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup athlete-popup">
-      <h2>Competitor registry</h2>
+      <h2 data-i18n="athlete.title">Competitor registry</h2>
 
       <div class="tab-bar">
-        <button class="tab-btn active" data-tab="select" onclick="switchAthleteTab('select')">Select</button>
-        <button class="tab-btn"        data-tab="load"   onclick="switchAthleteTab('load')">Load</button>
+        <button class="tab-btn active" data-tab="select" data-i18n="athlete.tab_select" onclick="switchAthleteTab('select')">Select</button>
+        <button class="tab-btn"        data-tab="load"   data-i18n="athlete.tab_load"   onclick="switchAthleteTab('load')">Load</button>
       </div>
 
       <!-- Tab: Select -->
       <div id="tab-select" class="tab-content">
-        <input type="text" id="athlete-search" placeholder="Search bib, name, surname…" oninput="renderAthleteList(this.value)">
+        <input type="text" id="athlete-search" data-i18n-ph="athlete.search_ph" placeholder="Search bib, name, surname…" oninput="renderAthleteList(this.value)">
         <div class="athlete-layout">
           <div id="athlete-list" class="athlete-list"></div>
           <div id="athlete-detail" class="athlete-detail">
-            <p class="athlete-detail-empty">Select an athlete from the list</p>
+            <p class="athlete-detail-empty" data-i18n="athlete.empty">Select an athlete from the list</p>
           </div>
         </div>
         <div class="button-row">
-          <button class="big-button" id="athleteAssignBtn" onclick="assignAthlete()" disabled>Assign</button>
-          <button class="big-button" style="background:#e67e22;" onclick="resetAssignedAthletes()">Reset assigned</button>
-          <button class="big-button" onclick="closeAthleteModal()">Cancel</button>
+          <button class="big-button" id="athleteAssignBtn" data-i18n="athlete.assign" onclick="assignAthlete()" disabled>Assign</button>
+          <button class="big-button" data-i18n="btn.reset_assigned" style="background:#e67e22;" onclick="resetAssignedAthletes()">Reset assigned</button>
+          <button class="big-button" data-i18n="btn.cancel" onclick="closeAthleteModal()">Cancel</button>
         </div>
       </div>
 
       <!-- Tab: Load -->
       <div id="tab-load" class="tab-content" style="display:none;">
-        <p style="color:#555; margin:4px 0 8px;">Paste JSON or load a file.<br>
+        <p data-i18n-html="athlete.paste_info" style="color:#555; margin:4px 0 8px;">Paste JSON or load a file.<br>
           Expected format: <code>[{"competitor":1,"name":"Mario","surname":"Rossi", ...}]</code></p>
         <div class="button-row" style="margin-bottom:8px;">
           <label class="big-button" style="cursor:pointer;">
-            📂 Open file
+            <span data-i18n="btn.open_file">📂 Open file</span>
             <input type="file" id="athlete-file-input" accept=".json,.csv" style="display:none;">
           </label>
         </div>
-        <textarea id="athlete-json-input" placeholder='[{"competitor":1,"name":"Mario","surname":"Rossi"}]'></textarea>
+        <textarea id="athlete-json-input" data-i18n-ph="athlete.load_ph" placeholder='[{"competitor":1,"name":"Mario","surname":"Rossi"}]'></textarea>
         <div class="button-row">
-          <button class="big-button" onclick="loadAthleteRegistry()">Load</button>
-          <button class="big-button" style="background:#c0392b;" onclick="clearAthleteRegistry()">Clear</button>
-          <button class="big-button" onclick="closeAthleteModal()">Cancel</button>
+          <button class="big-button" data-i18n="btn.load"  onclick="loadAthleteRegistry()">Load</button>
+          <button class="big-button" data-i18n="btn.clear" style="background:#c0392b;" onclick="clearAthleteRegistry()">Clear</button>
+          <button class="big-button" data-i18n="btn.cancel" onclick="closeAthleteModal()">Cancel</button>
         </div>
         <p id="athlete-load-status"></p>
       </div>
@@ -227,36 +226,36 @@
     <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:85vh;">
 
       <div class="tab-bar">
-        <button class="tab-btn active" data-tab="sort"    onclick="switchSettingsTab('sort')">↕ Sort</button>
-        <button class="tab-btn"        data-tab="columns" onclick="switchSettingsTab('columns')">📊 Columns</button>
-        <button class="tab-btn"        data-tab="rows"    onclick="switchSettingsTab('rows')">☰ Rows</button>
+        <button class="tab-btn active" data-tab="sort"    data-i18n="table.tab_sort"    onclick="switchSettingsTab('sort')">↕ Sort</button>
+        <button class="tab-btn"        data-tab="columns" data-i18n="table.tab_columns" onclick="switchSettingsTab('columns')">📊 Columns</button>
+        <button class="tab-btn"        data-tab="rows"    data-i18n="table.tab_rows"    onclick="switchSettingsTab('rows')">☰ Rows</button>
       </div>
 
       <!-- Tab: Sort -->
       <div id="stab-sort" class="tab-content" style="overflow-y:auto; flex:1;">
         <div class="toggle-row">
-          <span>Show rank column</span>
+          <span data-i18n="table.show_rank">Show rank column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-rank">
             <span class="slider"></span>
           </label>
         </div>
         <div class="input-row">
-          <label for="sort-col" style="font-size:20px;">Order by</label>
+          <label for="sort-col" data-i18n="table.order_by" style="font-size:20px;">Order by</label>
           <select id="sort-col" onchange="onSortChange()">
-            <option value="arrival">Arrival(default)</option>
-            <option value="line">Line</option>
-            <option value="competitor">Competitor</option>
-            <option value="name">Name</option>
-            <option value="surname">Surname</option>
-            <option value="event-time">Event time</option>
-            <option value="race-time">Race time</option>
-            <option value="delta-time">Δ time</option>
-            <option value="elapsed-time">Elapsed</option>
+            <option value="arrival"      data-i18n="table.arrival">Arrival(default)</option>
+            <option value="line"         data-i18n="table.line">Line</option>
+            <option value="competitor"   data-i18n="table.competitor">Competitor</option>
+            <option value="name"         data-i18n="table.name">Name</option>
+            <option value="surname"      data-i18n="table.surname">Surname</option>
+            <option value="event-time"   data-i18n="table.event_time">Event time</option>
+            <option value="race-time"    data-i18n="table.race_time">Race time</option>
+            <option value="delta-time"   data-i18n="table.delta">Δ time</option>
+            <option value="elapsed-time" data-i18n="table.elapsed">Elapsed</option>
           </select>
         </div>
         <div class="toggle-row">
-          <span>Reverse row order</span>
+          <span data-i18n="table.reverse_order">Reverse row order</span>
           <label class="switch">
             <input type="checkbox" id="toggle-reverse-order">
             <span class="slider"></span>
@@ -267,84 +266,84 @@
       <!-- Tab: Columns -->
       <div id="stab-columns" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
         <div class="toggle-row">
-          <span>Show index column</span>
+          <span data-i18n="table.show_index">Show index column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-index" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show line column</span>
+          <span data-i18n="table.show_line">Show line column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-line" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show line ID column</span>
+          <span data-i18n="table.show_lineid">Show line ID column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-lineid" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show name column</span>
+          <span data-i18n="table.show_name">Show name column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-name">
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show surname column</span>
+          <span data-i18n="table.show_surname">Show surname column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-surname">
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show event time column</span>
+          <span data-i18n="table.show_event_time">Show event time column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-timestamp" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show incremental Δ column</span>
+          <span data-i18n="table.show_delta">Show incremental Δ column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-delta-time" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show elapsed time column</span>
+          <span data-i18n="table.show_elapsed">Show elapsed time column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-elapsed-time">
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show penality column</span>
+          <span data-i18n="table.show_penalty">Show penality column</span>
           <label class="switch">
             <input type="checkbox" id="toggle-penality">
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show edit button</span>
+          <span data-i18n="table.show_edit">Show edit button</span>
           <label class="switch">
             <input type="checkbox" id="toggle-edit-btn" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show send button</span>
+          <span data-i18n="table.show_send">Show send button</span>
           <label class="switch">
             <input type="checkbox" id="toggle-send-btn" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Time precision decimals</span>
+          <span data-i18n="table.time_precision">Time precision decimals</span>
           <select id="time-precision" onchange="onTimePrecisionChange(this.value)">
             <option value="1">1</option>
             <option value="2">2</option>
@@ -356,21 +355,21 @@
       <!-- Tab: Rows -->
       <div id="stab-rows" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
         <div class="toggle-row">
-          <span>Show sync test rows</span>
+          <span data-i18n="table.show_sync_test">Show sync test rows</span>
           <label class="switch">
             <input type="checkbox" class="toggle-btn" data-line="5">
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Show disabled line rows</span>
+          <span data-i18n="table.show_disabled">Show disabled line rows</span>
           <label class="switch">
             <input type="checkbox" id="toggle-disabled-rows" checked>
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span>Competitor splits mode</span>
+          <span data-i18n="table.splits_mode">Competitor splits mode</span>
           <label class="switch">
             <input type="checkbox" id="toggle-splits">
             <span class="slider"></span>
@@ -379,7 +378,7 @@
       </div>
 
       <div class="button-row">
-        <button class="big-button" id="closeTablePopup">Close</button>
+        <button class="big-button" data-i18n="btn.close" id="closeTablePopup">Close</button>
       </div>
 
       <p id="time-settings-field"></p>
@@ -389,28 +388,28 @@
     <!-- Overlay e popup per la connessione Wi-Fi -->
   <div id="wifiOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Connect to Wi-Fi for internet access</h2>
+      <h2 data-i18n="wifi.title">Connect to Wi-Fi for internet access</h2>
 
       <div id="sta-ip-row" style="display:none; background:#f0f8f0; border:1px solid #c3e6cb;
            border-radius:8px; padding:10px 14px; margin-bottom:14px; text-align:center;">
-        <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Already connected with IP address</div>
+        <div data-i18n="wifi.connected_ip" style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Already connected with IP address</div>
         <div id="sta-ip-value" style="font-size:22px; font-weight:bold; color:#2e7d32; letter-spacing:2px;">—</div>
-        <button class="big-button" onclick="disconnectWifi()"
+        <button class="big-button" data-i18n="btn.disconnect" onclick="disconnectWifi()"
           style="margin-top:10px; background:#c0392b; width:100%;">⛔ Disconnect</button>
       </div>
 
       <div class="input-row">
         <label for="wifi-ssid">SSID</label>
-        <input type="text" id="wifi-ssid" placeholder="Enter Wi-Fi SSID">
+        <input type="text" id="wifi-ssid" data-i18n-ph="wifi.ssid_ph" placeholder="Enter Wi-Fi SSID">
       </div>
 
       <div class="input-row">
         <label for="wifi-password">Password</label>
-        <input type="password" id="wifi-password" placeholder="Enter Wi-Fi password">
+        <input type="password" id="wifi-password" data-i18n-ph="wifi.pass_ph" placeholder="Enter Wi-Fi password">
       </div>
 
       <div class="toggle-row">
-        <span>Show password</span>
+        <span data-i18n="wifi.show_password">Show password</span>
         <label class="switch">
           <input type="checkbox" id="show-password" onchange="togglePassword()">
           <span class="slider"></span>
@@ -418,11 +417,11 @@
       </div>
 
       <div class="button-row">
-        <button class="big-button" id="connectWiFiBtn" onclick="connectWiFi()">Connect</button>
-        <button class="big-button" id="closeWifiPopup" onclick="closeWiFiPopup()">Cancel</button>
+        <button class="big-button" data-i18n="btn.connect" id="connectWiFiBtn" onclick="connectWiFi()">Connect</button>
+        <button class="big-button" data-i18n="btn.cancel"  id="closeWifiPopup" onclick="closeWiFiPopup()">Cancel</button>
       </div>
 
-      <button class="big-button" id="stopReconnectBtn" onclick="stopWifiReconnect()" style="display:none; background:#c0392b; margin-top:8px; width:100%;">⛔ Stop reconnecting</button>
+      <button class="big-button" data-i18n="btn.stop_reconnect" id="stopReconnectBtn" onclick="stopWifiReconnect()" style="display:none; background:#c0392b; margin-top:8px; width:100%;">⛔ Stop reconnecting</button>
 
       <p id="wifi-status-field"></p>
     </div>
@@ -431,27 +430,27 @@
   <!-- Overlay MQTT settings -->
   <div id="mqttOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Messages settings</h2>
+      <h2 data-i18n="mqtt.title">Messages settings</h2>
 
       <div class="input-row">
-        <label for="mqtt-prefix">Topic prefix</label>
+        <label for="mqtt-prefix" data-i18n="mqtt.prefix">Topic prefix</label>
         <input type="text" id="mqtt-prefix" placeholder="chronofit" oninput="updateMqttPreview()">
       </div>
 
       <div class="input-row">
-        <label for="mqtt-event">Event name</label>
+        <label for="mqtt-event" data-i18n="mqtt.event">Event name</label>
         <input type="text" id="mqtt-event" placeholder="e.g. race2024" oninput="updateMqttPreview()">
       </div>
 
       <p id="mqtt-pub-preview" style="font-size:0.75em; color:#888; word-break:break-all; margin:4px 0 12px;"></p>
 
       <div class="input-row">
-        <label for="mqtt-sub">Subscribe topic</label>
+        <label for="mqtt-sub" data-i18n="mqtt.sub">Subscribe topic</label>
         <input type="text" id="mqtt-sub" placeholder="e.g. chronofit/cmd">
       </div>
 
       <div class="toggle-row">
-        <span>Enable notifications</span>
+        <span data-i18n="mqtt.notifications">Enable notifications</span>
         <label class="switch">
           <input type="checkbox" id="mqttShowPopupToggle" checked>
           <span class="slider"></span>
@@ -461,7 +460,7 @@
       <hr style="border-color:#333; margin:10px 0;">
 
       <div class="toggle-row">
-        <span>Acquire row</span>
+        <span data-i18n="mqtt.acquire_row">Acquire row</span>
         <label class="switch">
           <input type="checkbox" id="mqttAcquireRowToggle">
           <span class="slider"></span>
@@ -469,7 +468,7 @@
       </div>
 
       <div class="toggle-row">
-        <span>Acquire competitor</span>
+        <span data-i18n="mqtt.acquire_comp">Acquire competitor</span>
         <label class="switch">
           <input type="checkbox" id="mqttAcquireCompetitorToggle">
           <span class="slider"></span>
@@ -477,16 +476,16 @@
       </div>
 
       <div class="input-row">
-        <label for="mqttAcqModeSelect">Acquisition</label>
+        <label for="mqttAcqModeSelect" data-i18n="mqtt.acquisition">Acquisition</label>
         <select id="mqttAcqModeSelect" onchange="updateMqttModeUI()">
-          <option value="immediate">Immediate</option>
-          <option value="manual">Manual confirm</option>
-          <option value="timed">Timed</option>
+          <option value="immediate" data-i18n="mqtt.immediate">Immediate</option>
+          <option value="manual"    data-i18n="mqtt.manual">Manual confirm</option>
+          <option value="timed"     data-i18n="mqtt.timed">Timed</option>
         </select>
       </div>
 
       <div class="toggle-row" id="mqttShowInfoRow">
-        <span>Show info popup</span>
+        <span data-i18n="mqtt.show_info">Show info popup</span>
         <label class="switch">
           <input type="checkbox" id="mqttShowInfoToggle" checked>
           <span class="slider"></span>
@@ -495,14 +494,14 @@
 
       <div id="mqttTimedOpts" style="display:none;">
         <div class="input-row">
-          <label for="mqttTimeoutInput">Timeout (s)</label>
+          <label for="mqttTimeoutInput" data-i18n="mqtt.timeout_s">Timeout (s)</label>
           <input type="number" id="mqttTimeoutInput" min="1" max="60" value="5" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
         </div>
         <div class="input-row">
-          <label for="mqttOnTimeoutSelect">On timeout</label>
+          <label for="mqttOnTimeoutSelect" data-i18n="mqtt.on_timeout">On timeout</label>
           <select id="mqttOnTimeoutSelect">
-            <option value="accept">Accept</option>
-            <option value="reject">Reject</option>
+            <option value="accept" data-i18n="mqtt.accept">Accept</option>
+            <option value="reject" data-i18n="mqtt.reject">Reject</option>
           </select>
         </div>
       </div>
@@ -511,22 +510,22 @@
 
       <!-- Broker settings toggle -->
       <div class="toggle-row" style="cursor:pointer;" onclick="toggleBrokerPanel()">
-        <span>⚙️ Broker settings</span>
+        <span data-i18n="mqtt.broker_settings">⚙️ Broker settings</span>
         <span id="broker-arrow" style="font-size:12px; color:#888;">▼</span>
       </div>
 
       <div id="broker-panel" style="display:none; margin-top:10px;">
         <div class="input-row">
-          <label for="mqtt-broker-host">Indirizzo broker</label>
+          <label for="mqtt-broker-host" data-i18n="mqtt.broker_host">Broker address</label>
           <input type="text" id="mqtt-broker-host" placeholder="broker.hivemq.com">
         </div>
         <div class="input-row">
-          <label for="mqtt-broker-port">Porta</label>
+          <label for="mqtt-broker-port" data-i18n="mqtt.broker_port">Port</label>
           <input type="number" id="mqtt-broker-port" placeholder="1883" min="1" max="65535">
         </div>
 
         <div class="toggle-row">
-          <span>Usa credenziali</span>
+          <span data-i18n="mqtt.use_credentials">Use credentials</span>
           <label class="switch">
             <input type="checkbox" id="mqttUseCredentials"
                    onchange="updateBrokerCredentialsUI()">
@@ -537,25 +536,23 @@
         <div id="broker-credentials" style="display:none;">
           <div class="input-row">
             <label for="mqtt-broker-user">Username</label>
-            <input type="text" id="mqtt-broker-user" placeholder="username"
-                   autocomplete="off">
+            <input type="text" id="mqtt-broker-user" placeholder="username" autocomplete="off">
           </div>
           <div class="input-row">
             <label for="mqtt-broker-pass">Password</label>
-            <input type="password" id="mqtt-broker-pass" placeholder="password"
-                   autocomplete="off">
+            <input type="password" id="mqtt-broker-pass" placeholder="password" autocomplete="off">
           </div>
         </div>
 
         <div class="button-row" style="margin-top:10px;">
-          <button class="big-button" onclick="saveBrokerSettings()">Save broker</button>
+          <button class="big-button" data-i18n="btn.save_broker" onclick="saveBrokerSettings()">Save broker</button>
         </div>
         <p id="broker-status-field" style="font-size:0.85em; margin:4px 0 0;"></p>
       </div>
 
       <div class="button-row">
-        <button class="big-button" onclick="saveMqttSettings()">Save</button>
-        <button class="big-button" onclick="closeMqttPopup()">Cancel</button>
+        <button class="big-button" data-i18n="btn.save"   onclick="saveMqttSettings()">Save</button>
+        <button class="big-button" data-i18n="btn.cancel" onclick="closeMqttPopup()">Cancel</button>
       </div>
 
       <p id="mqtt-status-field"></p>
@@ -565,16 +562,16 @@
   <!-- Overlay e popup per inserimento Email -->
   <div id="emailOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Insert your email</h2>
+      <h2 data-i18n="email.title">Insert your email</h2>
 
       <div class="input-row">
         <label for="user-email">Email</label>
-        <input type="email" id="user-email" placeholder="Enter email">
+        <input type="email" id="user-email" data-i18n-ph="email.ph" placeholder="Enter email">
       </div>
 
       <div class="button-row">
-        <button class="big-button" onclick="confirmEmail()">Confirm</button>
-        <button class="big-button" onclick="closeEmailPopup()">Cancel</button>
+        <button class="big-button" data-i18n="btn.confirm" onclick="confirmEmail()">Confirm</button>
+        <button class="big-button" data-i18n="btn.cancel"  onclick="closeEmailPopup()">Cancel</button>
       </div>
 
       <p id="email-status-field"></p>
@@ -584,11 +581,11 @@
 
   <div id="fullscreenOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
-      <h2>Fullscreen Mode</h2>
-      <p>Would you like to enable fullscreen mode for a better experience?</p>
+      <h2 data-i18n="fullscreen.title">Fullscreen Mode</h2>
+      <p data-i18n="fullscreen.question">Would you like to enable fullscreen mode for a better experience?</p>
       <div class="fullscreen-buttons">
-        <button class="big-button confirm" id="yesFullscreen">Yes</button>
-        <button class="big-button cancel" id="noFullscreen">No</button>
+        <button class="big-button confirm" data-i18n="btn.yes" id="yesFullscreen">Yes</button>
+        <button class="big-button cancel"  data-i18n="btn.no"  id="noFullscreen">No</button>
       </div>
     </div>
   </div>
@@ -617,40 +614,48 @@
       <hr class="divider">
 
       <div class="toggle-row">
-        <span>📄 Manual</span>
+        <span data-i18n="about.manual">📄 Manual</span>
         <a href="/manual.pdf" target="_blank">
-          <button class="big-button" style="width:auto; padding:5px 15px;">⬇ Download</button>
+          <button class="big-button" data-i18n="btn.download" style="width:auto; padding:5px 15px;">⬇ Download</button>
         </a>
       </div>
 
       <div class="toggle-row">
-        <span>🖥️ WiFi fix tool</span>
-        <button class="big-button" style="width:auto; padding:5px 15px;" onclick="downloadWifiFix()">⬇ Download</button>
+        <span data-i18n="about.wifi_fix">🖥️ WiFi fix tool</span>
+        <button class="big-button" data-i18n="btn.download" style="width:auto; padding:5px 15px;" onclick="downloadWifiFix()">⬇ Download</button>
       </div>
 
       <hr class="divider">
 
       <div class="button-row" style="justify-content:center;">
-        <button class="big-button" onclick="document.getElementById('aboutOverlay').style.display='none'">Close</button>
+        <button class="big-button" data-i18n="btn.close" onclick="document.getElementById('aboutOverlay').style.display='none'">Close</button>
       </div>
     </div>
   </div>
 
   <div class="navbar">
     <img src="/logo.png" alt="Logo" style="cursor:pointer;" onclick="document.getElementById('aboutOverlay').style.display='flex'">
+    <div id="lang-switcher">
+      <button class="lang-flag" data-lang="en" onclick="setLanguage('en')" title="English">
+        <img src="/gb.webp" alt="English">
+      </button>
+      <button class="lang-flag" data-lang="it" onclick="setLanguage('it')" title="Italiano">
+        <img src="/it.webp" alt="Italiano">
+      </button>
+    </div>
   </div>
   
   <div class="container">
 
   <div id="mqtt-notifications">
-    <button id="mqtt-close-all">✕ Close all</button>
+    <button id="mqtt-close-all" data-i18n="btn.close_all">✕ Close all</button>
     <div id="mqtt-cards"></div>
   </div>
-  <div id="popup" class="popup hidden">No connection to Chronofit device</div>
+  <div id="popup" class="popup hidden" data-i18n="main.no_connection">No connection to Chronofit device</div>
 
     <!-- General popup -->
   <div id="generalPopup" class="popup hidden">
-    <span id="generalPopupText">Messaggio generico</span>
+    <span id="generalPopupText"></span>
   </div>
 
   <div class="card left">
@@ -675,22 +680,22 @@
     </div>
     
     <p id="time">--:--:--</p>
-    <p id="status" class="status nosync">Device ot synchronized</p>
+    <p id="status" class="status nosync" data-i18n="status.not_sync">Device not synchronized</p>
     <p id="sync-msg"></p>
 
     <div class="button-row hidden" id="elapsedTimeControls">
-      <button class="small-button" id="startButton" onclick="sendCheckPoint(1)">Start</button>
-      <button class="small-button" id="resetButton" onclick="setElapsedTimemode()">Reset</button>
+      <button class="small-button" data-i18n="btn.start" id="startButton" onclick="sendCheckPoint(1)">Start</button>
+      <button class="small-button" data-i18n="btn.reset" id="resetButton" onclick="setElapsedTimemode()">Reset</button>
     </div>
 
     <div class="table-wrapper">
     <table class="checkpoint-settings">
       <thead>
         <tr>
-          <th>Line</th>
-          <th>ID</th>
-          <th>Competitor</th>
-          <th>ms</th>
+          <th data-i18n="cp.line">Line</th>
+          <th data-i18n="cp.id">ID</th>
+          <th data-i18n="cp.competitor">Competitor</th>
+          <th data-i18n="cp.ms">ms</th>
           <th>👁</th>
           <th>✓</th>
           <th>➡</th>
@@ -746,25 +751,23 @@
 
   <hr class="divider">
 
-  <h3>Quick settings</h3>
+  <h3 data-i18n="main.quick_settings">Quick settings</h3>
 
   <div class="toggle-row">
-    <span>Timing station name</span>
-    <input type="text" id="station-name-input" placeholder="Station name" onblur="setSettings()">
+    <span data-i18n="main.station_name">Timing station name</span>
+    <input type="text" id="station-name-input" data-i18n-ph="main.station_name_ph" placeholder="Station name" onblur="setSettings()">
   </div>
 
-  <!-- Setting 1: Print on paper -->
   <div class="toggle-row">
-    <span>Print on paper</span>
+    <span data-i18n="main.print">Print on paper</span>
     <label class="switch">
       <input type="checkbox" id="printToggle" onchange="setSettings()" checked>
       <span class="slider"></span>
     </label>
   </div>
 
-    <!-- Setting 1: Print on paper -->
   <div class="toggle-row">
-    <span>Buzzer enable</span>
+    <span data-i18n="main.buzzer">Buzzer enable</span>
     <label class="switch">
       <input type="checkbox" id="buzzerToggle" onchange="setSettings()" checked>
       <span class="slider"></span>
@@ -772,7 +775,7 @@
   </div>
 
   <div class="toggle-row">
-    <span>Fullscreen</span>
+    <span data-i18n="main.fullscreen">Fullscreen</span>
     <label class="switch">
       <input type="checkbox" id="fullscreenToggle" onchange="toggleFullscreen(this)">
       <span class="slider"></span>
@@ -791,18 +794,18 @@
           <tr>
             <th class="col-rank-col">🏅</th>
             <th class="col-index-col">#</th>
-            <th class="col-line-col">Line</th>
-            <th class="col-id-col">ID</th>
-            <th>Comp.</th>
-            <th class="col-name-col">Name</th>
-            <th class="col-surname-col">Surname</th>
-            <th class="timestamp-col">Event ⏱️</th>
-            <th class="race-time-col">Race time</th>
+            <th class="col-line-col"      data-i18n="th.line">Line</th>
+            <th class="col-id-col"        data-i18n="th.id">ID</th>
+            <th                           data-i18n="th.competitor">Comp.</th>
+            <th class="col-name-col"      data-i18n="th.name">Name</th>
+            <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
+            <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>
+            <th class="race-time-col"     data-i18n="th.race_time">Race time</th>
             <th class="delta-time-col">Δ ⏱️</th>
-            <th class="elapsed-time-col">Elapsed ⏱️</th>
+            <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
             <th class="penality-col">❌</th>
-            <th class="col-edit-col">Edit</th>
-            <th class="col-send-col">Send</th>
+            <th class="col-edit-col"      data-i18n="th.edit">Edit</th>
+            <th class="col-send-col"      data-i18n="th.send">Send</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -811,12 +814,12 @@
 
     <div style="display:flex; flex-direction:column; gap:8px;">
       <div class="button-row">
-        <button class="big-button" onclick="downloadSession()">Download session</button>
-        <button class="big-button" onclick="downloadActualView()">Download view</button>
+        <button class="big-button" data-i18n="btn.download_session" onclick="downloadSession()">Download session</button>
+        <button class="big-button" data-i18n="btn.download_view"    onclick="downloadActualView()">Download view</button>
       </div>
       <div class="button-row">
-        <button class="big-button" id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
-        <button class="big-button" onclick="clearSession()">Clear session</button>
+        <button class="big-button" data-i18n="btn.send_email"    id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
+        <button class="big-button" data-i18n="btn.clear_session" onclick="clearSession()">Clear session</button>
       </div>
     </div>
 
