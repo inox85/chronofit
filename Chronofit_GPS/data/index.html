@@ -420,7 +420,7 @@
       <!-- Tab: WiFi -->
       <div id="gs-tab-wifi" class="tab-content gs-tab" style="display:none; overflow-y:auto; flex:1;">
         <div id="sta-ip-row" style="display:none; background:#f0f8f0; border:1px solid #c3e6cb;
-             border-radius:8px; padding:10px 14px; margin-bottom:14px; text-align:center;">
+             padding:10px 14px; margin-bottom:14px; text-align:center;">
           <div data-i18n="wifi.connected_ip" style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Already connected with IP address</div>
           <div id="sta-ip-value" style="font-size:22px; font-weight:bold; color:#2e7d32; letter-spacing:2px;">—</div>
           <button class="big-button" data-i18n="btn.disconnect" onclick="disconnectWifi()"
@@ -858,6 +858,7 @@
 
   <div class="sidebar">
     <div class="card comp-list-card" id="comp-list-card">
+      <div class="card-title" data-i18n="card.competitors">Comp.</div>
       <div id="comp-quick-list" class="comp-quick-list"></div>
     </div>
     <div class="sidebar-stack">
@@ -865,6 +866,7 @@
         <p id="time">--:--:--</p>
       </div>
       <div class="card left">
+        <div class="card-title" data-i18n="card.checkpoints">Checkpoints</div>
 
         <div class="button-row hidden" id="elapsedTimeControls">
           <button class="small-button" data-i18n="btn.start" id="startButton" onclick="sendCheckPoint(1)">Start</button>
@@ -958,6 +960,7 @@
 
       </div>
       <div class="card notifications-card">
+        <div class="card-title" data-i18n="card.status">Status</div>
         <div class="card-navbar">
           <div class="card-status-item" id="clinet-notify" style="cursor:pointer;">
             <span class="status-icon">🔗:</span>
@@ -984,6 +987,7 @@
   </div>
 
   <div class="card table-card right">
+    <div class="card-title" data-i18n="card.arrivals">Arrivals</div>
     <button class="table-actions-btn" onclick="openTableActions()" title="Actions">⋮</button>
     <div class="table-wrapper">
       <table id="event-table">

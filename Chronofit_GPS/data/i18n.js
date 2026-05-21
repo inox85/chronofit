@@ -129,6 +129,13 @@ const TRANSLATIONS = {
     'settings.tab_mqtt':  '📡 MQTT',
     'settings.tab_print': '🖨 Print',
 
+    // ── Card titles ───────────────────────────────────────────────────────────
+    'card.competitors': 'Comp.',
+    'card.time':        'Time',
+    'card.checkpoints': 'Checkpoints',
+    'card.status':      'Status',
+    'card.arrivals':    'Arrivals',
+
     'table.show_device':     'Show test column',
     'table.show_mode':       'Show detection column',
     'table.time_precision':  'Time precision decimals',
@@ -362,6 +369,13 @@ const TRANSLATIONS = {
     'settings.tab_wifi':  '🌍 WiFi',
     'settings.tab_mqtt':  '📡 MQTT',
     'settings.tab_print': '🖨 Stampa',
+
+    // ── Card titles ───────────────────────────────────────────────────────────
+    'card.competitors': 'Comp.',
+    'card.time':        'Orario',
+    'card.checkpoints': 'Checkpoint',
+    'card.status':      'Stato',
+    'card.arrivals':    'Arrivi',
 
     'table.show_device':     'Mostra colonna prova',
     'table.show_mode':       'Mostra colonna rilevamento',

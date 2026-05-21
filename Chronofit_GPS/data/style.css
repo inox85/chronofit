@@ -159,7 +159,7 @@ span{
   z-index: 5;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 0;
   border: none;
   background: var(--primary-color);
   color: white;
@@ -231,7 +231,7 @@ hr {
   flex: 0 0 350px;
   background: white;
   padding: 15px;
-  border-radius: 10px;
+  border-radius: 0;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
@@ -262,11 +262,32 @@ hr {
   border-collapse: collapse;
 }
 
-.checkpoint-settings th,
+.checkpoint-settings th{
+  background-color: #333;
+  color: #fff;
+  text-align: left;
+  padding: 8px;
+  font-weight: bold;
+  text-align: center;
+  position: relative;
+}
+
 .checkpoint-settings td {
   text-align: center;
   vertical-align: middle;
   padding: 4px 3px;
+  position: relative;
+}
+
+.checkpoint-settings th:not(:last-child)::after,
+.checkpoint-settings td:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 1px;
+  background: rgba(0,0,0,0.13);
 }
 
 .checkpoint-settings tbody tr {
@@ -277,6 +298,7 @@ hr {
 .checkpoint-settings td input {
   vertical-align: middle;
   display: inline-block;
+  font-size: 30px;
 }
 
 /* ── Tipo cell (two-row display) ─────────────────────────────────────── */
@@ -304,6 +326,7 @@ hr {
 .cp-val-cell span {
   font-size: inherit;
   display: block;
+  font-size: 30px;
 }
 
 .cp-tipo-sep {
@@ -318,6 +341,7 @@ hr {
   font-size: 18px;
   user-select: none;
   transition: filter 0.15s;
+  font-size: 30px;
 }
 .cp-line-send:hover  { filter: brightness(0.88); }
 .cp-line-send:active { filter: brightness(0.75); }
@@ -377,7 +401,7 @@ hr {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 0;
   padding: 2px 4px;
   background: #fff;
 }
@@ -422,7 +446,7 @@ hr {
   max-width: 10px;
   padding: 6px 8px;
   border: none;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 16px;
   background: #e0e0e0;
@@ -442,7 +466,7 @@ input[type="password"]
   width: 100%;
   padding: 0px;
   margin: 2px 0;
-  border-radius: 5px;
+  border-radius: 0;
   border: 1px solid #ccc;
   font-size: 20px;
   box-sizing: border-box;
@@ -456,7 +480,7 @@ input[type="email"]{
   width: 80%;
   padding: 0px;
   margin: 2px 0;
-  border-radius: 5px;
+  border-radius: 0;
   border: 1px solid #ccc;
   font-size: 20px;
   box-sizing: border-box;
@@ -499,7 +523,7 @@ input#station-name-input{
 .form-row input[type="text"],
 .form-row input[type="number"] {
   padding: 5px;
-  border-radius: 5px;
+  border-radius: 0;
   border: 1px solid #ccc;
   width: 100%;
   box-sizing: border-box;
@@ -515,7 +539,7 @@ button {
   text-align: center;
   padding: 5px 10px;
   font-family: 'Nunito';
-  border-radius: 5px;
+  border-radius: 0;
   background: var(--primary-color);
   border: none;
   cursor: pointer;
@@ -531,7 +555,7 @@ button:hover {
 .toggle-btn, .line-enable-btn {
   border: none;
   padding: 5px 10px;  /* regola a piacere */
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   width: auto;        /* annulla il width:100% ereditato da button */
   background-color: var(--primary-color);
@@ -564,7 +588,7 @@ button:hover {
 /* ======= SELECT ======= */
 
 select {
-    border-radius: 5px;
+    border-radius: 0;
     border: 1px solid #ccc;
     font-family: 'Nunito';
     font-weight: bold;
@@ -619,7 +643,7 @@ pre {
 .navbar-icon-btn {
   background: none;
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 3px;
   cursor: pointer;
   opacity: 0.65;
@@ -641,7 +665,7 @@ pre {
 /* ── Discipline selection overlay ─────────────────────────────────────────── */
 .discipline-popup {
   background: #1c1c1e;
-  border-radius: 18px;
+  border-radius: 0;
   box-shadow: 0 8px 32px rgba(0,0,0,0.6);
   padding: 22px 20px 18px;
   width: 92%;
@@ -669,7 +693,7 @@ pre {
 .discipline-card {
   background: #2c2c2e;
   border: 2px solid transparent;
-  border-radius: 12px;
+  border-radius: 0;
   padding: 14px 8px 10px;
   cursor: pointer;
   display: flex;
@@ -710,7 +734,7 @@ pre {
 .lang-flag {
   background: none;
   border: 2px solid transparent;
-  border-radius: 5px;
+  border-radius: 0;
   padding: 2px;
   cursor: pointer;
   opacity: 0.45;
@@ -724,7 +748,7 @@ pre {
   height: 24px;
   width: auto;
   display: block;
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 .lang-flag:hover  { opacity: 0.8; }
@@ -752,7 +776,7 @@ pre {
   right: 0; bottom: 0;
   background-color: #ccc;
   transition: 0.3s;
-  border-radius: 24px;
+  border-radius: 0;
 }
 
 .slider:before {
@@ -764,7 +788,7 @@ pre {
   bottom: 3px;
   background-color: white;
   transition: 0.3s;
-  border-radius: 50%;
+  border-radius: 0;
 }
 
 input:checked + .slider {
@@ -790,7 +814,7 @@ input:checked + .slider:before {
 }
 
 .card.table-card {
-  min-height: 552px;
+  min-height: 642px;
   display: flex;
   flex-direction: column;
   flex: 1 1 350px;
@@ -812,12 +836,8 @@ input:checked + .slider:before {
   border-collapse: collapse;
   font-family: 'Nunito';
   font-size: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   table-layout: auto;
 }
-
-#event-table thead th:first-child { border-top-left-radius: 8px; }
-#event-table thead th:last-child  { border-top-right-radius: 8px; }
 
 #event-table th {
   background-color: #333;
@@ -826,12 +846,29 @@ input:checked + .slider:before {
   padding: 8px;
   font-weight: bold;
   text-align: center;
+  position: relative;
 }
 
 #event-table td {
   height: 36px;
   vertical-align: middle;
   text-align: center;
+  position: relative;
+}
+
+#event-table th:not(:last-child)::after,
+#event-table td:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 1px;
+  background: rgba(255,255,255,0.25);
+}
+
+#event-table td:not(:last-child)::after {
+  background: rgba(0,0,0,0.10);
 }
 
 #event-table tr:nth-child(even) {
@@ -867,7 +904,7 @@ input:checked + .slider:before {
   background-color: #333;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 20px;
   line-height: 1;
@@ -978,7 +1015,7 @@ input:checked + .slider:before {
   background: #F44336;
   color: white;
   padding: 10px 20px;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 24px;
   opacity: 0;
   transition: opacity 0.4s, bottom 0.4s;
@@ -1012,7 +1049,7 @@ input:checked + .slider:before {
 .fullscreen-popup {
   font-family: 'Nunito';
   background: #fff;
-  border-radius: 16px;
+  border-radius: 0;
   box-shadow: 0 5px 20px rgba(0,0,0,0.3);
   max-width: 400px;
   max-height: 90vh;
@@ -1095,7 +1132,7 @@ input:checked + .slider:before {
 
 #settingsOverlay .fullscreen-popup {
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 0;
   padding: 20px;
   width: 85%;
   max-width: 400px;
@@ -1233,6 +1270,8 @@ input:checked + .slider:before {
 
 /* ── Competitor quick-list card ── */
 .comp-list-card {
+  max-height: 516px;
+  margin-top: 144px;
   flex: 0 0 90px;
   min-width: 70px;
   max-width: 110px;
@@ -1254,7 +1293,7 @@ input:checked + .slider:before {
 .comp-list-item {
   cursor: pointer;
   padding: 6px 4px;
-  border-radius: 6px;
+  border-radius: 0;
   text-align: center;
   background: #f5f5f5;
   user-select: none;
@@ -1267,7 +1306,7 @@ input:checked + .slider:before {
 }
 
 .comp-list-num {
-  font-size: 17px;
+  font-size: 30px;
   font-weight: bold;
   display: block;
   line-height: 1.2;
@@ -1340,7 +1379,7 @@ input:checked + .slider:before {
   padding: 8px 10px;
   font-size: 16px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 .athlete-layout {
@@ -1355,7 +1394,7 @@ input:checked + .slider:before {
   max-height: 260px;
   overflow-y: auto;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 .athlete-item {
@@ -1403,7 +1442,7 @@ input:checked + .slider:before {
   max-height: 260px;
   overflow-y: auto;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 8px;
 }
 
@@ -1441,7 +1480,7 @@ input:checked + .slider:before {
   font-size: 13px;
   font-family: monospace;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 0;
   resize: vertical;
 }
 
@@ -1472,7 +1511,7 @@ input:checked + .slider:before {
 
 .status-icon {
   font-weight: bold;
-  font-size: 15px;
+  font-size: 20px;
   cursor: pointer;
 }
 
@@ -1528,7 +1567,7 @@ input:checked + .slider:before {
   background: #8b0000;
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.82em;
   white-space: nowrap;
@@ -1547,7 +1586,7 @@ input:checked + .slider:before {
   background: #1e1e2e;
   border: 1px solid #444;
   border-left: 4px solid #3b55ff;
-  border-radius: 10px;
+  border-radius: 0;
   padding: 10px 12px;
   color: #eee;
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
@@ -1579,7 +1618,7 @@ input:checked + .slider:before {
   background: #3b55ff;
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 0.82em;
 }
@@ -1617,10 +1656,15 @@ input#mqtt-broker-pass {
   flex: 0 0 auto;
 }
 
+/* ── Checkpoint settings card — si adatta al contenuto, niente scroll ── */
+.container .card.left {
+  overflow: visible;
+  height: fit-content;
+}
+
 /* ── Time card ── */
 .card.time-card {
   flex: 0 0 auto;
-  padding: 6px 14px;
   text-align: center;
 }
 .card.time-card #time {
@@ -1630,6 +1674,17 @@ input#mqtt-broker-pass {
   letter-spacing: 2px;
 }
 
+/* ── Card titles ── */
+.card-title {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  margin: 0 0 6px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  letter-spacing: 0.3px;
+}
+
 /* ── Notifications card ── */
 .card.notifications-card {
   flex: 0 0 auto;
@@ -1637,7 +1692,7 @@ input#mqtt-broker-pass {
 }
 .card.notifications-card #status {
   margin: 4px 0 2px;
-  font-size: 0.85em;
+  font-size: 30px;
 }
 .card.notifications-card #sync-msg,
 .card.notifications-card #settings-field {
@@ -1659,13 +1714,8 @@ input#mqtt-broker-pass {
 }
 
 /* ── Max-height caps for list and arrivals cards ── */
-.comp-list-card {
-  max-height: 500px;
-}
+
 .container .table-card {
-  max-height: 500px;
-}
-.card.table-card {
   max-height: 500px;
 }
 
