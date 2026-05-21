@@ -83,97 +83,6 @@
     </div>
   </div>
 
-  <!-- Overlay e popup per Edit Time -->
-  <div id="settingsOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup">
-      <h2 data-i18n="time.title">Time settings</h2>
-      <p id="pos" onclick="printFixInfos()">Lat: --, Lng: --, Sat: --, Fix: --</p>
-
-      <div class="toggle-row">
-        <span data-i18n="time.sync_method">Sync method</span>
-        <select id="sync-method-select" onchange="updateTimeSettingsVisibility()">
-          <option value="0" data-i18n="time.manual_sync">Manual sync</option>
-          <option value="1" data-i18n="time.line_sync">Line closure sync</option>
-          <option value="2" data-i18n="time.gps_sync">GPS sync</option>
-          <option value="3" data-i18n="time.elapsed_mode">Elapsed mode (no sync)</option>
-        </select>
-      </div>
-
-      <!-- Setting 2: Timezone -->
-      <div class="toggle-row gps-sync hidden">
-        <span data-i18n="time.gps_interval">GPS Sync interval</span>
-        <select id="sync-interval-select">
-          <option value="32768" data-i18n="time.one_shot">One-shot sync</option>
-          <option value="1">1 Minute</option>
-          <option value="5">5 Minutes</option>
-          <option value="10">10 Minutes</option>
-          <option value="15">15 Minutes</option>
-          <option value="20">20 Minutes</option>
-          <option value="25">25 Minutes</option>
-          <option value="30">30 Minutes</option>
-          <option value="60">1 Hour</option>
-          <option value="120">2 Hour</option>
-          <option value="180">3 Hour</option>
-          <option value="240">4 Hour</option>
-          <option value="300">5 Hour</option>
-          <option value="600">10 Hour</option>
-          <option value="1440">24 Hour</option>
-          
-        </select>
-      </div>
-
-      <!-- Setting 2: Timezone -->
-      <div class="toggle-row gps-sync hidden">
-        <span data-i18n="time.timezone">Timezone</span>
-        <select id="timezone-select">
-          <option value="-12">UTC-12: Baker Island</option>
-          <option value="-11">UTC-11: Niue, Samoa</option>
-          <option value="-10">UTC-10: Hawaii, Tahiti</option>
-          <option value="-9">UTC-9: Alaska</option>
-          <option value="-8">UTC-8: Los Angeles, Vancouver</option>
-          <option value="-7">UTC-7: Denver, Phoenix</optio
-          <option value="-6">UTC-6: Mexico City, Chicago</option>
-          <option value="-5">UTC-5: New York, Toronto</option>
-          <option value="-4">UTC-4: Santiago, Caracas</option>
-          <option value="-3">UTC-3: Buenos Aires, Montevideo</option>
-          <option value="-2">UTC-2: South Georgia</option>
-          <option value="-1">UTC-1: Azores, Cape Verde</option>
-          <option value="0" selected>UTC+0: London, Lisbon</option>
-          <option value="1">UTC+1: Paris, Berlin, Rome</option>
-          <option value="2">UTC+2: Athens, Cairo, Helsinki</option>
-          <option value="3">UTC+3: Moscow, Riyadh, Nairobi</option>
-          <option value="4">UTC+4: Dubai, Baku</option>
-          <option value="5">UTC+5: Karachi, Tashkent</option>
-          <option value="6">UTC+6: Dhaka, Almaty</option>
-          <option value="7">UTC+7: Bangkok, Jakarta</option>
-          <option value="8">UTC+8: Beijing, Singapore, Perth</option>
-          <option value="9">UTC+9: Tokyo, Seoul</option>
-          <option value="10">UTC+10: Sydney, Vladivostok</option>
-          <option value="11">UTC+11: Solomon Is.</option>
-          <option value="12">UTC+12: Auckland, Fiji</option>
-          <option value="13">UTC+13: Tonga, Phoenix Is.</option>
-          <option value="14">UTC+14: Line Islands</option>
-        </select>
-      </div>
-
-      <div class="toggle-row manual-sync">
-        <span class="time-set-fields" data-i18n="time.time_to_set">Time to set</span>
-        <input class="manual-inputs" type="number" id="hour" placeholder="HH" min="0" max="23" onfocus="this.select()">
-        <input class="manual-inputs" type="number" id="minute" placeholder="MM" min="0" max="59" onfocus="this.select()">
-        <input class="manual-inputs" type="number" id="second" placeholder="SS" min="0" max="59" onfocus="this.select()">
-      </div>
-
-      <div class="button-row">
-        <!--<button class="big-button">Clear session</button>-->
-        <button class="big-button" id="closeTimePopup"   data-i18n="btn.close">Close</button>
-        <button class="big-button" id="confirmTimePopup" data-i18n="btn.apply" onclick="onApplyClick()">Apply</button>
-      </div>
-      
-      <p id="time-settings-field"></p>
-    </div>
-  </div>
-
-
   <!-- Overlay Athlete Registry -->
   <div id="athleteOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup athlete-popup">
@@ -182,6 +91,7 @@
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="select" data-i18n="athlete.tab_select" onclick="switchAthleteTab('select')">Select</button>
         <button class="tab-btn"        data-tab="load"   data-i18n="athlete.tab_load"   onclick="switchAthleteTab('load')">Load</button>
+        <button class="tab-btn"        data-tab="manual" data-i18n="athlete.tab_manual" onclick="switchAthleteTab('manual')">Manual</button>
       </div>
 
       <!-- Tab: Select -->
@@ -217,6 +127,33 @@
           <button class="big-button" data-i18n="btn.cancel" onclick="closeAthleteModal()">Cancel</button>
         </div>
         <p id="athlete-load-status"></p>
+      </div>
+
+      <!-- Tab: Manual -->
+      <div id="tab-manual" class="tab-content" style="display:none;">
+        <div class="athlete-manual-form">
+          <div class="input-row">
+            <label data-i18n="athlete.manual_num">Number</label>
+            <input type="number" id="manual-num" inputmode="numeric" autocomplete="off" min="1">
+          </div>
+          <div class="input-row">
+            <label data-i18n="athlete.manual_name">Name</label>
+            <input type="text" id="manual-name" value="-" autocomplete="off">
+          </div>
+          <div class="input-row">
+            <label data-i18n="athlete.manual_surname">Surname</label>
+            <input type="text" id="manual-surname" value="-" autocomplete="off">
+          </div>
+          <div class="input-row">
+            <label data-i18n="athlete.manual_team">Team</label>
+            <input type="text" id="manual-team" value="-" autocomplete="off">
+          </div>
+        </div>
+        <p id="athlete-manual-status"></p>
+        <div class="button-row">
+          <button class="big-button" data-i18n="athlete.manual_add" onclick="addAthleteManual()">Add</button>
+          <button class="big-button" data-i18n="btn.cancel" onclick="closeAthleteModal()">Cancel</button>
+        </div>
       </div>
 
     </div>
@@ -323,13 +260,6 @@
           </label>
         </div>
         <div class="toggle-row">
-          <span data-i18n="table.show_edit">Show edit button</span>
-          <label class="switch">
-            <input type="checkbox" id="toggle-edit-btn" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="toggle-row">
           <span data-i18n="table.show_send">Show send button</span>
           <label class="switch">
             <input type="checkbox" id="toggle-send-btn" checked>
@@ -389,181 +319,304 @@
         <button class="big-button" data-i18n="btn.close" id="closeTablePopup">Close</button>
       </div>
 
-      <p id="time-settings-field"></p>
     </div>
   </div>
 
-    <!-- Overlay e popup per la connessione Wi-Fi -->
-  <div id="wifiOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup">
-      <h2 data-i18n="wifi.title">Connect to Wi-Fi for internet access</h2>
+  <!-- Global Settings Overlay -->
+  <div id="globalSettingsOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeGlobalSettings()">
+    <div class="fullscreen-popup global-settings-popup">
+      <h2 data-i18n="settings.title">Settings</h2>
 
-      <div id="sta-ip-row" style="display:none; background:#f0f8f0; border:1px solid #c3e6cb;
-           border-radius:8px; padding:10px 14px; margin-bottom:14px; text-align:center;">
-        <div data-i18n="wifi.connected_ip" style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Already connected with IP address</div>
-        <div id="sta-ip-value" style="font-size:22px; font-weight:bold; color:#2e7d32; letter-spacing:2px;">—</div>
-        <button class="big-button" data-i18n="btn.disconnect" onclick="disconnectWifi()"
-          style="margin-top:10px; background:#c0392b; width:100%;">⛔ Disconnect</button>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="sync"  data-i18n="settings.tab_sync"  onclick="switchGlobalSettingsTab('sync')">🕐 Sync</button>
+        <button class="tab-btn"        data-tab="wifi"  data-i18n="settings.tab_wifi"  onclick="switchGlobalSettingsTab('wifi')">🌍 WiFi</button>
+        <button class="tab-btn"        data-tab="mqtt"  data-i18n="settings.tab_mqtt"  onclick="switchGlobalSettingsTab('mqtt')">📡 MQTT</button>
+        <button class="tab-btn"        data-tab="print" data-i18n="settings.tab_print" onclick="switchGlobalSettingsTab('print')">🖨 Print</button>
       </div>
 
-      <div class="input-row">
-        <label for="wifi-ssid">SSID</label>
-        <input type="text" id="wifi-ssid" data-i18n-ph="wifi.ssid_ph" placeholder="Enter Wi-Fi SSID">
-      </div>
+      <!-- Tab: Sync -->
+      <div id="gs-tab-sync" class="tab-content gs-tab" style="overflow-y:auto; flex:1;">
+        <p id="pos" onclick="printFixInfos()">Lat: --, Lng: --, Sat: --, Fix: --</p>
 
-      <div class="input-row">
-        <label for="wifi-password">Password</label>
-        <input type="password" id="wifi-password" data-i18n-ph="wifi.pass_ph" placeholder="Enter Wi-Fi password">
-      </div>
-
-      <div class="toggle-row">
-        <span data-i18n="wifi.show_password">Show password</span>
-        <label class="switch">
-          <input type="checkbox" id="show-password" onchange="togglePassword()">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="button-row">
-        <button class="big-button" data-i18n="btn.connect" id="connectWiFiBtn" onclick="connectWiFi()">Connect</button>
-        <button class="big-button" data-i18n="btn.cancel"  id="closeWifiPopup" onclick="closeWiFiPopup()">Cancel</button>
-      </div>
-
-      <button class="big-button" data-i18n="btn.stop_reconnect" id="stopReconnectBtn" onclick="stopWifiReconnect()" style="display:none; background:#c0392b; margin-top:8px; width:100%;">⛔ Stop reconnecting</button>
-
-      <p id="wifi-status-field"></p>
-    </div>
-  </div>
-
-  <!-- Overlay MQTT settings -->
-  <div id="mqttOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup">
-      <h2 data-i18n="mqtt.title">Messages settings</h2>
-
-      <div class="input-row">
-        <label for="mqtt-prefix" data-i18n="mqtt.prefix">Topic prefix</label>
-        <input type="text" id="mqtt-prefix" placeholder="chronofit" oninput="updateMqttPreview()">
-      </div>
-
-      <div class="input-row">
-        <label for="mqtt-event" data-i18n="mqtt.event">Event name</label>
-        <input type="text" id="mqtt-event" placeholder="e.g. race2024" oninput="updateMqttPreview()">
-      </div>
-
-      <p id="mqtt-pub-preview" style="font-size:0.75em; color:#888; word-break:break-all; margin:4px 0 12px;"></p>
-
-      <div class="input-row">
-        <label for="mqtt-sub" data-i18n="mqtt.sub">Subscribe topic</label>
-        <input type="text" id="mqtt-sub" placeholder="e.g. chronofit/cmd">
-      </div>
-
-      <div class="toggle-row">
-        <span data-i18n="mqtt.notifications">Enable notifications</span>
-        <label class="switch">
-          <input type="checkbox" id="mqttShowPopupToggle" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <hr style="border-color:#333; margin:10px 0;">
-
-      <div class="toggle-row">
-        <span data-i18n="mqtt.acquire_row">Acquire row</span>
-        <label class="switch">
-          <input type="checkbox" id="mqttAcquireRowToggle">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span data-i18n="mqtt.acquire_comp">Acquire competitor</span>
-        <label class="switch">
-          <input type="checkbox" id="mqttAcquireCompetitorToggle">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="input-row">
-        <label for="mqttAcqModeSelect" data-i18n="mqtt.acquisition">Acquisition</label>
-        <select id="mqttAcqModeSelect" onchange="updateMqttModeUI()">
-          <option value="immediate" data-i18n="mqtt.immediate">Immediate</option>
-          <option value="manual"    data-i18n="mqtt.manual">Manual confirm</option>
-          <option value="timed"     data-i18n="mqtt.timed">Timed</option>
-        </select>
-      </div>
-
-      <div class="toggle-row" id="mqttShowInfoRow">
-        <span data-i18n="mqtt.show_info">Show info popup</span>
-        <label class="switch">
-          <input type="checkbox" id="mqttShowInfoToggle" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div id="mqttTimedOpts" style="display:none;">
-        <div class="input-row">
-          <label for="mqttTimeoutInput" data-i18n="mqtt.timeout_s">Timeout (s)</label>
-          <input type="number" id="mqttTimeoutInput" min="1" max="60" value="5" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-        </div>
-        <div class="input-row">
-          <label for="mqttOnTimeoutSelect" data-i18n="mqtt.on_timeout">On timeout</label>
-          <select id="mqttOnTimeoutSelect">
-            <option value="accept" data-i18n="mqtt.accept">Accept</option>
-            <option value="reject" data-i18n="mqtt.reject">Reject</option>
+        <div class="toggle-row">
+          <span data-i18n="time.sync_method">Sync method</span>
+          <select id="sync-method-select" onchange="updateTimeSettingsVisibility()">
+            <option value="0" data-i18n="time.manual_sync">Manual sync</option>
+            <option value="1" data-i18n="time.line_sync">Line closure sync</option>
+            <option value="2" data-i18n="time.gps_sync">GPS sync</option>
+            <option value="3" data-i18n="time.elapsed_mode">Elapsed mode (no sync)</option>
           </select>
         </div>
-      </div>
 
-      <hr style="border-color:#333; margin:10px 0;">
-
-      <!-- Broker settings toggle -->
-      <div class="toggle-row" style="cursor:pointer;" onclick="toggleBrokerPanel()">
-        <span data-i18n="mqtt.broker_settings">⚙️ Broker settings</span>
-        <span id="broker-arrow" style="font-size:12px; color:#888;">▼</span>
-      </div>
-
-      <div id="broker-panel" style="display:none; margin-top:10px;">
-        <div class="input-row">
-          <label for="mqtt-broker-host" data-i18n="mqtt.broker_host">Broker address</label>
-          <input type="text" id="mqtt-broker-host" placeholder="broker.hivemq.com">
+        <div class="toggle-row gps-sync hidden">
+          <span data-i18n="time.gps_interval">GPS Sync interval</span>
+          <select id="sync-interval-select">
+            <option value="32768" data-i18n="time.one_shot">One-shot sync</option>
+            <option value="1">1 Minute</option>
+            <option value="5">5 Minutes</option>
+            <option value="10">10 Minutes</option>
+            <option value="15">15 Minutes</option>
+            <option value="20">20 Minutes</option>
+            <option value="25">25 Minutes</option>
+            <option value="30">30 Minutes</option>
+            <option value="60">1 Hour</option>
+            <option value="120">2 Hour</option>
+            <option value="180">3 Hour</option>
+            <option value="240">4 Hour</option>
+            <option value="300">5 Hour</option>
+            <option value="600">10 Hour</option>
+            <option value="1440">24 Hour</option>
+          </select>
         </div>
+
+        <div class="toggle-row gps-sync hidden">
+          <span data-i18n="time.timezone">Timezone</span>
+          <select id="timezone-select">
+            <option value="-12">UTC-12: Baker Island</option>
+            <option value="-11">UTC-11: Niue, Samoa</option>
+            <option value="-10">UTC-10: Hawaii, Tahiti</option>
+            <option value="-9">UTC-9: Alaska</option>
+            <option value="-8">UTC-8: Los Angeles, Vancouver</option>
+            <option value="-7">UTC-7: Denver, Phoenix</option>
+            <option value="-6">UTC-6: Mexico City, Chicago</option>
+            <option value="-5">UTC-5: New York, Toronto</option>
+            <option value="-4">UTC-4: Santiago, Caracas</option>
+            <option value="-3">UTC-3: Buenos Aires, Montevideo</option>
+            <option value="-2">UTC-2: South Georgia</option>
+            <option value="-1">UTC-1: Azores, Cape Verde</option>
+            <option value="0" selected>UTC+0: London, Lisbon</option>
+            <option value="1">UTC+1: Paris, Berlin, Rome</option>
+            <option value="2">UTC+2: Athens, Cairo, Helsinki</option>
+            <option value="3">UTC+3: Moscow, Riyadh, Nairobi</option>
+            <option value="4">UTC+4: Dubai, Baku</option>
+            <option value="5">UTC+5: Karachi, Tashkent</option>
+            <option value="6">UTC+6: Dhaka, Almaty</option>
+            <option value="7">UTC+7: Bangkok, Jakarta</option>
+            <option value="8">UTC+8: Beijing, Singapore, Perth</option>
+            <option value="9">UTC+9: Tokyo, Seoul</option>
+            <option value="10">UTC+10: Sydney, Vladivostok</option>
+            <option value="11">UTC+11: Solomon Is.</option>
+            <option value="12">UTC+12: Auckland, Fiji</option>
+            <option value="13">UTC+13: Tonga, Phoenix Is.</option>
+            <option value="14">UTC+14: Line Islands</option>
+          </select>
+        </div>
+
+        <div class="toggle-row manual-sync">
+          <span class="time-set-fields" data-i18n="time.time_to_set">Time to set</span>
+          <input class="manual-inputs" type="number" id="hour"   placeholder="HH" min="0" max="23" onfocus="this.select()">
+          <input class="manual-inputs" type="number" id="minute" placeholder="MM" min="0" max="59" onfocus="this.select()">
+          <input class="manual-inputs" type="number" id="second" placeholder="SS" min="0" max="59" onfocus="this.select()">
+        </div>
+
+        <div class="button-row">
+          <button class="big-button" data-i18n="btn.close"  onclick="closeGlobalSettings()">Close</button>
+          <button class="big-button" data-i18n="btn.apply"  onclick="onApplyClick()">Apply</button>
+        </div>
+
+        <p id="time-settings-field"></p>
+      </div>
+
+      <!-- Tab: WiFi -->
+      <div id="gs-tab-wifi" class="tab-content gs-tab" style="display:none; overflow-y:auto; flex:1;">
+        <div id="sta-ip-row" style="display:none; background:#f0f8f0; border:1px solid #c3e6cb;
+             border-radius:8px; padding:10px 14px; margin-bottom:14px; text-align:center;">
+          <div data-i18n="wifi.connected_ip" style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Already connected with IP address</div>
+          <div id="sta-ip-value" style="font-size:22px; font-weight:bold; color:#2e7d32; letter-spacing:2px;">—</div>
+          <button class="big-button" data-i18n="btn.disconnect" onclick="disconnectWifi()"
+            style="margin-top:10px; background:#c0392b; width:100%;">⛔ Disconnect</button>
+        </div>
+
         <div class="input-row">
-          <label for="mqtt-broker-port" data-i18n="mqtt.broker_port">Port</label>
-          <input type="number" id="mqtt-broker-port" placeholder="1883" min="1" max="65535">
+          <label for="wifi-ssid">SSID</label>
+          <input type="text" id="wifi-ssid" data-i18n-ph="wifi.ssid_ph" placeholder="Enter Wi-Fi SSID">
+        </div>
+
+        <div class="input-row">
+          <label for="wifi-password">Password</label>
+          <input type="password" id="wifi-password" data-i18n-ph="wifi.pass_ph" placeholder="Enter Wi-Fi password">
         </div>
 
         <div class="toggle-row">
-          <span data-i18n="mqtt.use_credentials">Use credentials</span>
+          <span data-i18n="wifi.show_password">Show password</span>
           <label class="switch">
-            <input type="checkbox" id="mqttUseCredentials"
-                   onchange="updateBrokerCredentialsUI()">
+            <input type="checkbox" id="show-password" onchange="togglePassword()">
             <span class="slider"></span>
           </label>
         </div>
 
-        <div id="broker-credentials" style="display:none;">
+        <div class="button-row">
+          <button class="big-button" data-i18n="btn.connect"   id="connectWiFiBtn"   onclick="connectWiFi()">Connect</button>
+          <button class="big-button" data-i18n="btn.cancel"    id="closeWifiPopup"   onclick="closeGlobalSettings()">Cancel</button>
+        </div>
+
+        <button class="big-button" data-i18n="btn.stop_reconnect" id="stopReconnectBtn" onclick="stopWifiReconnect()" style="display:none; background:#c0392b; margin-top:8px; width:100%;">⛔ Stop reconnecting</button>
+
+        <p id="wifi-status-field"></p>
+      </div>
+
+      <!-- Tab: MQTT -->
+      <div id="gs-tab-mqtt" class="tab-content gs-tab" style="display:none; overflow-y:auto; flex:1;">
+        <div class="input-row">
+          <label for="mqtt-prefix" data-i18n="mqtt.prefix">Topic prefix</label>
+          <input type="text" id="mqtt-prefix" placeholder="chronofit" oninput="updateMqttPreview()">
+        </div>
+
+        <div class="input-row">
+          <label for="mqtt-event" data-i18n="mqtt.event">Event name</label>
+          <input type="text" id="mqtt-event" placeholder="e.g. race2024" oninput="updateMqttPreview()">
+        </div>
+
+        <p id="mqtt-pub-preview" style="font-size:0.75em; color:#888; word-break:break-all; margin:4px 0 12px;"></p>
+
+        <div class="input-row">
+          <label for="mqtt-sub" data-i18n="mqtt.sub">Subscribe topic</label>
+          <input type="text" id="mqtt-sub" placeholder="e.g. chronofit/cmd">
+        </div>
+
+        <div class="toggle-row">
+          <span data-i18n="mqtt.notifications">Enable notifications</span>
+          <label class="switch">
+            <input type="checkbox" id="mqttShowPopupToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <hr style="border-color:#333; margin:10px 0;">
+
+        <div class="toggle-row">
+          <span data-i18n="mqtt.acquire_row">Acquire row</span>
+          <label class="switch">
+            <input type="checkbox" id="mqttAcquireRowToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span data-i18n="mqtt.acquire_comp">Acquire competitor</span>
+          <label class="switch">
+            <input type="checkbox" id="mqttAcquireCompetitorToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="input-row">
+          <label for="mqttAcqModeSelect" data-i18n="mqtt.acquisition">Acquisition</label>
+          <select id="mqttAcqModeSelect" onchange="updateMqttModeUI()">
+            <option value="immediate" data-i18n="mqtt.immediate">Immediate</option>
+            <option value="manual"    data-i18n="mqtt.manual">Manual confirm</option>
+            <option value="timed"     data-i18n="mqtt.timed">Timed</option>
+          </select>
+        </div>
+
+        <div class="toggle-row" id="mqttShowInfoRow">
+          <span data-i18n="mqtt.show_info">Show info popup</span>
+          <label class="switch">
+            <input type="checkbox" id="mqttShowInfoToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div id="mqttTimedOpts" style="display:none;">
           <div class="input-row">
-            <label for="mqtt-broker-user">Username</label>
-            <input type="text" id="mqtt-broker-user" placeholder="username" autocomplete="off">
+            <label for="mqttTimeoutInput" data-i18n="mqtt.timeout_s">Timeout (s)</label>
+            <input type="number" id="mqttTimeoutInput" min="1" max="60" value="5" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
           </div>
           <div class="input-row">
-            <label for="mqtt-broker-pass">Password</label>
-            <input type="password" id="mqtt-broker-pass" placeholder="password" autocomplete="off">
+            <label for="mqttOnTimeoutSelect" data-i18n="mqtt.on_timeout">On timeout</label>
+            <select id="mqttOnTimeoutSelect">
+              <option value="accept" data-i18n="mqtt.accept">Accept</option>
+              <option value="reject" data-i18n="mqtt.reject">Reject</option>
+            </select>
           </div>
         </div>
 
-        <div class="button-row" style="margin-top:10px;">
-          <button class="big-button" data-i18n="btn.save_broker" onclick="saveBrokerSettings()">Save broker</button>
+        <hr style="border-color:#333; margin:10px 0;">
+
+        <div class="toggle-row" style="cursor:pointer;" onclick="toggleBrokerPanel()">
+          <span data-i18n="mqtt.broker_settings">⚙️ Broker settings</span>
+          <span id="broker-arrow" style="font-size:12px; color:#888;">▼</span>
         </div>
-        <p id="broker-status-field" style="font-size:0.85em; margin:4px 0 0;"></p>
+
+        <div id="broker-panel" style="display:none; margin-top:10px;">
+          <div class="input-row">
+            <label for="mqtt-broker-host" data-i18n="mqtt.broker_host">Broker address</label>
+            <input type="text" id="mqtt-broker-host" placeholder="broker.hivemq.com">
+          </div>
+          <div class="input-row">
+            <label for="mqtt-broker-port" data-i18n="mqtt.broker_port">Port</label>
+            <input type="number" id="mqtt-broker-port" placeholder="1883" min="1" max="65535">
+          </div>
+
+          <div class="toggle-row">
+            <span data-i18n="mqtt.use_credentials">Use credentials</span>
+            <label class="switch">
+              <input type="checkbox" id="mqttUseCredentials" onchange="updateBrokerCredentialsUI()">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div id="broker-credentials" style="display:none;">
+            <div class="input-row">
+              <label for="mqtt-broker-user">Username</label>
+              <input type="text" id="mqtt-broker-user" placeholder="username" autocomplete="off">
+            </div>
+            <div class="input-row">
+              <label for="mqtt-broker-pass">Password</label>
+              <input type="password" id="mqtt-broker-pass" placeholder="password" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="button-row" style="margin-top:10px;">
+            <button class="big-button" data-i18n="btn.save_broker" onclick="saveBrokerSettings()">Save broker</button>
+          </div>
+          <p id="broker-status-field" style="font-size:0.85em; margin:4px 0 0;"></p>
+        </div>
+
+        <div class="button-row">
+          <button class="big-button" data-i18n="btn.save"   onclick="saveMqttSettings()">Save</button>
+          <button class="big-button" data-i18n="btn.cancel" onclick="closeGlobalSettings()">Cancel</button>
+        </div>
+
+        <p id="mqtt-status-field"></p>
       </div>
 
-      <div class="button-row">
-        <button class="big-button" data-i18n="btn.save"   onclick="saveMqttSettings()">Save</button>
-        <button class="big-button" data-i18n="btn.cancel" onclick="closeMqttPopup()">Cancel</button>
+      <!-- Tab: Print -->
+      <div id="gs-tab-print" class="tab-content gs-tab" style="display:none; overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span data-i18n="main.station_name">Timing station name</span>
+          <input type="text" id="station-name-input" data-i18n-ph="main.station_name_ph" placeholder="Station name" onblur="setSettings()">
+        </div>
+
+        <div class="toggle-row">
+          <span data-i18n="main.print">Print on paper</span>
+          <label class="switch">
+            <input type="checkbox" id="printToggle" onchange="setSettings()" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span data-i18n="main.buzzer">Buzzer enable</span>
+          <label class="switch">
+            <input type="checkbox" id="buzzerToggle" onchange="setSettings()" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span data-i18n="main.fullscreen">Fullscreen</span>
+          <label class="switch">
+            <input type="checkbox" id="fullscreenToggle" onchange="toggleFullscreen(this)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="button-row">
+          <button class="big-button" data-i18n="btn.close" onclick="closeGlobalSettings()">Close</button>
+        </div>
       </div>
 
-      <p id="mqtt-status-field"></p>
     </div>
   </div>
 
@@ -652,7 +705,6 @@
               <th data-i18n="cp.line">Line</th>
               <th data-i18n="cp.tipo_device">Device</th>
               <th data-i18n="cp.tipo_mode">Mode</th>
-              <th data-i18n="cp.competitor">Comp.</th>
               <th data-i18n="cp.ms">ms</th>
               <th>👁</th>
               <th>✓</th>
@@ -678,7 +730,6 @@
                   <option value="1" data-i18n="cp.tipo2_manual">Manuale</option>
                 </select>
               </td>
-              <td><input type="number" id="le-c-1" inputmode="numeric" autocomplete="off"></td>
               <td><input type="number" id="le-d-1" inputmode="numeric" autocomplete="off"></td>
               <td><button id="le-eye-1"  class="le-action-btn" onclick="leToggle(1)">👁</button></td>
               <td><button id="le-enbl-1" class="le-action-btn" onclick="leEnable(1)">✓</button></td>
@@ -702,7 +753,6 @@
                   <option value="1" data-i18n="cp.tipo2_manual">Manuale</option>
                 </select>
               </td>
-              <td><input type="number" id="le-c-2" inputmode="numeric" autocomplete="off"></td>
               <td><input type="number" id="le-d-2" inputmode="numeric" autocomplete="off"></td>
               <td><button id="le-eye-2"  class="le-action-btn" onclick="leToggle(2)">👁</button></td>
               <td><button id="le-enbl-2" class="le-action-btn" onclick="leEnable(2)">✓</button></td>
@@ -726,7 +776,6 @@
                   <option value="1" data-i18n="cp.tipo2_manual">Manuale</option>
                 </select>
               </td>
-              <td><input type="number" id="le-c-3" inputmode="numeric" autocomplete="off"></td>
               <td><input type="number" id="le-d-3" inputmode="numeric" autocomplete="off"></td>
               <td><button id="le-eye-3"  class="le-action-btn" onclick="leToggle(3)">👁</button></td>
               <td><button id="le-enbl-3" class="le-action-btn" onclick="leEnable(3)">✓</button></td>
@@ -750,7 +799,6 @@
                   <option value="1" data-i18n="cp.tipo2_manual">Manuale</option>
                 </select>
               </td>
-              <td><input type="number" id="le-c-4" inputmode="numeric" autocomplete="off"></td>
               <td><input type="number" id="le-d-4" inputmode="numeric" autocomplete="off"></td>
               <td><button id="le-eye-4"  class="le-action-btn" onclick="leToggle(4)">👁</button></td>
               <td><button id="le-enbl-4" class="le-action-btn" onclick="leEnable(4)">✓</button></td>
@@ -808,164 +856,135 @@
     <span id="generalPopupText"></span>
   </div>
 
-  <div class="card left">
-  <!-- Navbar interna della card -->
-    <div class="card-navbar">
-      <div class="card-status-item" id="clinet-notify">
-        <span class="status-icon">🔗:</span>
-        <span id="clientStatus" class="status-icon">0</span>
+  <div class="sidebar">
+    <div class="card comp-list-card" id="comp-list-card">
+      <div id="comp-quick-list" class="comp-quick-list"></div>
+    </div>
+    <div class="sidebar-stack">
+      <div class="card time-card">
+        <p id="time">--:--:--</p>
       </div>
-      <div class="card-status-item" id="wifi-notify">
-        <span class="status-icon">🌍:</span>
-        <span id="wifiStatus" class="status-icon">❌</span>
+      <div class="card left">
+
+        <div class="button-row hidden" id="elapsedTimeControls">
+          <button class="small-button" data-i18n="btn.start" id="startButton" onclick="sendCheckPoint(1)">Start</button>
+          <button class="small-button" data-i18n="btn.reset" id="resetButton" onclick="setElapsedTimemode()">Reset</button>
+        </div>
+
+        <div class="table-wrapper">
+        <table class="checkpoint-settings">
+          <thead>
+            <tr>
+              <th data-i18n="cp.line">Line</th>
+              <th data-i18n="cp.tipo">Type</th>
+              <th data-i18n="cp.comp_abbr">Comp.</th>
+              <th data-i18n="cp.ms">ms</th>
+              <th>⏱</th>
+              <th>👁</th>
+              <th>✓</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr>
+              <td class="cp-line-send" style="background-color:#ffcccc" onclick="sendCheckPoint(1)">1</td>
+              <td class="cp-tipo-cell" onclick="openLineEdit(1,'tipo1')">
+                <span id="tipo1-display-1">FPC 102</span>
+                <hr class="cp-tipo-sep">
+                <span id="tipo2-display-1">Automatica</span>
+              </td>
+              <td class="cp-comp-cell"><input type="number" id="c1" class="comp-input" data-line="1" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(1)" onblur="onCompInputBlur(1)"></td>
+              <td class="cp-val-cell" onclick="openLineEdit(1,'delay')"><span id="delay-display-1">0</span></td>
+              <td class="cp-lasttime-cell"><span id="last-time-1" class="line-last-time"></span></td>
+              <td><button data-color="#ffcccc" class="toggle-btn" data-line="1">👁</button></td>
+              <td><button data-color="#ffcccc" class="line-enable-btn" data-line="1" onclick="toggleLineEnable(1)">✓</button></td>
+            </tr>
+
+            <tr>
+              <td class="cp-line-send" style="background-color:#ccffcc" onclick="sendCheckPoint(2)">2</td>
+              <td class="cp-tipo-cell" onclick="openLineEdit(2,'tipo1')">
+                <span id="tipo1-display-2">FPC 102</span>
+                <hr class="cp-tipo-sep">
+                <span id="tipo2-display-2">Automatica</span>
+              </td>
+              <td class="cp-comp-cell"><input type="number" id="c2" class="comp-input" data-line="2" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(2)" onblur="onCompInputBlur(2)"></td>
+              <td class="cp-val-cell" onclick="openLineEdit(2,'delay')"><span id="delay-display-2">0</span></td>
+              <td class="cp-lasttime-cell"><span id="last-time-2" class="line-last-time"></span></td>
+              <td><button data-color="#ccffcc" class="toggle-btn" data-line="2">👁</button></td>
+              <td><button data-color="#ccffcc" class="line-enable-btn" data-line="2" onclick="toggleLineEnable(2)">✓</button></td>
+            </tr>
+
+            <tr>
+              <td class="cp-line-send" style="background-color:#ccccff" onclick="sendCheckPoint(3)">3</td>
+              <td class="cp-tipo-cell" onclick="openLineEdit(3,'tipo1')">
+                <span id="tipo1-display-3">FPC 102</span>
+                <hr class="cp-tipo-sep">
+                <span id="tipo2-display-3">Automatica</span>
+              </td>
+              <td class="cp-comp-cell"><input type="number" id="c3" class="comp-input" data-line="3" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(3)" onblur="onCompInputBlur(3)"></td>
+              <td class="cp-val-cell" onclick="openLineEdit(3,'delay')"><span id="delay-display-3">0</span></td>
+              <td class="cp-lasttime-cell"><span id="last-time-3" class="line-last-time"></span></td>
+              <td><button data-color="#ccccff" class="toggle-btn" data-line="3">👁</button></td>
+              <td><button data-color="#ccccff" class="line-enable-btn" data-line="3" onclick="toggleLineEnable(3)">✓</button></td>
+            </tr>
+
+            <tr>
+              <td class="cp-line-send" style="background-color:#fff5cc" onclick="sendCheckPoint(4)">4</td>
+              <td class="cp-tipo-cell" onclick="openLineEdit(4,'tipo1')">
+                <span id="tipo1-display-4">FPC 102</span>
+                <hr class="cp-tipo-sep">
+                <span id="tipo2-display-4">Automatica</span>
+              </td>
+              <td class="cp-comp-cell"><input type="number" id="c4" class="comp-input" data-line="4" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(4)" onblur="onCompInputBlur(4)"></td>
+              <td class="cp-val-cell" onclick="openLineEdit(4,'delay')"><span id="delay-display-4">0</span></td>
+              <td class="cp-lasttime-cell"><span id="last-time-4" class="line-last-time"></span></td>
+              <td><button data-color="#fff5cc" class="toggle-btn" data-line="4">👁</button></td>
+              <td><button data-color="#fff5cc" class="line-enable-btn" data-line="4" onclick="toggleLineEnable(4)">✓</button></td>
+            </tr>
+
+          </tbody>
+        </table>
+        </div>
+
+        <!-- Hidden inputs — delay backing store -->
+        <div style="display:none">
+          <input type="number" id="d1" data-line="1" value="0">
+          <input type="number" id="d2" data-line="2" value="0">
+          <input type="number" id="d3" data-line="3" value="0">
+          <input type="number" id="d4" data-line="4" value="0">
+        </div>
+
+        <p id="fields-msg"></p>
+
       </div>
-      <div class="card-status-item" id="mqtt-notify">
-        <span class="status-icon">📡:</span>
-        <span id="mqttStatus" class="status-icon">❌</span>
-      </div>
-      <div class="card-status-item" id="gps-notify">
-        <span class="status-icon">🛰️:</span>
-        <span id="gpsStatus" class="status-icon">❌</span>
+      <div class="card notifications-card">
+        <div class="card-navbar">
+          <div class="card-status-item" id="clinet-notify" style="cursor:pointer;">
+            <span class="status-icon">🔗:</span>
+            <span id="clientStatus" class="status-icon">0</span>
+          </div>
+          <div class="card-status-item" id="wifi-notify" style="cursor:pointer;">
+            <span class="status-icon">🌍:</span>
+            <span id="wifiStatus" class="status-icon">❌</span>
+          </div>
+          <div class="card-status-item" id="mqtt-notify" style="cursor:pointer;">
+            <span class="status-icon">📡:</span>
+            <span id="mqttStatus" class="status-icon">❌</span>
+          </div>
+          <div class="card-status-item" id="gps-notify" style="cursor:pointer;">
+            <span class="status-icon">🛰️:</span>
+            <span id="gpsStatus" class="status-icon">❌</span>
+          </div>
+        </div>
+        <p id="status" class="status nosync" data-i18n="status.not_sync">Device not synchronized</p>
+        <p id="sync-msg"></p>
+        <p id="settings-field"></p>
       </div>
     </div>
-    
-    <p id="time">--:--:--</p>
-    <p id="status" class="status nosync" data-i18n="status.not_sync">Device not synchronized</p>
-    <p id="sync-msg"></p>
-
-    <div class="button-row hidden" id="elapsedTimeControls">
-      <button class="small-button" data-i18n="btn.start" id="startButton" onclick="sendCheckPoint(1)">Start</button>
-      <button class="small-button" data-i18n="btn.reset" id="resetButton" onclick="setElapsedTimemode()">Reset</button>
-    </div>
-
-    <div class="table-wrapper">
-    <table class="checkpoint-settings">
-      <thead>
-        <tr>
-          <th data-i18n="cp.line">Line</th>
-          <th data-i18n="cp.tipo">Type</th>
-          <th data-i18n="cp.comp_abbr">Comp.</th>
-          <th data-i18n="cp.ms">ms</th>
-          <th>👁</th>
-          <th>✓</th>
-          <th>➡</th>
-        </tr>
-      </thead>
-      <tbody>
-
-        <tr>
-          <td>1</td>
-          <td class="cp-tipo-cell" onclick="openLineEdit(1,'tipo1')">
-            <span id="tipo1-display-1">FPC 102</span>
-            <hr class="cp-tipo-sep">
-            <span id="tipo2-display-1">Automatica</span>
-          </td>
-          <td class="cp-val-cell" onclick="openLineEdit(1,'comp')"><span id="comp-display-1">000000</span></td>
-          <td class="cp-val-cell" onclick="openLineEdit(1,'delay')"><span id="delay-display-1">0</span></td>
-          <td><button data-color="#ffcccc" class="toggle-btn" data-line="1">👁</button></td>
-          <td><button data-color="#ffcccc" class="line-enable-btn" data-line="1" onclick="toggleLineEnable(1)">✓</button></td>
-          <td><button style="background-color:#ffcccc" onclick="sendCheckPoint(1)">➡</button></td>
-        </tr>
-
-        <tr>
-          <td>2</td>
-          <td class="cp-tipo-cell" onclick="openLineEdit(2,'tipo1')">
-            <span id="tipo1-display-2">FPC 102</span>
-            <hr class="cp-tipo-sep">
-            <span id="tipo2-display-2">Automatica</span>
-          </td>
-          <td class="cp-val-cell" onclick="openLineEdit(2,'comp')"><span id="comp-display-2">000000</span></td>
-          <td class="cp-val-cell" onclick="openLineEdit(2,'delay')"><span id="delay-display-2">0</span></td>
-          <td><button data-color="#ccffcc" class="toggle-btn" data-line="2">👁</button></td>
-          <td><button data-color="#ccffcc" class="line-enable-btn" data-line="2" onclick="toggleLineEnable(2)">✓</button></td>
-          <td><button style="background-color:#ccffcc" onclick="sendCheckPoint(2)">➡</button></td>
-        </tr>
-
-        <tr>
-          <td>3</td>
-          <td class="cp-tipo-cell" onclick="openLineEdit(3,'tipo1')">
-            <span id="tipo1-display-3">FPC 102</span>
-            <hr class="cp-tipo-sep">
-            <span id="tipo2-display-3">Automatica</span>
-          </td>
-          <td class="cp-val-cell" onclick="openLineEdit(3,'comp')"><span id="comp-display-3">000000</span></td>
-          <td class="cp-val-cell" onclick="openLineEdit(3,'delay')"><span id="delay-display-3">0</span></td>
-          <td><button data-color="#ccccff" class="toggle-btn" data-line="3">👁</button></td>
-          <td><button data-color="#ccccff" class="line-enable-btn" data-line="3" onclick="toggleLineEnable(3)">✓</button></td>
-          <td><button style="background-color:#ccccff" onclick="sendCheckPoint(3)">➡</button></td>
-        </tr>
-
-        <tr>
-          <td>4</td>
-          <td class="cp-tipo-cell" onclick="openLineEdit(4,'tipo1')">
-            <span id="tipo1-display-4">FPC 102</span>
-            <hr class="cp-tipo-sep">
-            <span id="tipo2-display-4">Automatica</span>
-          </td>
-          <td class="cp-val-cell" onclick="openLineEdit(4,'comp')"><span id="comp-display-4">000000</span></td>
-          <td class="cp-val-cell" onclick="openLineEdit(4,'delay')"><span id="delay-display-4">0</span></td>
-          <td><button data-color="#fff5cc" class="toggle-btn" data-line="4">👁</button></td>
-          <td><button data-color="#fff5cc" class="line-enable-btn" data-line="4" onclick="toggleLineEnable(4)">✓</button></td>
-          <td><button style="background-color:#fff5cc" onclick="sendCheckPoint(4)">➡</button></td>
-        </tr>
-
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Hidden inputs — keep server communication intact -->
-  <div style="display:none">
-    <input type="number" id="c1" data-line="1" value="000000">
-    <input type="number" id="d1" data-line="1" value="0">
-    <input type="number" id="c2" data-line="2" value="000000">
-    <input type="number" id="d2" data-line="2" value="0">
-    <input type="number" id="c3" data-line="3" value="000000">
-    <input type="number" id="d3" data-line="3" value="0">
-    <input type="number" id="c4" data-line="4" value="000000">
-    <input type="number" id="d4" data-line="4" value="0">
-  </div>
-
-  <p id="fields-msg"></p>
-
-  <hr class="divider">
-
-  <h3 data-i18n="main.quick_settings">Quick settings</h3>
-
-  <div class="toggle-row">
-    <span data-i18n="main.station_name">Timing station name</span>
-    <input type="text" id="station-name-input" data-i18n-ph="main.station_name_ph" placeholder="Station name" onblur="setSettings()">
-  </div>
-
-  <div class="toggle-row">
-    <span data-i18n="main.print">Print on paper</span>
-    <label class="switch">
-      <input type="checkbox" id="printToggle" onchange="setSettings()" checked>
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="toggle-row">
-    <span data-i18n="main.buzzer">Buzzer enable</span>
-    <label class="switch">
-      <input type="checkbox" id="buzzerToggle" onchange="setSettings()" checked>
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="toggle-row">
-    <span data-i18n="main.fullscreen">Fullscreen</span>
-    <label class="switch">
-      <input type="checkbox" id="fullscreenToggle" onchange="toggleFullscreen(this)">
-      <span class="slider"></span>
-    </label>
-  </div>
-
-
-  <p id="settings-field"></p>
-
   </div>
 
   <div class="card table-card right">
+    <button class="table-actions-btn" onclick="openTableActions()" title="Actions">⋮</button>
     <div class="table-wrapper">
       <table id="event-table">
         <thead>
@@ -983,7 +1002,6 @@
             <th class="delta-time-col">Δ ⏱️</th>
             <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
             <th class="penality-col">❌</th>
-            <th class="col-edit-col"      data-i18n="th.edit">Edit</th>
             <th class="col-send-col"      data-i18n="th.send">Send</th>
           </tr>
         </thead>
@@ -991,17 +1009,20 @@
       </table>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:8px;">
-      <div class="button-row">
+  </div>
+
+  <!-- Table actions popup -->
+  <div id="tableActionsOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeTableActions()">
+    <div class="fullscreen-popup" style="max-width:340px; padding:24px;">
+      <h2 data-i18n="btn.actions">Actions</h2>
+      <div style="display:flex; flex-direction:column; gap:10px;">
         <button class="big-button" data-i18n="btn.download_session" onclick="downloadSession()">Download session</button>
         <button class="big-button" data-i18n="btn.download_view"    onclick="downloadActualView()">Download view</button>
-      </div>
-      <div class="button-row">
-        <button class="big-button" data-i18n="btn.send_email"    id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
-        <button class="big-button" data-i18n="btn.clear_session" onclick="clearSession()">Clear session</button>
+        <button class="big-button" data-i18n="btn.send_email"       id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
+        <button class="big-button" data-i18n="btn.clear_session"    style="background:#c0392b;" onclick="clearSession()">Clear session</button>
+        <button class="big-button" data-i18n="btn.close"            onclick="closeTableActions()">Close</button>
       </div>
     </div>
-
   </div>
 
   <script src="/script.js"></script>

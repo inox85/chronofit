@@ -350,7 +350,6 @@ function saveViewPrefs() {
     showLine:      document.getElementById("toggle-line").checked,
     showName:      document.getElementById("toggle-name")?.checked    ?? false,
     showSurname:   document.getElementById("toggle-surname")?.checked ?? false,
-    showEditBtn:   document.getElementById("toggle-edit-btn").checked,
     showSendBtn:   document.getElementById("toggle-send-btn").checked,
     showDevice:    document.getElementById("toggle-device")?.checked ?? false,
     showMode:      document.getElementById("toggle-mode")?.checked   ?? false,
@@ -390,7 +389,6 @@ function restoreViewPrefs() {
     setChk("toggle-line",          prefs.showLine     ?? true);
     setChk("toggle-name",          prefs.showName     ?? false);
     setChk("toggle-surname",       prefs.showSurname  ?? false);
-    setChk("toggle-edit-btn",      prefs.showEditBtn  ?? true);
     setChk("toggle-send-btn",      prefs.showSendBtn  ?? true);
     setChk("toggle-device",        prefs.showDevice   ?? false);
     setChk("toggle-mode",          prefs.showMode     ?? false);
@@ -458,7 +456,6 @@ function applyDisciplinePreset(prefs) {
   setChk("toggle-line",          prefs.showLine   ?? true);
   setChk("toggle-name",          prefs.showName   ?? false);
   setChk("toggle-surname",       prefs.showSurname ?? false);
-  setChk("toggle-edit-btn",      prefs.showEditBtn ?? true);
   setChk("toggle-send-btn",      prefs.showSendBtn ?? true);
   setChk("toggle-device",        prefs.showDevice  ?? false);
   setChk("toggle-mode",          prefs.showMode    ?? false);
@@ -526,6 +523,56 @@ function translateDevice(v) { return t(TIPO1_I18N[Number(v)] ?? '') || String(v)
 function translateMode(v)   { return t(TIPO2_I18N[Number(v)] ?? '') || String(v); }
 
 let _lineEditTarget = null;
+
+// ── Competitor direct-input on main card ───────────────────────────────────
+
+let activeCompLine = null;   // quale input comp è attivo/focused
+let _compBlurTimer = null;
+
+function onCompInputFocus(n) {
+  if (_compBlurTimer) { clearTimeout(_compBlurTimer); _compBlurTimer = null; }
+  activeCompLine = n;
+  document.querySelectorAll('.comp-input').forEach(el => el.classList.remove('comp-active'));
+  document.getElementById(`c${n}`)?.classList.add('comp-active');
+}
+
+function onCompInputBlur(n) {
+  // Piccolo delay: se l'utente clicca sulla lista, il click deve arrivare prima del blur
+  _compBlurTimer = setTimeout(() => {
+    if (activeCompLine === n) {
+      activeCompLine = null;
+      document.getElementById(`c${n}`)?.classList.remove('comp-active');
+    }
+    _compBlurTimer = null;
+  }, 200);
+}
+
+function fillCompFromList(num) {
+  // Se nessun input è attivo, non fare niente
+  if (!activeCompLine) return;
+  const n = activeCompLine;
+  const cEl = document.getElementById(`c${n}`);
+  if (!cEl) return;
+  cEl.value = num;
+  cEl.dispatchEvent(new Event('change'));   // salva sul server
+  cEl.focus();                              // mantiene l'attivazione
+}
+
+function renderCompQuickList() {
+  const container = document.getElementById('comp-quick-list');
+  if (!container) return;
+  if (!athleteRegistry || athleteRegistry.length === 0) {
+    container.innerHTML = '<p class="comp-list-empty">—</p>';
+    return;
+  }
+  const sorted = [...athleteRegistry].sort((a, b) => Number(a.competitor) - Number(b.competitor));
+  container.innerHTML = sorted.map(a => {
+    const nameParts = [a.name, a.surname].filter(s => s && s !== '-').join(' ');
+    return `<div class="comp-list-item" onmousedown="event.preventDefault()" onclick="fillCompFromList(${a.competitor})">
+      <span class="comp-list-num">${a.competitor}</span>${nameParts ? `<span class="comp-list-name">${nameParts}</span>` : ''}
+    </div>`;
+  }).join('');
+}
 
 function getLineTipo(line) {
   return lineTipoConfig[line] ?? { tipo1: 0, tipo2: 0 };
@@ -601,7 +648,6 @@ function openLineEdit(line, focusField) {
 
   // Populate all 4 rows from hidden inputs + tipo config
   for (let n = 1; n <= 4; n++) {
-    document.getElementById(`le-c-${n}`).value  = document.getElementById(`c${n}`)?.value ?? '';
     document.getElementById(`le-d-${n}`).value  = document.getElementById(`d${n}`)?.value ?? '0';
     const tipo = getLineTipo(n);
     document.getElementById(`le-t1-${n}`).value = tipo.tipo1;
@@ -619,7 +665,6 @@ function openLineEdit(line, focusField) {
   const focusMap = {
     tipo1:  `le-t1-${line}`,
     tipo2:  `le-t2-${line}`,
-    comp:   `le-c-${line}`,
     delay:  `le-d-${line}`
   };
   const focusId = focusMap[focusField];
@@ -641,7 +686,6 @@ function saveLineEdit() {
   for (let line = 1; line <= 4; line++) {
     const cEl = document.getElementById(`c${line}`);
     const dEl = document.getElementById(`d${line}`);
-    if (cEl) cEl.value = document.getElementById(`le-c-${line}`).value;
     if (dEl) dEl.value = document.getElementById(`le-d-${line}`).value;
 
     lineTipoConfig[line] = {
@@ -780,7 +824,7 @@ function setTimeSyncMode(){
     )
     .catch(err => console.error("Error fetching JSON:", err));
   
-  document.getElementById("settingsOverlay").style.display = "none"
+  closeGlobalSettings();
 }
 
 function sendCheckPoint(lineNumber) {
@@ -969,8 +1013,8 @@ function handleMessage(data) {
         data.ms,
         0,
         data.e ?? 1,
-        data.td ?? '',
-        data.tm ?? ''
+        data.p ?? '',
+        data.r ?? ''
       );
       reorderTable();
       if (document.getElementById("toggle-splits").checked) applyCompetitorSplits();
@@ -1025,7 +1069,7 @@ function handleMessage(data) {
         statusField.innerText = data.msg ? "❌ " + data.msg : t('wifi.conn_error');
         statusField.style.color = "#c0392b";
       }
-      document.getElementById("wifiOverlay").style.display = "flex";
+      openGlobalSettings('wifi');
       break;
   }
 }
@@ -1330,8 +1374,8 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const millis = checkpoint.ms;
   const penality = checkpoint.x;
   const enabled = checkpoint.e ?? 1;
-  const device = checkpoint.td ?? '';
-  const mode   = checkpoint.tm ?? '';
+  const device = checkpoint.p ?? '';
+  const mode   = checkpoint.r ?? '';
 
   // Richiama la funzione originale
   addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, device, mode);
@@ -1373,7 +1417,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
     <td class="col-rank"></td>
     <td class="col-index">${index}</td>
     <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}" class="col-line">${lineNumber}</td>
-    <td class="col-competitor">${competitor}</td>
+    <td class="col-competitor">${competitor > 0 ? competitor : ''}</td>
     <td class="col-device">${translateDevice(device)}</td>
     <td class="col-mode">${translateMode(mode)}</td>
     <td class="col-name">${getAthleteName(competitor)}</td>
@@ -1383,20 +1427,21 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
     <td class="delta-time"></td>
     <td class="elapsed-time"></td>
     <td><button class="penality penality-btn">${penality}</button></td>
-    <td><button class="edit-btn">✎</button></td>
     <td><button class="send-btn">➡</button></td>
   `;
 
   
 
-  // Aggiungi gli eventi ai pulsanti della riga
-  const editBtn = row.querySelector(".edit-btn");
-  const sendBtn = row.querySelector(".send-btn");
-
-  editBtn.onclick = () => editRow(editBtn);
+  const sendBtn = row.querySelector('.send-btn');
   sendBtn.onclick = () => sendRow(sendBtn);
+  addLongPress(row, () => editRow(row));
 
   tbody.appendChild(row);
+
+  // Aggiorna il timestamp dell'ultima rilevazione nella card principale
+  const lastTimeEl = document.getElementById(`last-time-${lineNumber}`);
+  if (lastTimeEl) lastTimeEl.textContent = timestamp;
+
   updateRankColumn();
 
   // forza reflow (FONDAMENTALE per animazione)
@@ -1535,45 +1580,26 @@ function applyLineFilter() {
   updateRankColumn();
 }
 
-function editRow(button) {
-  const row = button.closest("tr");
+function editRow(row) {
+  if (row.classList.contains('row-editing')) return;
+  row.classList.add('row-editing');
 
-  // colonne editabili
-  const editableCells = row.querySelectorAll(
-    ".col-competitor, .timestamp"
-  );
-
+  const editableCells = row.querySelectorAll('.col-competitor, .timestamp');
   editableCells.forEach(cell => {
-    if (cell.querySelector("input")) return;
-
     const value = cell.textContent.trim();
-
-    // Event Time → orario mascherato
-    if (cell.classList.contains("timestamp")) {
-      cell.innerHTML = `
-        <input type="text" value="${value}" style="width:90%"
-          maxlength="12"
-          placeholder="hh:mm:ss.mmm"
-          oninput="maskTimeInput(this)">
-      `;
-    }
-
-    // Δ e Elapsed → numerici (o testo se preferisci)
-    else if (
-      cell.classList.contains("delta-time-col") ||
-      cell.classList.contains("elapsed-time-col")
-    ) {
-      cell.innerHTML = `<input type="number" step="any" value="${value}" style="width:90%">`;
-    }
-
-    // Competitor → testo
-    else {
+    if (cell.classList.contains('timestamp')) {
+      cell.innerHTML = `<input type="text" value="${value}" style="width:90%" maxlength="12" placeholder="hh:mm:ss.mmm" oninput="maskTimeInput(this)">`;
+    } else {
       cell.innerHTML = `<input type="text" value="${value}" style="width:90%">`;
     }
+    cell.querySelector('input').addEventListener('blur', () => {
+      setTimeout(() => {
+        if (!row.contains(document.activeElement)) saveRow(row);
+      }, 80);
+    });
   });
 
-  button.textContent = "💾";
-  button.onclick = () => saveRow(button);
+  row.querySelector('input')?.focus();
 }
 
 
@@ -1594,49 +1620,40 @@ function maskTimeInput(input) {
   input.value = formatted;
 }
 
-function saveRow(button) {
-  const row = button.closest("tr");
-  const inputs = row.querySelectorAll("input");
+function saveRow(row) {
+  if (!row.classList.contains('row-editing')) return;
+  row.classList.remove('row-editing');
 
-  // Salva valori input
+  const inputs = row.querySelectorAll('input');
   inputs.forEach((input, i) => {
     const newValue = input.value.trim();
     const cell = input.parentElement;
-    cell.textContent = newValue;
-
-    switch(i) {
-      case 0: row.dataset.competitor = newValue; break;
+    switch (i) {
+      case 0:
+        row.dataset.competitor = newValue;
+        cell.textContent = Number(newValue) > 0 ? newValue : '';
+        break;
       case 1: {
-        // timestamp → hh:mm:ss.mmm
-        const [hms, ms] = newValue.split(".");
-        const [h, m, s] = hms.split(":");
-        row.dataset.hour     = Number(h);
-        row.dataset.minute   = Number(m);
-        row.dataset.seconds  = Number(s);
-        // normalizza sempre a ms interi (il testo può avere 1-3 cifre decimali)
+        cell.textContent = newValue;
+        const [hms, ms] = newValue.split('.');
+        const [h, m, s] = (hms || '0:0:0').split(':');
+        row.dataset.hour    = Number(h);
+        row.dataset.minute  = Number(m);
+        row.dataset.seconds = Number(s);
         let msVal = Number(ms ?? 0);
         if (ms && ms.length === 1) msVal *= 100;
         else if (ms && ms.length === 2) msVal *= 10;
         row.dataset.msRaw = msVal;
         break;
       }
+      default: cell.textContent = newValue; break;
     }
   });
 
-  // 🔹 SALVA PENALITY DAL BUTTON
-  const penalityBtn = row.querySelector(".penality-btn");
-  if (penalityBtn) {
-    row.dataset.penality = Number(penalityBtn.textContent.trim());
-  }
+  const penalityBtn = row.querySelector('.penality-btn');
+  if (penalityBtn) row.dataset.penality = Number(penalityBtn.textContent.trim());
 
-  // Ripristina pulsante Edit
-  button.textContent = "✎";
-  button.onclick = () => editRow(button);
-
-  // Riassegna listener
-  const editBtn = row.querySelector(".edit-btn");
-  const sendBtn = row.querySelector(".send-btn");
-  if (editBtn) editBtn.onclick = () => editRow(editBtn);
+  const sendBtn = row.querySelector('.send-btn');
   if (sendBtn) sendBtn.onclick = () => sendRow(sendBtn);
 
   sendUpdatedCheckPointRow(row);
@@ -1978,11 +1995,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateTableCorners();
 
-    // Long press su c1..c4 per aprire il registro competitor
+    // Long press su comp-input (card principale) → apre il form di caricamento competitor
     for (let n = 1; n <= 4; n++) {
       const el = document.getElementById(`c${n}`);
-      if (el) addLongPress(el, () => openAthleteModal(n));
+      if (el) addLongPress(el, () => {
+        athleteTargetLine = n;
+        switchAthleteTab('load');
+        document.getElementById('athleteOverlay').style.display = 'flex';
+      });
     }
+
+    // Render lista competitor iniziale (da localStorage)
+    renderCompQuickList();
 });
 
 
@@ -2066,7 +2090,7 @@ document.getElementById("time").addEventListener("click", () => {
 function onTimeSettingsAction(){
   updateParams();
   document.getElementById("timeChoiceOverlay").style.display = "none"
-  document.getElementById("settingsOverlay").style.display = "flex";
+  openGlobalSettings('sync');
 }
 
 function onSyncTestAction(){
@@ -2092,11 +2116,6 @@ function onSyncTestAction(){
 function onGoHomeAction(){
   document.getElementById("timeChoiceOverlay").style.display = "none"
 }
-
-// Chiudi popup
-document.getElementById("closeTimePopup").addEventListener("click", () => {
-  document.getElementById("settingsOverlay").style.display = "none";
-});
 
 // Funzione per inviare al dispositivo o aggiornare l'orario
 function setTimeManualPopup(hh, mm, ss) {
@@ -2323,7 +2342,6 @@ function updateVisibleColumns(){
   toggleRankColumn(document.getElementById("toggle-rank").checked);
   toggleNameColumn(document.getElementById("toggle-name")?.checked ?? false);
   toggleSurnameColumn(document.getElementById("toggle-surname")?.checked ?? false);
-  toggleEditColumn(document.getElementById("toggle-edit-btn").checked);
   toggleSendColumn(document.getElementById("toggle-send-btn").checked);
   toggleDeviceColumn(document.getElementById("toggle-device")?.checked ?? false);
   toggleModeColumn(document.getElementById("toggle-mode")?.checked ?? false);
@@ -2380,7 +2398,7 @@ function applyCompetitorSplits() {
           <td class="col-rank"></td>
           <td class="col-index">—</td>
           <td class="col-line">L${line1}→L${line2}</td>
-          <td class="col-competitor">${comp}</td>
+          <td class="col-competitor">${Number(comp) > 0 ? comp : ''}</td>
           <td class="col-name">${getAthleteName(comp)}</td>
           <td class="col-surname">${getAthleteSurname(comp)}</td>
           <td class="timestamp">—</td>
@@ -2492,9 +2510,6 @@ document.getElementById("toggle-name")
 document.getElementById("toggle-surname")
 .addEventListener("change", e => { toggleSurnameColumn(e.target.checked); saveViewPrefs(); });
 
-document.getElementById("toggle-edit-btn")
-.addEventListener("change", e => { toggleEditColumn(e.target.checked); saveViewPrefs(); });
-
 document.getElementById("toggle-send-btn")
 .addEventListener("change", e => { toggleSendColumn(e.target.checked); saveViewPrefs(); });
 
@@ -2551,7 +2566,7 @@ function updateRowFromBroadcas(data) {
   // aggiorna competitor
   const competitorCell = row.querySelector(".col-competitor");
   if (competitorCell && data.c !== undefined) {
-    competitorCell.textContent = data.c;
+    competitorCell.textContent = data.c > 0 ? data.c : '';
     const nc = row.querySelector(".col-name");
     const sc = row.querySelector(".col-surname");
     if (nc) nc.textContent = getAthleteName(data.c);
@@ -2739,7 +2754,7 @@ function connectWiFi() {
     .then(t => console.log(t))
     .catch(e => console.error(e));
 
-  document.getElementById("wifiOverlay").style.display = "none";
+  closeGlobalSettings();
 }
 
 // Apri popup premendo sull'orario
@@ -2767,23 +2782,23 @@ document.getElementById("wifi-notify").addEventListener("click", () => {
   .catch(err => console.error("Errore:", err));
 
   clearWifiError();
-  document.getElementById("wifiOverlay").style.display = "flex";
+  openGlobalSettings('wifi');
 });
 
 function closeWiFiPopup(){
-  document.getElementById("wifiOverlay").style.display = "none";
+  closeGlobalSettings();
 }
 
 function stopWifiReconnect() {
   fetch('/wifiStop').catch(e => console.error(e));
   document.getElementById("stopReconnectBtn").style.display = "none";
-  document.getElementById("wifiOverlay").style.display = "none";
+  closeGlobalSettings();
 }
 
 function disconnectWifi() {
   fetch('/wifiStop').catch(e => console.error(e));
   document.getElementById("sta-ip-row").style.display = "none";
-  document.getElementById("wifiOverlay").style.display = "none";
+  closeGlobalSettings();
 }
 
 // ── MQTT notifications ───────────────────────────────────────
@@ -2975,7 +2990,7 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
       updateMqttModeUI();
     })
     .catch(e => console.error(e));
-  document.getElementById("mqttOverlay").style.display = "flex";
+  openGlobalSettings('mqtt');
 });
 
 function saveMqttSettings() {
@@ -2998,7 +3013,7 @@ function saveMqttSettings() {
       const f = document.getElementById("mqtt-status-field");
       f.innerText = t('mqtt.saved');
       f.style.color = "green";
-      setTimeout(() => { document.getElementById("mqttOverlay").style.display = "none"; }, 800);
+      setTimeout(() => { closeGlobalSettings(); }, 800);
     })
     .catch(() => {
       const f = document.getElementById("mqtt-status-field");
@@ -3008,7 +3023,7 @@ function saveMqttSettings() {
 }
 
 function closeMqttPopup() {
-  document.getElementById("mqttOverlay").style.display = "none";
+  closeGlobalSettings();
 }
 
 function toggleBrokerPanel() {
@@ -3053,9 +3068,12 @@ function togglePassword() {
   pwInput.type = toggle.checked ? "text" : "password";
 }
 
-// Apri popup premendo sull'orario
 document.getElementById("gps-notify").addEventListener("click", () => {
-  document.getElementById("settingsOverlay").style.display = "flex";
+  openGlobalSettings('sync');
+});
+
+document.getElementById("clinet-notify").addEventListener("click", () => {
+  openGlobalSettings('sync');
 });
 
 function sendActualView(){
@@ -3189,6 +3207,14 @@ function addLongPress(el, callback, ms = 600) {
 
 // (registrazione long press spostata in DOMContentLoaded)
 
+// ── Table actions popup ──
+function openTableActions() {
+  document.getElementById("tableActionsOverlay").style.display = "flex";
+}
+function closeTableActions() {
+  document.getElementById("tableActionsOverlay").style.display = "none";
+}
+
 // ── Modal open / close ──
 function openAthleteModal(lineNumber) {
   athleteTargetLine = lineNumber;
@@ -3217,6 +3243,27 @@ function switchAthleteTab(tab) {
   overlay.querySelectorAll(".tab-content").forEach(c =>
     c.style.display = "none");
   document.getElementById(`tab-${tab}`).style.display = "";
+  if (tab === 'manual') {
+    setTimeout(() => document.getElementById('manual-num')?.focus(), 80);
+  }
+}
+
+function openGlobalSettings(tab) {
+  switchGlobalSettingsTab(tab);
+  document.getElementById('globalSettingsOverlay').style.display = 'flex';
+}
+
+function closeGlobalSettings() {
+  document.getElementById('globalSettingsOverlay').style.display = 'none';
+}
+
+function switchGlobalSettingsTab(tab) {
+  const overlay = document.getElementById('globalSettingsOverlay');
+  overlay.querySelectorAll('.tab-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.tab === tab));
+  overlay.querySelectorAll('.gs-tab').forEach(c => c.style.display = 'none');
+  const el = document.getElementById(`gs-tab-${tab}`);
+  if (el) el.style.display = '';
 }
 
 function switchSettingsTab(tab) {
@@ -3287,12 +3334,21 @@ function selectAthlete(competitor) {
 // ── Assign selected athlete to textbox ──
 function assignAthlete() {
   if (!selectedAthlete || !athleteTargetLine) return;
-  const cEl = document.getElementById(`c${athleteTargetLine}`);
+  const n = athleteTargetLine;
+  const val = selectedAthlete.competitor;
+
+  // Aggiorna il campo visibile nell'overlay line-edit (se aperto)
+  const leInput = document.getElementById(`le-c-${n}`);
+  if (leInput) leInput.value = val;
+
+  // Aggiorna il backing store nascosto e invia al server
+  const cEl = document.getElementById(`c${n}`);
   if (cEl) {
-    cEl.value = selectedAthlete.competitor;
+    cEl.value = val;
     cEl.dispatchEvent(new Event("change")); // triggers handleInputUpdate → server save
   }
-  assignedCompetitorSet.add(Number(selectedAthlete.competitor));
+
+  assignedCompetitorSet.add(Number(val));
   localStorage.setItem("chronofit_assigned", JSON.stringify([...assignedCompetitorSet]));
   closeAthleteModal();
 }
@@ -3316,6 +3372,52 @@ function clearAthleteRegistry() {
   renderAthleteList(document.getElementById("athlete-search").value);
 }
 
+// ── Manual single-athlete add ──
+function addAthleteManual() {
+  const numEl     = document.getElementById("manual-num");
+  const nameEl    = document.getElementById("manual-name");
+  const surnameEl = document.getElementById("manual-surname");
+  const teamEl    = document.getElementById("manual-team");
+  const status    = document.getElementById("athlete-manual-status");
+
+  const num = parseInt(numEl.value);
+  if (!num || num < 1) {
+    status.style.color = "red";
+    status.textContent = "❌ " + t('athlete.manual_err_num');
+    numEl.focus();
+    return;
+  }
+
+  const entry = {
+    competitor: num,
+    name:    nameEl.value.trim()    || "-",
+    surname: surnameEl.value.trim() || "-",
+    team:    teamEl.value.trim()    || "-"
+  };
+
+  const existingIdx = athleteRegistry.findIndex(a => Number(a.competitor) === num);
+  if (existingIdx >= 0) {
+    athleteRegistry[existingIdx] = entry;   // aggiorna se già presente
+  } else {
+    athleteRegistry.push(entry);             // aggiunge al fondo
+  }
+
+  localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+  renderCompQuickList();
+
+  status.style.color = "green";
+  status.textContent = t('athlete.manual_added', num);
+
+  // Reset form per prossima inserzione
+  numEl.value     = "";
+  nameEl.value    = "-";
+  surnameEl.value = "-";
+  teamEl.value    = "-";
+
+  numEl.focus();
+  renderAthleteList(document.getElementById("athlete-search")?.value ?? "");
+}
+
 function loadAthleteRegistry() {
   const raw = document.getElementById("athlete-json-input").value.trim();
   const status = document.getElementById("athlete-load-status");
@@ -3326,6 +3428,7 @@ function loadAthleteRegistry() {
       throw new Error('Each entry must have a "competitor" field');
     athleteRegistry = data;
     localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
+    renderCompQuickList();
     status.style.color = "green";
     status.textContent = t('athlete.loaded', athleteRegistry.length);
     renderAthleteList(document.getElementById("athlete-search").value);
@@ -3368,6 +3471,7 @@ document.getElementById("athlete-file-input").addEventListener("change", e => {
         const data = parseCsvRegistry(text);
         athleteRegistry = data;
         localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
+        renderCompQuickList();
         status.style.color = "green";
         status.textContent = t('athlete.loaded_csv', athleteRegistry.length);
         renderAthleteList(document.getElementById("athlete-search").value);

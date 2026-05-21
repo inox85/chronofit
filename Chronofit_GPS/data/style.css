@@ -47,14 +47,19 @@ span{
 /* ======= STRUTTURA ======= */
 
 .container {
-    display: flex;
-    flex-wrap: balance;
-    width: 100%;
-    margin: 0px;
-    padding: 15px;
-    margin-top: 50px;
-    flex-direction: row;
-    justify-content: center;
+
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  gap: 5px;
+  width: 100%;
+  overflow: hidden;              /* solo il contenuto delle card scorre */
+  box-sizing: border-box;
+  margin: 0;
+  margin-top: 60px;
+  padding: 5px;
 }
 
 .time-header {
@@ -84,17 +89,35 @@ span{
 }
 
 
-/* Mantieni la card come sidebar “sticky” */
+/* Sidebar cards: si estendono all'altezza del container, scorrevoli internamente */
 .container .card:not(.table-card) {
-  position: sticky;
-  top: 75px;
-  align-self: flex-start;
+  position: static;
+  align-self: auto;
+  overflow-y: auto;
+  min-height: 0;
 }
+
+/* Card lista competitor: a sinistra della card principale */
+.comp-list-card  { order: 0; }
+.sidebar-stack   { order: 1; }
+.table-card      { order: 2; }
 
 /* La card con tabella occupa il resto dello spazio */
 .container .table-card {
   flex: 1;
   min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;   /* ancora per il pulsante azioni */
+  min-height: 0;
+}
+
+/* Solo il wrapper della tabella scorre */
+.container .table-card .table-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .edit-btn {
@@ -128,14 +151,54 @@ span{
   font-size: 20px;
 }
 
-/* Mobile: disattiva sticky */
+/* ── Pulsante azioni griglia (⋮) ── */
+.table-actions-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary-color);
+  color: white;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.table-actions-btn:hover { opacity: 0.85; }
+
+/* Mobile: ripristina scroll normale */
 @media (max-width: 800px) {
   .container {
     flex-direction: column;
+    height: auto;
+    overflow: visible;
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
   .container .card:not(.table-card) {
     position: static;
+    overflow-y: visible;
   }
+  .container .table-card {
+    overflow: visible;
+  }
+  .container .table-card .table-wrapper {
+    overflow-y: auto;
+    max-height: 60vh;
+  }
+  .comp-list-card  { order: unset; }
+  .sidebar-stack   { order: unset; }
+  .table-card      { order: unset; }
 }
 
 h2 {
@@ -163,12 +226,11 @@ hr {
 
 .card {
   height: fit-content;
-  margin: 10px;
+  margin: 0;
   min-width: 400px;
   flex: 0 0 350px;
   background: white;
   padding: 15px;
-  margin-bottom: 15px;
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
@@ -204,6 +266,17 @@ hr {
 .checkpoint-settings td {
   text-align: center;
   vertical-align: middle;
+  padding: 4px 3px;
+}
+
+.checkpoint-settings tbody tr {
+  height: 46px;
+}
+
+.checkpoint-settings td button,
+.checkpoint-settings td input {
+  vertical-align: middle;
+  display: inline-block;
 }
 
 /* ── Tipo cell (two-row display) ─────────────────────────────────────── */
@@ -224,7 +297,7 @@ hr {
 }
 
 .cp-tipo-cell span {
-  font-size: 12px;
+  font-size: 20px;
   display: block;
 }
 
@@ -238,6 +311,16 @@ hr {
   border-top: 1px solid #ccc;
   margin: 2px 4px;
 }
+
+.cp-line-send {
+  cursor: pointer !important;
+  font-weight: bold;
+  font-size: 18px;
+  user-select: none;
+  transition: filter 0.15s;
+}
+.cp-line-send:hover  { filter: brightness(0.88); }
+.cp-line-send:active { filter: brightness(0.75); }
 
 /* ── Line edit overlay ───────────────────────────────────────────────── */
 #lineEditOverlay .fullscreen-popup.line-edit-popup {
@@ -317,8 +400,26 @@ hr {
   min-width: 110px;
 }
 
+/* competitor cell: input + 👤 button affiancati */
+.le-comp-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.le-comp-cell input {
+  flex: 1;
+  min-width: 0;
+  width: 0;        /* flex gestisce la larghezza */
+}
+
+.le-athlete-btn {
+  flex-shrink: 0;
+}
+
 /* action buttons (eye / enable / send) */
 .le-action-btn {
+  max-width: 10px;
   padding: 6px 8px;
   border: none;
   border-radius: 6px;
@@ -1097,7 +1198,102 @@ input:checked + .slider:before {
   font-weight: 700;
 }
 
+/* ── Competitor input on main card ── */
+.cp-comp-cell {
+  padding: 2px 4px !important;
+  max-width: 100px;
+}
+
+.comp-input {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+.comp-input.comp-active {
+  background-color: #d8d8d8 !important;
+  outline: 2px solid #888;
+}
+
+/* ── Last event time column on main card ── */
+.cp-lasttime-cell {
+  padding: 2px 4px !important;
+  text-align: center;
+  white-space: nowrap;
+}
+.line-last-time {
+  font-size: 30px;
+  letter-spacing: 0.3px;
+}
+
+.line-last-time:empty::before {
+  content: '00:00:00.000';
+  color: #bbb;
+}
+
+/* ── Competitor quick-list card ── */
+.comp-list-card {
+  flex: 0 0 90px;
+  min-width: 70px;
+  max-width: 110px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;          /* permette la stessa altezza della card principale */
+  overflow: hidden;
+}
+
+.comp-quick-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.comp-list-item {
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: 6px;
+  text-align: center;
+  background: #f5f5f5;
+  user-select: none;
+  transition: background 0.12s;
+}
+
+.comp-list-item:hover,
+.comp-list-item:active {
+  background: #d0e8ff;
+}
+
+.comp-list-num {
+  font-size: 17px;
+  font-weight: bold;
+  display: block;
+  line-height: 1.2;
+}
+
+.comp-list-name {
+  font-size: 10px;
+  display: block;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comp-list-empty {
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
 /* ── Athlete Registry overlay ── */
+#athleteOverlay {
+  z-index: 10001;   /* sopra lineEditOverlay (9999) */
+}
+
 #athleteOverlay .fullscreen-popup.athlete-popup {
   width: 94%;
   max-width: 640px;
@@ -1401,4 +1597,88 @@ input:checked + .slider:before {
 
 input#mqtt-broker-pass {
     width: 300px;
+}
+
+/* ── Sidebar layout ── */
+.sidebar {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  min-height: 0;
+  align-items: flex-start;
+  flex: 0 0 auto;
+}
+
+.sidebar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+/* ── Time card ── */
+.card.time-card {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  text-align: center;
+}
+.card.time-card #time {
+  margin: 0;
+  font-size: 5em;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+/* ── Notifications card ── */
+.card.notifications-card {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+}
+.card.notifications-card #status {
+  margin: 4px 0 2px;
+  font-size: 0.85em;
+}
+.card.notifications-card #sync-msg,
+.card.notifications-card #settings-field {
+  margin: 0;
+  font-size: 0.8em;
+  color: #555;
+}
+
+/* ── Global settings overlay ── */
+.global-settings-popup {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+.global-settings-popup .gs-tab {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── Max-height caps for list and arrivals cards ── */
+.comp-list-card {
+  max-height: 500px;
+}
+.container .table-card {
+  max-height: 500px;
+}
+.card.table-card {
+  max-height: 500px;
+}
+
+/* ── Long-press row edit indicator ── */
+#event-table tbody tr {
+  cursor: pointer;
+  user-select: none;
+}
+#event-table tbody tr.row-editing {
+  outline: 2px solid #3b55ff;
+  outline-offset: -2px;
+  cursor: default;
+}
+#event-table tbody tr.row-editing input {
+  cursor: text;
 }
