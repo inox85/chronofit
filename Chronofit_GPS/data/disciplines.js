@@ -19,77 +19,23 @@ const DISCIPLINES = [
       showName: false,      showSurname: false,
       timestamp: true,      deltaTime: false,  elapsedTime: false,
       penality: false,      showEditBtn: true, showSendBtn: true,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false
+      splitsMode: false,    timePrecision: 3,  showDisabled: false,
+      showCompList: true,   syncMode: 0   // 0=manual, 1=line-closure, 2=GPS, 3=elapsed(no sync)
     }
   },
 
   {
-    id: "running",
-    emoji: "🏃",
-    label: { en: "Running", it: "Corsa" },
+    id: "regularity",
+    emoji: "🚗",
+    label: { en: "Regulariy", it: "Regolarita" },
     prefs: {
-      sortCol: "race-time", reverseOrder: false,
+      sortCol: "arrival", reverseOrder: false,
       showRank: true,       showIndex: false, showLine: false,   showLineId: false,
       showName: true,       showSurname: true,
       timestamp: false,     deltaTime: true,   elapsedTime: false,
       penality: false,      showEditBtn: true, showSendBtn: false,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false
-    }
-  },
-
-  {
-    id: "trail",
-    emoji: "🏔️",
-    label: { en: "Trail Running", it: "Trail Running" },
-    prefs: {
-      sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false, showLine: true,    showLineId: false,
-      showName: true,       showSurname: true,
-      timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: false,      showEditBtn: true, showSendBtn: false,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false
-    }
-  },
-
-  {
-    id: "cycling",
-    emoji: "🚴",
-    label: { en: "Cycling", it: "Ciclismo" },
-    prefs: {
-      sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false, showLine: false,   showLineId: false,
-      showName: true,       showSurname: false,
-      timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: false,      showEditBtn: true, showSendBtn: false,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false
-    }
-  },
-
-  {
-    id: "mtb",
-    emoji: "🚵",
-    label: { en: "MTB", it: "MTB" },
-    prefs: {
-      sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false, showLine: false,   showLineId: false,
-      showName: true,       showSurname: false,
-      timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: false,      showEditBtn: true, showSendBtn: false,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false
-    }
-  },
-
-  {
-    id: "triathlon",
-    emoji: "🔱",
-    label: { en: "Triathlon", it: "Triathlon" },
-    prefs: {
-      sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false, showLine: true,    showLineId: false,
-      showName: true,       showSurname: true,
-      timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: false,      showEditBtn: true, showSendBtn: false,
-      splitsMode: true,     timePrecision: 3,  showDisabled: false
+      splitsMode: false,    timePrecision: 3,  showDisabled: false,
+      showCompList: true,   syncMode: 1
     }
   },
 
@@ -103,22 +49,40 @@ const DISCIPLINES = [
       showName: true,       showSurname: true,
       timestamp: false,     deltaTime: true,   elapsedTime: false,
       penality: true,       showEditBtn: true, showSendBtn: false,
-      splitsMode: true,     timePrecision: 2,  showDisabled: false
+      splitsMode: true,     timePrecision: 2,  showDisabled: false,
+      showCompList: false,  syncMode: 2
     }
   },
 
   {
-    id: "xc-ski",
-    emoji: "🎿",
-    label: { en: "Cross-Country Ski", it: "Sci di Fondo" },
+    id: "cycling",
+    emoji: "🚴",
+    label: { en: "Cycling", it: "Ciclismo" },
     prefs: {
       sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false, showLine: true,    showLineId: false,
-      showName: true,       showSurname: true,
+      showRank: true,       showIndex: false, showLine: false,   showLineId: false,
+      showName: true,       showSurname: false,
       timestamp: false,     deltaTime: true,   elapsedTime: false,
       penality: false,      showEditBtn: true, showSendBtn: false,
-      splitsMode: true,     timePrecision: 1,  showDisabled: false
+      splitsMode: false,    timePrecision: 3,  showDisabled: false,
+      showCompList: false,  syncMode: 2
     }
-  }
+  },
+
+  {
+    id: "mtb",
+    emoji: "🚵",
+    label: { en: "MTB", it: "MTB" },
+    prefs: {
+      sortCol: "race-time", reverseOrder: false,
+      showRank: true,       showIndex: false, showLine: false,   showLineId: false,
+      showName: true,       showSurname: false,
+      timestamp: false,     deltaTime: true,   elapsedTime: false,
+      penality: false,      showEditBtn: true, showSendBtn: false,
+      splitsMode: false,    timePrecision: 3,  showDisabled: false,
+      showCompList: false,  syncMode: 2
+    }
+  },
+
 
 ];

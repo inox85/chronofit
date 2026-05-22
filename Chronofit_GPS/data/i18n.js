@@ -365,17 +365,17 @@ const TRANSLATIONS = {
     'table.show_edit':       'Mostra pulsante modifica',
     'table.show_send':       'Mostra pulsante invia',
     'settings.title':    'Impostazioni',
-    'settings.tab_sync':  '🕐 Sincronizzazione',
+    'settings.tab_sync':  '🕐 Sync',
     'settings.tab_wifi':  '🌍 WiFi',
     'settings.tab_mqtt':  '📡 MQTT',
-    'settings.tab_print': '🖨 Stampa',
+    'settings.tab_print': '⚙️ Generali',
 
     // ── Card titles ───────────────────────────────────────────────────────────
-    'card.competitors': 'Comp.',
+    'card.competitors': 'Attesi',
     'card.time':        'Orario',
-    'card.checkpoints': 'Checkpoint',
-    'card.status':      'Stato',
-    'card.arrivals':    'Arrivi',
+    'card.checkpoints': 'Gestione transiti',
+    'card.status':      'Utilità',
+    'card.arrivals':    'Lista passaggi',
 
     'table.show_device':     'Mostra colonna prova',
     'table.show_mode':       'Mostra colonna rilevamento',

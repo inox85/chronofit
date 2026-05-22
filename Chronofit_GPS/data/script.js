@@ -356,6 +356,8 @@ function saveViewPrefs() {
     splitsMode:    document.getElementById("toggle-splits").checked,
     timePrecision: document.getElementById("time-precision").value,
     sortCol:       sortCol,
+    showCompList:  document.getElementById('comp-list-card')?.style.display !== 'none',
+    syncMode:      Number(document.getElementById('sync-method-select')?.value ?? 0),
     lines: {}
   };
   document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
@@ -422,6 +424,18 @@ function restoreViewPrefs() {
 
     if (prefs.sortCol) { sortCol = prefs.sortCol; const el = document.getElementById('sort-col'); if (el) el.value = sortCol; }
 
+    if (prefs.showCompList !== undefined) {
+      const card = document.getElementById('comp-list-card');
+      if (card) card.style.display = prefs.showCompList ? '' : 'none';
+    }
+    if (prefs.syncMode !== undefined) {
+      const sel = document.getElementById('sync-method-select');
+      if (sel) {
+        sel.value = String(prefs.syncMode);
+        if (typeof updateTimeSettingsVisibility === 'function') updateTimeSettingsVisibility();
+      }
+    }
+
     updateVisibleColumns();
     if (prefs.splitsMode) applyCompetitorSplits();
     else reorderTable();
@@ -471,6 +485,21 @@ function applyDisciplinePreset(prefs) {
     const el = document.getElementById('sort-col');
     if (el) el.value = sortCol;
   }
+  // Competitor list card visibility
+  if (prefs.showCompList !== undefined) {
+    const card = document.getElementById('comp-list-card');
+    if (card) card.style.display = prefs.showCompList ? '' : 'none';
+  }
+
+  // Sync mode (aggiorna solo la UI — l'invio al device resta manuale)
+  if (prefs.syncMode !== undefined) {
+    const sel = document.getElementById('sync-method-select');
+    if (sel) {
+      sel.value = String(prefs.syncMode);
+      if (typeof updateTimeSettingsVisibility === 'function') updateTimeSettingsVisibility();
+    }
+  }
+
   updateVisibleColumns();
   if (prefs.splitsMode) applyCompetitorSplits(); else { clearCompetitorSplits(); reorderTable(); }
   saveViewPrefs();
@@ -490,7 +519,7 @@ function renderDisciplineCards() {
 }
 
 function openDisciplineOverlay() {
-  renderDisciplineCards();
+  try { renderDisciplineCards(); } catch(e) { console.error('renderDisciplineCards:', e); }
   document.getElementById('disciplineOverlay').style.display = 'flex';
 }
 
@@ -855,7 +884,7 @@ function sendCheckPoint(lineNumber) {
 
 
 function clearSession() {
-  // mostra popup
+  closeTableActions(); // chiude il menu prima di aprire il popup di conferma
   document.getElementById("clearSessionOverlay").style.display = "flex";
 
   // tasti
@@ -2298,13 +2327,12 @@ function toggleSendColumn(show) {
 }
 
 function updateTableCorners() {
-  const ths = Array.from(document.querySelectorAll("#event-table thead th"));
-  ths.forEach(th => { th.style.borderTopLeftRadius = ""; th.style.borderTopRightRadius = ""; });
-  const visible = ths.filter(th => getComputedStyle(th).display !== "none");
-  if (visible.length > 0) {
-    visible[0].style.borderTopLeftRadius = "8px";
-    visible[visible.length - 1].style.borderTopRightRadius = "8px";
-  }
+  // angoli sempre netti — nessun border-radius inline
+  const ths = document.querySelectorAll("#event-table thead th");
+  ths.forEach(th => {
+    th.style.borderTopLeftRadius = "0";
+    th.style.borderTopRightRadius = "0";
+  });
 }
 
 function toggleNameColumn(show) {
@@ -3246,6 +3274,12 @@ function switchAthleteTab(tab) {
   if (tab === 'manual') {
     setTimeout(() => document.getElementById('manual-num')?.focus(), 80);
   }
+}
+
+// ── Print overlay (TODO: da definire) ────────────────────────────────────────
+function openPrintOverlay() {
+  // placeholder — popup di stampa ancora da implementare
+  openGlobalSettings('print');
 }
 
 function openGlobalSettings(tab) {

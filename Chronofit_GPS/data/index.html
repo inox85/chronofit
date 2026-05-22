@@ -816,11 +816,12 @@
   </div>
 
   <!-- Discipline selection overlay -->
-  <div id="disciplineOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeDisciplineOverlay()">
+  <div id="disciplineOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="discipline-popup">
+      <img src="/logo.png" alt="Logo" class="discipline-logo" onclick="document.getElementById('aboutOverlay').style.display='flex'">
       <h2 data-i18n="discipline.title">Select discipline</h2>
       <div id="discipline-grid" class="discipline-grid"></div>
-      <div class="button-row" style="justify-content:center; margin-top:8px;">
+      <div class="button-row" style="justify-content:center; margin-top:16px;">
         <button class="big-button" data-i18n="btn.close" onclick="closeDisciplineOverlay()">Close</button>
       </div>
     </div>
@@ -862,8 +863,14 @@
       <div id="comp-quick-list" class="comp-quick-list"></div>
     </div>
     <div class="sidebar-stack">
-      <div class="card time-card">
-        <p id="time">--:--:--</p>
+      <div class="top-row">
+        <div class="card quick-actions-card">
+          <button class="qa-btn" onclick="openGlobalSettings('sync')" title="Settings">⚙️</button>
+          <button class="qa-btn" onclick="openPrintOverlay()" title="Print">🖨️</button>
+        </div>
+        <div class="card time-card">
+          <p id="time">--:--:--</p>
+        </div>
       </div>
       <div class="card left">
         <div class="card-title" data-i18n="card.checkpoints">Checkpoints</div>
@@ -880,7 +887,6 @@
               <th data-i18n="cp.line">Line</th>
               <th data-i18n="cp.tipo">Type</th>
               <th data-i18n="cp.comp_abbr">Comp.</th>
-              <th data-i18n="cp.ms">ms</th>
               <th>⏱</th>
               <th>👁</th>
               <th>✓</th>
@@ -896,7 +902,6 @@
                 <span id="tipo2-display-1">Automatica</span>
               </td>
               <td class="cp-comp-cell"><input type="number" id="c1" class="comp-input" data-line="1" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(1)" onblur="onCompInputBlur(1)"></td>
-              <td class="cp-val-cell" onclick="openLineEdit(1,'delay')"><span id="delay-display-1">0</span></td>
               <td class="cp-lasttime-cell"><span id="last-time-1" class="line-last-time"></span></td>
               <td><button data-color="#ffcccc" class="toggle-btn" data-line="1">👁</button></td>
               <td><button data-color="#ffcccc" class="line-enable-btn" data-line="1" onclick="toggleLineEnable(1)">✓</button></td>
@@ -910,7 +915,6 @@
                 <span id="tipo2-display-2">Automatica</span>
               </td>
               <td class="cp-comp-cell"><input type="number" id="c2" class="comp-input" data-line="2" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(2)" onblur="onCompInputBlur(2)"></td>
-              <td class="cp-val-cell" onclick="openLineEdit(2,'delay')"><span id="delay-display-2">0</span></td>
               <td class="cp-lasttime-cell"><span id="last-time-2" class="line-last-time"></span></td>
               <td><button data-color="#ccffcc" class="toggle-btn" data-line="2">👁</button></td>
               <td><button data-color="#ccffcc" class="line-enable-btn" data-line="2" onclick="toggleLineEnable(2)">✓</button></td>
@@ -924,7 +928,6 @@
                 <span id="tipo2-display-3">Automatica</span>
               </td>
               <td class="cp-comp-cell"><input type="number" id="c3" class="comp-input" data-line="3" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(3)" onblur="onCompInputBlur(3)"></td>
-              <td class="cp-val-cell" onclick="openLineEdit(3,'delay')"><span id="delay-display-3">0</span></td>
               <td class="cp-lasttime-cell"><span id="last-time-3" class="line-last-time"></span></td>
               <td><button data-color="#ccccff" class="toggle-btn" data-line="3">👁</button></td>
               <td><button data-color="#ccccff" class="line-enable-btn" data-line="3" onclick="toggleLineEnable(3)">✓</button></td>
@@ -938,7 +941,6 @@
                 <span id="tipo2-display-4">Automatica</span>
               </td>
               <td class="cp-comp-cell"><input type="number" id="c4" class="comp-input" data-line="4" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(4)" onblur="onCompInputBlur(4)"></td>
-              <td class="cp-val-cell" onclick="openLineEdit(4,'delay')"><span id="delay-display-4">0</span></td>
               <td class="cp-lasttime-cell"><span id="last-time-4" class="line-last-time"></span></td>
               <td><button data-color="#fff5cc" class="toggle-btn" data-line="4">👁</button></td>
               <td><button data-color="#fff5cc" class="line-enable-btn" data-line="4" onclick="toggleLineEnable(4)">✓</button></td>
