@@ -1684,7 +1684,7 @@ input:checked + .slider:before {
   white-space: nowrap;
   display: none;
   align-self: flex-start;
-  max-width: 85px;
+  max-width: 96px;
 }
 #mqtt-close-all:hover { background: #b00000; }
 #mqtt-cards {

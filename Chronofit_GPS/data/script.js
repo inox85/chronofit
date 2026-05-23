@@ -569,28 +569,28 @@ function onCompInputFocus(n) {
 }
 
 function onCompInputBlur(n) {
-  // Se l'opzione "mantieni attivo" è abilitata, distinguiamo blur intenzionale da involontario.
-  // Aspettiamo un tick: se dopo il blur document.activeElement è un elemento specifico (non body),
-  // l'utente ha deliberatamente cliccato altrove → disattiviamo normalmente.
-  // Se invece activeElement è body (blur da reflow DOM o da browser mobile), ripristiniamo.
+  // Con keep-focus ON: stesso delay da 200ms, ma alla scadenza controlliamo
+  // document.activeElement. Se un altro elemento focusable ha preso il focus
+  // (l'utente ha cliccato intenzionalmente altrove: un input MQTT, un select, ecc.)
+  // disattiviamo normalmente. Se invece nulla ha il focus (blur involontario da
+  // reflow DOM) oppure il focus è tornato sul competitor input (click lista),
+  // ripristiniamo comp-active.
   if (document.getElementById('toggle-keep-comp-focus')?.checked && activeCompLine === n) {
-    setTimeout(() => {
+    _compBlurTimer = setTimeout(() => {
+      _compBlurTimer = null;
+      if (activeCompLine !== n) return;
       const el = document.getElementById(`c${n}`);
-      const focused = document.activeElement;
-      const isIntentional = focused && focused !== document.body && focused !== el;
-      if (isIntentional) {
-        // L'utente ha scelto di andare altrove — disattiva
+      const active = document.activeElement;
+      const movedAway = active && active !== document.body && active !== el;
+      if (movedAway) {
+        // L'utente ha cliccato su un altro campo — disattiva normalmente
         activeCompLine = null;
         el?.classList.remove('comp-active');
       } else {
-        // Blur involontario — ripristina stato attivo
-        if (el && activeCompLine === n) {
-          el.classList.add('comp-active');
-          el.focus();  // funziona su desktop; su alcuni browser mobili può fallire silenziosamente,
-                       // ma activeCompLine resta impostato quindi fillCompFromList() funziona comunque
-        }
+        // Blur involontario — ripristina
+        if (el) { el.classList.add('comp-active'); el.focus(); }
       }
-    }, 0);
+    }, 200);
     return;
   }
   // Comportamento normale (impostazione disattivata):
@@ -615,6 +615,29 @@ function fillCompFromList(num) {
   cEl.focus();                              // mantiene l'attivazione
 }
 
+// Flag per bloccare il click normale dopo un long press
+let _compListLongPressed = false;
+
+function fillCompFromListGuarded(competitor) {
+  if (_compListLongPressed) { _compListLongPressed = false; return; }
+  fillCompFromList(competitor);
+}
+
+function openAthleteFromList(competitor) {
+  _compListLongPressed = true;
+  // Cerca i dati nel registry
+  const a = athleteRegistry.find(x => Number(x.competitor) === Number(competitor));
+  // Pre-popola il tab manual con i dati del competitor
+  document.getElementById('manual-num').value     = a?.competitor ?? competitor;
+  document.getElementById('manual-name').value    = a?.name    ?? '-';
+  document.getElementById('manual-surname').value = a?.surname ?? '-';
+  document.getElementById('manual-team').value    = a?.team    ?? '-';
+  document.getElementById('athlete-manual-status').textContent = '';
+  // Apri l'overlay sul tab manual
+  switchAthleteTab('manual');
+  document.getElementById('athleteOverlay').style.display = 'flex';
+}
+
 function renderCompQuickList() {
   const container = document.getElementById('comp-quick-list');
   if (!container) return;
@@ -625,10 +648,16 @@ function renderCompQuickList() {
   const sorted = [...athleteRegistry].sort((a, b) => Number(a.competitor) - Number(b.competitor));
   container.innerHTML = sorted.map(a => {
     const nameParts = [a.name, a.surname].filter(s => s && s !== '-').join(' ');
-    return `<div class="comp-list-item" onmousedown="event.preventDefault()" onclick="fillCompFromList(${a.competitor})">
+    return `<div class="comp-list-item" data-competitor="${a.competitor}"
+      onmousedown="event.preventDefault()" onclick="fillCompFromListGuarded(${a.competitor})">
       <span class="comp-list-num">${a.competitor}</span>${nameParts ? `<span class="comp-list-name">${nameParts}</span>` : ''}
     </div>`;
   }).join('');
+  // Aggiunge long press su ogni item → apre finestra gestione competitor
+  container.querySelectorAll('.comp-list-item').forEach(item => {
+    const competitor = Number(item.dataset.competitor);
+    addLongPress(item, () => openAthleteFromList(competitor));
+  });
 }
 
 function getLineTipo(line) {
@@ -2886,16 +2915,13 @@ function handleMqttIncoming(topic, d, pendingId) {
 
   function doAcquire() {
     if (acquireCompetitor) {
-      [1, 2, 3, 4].forEach(n => {
-        const inp = document.getElementById("c" + n);
-        if (inp) inp.value = competitor;
-        sendSettingsRowData({
-          l:  Number(n),
-          ld: String(document.querySelector(`#l${n}`).value),
-          c:  Number(document.querySelector(`#c${n}`).value),
-          d:  Number(document.querySelector(`#d${n}`).value) || 0
-        });
-      });
+      // Aggiunge il competitor al registry se non è già presente
+      const compNum = Number(competitor);
+      if (compNum > 0 && !athleteRegistry.find(a => Number(a.competitor) === compNum)) {
+        athleteRegistry.push({ competitor: compNum, name: '-', surname: '-', team: '-' });
+        localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+        renderCompQuickList();
+      }
     }
     if (pendingId !== undefined) {
       fetch("/mqttConfirmPending?id=" + pendingId).catch(e => console.error(e));
@@ -2911,14 +2937,21 @@ function handleMqttIncoming(topic, d, pendingId) {
 
   if (mode === "immediate") {
     doAcquire();
-    if (showInfo) showMqttCard(topic, d, null, null, null, null, acquireRow, acquireCompetitor, true);
+    if (mqttCfg.showPopup && showInfo)
+      showMqttCard(topic, d, null, null, null, null, acquireRow, acquireCompetitor, true);
     return;
   }
 
-  showMqttCard(topic, d, doAcquire, doDiscard,
-    mode === "timed" ? timeout   : null,
-    mode === "timed" ? onTimeout : null,
-    acquireRow, acquireCompetitor, false);
+  if (mqttCfg.showPopup) {
+    showMqttCard(topic, d, doAcquire, doDiscard,
+      mode === "timed" ? timeout   : null,
+      mode === "timed" ? onTimeout : null,
+      acquireRow, acquireCompetitor, false);
+  } else {
+    // Notifiche disabilitate: in manual/timed non c'è conferma utente,
+    // quindi eseguiamo l'acquisizione direttamente come in immediate mode
+    doAcquire();
+  }
 }
 
 function showMqttCard(topic, d, doAcquire, onDiscard, timeoutSec, onTimeout, acquireRow, acquireCompetitor, immediateMode) {
@@ -3000,7 +3033,7 @@ function showMqttCard(topic, d, doAcquire, onDiscard, timeoutSec, onTimeout, acq
 // ── MQTT popup ────────────────────────────────────────────────
 let mqttStationName = "";
 let mqttChipId      = "";
-const mqttCfg       = { acquireRow: false, immediateMode: false };
+const mqttCfg       = { acquireRow: false, immediateMode: false, showPopup: true };
 
 function updateMqttPreview() {
   const prefix  = document.getElementById("mqtt-prefix").value.trim() || "chronofit";
@@ -3017,7 +3050,7 @@ function updateMqttModeUI() {
   document.getElementById("mqttTimedOpts").style.display   = mode === "timed"     ? "" : "none";
 }
 
-document.getElementById("mqtt-notify").addEventListener("click", () => {
+function refreshMqttTab() {
   fetch('/mqttSettings')
     .then(r => r.json())
     .then(data => {
@@ -3030,6 +3063,7 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
       document.getElementById("mqttAcquireRowToggle").checked       = (data.acquireRow   == 1);
       mqttCfg.acquireRow    = (data.acquireRow    == 1);
       mqttCfg.immediateMode = (data.immediateMode == 1);
+      mqttCfg.showPopup     = (data.showPopup     !== 0);
       document.getElementById("mqttAcquireCompetitorToggle").checked = localStorage.getItem("mqttAcquireCompetitor") === "1";
       document.getElementById("mqttAcqModeSelect").value            = data.immediateMode == 1
           ? "immediate"
@@ -3051,6 +3085,10 @@ document.getElementById("mqtt-notify").addEventListener("click", () => {
       updateMqttModeUI();
     })
     .catch(e => console.error(e));
+}
+
+document.getElementById("mqtt-notify").addEventListener("click", () => {
+  refreshMqttTab();
   openGlobalSettings('mqtt');
 });
 
@@ -3068,6 +3106,10 @@ function saveMqttSettings() {
 
   const acquireRow    = document.getElementById("mqttAcquireRowToggle").checked ? 1 : 0;
   const immediateMode = document.getElementById("mqttAcqModeSelect").value === "immediate" ? 1 : 0;
+  // Aggiorna subito il flag client-side senza aspettare il prossimo refresh dal server
+  mqttCfg.showPopup     = (showPopup === 1);
+  mqttCfg.acquireRow    = (acquireRow === 1);
+  mqttCfg.immediateMode = (immediateMode === 1);
   fetch(`/mqttSave?prefix=${prefix}&eventName=${evt}&subTopic=${sub}&showPopup=${showPopup}&acquireRow=${acquireRow}&immediateMode=${immediateMode}`)
     .then(r => r.text())
     .then(() => {
@@ -3331,8 +3373,9 @@ function switchGlobalSettingsTab(tab) {
   overlay.querySelectorAll('.gs-tab').forEach(c => c.style.display = 'none');
   const el = document.getElementById(`gs-tab-${tab}`);
   if (el) el.style.display = '';
-  // Ogni volta che il tab WiFi diventa visibile, aggiorna SSID/password/IP
+  // Ogni volta che il tab WiFi o MQTT diventa visibile, aggiorna i dati dal server
   if (tab === 'wifi') refreshWifiTab();
+  if (tab === 'mqtt') refreshMqttTab();
 }
 
 function switchSettingsTab(tab) {

@@ -217,7 +217,7 @@ const TRANSLATIONS = {
     'cp.settings_title':   'Checkpoint settings',
     'cp.line_id':     'Line ID',
     'cp.tipo_device': 'Test',
-    'cp.tipo_mode':   'Ril.',
+    'cp.tipo_mode':   'Rel.',
     'cp.delay_ms':    'Delay (ms)',
     'cp.tipo1_fpc':   'FPC 102',
     'cp.tipo1_none':  'Unmanaged',
@@ -233,7 +233,7 @@ const TRANSLATIONS = {
     'th.race_time':  'Race time',
     'th.elapsed':    'Elapsed ⏱️',
     'th.device':     'Test',
-    'th.mode':       'Ril.',
+    'th.mode':       'Rel.',
     'th.edit':       'Edit',
     'th.send':       'Send',
 
