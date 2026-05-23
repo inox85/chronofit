@@ -31,6 +31,8 @@ body {
   font-weight: bold;
   transition: transform 0.3s ease;
   transform-origin: top left; /* punto di origine per lo zoom */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 th {
@@ -55,6 +57,10 @@ span{
   align-items: stretch;
   gap: 5px;
   width: 100%;
+  /* Altezza fissa = viewport meno la navbar.
+     Tutti i figli si estendono alla stessa altezza (align-items:stretch)
+     e il contenuto che eccede scorre internamente — senza allungare il layout. */
+  height: calc(100vh - 60px);
   overflow: hidden;              /* solo il contenuto delle card scorre */
   box-sizing: border-box;
   margin: 0;
@@ -184,15 +190,49 @@ span{
 
 .table-actions-btn:hover { opacity: 0.85; }
 
-/* Mobile: ripristina scroll normale */
+/* Mobile: layout verticale — sidebar e tabella si impilano con la stessa larghezza */
 @media (max-width: 800px) {
   .container {
     flex-direction: column;
     height: auto;
     overflow: visible;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    flex-wrap: nowrap;
+    align-items: stretch;
   }
+
+  /* Fix allineamento a qualsiasi livello di zoom:
+     align-items:stretch calcola la cross-size di ogni figlio in modo indipendente;
+     a zoom non interi i valori frazionari vengono arrotondati separatamente e
+     possono differire di 1px. Con width:100% esplicito entrambi riferiscono lo
+     stesso valore del genitore, il rounding avviene sulla stessa base. */
+  .container > .sidebar {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .container > .card.table-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* sidebar-stack si estende per riempire lo spazio residuo accanto alla comp-list-card
+     (o tutta la sidebar quando la comp-list-card è nascosta) */
+  .sidebar-stack {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Le card dentro sidebar-stack non usano il min-width:400px né il flex-basis:350px
+     del layout desktop — si adattano alla larghezza disponibile.
+     width:100% + box-sizing:border-box: stesso fix sub-pixel applicato al livello
+     della sidebar-stack (flex column) — tutti i figli riferiscono lo stesso valore. */
+  .sidebar-stack > .card,
+  .sidebar-stack > .top-row {
+    min-width: 0;
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .container .card:not(.table-card) {
     position: static;
     overflow-y: visible;
@@ -489,6 +529,7 @@ input[type="password"]
  {
   font-family: 'Nunito';
   width: 100%;
+  max-width: 240px;
   padding: 0px;
   margin: 2px 0;
   border-radius: 0;
@@ -1072,6 +1113,7 @@ input:checked + .slider:before {
 
 /* Contenitore popup */
 .fullscreen-popup {
+  min-width: 450px;
   font-family: 'Nunito';
   background: #fff;
   border-radius: 0;

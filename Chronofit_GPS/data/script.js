@@ -357,7 +357,8 @@ function saveViewPrefs() {
     timePrecision: document.getElementById("time-precision").value,
     sortCol:       sortCol,
     showCompList:  document.getElementById('comp-list-card')?.style.display !== 'none',
-    syncMode:      Number(document.getElementById('sync-method-select')?.value ?? 0),
+    syncMode:        Number(document.getElementById('sync-method-select')?.value ?? 0),
+    keepCompFocus:   document.getElementById('toggle-keep-comp-focus')?.checked ?? false,
     lines: {}
   };
   document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
@@ -435,6 +436,8 @@ function restoreViewPrefs() {
         if (typeof updateTimeSettingsVisibility === 'function') updateTimeSettingsVisibility();
       }
     }
+    const kcf = document.getElementById('toggle-keep-comp-focus');
+    if (kcf && prefs.keepCompFocus !== undefined) kcf.checked = prefs.keepCompFocus;
 
     updateVisibleColumns();
     if (prefs.splitsMode) applyCompetitorSplits();
@@ -566,7 +569,32 @@ function onCompInputFocus(n) {
 }
 
 function onCompInputBlur(n) {
-  // Piccolo delay: se l'utente clicca sulla lista, il click deve arrivare prima del blur
+  // Se l'opzione "mantieni attivo" è abilitata, distinguiamo blur intenzionale da involontario.
+  // Aspettiamo un tick: se dopo il blur document.activeElement è un elemento specifico (non body),
+  // l'utente ha deliberatamente cliccato altrove → disattiviamo normalmente.
+  // Se invece activeElement è body (blur da reflow DOM o da browser mobile), ripristiniamo.
+  if (document.getElementById('toggle-keep-comp-focus')?.checked && activeCompLine === n) {
+    setTimeout(() => {
+      const el = document.getElementById(`c${n}`);
+      const focused = document.activeElement;
+      const isIntentional = focused && focused !== document.body && focused !== el;
+      if (isIntentional) {
+        // L'utente ha scelto di andare altrove — disattiva
+        activeCompLine = null;
+        el?.classList.remove('comp-active');
+      } else {
+        // Blur involontario — ripristina stato attivo
+        if (el && activeCompLine === n) {
+          el.classList.add('comp-active');
+          el.focus();  // funziona su desktop; su alcuni browser mobili può fallire silenziosamente,
+                       // ma activeCompLine resta impostato quindi fillCompFromList() funziona comunque
+        }
+      }
+    }, 0);
+    return;
+  }
+  // Comportamento normale (impostazione disattivata):
+  // piccolo delay in modo che il click sulla lista arrivi prima del blur
   _compBlurTimer = setTimeout(() => {
     if (activeCompLine === n) {
       activeCompLine = null;
@@ -1898,6 +1926,7 @@ document.querySelectorAll('input[type="text"], input[type="number"]').forEach(in
 function resetLineCompetitor(lineNumber) {
   const cEl = document.getElementById(`c${lineNumber}`);
   if (!cEl) return;
+  const wasActive = (activeCompLine === lineNumber);
   cEl.value = 0;
   updateCompDisplay(lineNumber);
   const enableBtn = document.querySelector(`.line-enable-btn[data-line="${lineNumber}"]`);
@@ -2532,6 +2561,9 @@ document.getElementById("toggle-splits")
   saveViewPrefs();
 });
 
+document.getElementById("toggle-keep-comp-focus")
+.addEventListener("change", () => saveViewPrefs());
+
 document.getElementById("toggle-name")
 .addEventListener("change", e => { toggleNameColumn(e.target.checked); saveViewPrefs(); });
 
@@ -2785,19 +2817,16 @@ function connectWiFi() {
   closeGlobalSettings();
 }
 
-// Apri popup premendo sull'orario
-document.getElementById("wifi-notify").addEventListener("click", () => {
-
+// Aggiorna il tab WiFi con SSID, password e IP corrente (se connesso come STA)
+function refreshWifiTab() {
   fetch('/wifiCredential')
     .then(res => {
       if (!res.ok) throw new Error("Errore nella fetch");
       return res.json();
     })
     .then(data => {
-      console.log("Credenziali ricevute:");
-      console.log(data);
-      document.getElementById("wifi-ssid").value = data.ssid;
-      document.getElementById("wifi-password").value = data.pw;
+      document.getElementById("wifi-ssid").value = data.ssid ?? '';
+      document.getElementById("wifi-password").value = data.pw ?? '';
       const ipRow = document.getElementById("sta-ip-row");
       const ipVal = document.getElementById("sta-ip-value");
       if (data.staConnected && data.staIp && data.staIp !== "0.0.0.0") {
@@ -2807,9 +2836,13 @@ document.getElementById("wifi-notify").addEventListener("click", () => {
         ipRow.style.display = "none";
       }
     })
-  .catch(err => console.error("Errore:", err));
+    .catch(err => console.error("refreshWifiTab:", err));
+}
 
+// Apri popup premendo sull'icona WiFi
+document.getElementById("wifi-notify").addEventListener("click", () => {
   clearWifiError();
+  refreshWifiTab();
   openGlobalSettings('wifi');
 });
 
@@ -3298,6 +3331,8 @@ function switchGlobalSettingsTab(tab) {
   overlay.querySelectorAll('.gs-tab').forEach(c => c.style.display = 'none');
   const el = document.getElementById(`gs-tab-${tab}`);
   if (el) el.style.display = '';
+  // Ogni volta che il tab WiFi diventa visibile, aggiorna SSID/password/IP
+  if (tab === 'wifi') refreshWifiTab();
 }
 
 function switchSettingsTab(tab) {

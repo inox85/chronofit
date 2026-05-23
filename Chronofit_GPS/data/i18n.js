@@ -123,6 +123,7 @@ const TRANSLATIONS = {
     'table.show_penalty':    'Show penality column',
     'table.show_edit':       'Show edit button',
     'table.show_send':       'Show send button',
+    'settings.keep_comp_focus': 'Keep competitor input active after detection',
     'settings.title':    'Settings',
     'settings.tab_sync':  '🕐 Sync',
     'settings.tab_wifi':  '🌍 WiFi',
@@ -220,8 +221,8 @@ const TRANSLATIONS = {
     'cp.delay_ms':    'Delay (ms)',
     'cp.tipo1_fpc':   'FPC 102',
     'cp.tipo1_none':  'Unmanaged',
-    'cp.tipo2_auto':  'auto',
-    'cp.tipo2_manual':'Manual',
+    'cp.tipo2_auto':  'Auto',
+    'cp.tipo2_manual':'Man.',
 
     // ── Event table headers ───────────────────────────────────────────────────
     'th.line':       'Line',
@@ -364,6 +365,7 @@ const TRANSLATIONS = {
     'table.show_penalty':    'Mostra colonna penalità',
     'table.show_edit':       'Mostra pulsante modifica',
     'table.show_send':       'Mostra pulsante invia',
+    'settings.keep_comp_focus': 'Mantieni input competitor attivo dopo rilevazione',
     'settings.title':    'Impostazioni',
     'settings.tab_sync':  '🕐 Sync',
     'settings.tab_wifi':  '🌍 WiFi',
@@ -461,8 +463,8 @@ const TRANSLATIONS = {
     'cp.delay_ms':    'Ritardo (ms)',
     'cp.tipo1_fpc':   'FPC 102',
     'cp.tipo1_none':  'Non gestita',
-    'cp.tipo2_auto':  'auto',
-    'cp.tipo2_manual':'Manuale',
+    'cp.tipo2_auto':  'Auto',
+    'cp.tipo2_manual':'Man.',
 
     // ── Event table headers ───────────────────────────────────────────────────
     'th.line':       'Linea',
