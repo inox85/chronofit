@@ -19,8 +19,8 @@
 //   elapsedTime    bool — elapsed time column
 //   penality       bool — penalty column
 //   showSendBtn    bool — send button column
-//   showDevice     bool — device column
-//   showMode       bool — mode column
+//   showTest     bool — device column
+//   showTrigger       bool — mode column
 //   splitsMode     bool — split times mode
 //   timePrecision  1=tenths | 2=hundredths | 3=milliseconds
 //   showDisabled   bool — show disabled rows
@@ -40,7 +40,7 @@ const DISCIPLINES = [
       showName: false,      showSurname: false,
       timestamp: true,      deltaTime: false,  elapsedTime: false,
       penality: false,      showSendBtn: true,
-      showDevice: true,     showMode: true,
+      showTest: true,     showTrigger: true,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: true,   syncMode: 0
     }
@@ -56,7 +56,7 @@ const DISCIPLINES = [
       showName: false,       showSurname: false,
       timestamp: true,     deltaTime: true,   elapsedTime: false,
       penality: false,      showSendBtn: true,
-      showDevice: true,    showMode: true,
+      showTest: true,    showTrigger: true,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: true,   syncMode: 1
     }
@@ -72,7 +72,7 @@ const DISCIPLINES = [
       showName: true,       showSurname: true,
       timestamp: false,     deltaTime: true,   elapsedTime: false,
       penality: true,       showSendBtn: false,
-      showDevice: false,    showMode: false,
+      showTest: false,    showTrigger: false,
       splitsMode: true,     timePrecision: 2,  showDisabled: false,
       showCompList: false,  syncMode: 2
     }
@@ -88,7 +88,7 @@ const DISCIPLINES = [
       showName: true,       showSurname: false,
       timestamp: false,     deltaTime: true,   elapsedTime: false,
       penality: false,      showSendBtn: false,
-      showDevice: false,    showMode: false,
+      showTest: false,    showTrigger: false,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: false,  syncMode: 2
     }
@@ -104,7 +104,7 @@ const DISCIPLINES = [
       showName: true,       showSurname: false,
       timestamp: false,     deltaTime: true,   elapsedTime: false,
       penality: false,      showSendBtn: false,
-      showDevice: false,    showMode: false,
+      showTest: false,    showTrigger: false,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: false,  syncMode: 2
     }

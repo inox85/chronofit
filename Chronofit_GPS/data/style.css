@@ -1891,9 +1891,11 @@ input#mqtt-broker-pass {
   border-radius: 4px;
   font-family: 'Courier New', monospace;
   font-size: 13px;
+  min-width: 427px;
 }
 
 .print-text-short {
+  min-width: 388px;
   width: 90px;
   padding: 7px 10px;
   border: 1px solid #ccc;
