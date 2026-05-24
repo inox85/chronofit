@@ -130,6 +130,17 @@ const TRANSLATIONS = {
     'settings.tab_mqtt':  '📡 MQTT',
     'settings.tab_print': '🖨 Print',
 
+    // ── Print overlay ─────────────────────────────────────────────────────────
+    'print.title':      '🖨️ Print',
+    'print.row_range':  'Row range',
+    'print.from':       'From #',
+    'print.to':         'To #',
+    'print.row_format': 'Row format',
+    'print.fields':     'Fields',
+    'print.separator':  'Row separator',
+    'print.preview':    'Preview',
+    'print.start':      '🖨 Print',
+
     // ── Card titles ───────────────────────────────────────────────────────────
     'card.competitors': 'Comp.',
     'card.time':        'Time',
@@ -137,8 +148,8 @@ const TRANSLATIONS = {
     'card.status':      'Status',
     'card.arrivals':    'Arrivals',
 
-    'table.show_device':     'Show test column',
-    'table.show_mode':       'Show detection column',
+    'table.show_test':     'Show test column',
+    'table.show_trigger':       'Show detection column',
     'table.time_precision':  'Time precision decimals',
     'table.show_sync_test':  'Show sync test rows',
     'table.show_disabled':   'Show disabled line rows',
@@ -372,6 +383,17 @@ const TRANSLATIONS = {
     'settings.tab_mqtt':  '📡 MQTT',
     'settings.tab_print': '⚙️ Generali',
 
+    // ── Print overlay ─────────────────────────────────────────────────────────
+    'print.title':      '🖨️ Stampa',
+    'print.row_range':  'Intervallo righe',
+    'print.from':       'Da #',
+    'print.to':         'A #',
+    'print.row_format': 'Formato riga',
+    'print.fields':     'Campi',
+    'print.separator':  'Separatore righe',
+    'print.preview':    'Anteprima',
+    'print.start':      '🖨 Stampa',
+
     // ── Card titles ───────────────────────────────────────────────────────────
     'card.competitors': 'Attesi',
     'card.time':        'Orario',
@@ -379,8 +401,8 @@ const TRANSLATIONS = {
     'card.status':      'Utilità',
     'card.arrivals':    'Lista passaggi',
 
-    'table.show_device':     'Mostra colonna prova',
-    'table.show_mode':       'Mostra colonna rilevamento',
+    'table.show_test':     'Mostra colonna prova',
+    'table.show_trigger':       'Mostra colonna rilevamento',
     'table.time_precision':  'Decimali precisione tempo',
     'table.show_sync_test':  'Mostra righe test sync',
     'table.show_disabled':   'Mostra righe linee disabilitate',

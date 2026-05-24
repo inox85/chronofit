@@ -1838,6 +1838,166 @@ input#mqtt-broker-pass {
   max-height: 500px;
 }
 
+/* ── Print overlay ── */
+#printOverlay .fullscreen-popup.print-popup {
+  width: 94%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  text-align: left;
+  padding: 20px 22px;
+}
+
+.print-section {
+  margin-bottom: 14px;
+}
+
+.print-inline-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.print-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #888;
+  margin-bottom: 5px;
+}
+
+.print-range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.print-range-row input {
+  width: 72px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.print-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.print-text-short {
+  width: 90px;
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.print-fields-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  cursor: pointer;
+  user-select: none;
+  color: #3949ab;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.print-fields-toggle:hover {
+  color: #1a237e;
+}
+
+#print-fields-arrow {
+  font-size: 10px;
+  transition: transform .2s;
+}
+
+.print-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.print-tag {
+  background: #eef0f7;
+  border: 1px solid #c5cae9;
+  border-radius: 6px;
+  padding: 5px 4px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  color: #3949ab;
+  cursor: pointer;
+  line-height: 1.4;
+  text-align: center;
+  transition: background .15s;
+  width: 100%;
+}
+
+.print-tag:hover {
+  background: #c5cae9;
+}
+
+.print-preview {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  min-height: 56px;
+  max-height: 130px;
+  overflow-y: auto;
+  color: #333;
+  line-height: 1.5;
+}
+
+.print-row-count {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.print-progress {
+  margin: 8px 0 4px;
+}
+
+.print-progress-track {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.print-progress-fill {
+  height: 100%;
+  background: #3949ab;
+  border-radius: 4px;
+  width: 0%;
+  transition: width .2s ease;
+}
+
+.print-progress span {
+  font-size: 12px;
+  color: #555;
+}
+
 /* ── Long-press row edit indicator ── */
 #event-table tbody tr {
   cursor: pointer;

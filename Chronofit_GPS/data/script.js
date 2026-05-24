@@ -351,8 +351,8 @@ function saveViewPrefs() {
     showName:      document.getElementById("toggle-name")?.checked    ?? false,
     showSurname:   document.getElementById("toggle-surname")?.checked ?? false,
     showSendBtn:   document.getElementById("toggle-send-btn").checked,
-    showDevice:    document.getElementById("toggle-device")?.checked ?? false,
-    showMode:      document.getElementById("toggle-mode")?.checked   ?? false,
+    showTest:    document.getElementById("toggle-test")?.checked ?? false,
+    showTrigger:      document.getElementById("toggle-trigger")?.checked   ?? false,
     splitsMode:    document.getElementById("toggle-splits").checked,
     timePrecision: document.getElementById("time-precision").value,
     sortCol:       sortCol,
@@ -393,8 +393,8 @@ function restoreViewPrefs() {
     setChk("toggle-name",          prefs.showName     ?? false);
     setChk("toggle-surname",       prefs.showSurname  ?? false);
     setChk("toggle-send-btn",      prefs.showSendBtn  ?? true);
-    setChk("toggle-device",        prefs.showDevice   ?? false);
-    setChk("toggle-mode",          prefs.showMode     ?? false);
+    setChk("toggle-test",        prefs.showTest   ?? false);
+    setChk("toggle-trigger",          prefs.showTrigger     ?? false);
     setChk("toggle-splits",        prefs.splitsMode   ?? false);
     if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
 
@@ -474,8 +474,8 @@ function applyDisciplinePreset(prefs) {
   setChk("toggle-name",          prefs.showName   ?? false);
   setChk("toggle-surname",       prefs.showSurname ?? false);
   setChk("toggle-send-btn",      prefs.showSendBtn ?? true);
-  setChk("toggle-device",        prefs.showDevice  ?? false);
-  setChk("toggle-mode",          prefs.showMode    ?? false);
+  setChk("toggle-test",        prefs.showTest  ?? false);
+  setChk("toggle-trigger",          prefs.showTrigger    ?? false);
   setChk("toggle-splits",        prefs.splitsMode  ?? false);
   if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
   if (prefs.timePrecision !== undefined) {
@@ -548,11 +548,11 @@ const LINE_TIPO_KEY = 'chronofit_line_tipo';
 let lineTipoConfig  = JSON.parse(localStorage.getItem(LINE_TIPO_KEY) || '{}');
 
 // i18n key maps for tipo values (keys are numeric)
-const TIPO1_I18N = { 0: 'cp.tipo1_fpc', 1: 'cp.tipo1_none' };
-const TIPO2_I18N = { 0: 'cp.tipo2_auto', 1: 'cp.tipo2_manual' };
+const TEST_I18N = { 0: 'cp.tipo1_fpc', 1: 'cp.tipo1_none' };
+const TRIGGER_I18N = { 0: 'cp.tipo2_auto', 1: 'cp.tipo2_manual' };
 
-function translateDevice(v) { return t(TIPO1_I18N[Number(v)] ?? '') || String(v); }
-function translateMode(v)   { return t(TIPO2_I18N[Number(v)] ?? '') || String(v); }
+function translateTest(v) { return t(TEST_I18N[Number(v)] ?? '') || String(v); }
+function translateTrigger(v)   { return t(TRIGGER_I18N[Number(v)] ?? '') || String(v); }
 
 let _lineEditTarget = null;
 
@@ -668,8 +668,8 @@ function updateTipoDisplays(line) {
   const cfg = getLineTipo(line);
   const el1 = document.getElementById(`tipo1-display-${line}`);
   const el2 = document.getElementById(`tipo2-display-${line}`);
-  if (el1) el1.textContent = t(TIPO1_I18N[cfg.tipo1] ?? cfg.tipo1);
-  if (el2) el2.textContent = t(TIPO2_I18N[cfg.tipo2] ?? cfg.tipo2);
+  if (el1) el1.textContent = t(TEST_I18N[cfg.tipo1] ?? cfg.tipo1);
+  if (el2) el2.textContent = t(TRIGGER_I18N[cfg.tipo2] ?? cfg.tipo2);
 }
 
 function updateCompDisplay(line) {
@@ -1460,15 +1460,15 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const millis = checkpoint.ms;
   const penality = checkpoint.x;
   const enabled = checkpoint.e ?? 1;
-  const device = checkpoint.p ?? '';
-  const mode   = checkpoint.r ?? '';
+  const test    = checkpoint.p ?? '';
+  const trigger = checkpoint.r ?? '';
 
   // Richiama la funzione originale
-  addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, device, mode);
+  addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger);
 }
 
 
-function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, device = '', mode = '') {
+function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, test = '', trigger = '') {
   console.log(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled);
   const tbody = document.querySelector("#event-table tbody");
   const row = document.createElement("tr");
@@ -1496,16 +1496,16 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
   row.setAttribute("data-penality", 0);
   row.setAttribute("data-enabled", enabled ? "1" : "0");
   row.setAttribute("data-row-id", rowIndex);
-  row.setAttribute("data-device", device);
-  row.setAttribute("data-mode", mode);
+  row.setAttribute("data-test", test);
+  row.setAttribute("data-trigger", trigger);
 
   row.innerHTML = `
     <td class="col-rank"></td>
     <td class="col-index">${index}</td>
     <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}" class="col-line">${lineNumber}</td>
     <td class="col-competitor">${competitor > 0 ? competitor : ''}</td>
-    <td class="col-device">${translateDevice(device)}</td>
-    <td class="col-mode">${translateMode(mode)}</td>
+    <td class="col-test">${translateTest(test)}</td>
+    <td class="col-trigger">${translateTrigger(trigger)}</td>
     <td class="col-name">${getAthleteName(competitor)}</td>
     <td class="col-surname">${getAthleteSurname(competitor)}</td>
     <td class="timestamp">${timestamp}</td>
@@ -2407,14 +2407,14 @@ function toggleSurnameColumn(show) {
   updateTableCorners();
 }
 
-function toggleDeviceColumn(show) {
+function toggleTestColumn(show) {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-device-col, td.col-device").forEach(el => el.style.display = d);
+  document.querySelectorAll("th.col-test-col, td.col-test").forEach(el => el.style.display = d);
 }
 
-function toggleModeColumn(show) {
+function toggleTriggerColumn(show) {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-mode-col, td.col-mode").forEach(el => el.style.display = d);
+  document.querySelectorAll("th.col-trigger-col, td.col-trigger").forEach(el => el.style.display = d);
 }
 
 function updateVisibleColumns(){
@@ -2429,8 +2429,8 @@ function updateVisibleColumns(){
   toggleNameColumn(document.getElementById("toggle-name")?.checked ?? false);
   toggleSurnameColumn(document.getElementById("toggle-surname")?.checked ?? false);
   toggleSendColumn(document.getElementById("toggle-send-btn").checked);
-  toggleDeviceColumn(document.getElementById("toggle-device")?.checked ?? false);
-  toggleModeColumn(document.getElementById("toggle-mode")?.checked ?? false);
+  toggleTestColumn(document.getElementById("toggle-test")?.checked ?? false);
+  toggleTriggerColumn(document.getElementById("toggle-trigger")?.checked ?? false);
   updateTableCorners();
 }
 
@@ -2602,11 +2602,11 @@ document.getElementById("toggle-surname")
 document.getElementById("toggle-send-btn")
 .addEventListener("change", e => { toggleSendColumn(e.target.checked); saveViewPrefs(); });
 
-document.getElementById("toggle-device")
-.addEventListener("change", e => { toggleDeviceColumn(e.target.checked); saveViewPrefs(); });
+document.getElementById("toggle-test")
+.addEventListener("change", e => { toggleTestColumn(e.target.checked); saveViewPrefs(); });
 
-document.getElementById("toggle-mode")
-.addEventListener("change", e => { toggleModeColumn(e.target.checked); saveViewPrefs(); });
+document.getElementById("toggle-trigger")
+.addEventListener("change", e => { toggleTriggerColumn(e.target.checked); saveViewPrefs(); });
 
 
 
@@ -3351,10 +3351,167 @@ function switchAthleteTab(tab) {
   }
 }
 
-// ── Print overlay (TODO: da definire) ────────────────────────────────────────
+// ── Print overlay ────────────────────────────────────────────────────────────
+const PRINT_PREFS_KEY = 'printPrefs';
+let _printAbort = false;
+let _printRunning = false;
+
 function openPrintOverlay() {
-  // placeholder — popup di stampa ancora da implementare
-  openGlobalSettings('print');
+  _printLoadPrefs();
+  updatePrintPreview();
+  document.getElementById('printOverlay').style.display = 'flex';
+}
+
+function closePrintOverlay() {
+  _printAbort = true;
+  document.getElementById('printOverlay').style.display = 'none';
+}
+
+function _printLoadPrefs() {
+  const p = JSON.parse(localStorage.getItem(PRINT_PREFS_KEY) || '{}');
+  const s = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  s('print-from',       p.from      ?? 1);
+  s('print-to',         p.to        ?? '');
+  s('print-row-format', p.format    ?? '#{index} L{line} C{competitor} {name} {surname}  {time}');
+  s('print-separator',  p.separator ?? '');
+}
+
+function _printSavePrefs() {
+  const g = id => document.getElementById(id)?.value ?? '';
+  localStorage.setItem(PRINT_PREFS_KEY, JSON.stringify({
+    from:      g('print-from'),
+    to:        g('print-to'),
+    format:    g('print-row-format'),
+    separator: g('print-separator'),
+  }));
+}
+
+function togglePrintFields() {
+  const grid  = document.getElementById('print-fields-grid');
+  const arrow = document.getElementById('print-fields-arrow');
+  if (!grid) return;
+  const open = grid.style.display === 'none';
+  grid.style.display  = open ? 'grid' : 'none';
+  if (arrow) arrow.textContent = open ? '▾' : '▸';
+}
+
+/* Restituisce le righe della tabella filtrate per posizione visiva (1-based).
+   Non usa data-row-id perché quell'ID dipende dal server e può iniziare da 0
+   o da valori arbitrari; la posizione nella lista è più intuitiva per l'utente. */
+function _getPrintRows() {
+  const fromRaw = document.getElementById('print-from')?.value ?? '';
+  const toRaw   = document.getElementById('print-to')?.value   ?? '';
+  const from = fromRaw !== '' ? (parseInt(fromRaw) || 1) : 1;
+  const to   = toRaw   !== '' ? parseInt(toRaw)         : Infinity;
+  return Array.from(document.querySelectorAll('#event-table tbody tr'))
+    .filter(r => !r.classList.contains('splits-row'))
+    .filter((_, i) => {
+      const pos = i + 1;   // posizione 1-based nella vista corrente
+      return pos >= from && pos <= to;
+    });
+}
+
+/* Sostituisce {token} nella stringa di riga con i dati della row */
+function _applyRowFormat(fmt, row) {
+  const q  = sel => row.querySelector(sel)?.textContent?.trim() ?? '';
+  return fmt
+    .replace(/\{index\}/g,      row.dataset.rowId      ?? '')
+    .replace(/\{line\}/g,       row.dataset.line       ?? '')
+    .replace(/\{competitor\}/g, row.dataset.competitor ?? '')
+    .replace(/\{name\}/g,       q('.col-name'))
+    .replace(/\{surname\}/g,    q('.col-surname'))
+    .replace(/\{time\}/g,       q('.timestamp'))
+    .replace(/\{race\}/g,       q('.race-time'))
+    .replace(/\{delta\}/g,      q('.delta-time'))
+    .replace(/\{elapsed\}/g,    q('.elapsed-time'))
+    .replace(/\{penality\}/g,   q('.penality-btn'))
+    .replace(/\{test\}/g,        q('.col-test'))
+    .replace(/\{trigger\}/g,     q('.col-trigger'));
+}
+
+/* Costruisce la sequenza di stringhe da stampare */
+function _buildPrintLines(rows) {
+  const fmt = document.getElementById('print-row-format')?.value ?? '';
+  const sep = document.getElementById('print-separator')?.value ?? '';
+  const lines = [];
+  rows.forEach((r, i) => {
+    lines.push(_applyRowFormat(fmt, r));
+    if (sep && i < rows.length - 1) lines.push(sep);
+  });
+  return lines;
+}
+
+/* Aggiorna il pannello di anteprima e salva le preferenze */
+function updatePrintPreview() {
+  _printSavePrefs();
+  const rows      = _getPrintRows();
+  const previewEl = document.getElementById('print-preview');
+  const countEl   = document.getElementById('print-row-count');
+
+  if (rows.length === 0) {
+    if (previewEl) previewEl.textContent = '(no rows in range)';
+    if (countEl)   countEl.textContent   = 'No rows in range';
+    return;
+  }
+
+  const lines = _buildPrintLines(rows.slice(0, 3));
+  const more  = rows.length > 3 ? `\n… (+${rows.length - 3} more)` : '';
+  if (previewEl) previewEl.textContent = lines.join('\n') + more;
+  if (countEl)   countEl.textContent   = `${rows.length} row${rows.length !== 1 ? 's' : ''} selected`;
+}
+
+/* Inserisce un tag {field} alla posizione del cursore senza togliere il focus all'input
+   (funziona perché i bottoni usano onmousedown="event.preventDefault()") */
+function insertPrintTag(inputId, tag) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const start = el.selectionStart ?? el.value.length;
+  const end   = el.selectionEnd   ?? el.value.length;
+  el.value = el.value.slice(0, start) + tag + el.value.slice(end);
+  el.selectionStart = el.selectionEnd = start + tag.length;
+  updatePrintPreview();
+}
+
+/* Invia una riga alla stampante — restituisce Promise */
+function _sendToPrinterAsync(text, cr) {
+  return fetch(`/print?text=${encodeURIComponent(text)}&${cr}`)
+    .then(r => { if (!r.ok) console.error('Print error', r.status); })
+    .catch(e  => console.error('Print network error:', e));
+}
+
+/* Avvia il job di stampa (500 ms tra una riga e la successiva) */
+async function startPrintJob() {
+  if (_printRunning) return;
+  _printSavePrefs();
+  _printAbort   = false;
+  _printRunning = true;
+
+  const rows  = _getPrintRows();
+  const lines = _buildPrintLines(rows);
+
+  const btn      = document.getElementById('print-start-btn');
+  const progress = document.getElementById('print-progress');
+  const bar      = document.getElementById('print-progress-bar');
+  const txt      = document.getElementById('print-progress-text');
+
+  if (btn)      { btn.disabled = true; btn.textContent = '⏳ …'; }
+  if (progress) { progress.style.display = 'block'; }
+  if (bar)      { bar.style.width = '0%'; }
+  if (txt)      { txt.textContent = `0 / ${lines.length}`; }
+
+  for (let i = 0; i < lines.length; i++) {
+    if (_printAbort) break;
+    if (bar) bar.style.width = `${Math.round((i / lines.length) * 100)}%`;
+    if (txt) txt.textContent = `${i + 1} / ${lines.length}`;
+    await _sendToPrinterAsync(lines[i], 1);
+    if (i < lines.length - 1) await sleep(500);
+  }
+
+  if (bar) bar.style.width = '100%';
+  if (txt) txt.textContent = _printAbort ? '⛔ Aborted' : '✅ Done!';
+  if (btn) { btn.disabled = false; btn.textContent = '🖨 Print'; }
+  _printRunning = false;
+  setTimeout(() => { if (progress) progress.style.display = 'none'; }, 2500);
 }
 
 function openGlobalSettings(tab) {
