@@ -65,7 +65,7 @@ const DISCIPLINES = [
   {
     id: "ski",
     emoji: "⛷️",
-    label: { en: "Alpine Ski", it: "Sci Alpino" },
+    label: { en: "Ski", it: "Sci" },
     prefs: {
       sortCol: "race-time", reverseOrder: false,
       showRank: true,       showIndex: false,  showLine: false,
