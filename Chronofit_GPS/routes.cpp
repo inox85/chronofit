@@ -756,7 +756,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
 
   server.on("/mqttSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
-    StaticJsonDocument<256> doc;
+    StaticJsonDocument<512> doc;
     doc["subTopic"]    = readStringFromSettings("mqttSubTopic", "");
     doc["eventName"]   = readStringFromSettings("mqttEvent", "");
     doc["prefix"]      = readStringFromSettings("mqttPrefix", "chronofit");

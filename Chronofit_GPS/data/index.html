@@ -92,6 +92,7 @@
         <button class="tab-btn active" data-tab="select" data-i18n="athlete.tab_select" onclick="switchAthleteTab('select')">Select</button>
         <button class="tab-btn"        data-tab="load"   data-i18n="athlete.tab_load"   onclick="switchAthleteTab('load')">Load</button>
         <button class="tab-btn"        data-tab="manual" data-i18n="athlete.tab_manual" onclick="switchAthleteTab('manual')">Manual</button>
+        <button class="tab-btn"        data-tab="auto"   data-i18n="athlete.tab_auto"   onclick="switchAthleteTab('auto')">Auto</button>
       </div>
 
       <!-- Tab: Select -->
@@ -153,6 +154,47 @@
         <div class="button-row">
           <button class="big-button" data-i18n="athlete.manual_add" onclick="addAthleteManual()">Add</button>
           <button class="big-button" data-i18n="btn.cancel" onclick="closeAthleteModal()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Tab: Auto -->
+      <div id="tab-auto" class="tab-content" style="display:none;">
+        <p data-i18n="athlete.auto_info" style="color:#555; margin:4px 0 12px;">Automatically add a competitor to the registry the first time its number appears from a live source. Both sources can be active at the same time.</p>
+
+        <div class="toggle-row">
+          <span data-i18n="athlete.auto_mqtt">Acquire from MQTT</span>
+          <label class="switch">
+            <input type="checkbox" id="autoAcquireMqttToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span data-i18n="athlete.auto_table">Acquire from arrivals table</span>
+          <label class="switch">
+            <input type="checkbox" id="autoAcquireTableToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div id="autoAcquireTableLines" style="display:flex; align-items:center; gap:10px; margin:0 0 12px 4px;">
+          <span data-i18n="athlete.auto_table_lines" style="color:#555;">Lines:</span>
+          <label style="display:flex; align-items:center; gap:4px; background:#ffcccc; padding:4px 8px;">
+            <input type="checkbox" class="auto-acquire-line-cb" data-line="1" checked>1
+          </label>
+          <label style="display:flex; align-items:center; gap:4px; background:#ccffcc; padding:4px 8px;">
+            <input type="checkbox" class="auto-acquire-line-cb" data-line="2" checked>2
+          </label>
+          <label style="display:flex; align-items:center; gap:4px; background:#ccccff; padding:4px 8px;">
+            <input type="checkbox" class="auto-acquire-line-cb" data-line="3" checked>3
+          </label>
+          <label style="display:flex; align-items:center; gap:4px; background:#fff5cc; padding:4px 8px;">
+            <input type="checkbox" class="auto-acquire-line-cb" data-line="4" checked>4
+          </label>
+        </div>
+
+        <div class="button-row">
+          <button class="big-button" data-i18n="btn.close" onclick="closeAthleteModal()">Close</button>
         </div>
       </div>
 
@@ -488,14 +530,6 @@
           <span data-i18n="mqtt.acquire_row">Acquire row</span>
           <label class="switch">
             <input type="checkbox" id="mqttAcquireRowToggle">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="toggle-row">
-          <span data-i18n="mqtt.acquire_comp">Acquire competitor</span>
-          <label class="switch">
-            <input type="checkbox" id="mqttAcquireCompetitorToggle">
             <span class="slider"></span>
           </label>
         </div>

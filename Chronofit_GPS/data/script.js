@@ -237,6 +237,16 @@ const VIEW_PREFS_KEY = "chronofit_view_prefs";
 
 // ── Athlete registry (read-only — caricato da stream/broadcast) ──
 const ATHLETES_KEY = "chronofit_athletes";
+const MQTT_ACQUIRE_KEY  = "mqttAcquireCompetitor";
+const TABLE_ACQUIRE_KEY = "tableAcquireCompetitor";
+const TABLE_ACQUIRE_LINES_KEY = "tableAcquireLines";
+
+// Linee che, se abilitato "Acquire from arrivals table", possono innescare l'acquisizione
+function getTableAcquireLines() {
+  const raw = localStorage.getItem(TABLE_ACQUIRE_LINES_KEY);
+  if (!raw) return [1, 2, 3, 4];
+  try { return JSON.parse(raw); } catch (e) { return [1, 2, 3, 4]; }
+}
 
 function findAthlete(competitorNum) {
   try {
@@ -658,6 +668,15 @@ function renderCompQuickList() {
     const competitor = Number(item.dataset.competitor);
     addLongPress(item, () => openAthleteFromList(competitor));
   });
+}
+
+// Aggiunge il competitor al registro se non è già presente (usato dalle fonti di auto-acquisizione)
+function maybeAutoAcquireCompetitor(compNum) {
+  if (compNum > 0 && !athleteRegistry.find(a => Number(a.competitor) === compNum)) {
+    athleteRegistry.push({ competitor: compNum, name: '-', surname: '-', team: '-' });
+    localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+    renderCompQuickList();
+  }
 }
 
 function getLineTipo(line) {
@@ -1470,6 +1489,11 @@ function addEventToTableFromCheckpoint(checkpoint) {
 
 function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, test = '', trigger = '') {
   console.log(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled);
+
+  if (localStorage.getItem(TABLE_ACQUIRE_KEY) === "1" && getTableAcquireLines().includes(Number(lineNumber))) {
+    maybeAutoAcquireCompetitor(Number(competitor));
+  }
+
   const tbody = document.querySelector("#event-table tbody");
   const row = document.createElement("tr");
 
@@ -2905,7 +2929,7 @@ document.getElementById("mqtt-close-all").addEventListener("click", () => {
 
 function handleMqttIncoming(topic, d, pendingId) {
   const acquireRow        = mqttCfg.acquireRow;
-  const acquireCompetitor = localStorage.getItem("mqttAcquireCompetitor") === "1";
+  const acquireCompetitor = localStorage.getItem(MQTT_ACQUIRE_KEY) === "1";
   const mode              = mqttCfg.immediateMode ? "immediate" : (localStorage.getItem("mqttAcqMode") || "manual");
   const showInfo          = localStorage.getItem("mqttShowInfo")          !== "0";
   const timeout           = parseInt(localStorage.getItem("mqttTimeout")  || "5", 10);
@@ -2915,13 +2939,7 @@ function handleMqttIncoming(topic, d, pendingId) {
 
   function doAcquire() {
     if (acquireCompetitor) {
-      // Aggiunge il competitor al registry se non è già presente
-      const compNum = Number(competitor);
-      if (compNum > 0 && !athleteRegistry.find(a => Number(a.competitor) === compNum)) {
-        athleteRegistry.push({ competitor: compNum, name: '-', surname: '-', team: '-' });
-        localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
-        renderCompQuickList();
-      }
+      maybeAutoAcquireCompetitor(Number(competitor));
     }
     if (pendingId !== undefined) {
       fetch("/mqttConfirmPending?id=" + pendingId).catch(e => console.error(e));
@@ -3064,7 +3082,6 @@ function refreshMqttTab() {
       mqttCfg.acquireRow    = (data.acquireRow    == 1);
       mqttCfg.immediateMode = (data.immediateMode == 1);
       mqttCfg.showPopup     = (data.showPopup     !== 0);
-      document.getElementById("mqttAcquireCompetitorToggle").checked = localStorage.getItem("mqttAcquireCompetitor") === "1";
       document.getElementById("mqttAcqModeSelect").value            = data.immediateMode == 1
           ? "immediate"
           : (localStorage.getItem("mqttAcqMode") || "manual");
@@ -3098,7 +3115,6 @@ function saveMqttSettings() {
   const sub       = encodeURIComponent(document.getElementById("mqtt-sub").value.trim());
   const showPopup = document.getElementById("mqttShowPopupToggle").checked ? 1 : 0;
 
-  localStorage.setItem("mqttAcquireCompetitor", document.getElementById("mqttAcquireCompetitorToggle").checked ? "1" : "0");
   localStorage.setItem("mqttAcqMode",           document.getElementById("mqttAcqModeSelect").value);
   localStorage.setItem("mqttShowInfo",          document.getElementById("mqttShowInfoToggle").checked          ? "1" : "0");
   localStorage.setItem("mqttTimeout",           document.getElementById("mqttTimeoutInput").value);
@@ -3271,6 +3287,39 @@ let athleteRegistry = JSON.parse(localStorage.getItem("chronofit_athletes") || "
 let assignedCompetitorSet = new Set(JSON.parse(localStorage.getItem("chronofit_assigned") || "[]"));
 let selectedAthlete  = null;
 let athleteTargetLine = null;
+
+// ── Auto-acquire toggles (tab "Auto" del registro competitori) ──
+document.getElementById("autoAcquireMqttToggle").checked  = localStorage.getItem(MQTT_ACQUIRE_KEY)  === "1";
+document.getElementById("autoAcquireTableToggle").checked = localStorage.getItem(TABLE_ACQUIRE_KEY) === "1";
+
+document.getElementById("autoAcquireMqttToggle")
+  .addEventListener("change", e => localStorage.setItem(MQTT_ACQUIRE_KEY, e.target.checked ? "1" : "0"));
+document.getElementById("autoAcquireTableToggle")
+  .addEventListener("change", e => {
+    localStorage.setItem(TABLE_ACQUIRE_KEY, e.target.checked ? "1" : "0");
+    updateAutoAcquireLinesUI();
+  });
+
+// ── Selezione linee che innescano l'acquisizione da tabella arrivi ──
+const autoAcquireLineCbs = document.querySelectorAll(".auto-acquire-line-cb");
+const savedAcquireLines  = getTableAcquireLines();
+autoAcquireLineCbs.forEach(cb => {
+  cb.checked = savedAcquireLines.includes(Number(cb.dataset.line));
+  cb.addEventListener("change", () => {
+    const selected = Array.from(autoAcquireLineCbs)
+      .filter(c => c.checked)
+      .map(c => Number(c.dataset.line));
+    localStorage.setItem(TABLE_ACQUIRE_LINES_KEY, JSON.stringify(selected));
+  });
+});
+
+function updateAutoAcquireLinesUI() {
+  const enabled = document.getElementById("autoAcquireTableToggle").checked;
+  const wrapper = document.getElementById("autoAcquireTableLines");
+  wrapper.style.opacity = enabled ? "1" : "0.4";
+  autoAcquireLineCbs.forEach(cb => cb.disabled = !enabled);
+}
+updateAutoAcquireLinesUI();
 
 // ── Long press helper ──
 function addLongPress(el, callback, ms = 600) {

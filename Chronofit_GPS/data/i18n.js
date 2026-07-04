@@ -78,6 +78,7 @@ const TRANSLATIONS = {
     'athlete.tab_select':  'Select',
     'athlete.tab_load':    'Load',
     'athlete.tab_manual':  'Manual',
+    'athlete.tab_auto':    'Auto',
     'athlete.search_ph':   'Search bib, name, surname…',
     'athlete.empty':       'Select an athlete from the list',
     'athlete.assign':      'Assign',
@@ -96,6 +97,10 @@ const TRANSLATIONS = {
     'athlete.manual_add':     'Add',
     'athlete.manual_added':   '✅ Competitor {0} added',
     'athlete.manual_err_num': 'Enter a valid number',
+    'athlete.auto_info':      'Automatically add a competitor to the registry the first time its number appears from a live source. Both sources can be active at the same time.',
+    'athlete.auto_mqtt':      'Acquire from MQTT',
+    'athlete.auto_table':     'Acquire from arrivals table',
+    'athlete.auto_table_lines': 'Lines:',
 
     // ── Table settings ────────────────────────────────────────────────────────
     'table.tab_sort':        '↕ Sort',
@@ -170,7 +175,6 @@ const TRANSLATIONS = {
     'mqtt.sub':             'Subscribe topic',
     'mqtt.notifications':   'Enable notifications',
     'mqtt.acquire_row':     'Acquire row',
-    'mqtt.acquire_comp':    'Acquire competitor',
     'mqtt.acquisition':     'Acquisition',
     'mqtt.immediate':       'Immediate',
     'mqtt.manual':          'Manual confirm',
@@ -331,6 +335,7 @@ const TRANSLATIONS = {
     'athlete.tab_select':  'Seleziona',
     'athlete.tab_load':    'Carica',
     'athlete.tab_manual':  'Manuale',
+    'athlete.tab_auto':    'Auto',
     'athlete.search_ph':   'Cerca pettorale, nome, cognome…',
     'athlete.empty':       'Seleziona un atleta dalla lista',
     'athlete.assign':      'Assegna',
@@ -349,6 +354,10 @@ const TRANSLATIONS = {
     'athlete.manual_add':     'Aggiungi',
     'athlete.manual_added':   '✅ Competitore {0} aggiunto',
     'athlete.manual_err_num': 'Inserire un numero valido',
+    'athlete.auto_info':      'Aggiunge automaticamente un competitore al registro la prima volta che il suo numero arriva da una fonte live. Entrambe le fonti possono essere attive insieme.',
+    'athlete.auto_mqtt':      'Acquisisci da MQTT',
+    'athlete.auto_table':     'Acquisisci dalla tabella arrivi',
+    'athlete.auto_table_lines': 'Linee:',
 
     // ── Table settings ────────────────────────────────────────────────────────
     'table.tab_sort':        '↕ Ordina',
@@ -423,7 +432,6 @@ const TRANSLATIONS = {
     'mqtt.sub':             'Topic sottoscrizione',
     'mqtt.notifications':   'Abilita notifiche',
     'mqtt.acquire_row':     'Acquisisci riga',
-    'mqtt.acquire_comp':    'Acquisisci competitore',
     'mqtt.acquisition':     'Acquisizione',
     'mqtt.immediate':       'Immediata',
     'mqtt.manual':          'Conferma manuale',
