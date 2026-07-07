@@ -342,6 +342,13 @@
           </label>
         </div>
         <div class="toggle-row">
+          <span data-i18n="table.show_out_of_sensor">Show out-of-sensor rows</span>
+          <label class="switch">
+            <input type="checkbox" class="toggle-btn" data-line="6" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
           <span data-i18n="table.show_disabled">Show disabled line rows</span>
           <label class="switch">
             <input type="checkbox" id="toggle-disabled-rows" checked>
@@ -936,7 +943,7 @@
           <tbody>
 
             <tr>
-              <td class="cp-line-send" style="background-color:#ffcccc" onclick="sendCheckPoint(1)">1</td>
+              <td class="cp-line-send" data-line="1" style="background-color:#ffcccc" onclick="sendCheckPointGuarded(1)">1</td>
               <td class="cp-tipo-cell" onclick="openLineEdit(1,'tipo1')">
                 <span id="tipo1-display-1">FPC 102</span>
                 <hr class="cp-tipo-sep">
@@ -949,7 +956,7 @@
             </tr>
 
             <tr>
-              <td class="cp-line-send" style="background-color:#ccffcc" onclick="sendCheckPoint(2)">2</td>
+              <td class="cp-line-send" data-line="2" style="background-color:#ccffcc" onclick="sendCheckPointGuarded(2)">2</td>
               <td class="cp-tipo-cell" onclick="openLineEdit(2,'tipo1')">
                 <span id="tipo1-display-2">FPC 102</span>
                 <hr class="cp-tipo-sep">
@@ -962,7 +969,7 @@
             </tr>
 
             <tr>
-              <td class="cp-line-send" style="background-color:#ccccff" onclick="sendCheckPoint(3)">3</td>
+              <td class="cp-line-send" data-line="3" style="background-color:#ccccff" onclick="sendCheckPointGuarded(3)">3</td>
               <td class="cp-tipo-cell" onclick="openLineEdit(3,'tipo1')">
                 <span id="tipo1-display-3">FPC 102</span>
                 <hr class="cp-tipo-sep">
@@ -975,7 +982,7 @@
             </tr>
 
             <tr>
-              <td class="cp-line-send" style="background-color:#fff5cc" onclick="sendCheckPoint(4)">4</td>
+              <td class="cp-line-send" data-line="4" style="background-color:#fff5cc" onclick="sendCheckPointGuarded(4)">4</td>
               <td class="cp-tipo-cell" onclick="openLineEdit(4,'tipo1')">
                 <span id="tipo1-display-4">FPC 102</span>
                 <hr class="cp-tipo-sep">

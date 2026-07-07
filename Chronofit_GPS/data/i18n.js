@@ -157,6 +157,7 @@ const TRANSLATIONS = {
     'table.show_trigger':       'Show detection column',
     'table.time_precision':  'Time precision decimals',
     'table.show_sync_test':  'Show sync test rows',
+    'table.show_out_of_sensor': 'Show out-of-sensor rows',
     'table.show_disabled':   'Show disabled line rows',
     'table.splits_mode':     'Competitor splits mode',
 
@@ -414,6 +415,7 @@ const TRANSLATIONS = {
     'table.show_trigger':       'Mostra colonna rilevamento',
     'table.time_precision':  'Decimali precisione tempo',
     'table.show_sync_test':  'Mostra righe test sync',
+    'table.show_out_of_sensor': 'Mostra righe fuori pressostato',
     'table.show_disabled':   'Mostra righe linee disabilitate',
     'table.splits_mode':     'Modalità split competitore',
 

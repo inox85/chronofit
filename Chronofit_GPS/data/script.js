@@ -47,7 +47,8 @@ const lineColors = {
   2: "#ccffcc", // verde tenue
   3: "#ccccff", // blu tenue
   4: "#fff5cc", // giallo tenue
-  5: "#808080ff" // giallo tenue
+  5: "#808080ff", // grigio (sync-test GPS)
+  6: "#808080ff" // grigio (fuori pressostato)
 };
 
 
@@ -562,6 +563,14 @@ const TEST_I18N = { 0: 'cp.tipo1_fpc', 1: 'cp.tipo1_none' };
 const TRIGGER_I18N = { 0: 'cp.tipo2_auto', 1: 'cp.tipo2_manual' };
 
 function translateTest(v) { return t(TEST_I18N[Number(v)] ?? '') || String(v); }
+
+// Per le linee virtuali 5 e 6 la colonna "Test" mostra un'etichetta fissa
+// invece del device tradotto, per semplificare la lettura in tabella.
+function testColumnLabel(lineNumber, test) {
+  if (Number(lineNumber) === 5) return 'Sync-Test';
+  if (Number(lineNumber) === 6) return 'F.P.';
+  return translateTest(test);
+}
 function translateTrigger(v)   { return t(TRIGGER_I18N[Number(v)] ?? '') || String(v); }
 
 let _lineEditTarget = null;
@@ -648,7 +657,7 @@ function openAthleteFromList(competitor) {
   document.getElementById('athleteOverlay').style.display = 'flex';
 }
 
-function renderCompQuickList() {
+function renderCompQuickList(scrollToCompetitor = null) {
   const container = document.getElementById('comp-quick-list');
   if (!container) return;
   if (!athleteRegistry || athleteRegistry.length === 0) {
@@ -663,11 +672,14 @@ function renderCompQuickList() {
       <span class="comp-list-num">${a.competitor}</span>${nameParts ? `<span class="comp-list-name">${nameParts}</span>` : ''}
     </div>`;
   }).join('');
-  // Aggiunge long press su ogni item → apre finestra gestione competitor
   container.querySelectorAll('.comp-list-item').forEach(item => {
     const competitor = Number(item.dataset.competitor);
     addLongPress(item, () => openAthleteFromList(competitor));
   });
+  if (scrollToCompetitor !== null) {
+    const target = container.querySelector(`[data-competitor="${scrollToCompetitor}"]`);
+    if (target) target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
 }
 
 // Aggiunge il competitor al registro se non è già presente (usato dalle fonti di auto-acquisizione)
@@ -675,7 +687,7 @@ function maybeAutoAcquireCompetitor(compNum) {
   if (compNum > 0 && !athleteRegistry.find(a => Number(a.competitor) === compNum)) {
     athleteRegistry.push({ competitor: compNum, name: '-', surname: '-', team: '-' });
     localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
-    renderCompQuickList();
+    renderCompQuickList(compNum);
   }
 }
 
@@ -932,9 +944,11 @@ function setTimeSyncMode(){
   closeGlobalSettings();
 }
 
-function sendCheckPoint(lineNumber) {
+function sendCheckPoint(lineNumber, competitor) {
   // Invia la richiesta al server aggiungendo il numero della linea come query
-  fetch(`/checkPoint?lineNumber=${lineNumber-1}`)
+  let url = `/checkPoint?lineNumber=${lineNumber-1}`;
+  if (competitor !== undefined) url += `&competitor=${competitor}`;
+  fetch(url)
     .then(res => res.text())
     .then(data => {
       //const output = document.getElementById("json-output");
@@ -945,7 +959,27 @@ function sendCheckPoint(lineNumber) {
       //  output.innerText = "";
       //}, 3000);
     })
-    .catch(err => console.error("Error fetching JSON:", err)); 
+    .catch(err => console.error("Error fetching JSON:", err));
+}
+
+// ── Linea virtuale 6 "Fuori pressostato" — long press (1s) sugli header 1-4 ──
+// addLongPress() non blocca il click nativo che scatta comunque al rilascio:
+// stesso guard-flag già usato per comp-list-item/fillCompFromListGuarded.
+const _outOfSensorLongPressLines = new Set();
+
+function sendCheckPointGuarded(lineNumber) {
+  if (_outOfSensorLongPressLines.has(lineNumber)) {
+    _outOfSensorLongPressLines.delete(lineNumber);
+    return;
+  }
+  sendCheckPoint(lineNumber);
+}
+
+function triggerOutOfSensorCheckpoint(lineNumber) {
+  _outOfSensorLongPressLines.add(lineNumber);
+  const competitor = Number(document.getElementById(`c${lineNumber}`)?.value) || 0;
+  sendCheckPoint(6, competitor);
+  resetLineCompetitor(lineNumber);
 }
 
 
@@ -1506,7 +1540,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
   const activeLines = Array.from(document.querySelectorAll(".toggle-btn:not(.inactive)"))
   .map(btn => btn.dataset.line);
   
-  if(lineNumber != 5 && activeLines.map(Number).includes(Number(lineNumber))){
+  if(lineNumber != 5 && lineNumber != 6 && activeLines.map(Number).includes(Number(lineNumber))){
     playSound("/sound"+lineNumber+".mp3");
   }
   
@@ -1528,7 +1562,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
     <td class="col-index">${index}</td>
     <td style="background-color: ${lineColors[lineNumber] || "#f5f5f5"}" class="col-line">${lineNumber}</td>
     <td class="col-competitor">${competitor > 0 ? competitor : ''}</td>
-    <td class="col-test">${translateTest(test)}</td>
+    <td class="col-test">${testColumnLabel(lineNumber, test)}</td>
     <td class="col-trigger">${translateTrigger(trigger)}</td>
     <td class="col-name">${getAthleteName(competitor)}</td>
     <td class="col-surname">${getAthleteSurname(competitor)}</td>
@@ -2115,6 +2149,12 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('athleteOverlay').style.display = 'flex';
       });
     }
+
+    // Long press (1s) sugli header delle linee 1-4 → checkpoint manuale su linea virtuale 6 "Fuori pressostato"
+    document.querySelectorAll('.cp-line-send').forEach(el => {
+      const n = Number(el.dataset.line);
+      if (n) addLongPress(el, () => triggerOutOfSensorCheckpoint(n), 1000);
+    });
 
     // Render lista competitor iniziale (da localStorage)
     renderCompQuickList();
@@ -3721,7 +3761,7 @@ function addAthleteManual() {
   }
 
   localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
-  renderCompQuickList();
+  renderCompQuickList(num);
 
   status.style.color = "green";
   status.textContent = t('athlete.manual_added', num);

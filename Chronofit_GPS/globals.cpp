@@ -59,17 +59,18 @@ double compFactor = 0.03;
 int syncEnabled = 1;
 
 // --- Sensori ---
-String lineIds[5]    = {"1", "2", "3", "4", "Sync-test"};
-int lineDevice[5] = {0, 0, 0, 0, 0};   // 0=fpc102 | 1=nongestita
-int lineMode[5]   = {0, 0, 0, 0, 0};   // 0=auto   | 1=manuale
-int competitors[5] = {0, 0, 0, 0, 0};
-unsigned long delays[5] = {0, 0, 0, 0, 0};
-int lineEnabled[5] = {1, 1, 1, 1, 1};
-volatile unsigned long lastSensorsSignal[5] = {0, 0, 0, 0, 0};
-int sensorsPins[5] = { SENSOR_IN1, SENSOR_IN2, SENSOR_IN3, SENSOR_IN4, -1 };
-volatile bool lastSensorState[5] = {HIGH, HIGH, HIGH, HIGH, HIGH};
-volatile bool sensorTriggered[5] = {false, false, false, false, false};
-volatile uint64_t sensorTime[5] = {0, 0, 0, 0, 0};
+// Indice 4 = linea 5 (sync-test GPS), indice 5 = linea 6 (Fuori pressostato, manuale)
+String lineIds[6]    = {"1", "2", "3", "4", "Sync-test", "Fuori-pressostato"};
+int lineDevice[6] = {0, 0, 0, 0, 0, 1};   // 0=fpc102 | 1=nongestita
+int lineMode[6]   = {0, 0, 0, 0, 0, 1};   // 0=auto   | 1=manuale
+int competitors[6] = {0, 0, 0, 0, 0, 0};
+unsigned long delays[6] = {0, 0, 0, 0, 0, 0};
+int lineEnabled[6] = {1, 1, 1, 1, 1, 1};
+volatile unsigned long lastSensorsSignal[6] = {0, 0, 0, 0, 0, 0};
+int sensorsPins[6] = { SENSOR_IN1, SENSOR_IN2, SENSOR_IN3, SENSOR_IN4, -1, -1 };
+volatile bool lastSensorState[6] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
+volatile bool sensorTriggered[6] = {false, false, false, false, false, false};
+volatile uint64_t sensorTime[6] = {0, 0, 0, 0, 0, 0};
 
 volatile int syncTestRequested = 0;
 

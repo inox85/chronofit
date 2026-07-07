@@ -456,7 +456,7 @@ bool checkConnectedClient(){
 
 
 void handleSensorTrigger(){
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 6; i++) {
     bool triggered = false;
     uint64_t tUs = 0;
     portENTER_CRITICAL(&isrMux);

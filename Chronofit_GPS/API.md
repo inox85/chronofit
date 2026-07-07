@@ -117,7 +117,7 @@ Scarica il file di sessione corrente (`session.json`) in streaming chunked.
 
 **Formato riga:**
 ```json
-{"id":1,"ln":1,"lId":"A1","c":42,"h":10,"m":23,"s":45,"ms":678,"x":0,"e":1}
+{"id":1,"ln":1,"lId":"A1","c":42,"h":10,"m":23,"s":45,"ms":678,"x":0,"e":1,"p":0,"r":0}
 ```
 
 | Campo | Descrizione |
@@ -129,6 +129,8 @@ Scarica il file di sessione corrente (`session.json`) in streaming chunked.
 | `h`,`m`,`s`,`ms` | Orario evento |
 | `x` | Penalità (secondi) |
 | `e` | Abilitato (1) / disabilitato (0) |
+| `p` | Tipo prova/sensore (`0` = FPC 102, `1` = non gestita) |
+| `r` | Modalità trigger (`0` = automatico, `1` = manuale) |
 
 ---
 
@@ -224,6 +226,7 @@ Restituisce tutte le impostazioni del dispositivo serializzate in JSON.
 | `bz` | Buzzer abilitato (0/1) |
 | `mqttAcquireRow` | MQTT acquire row mode |
 | `mqttImmediateMode` | MQTT immediate mode |
+| `mqttShowPopup` | Mostra popup UI all'arrivo di messaggi MQTT (0/1) |
 
 ---
 
@@ -357,9 +360,9 @@ Salva le impostazioni MQTT generali.
 | `subTopic` | string | Subtopic (nome gara) |
 | `eventName` | string | Nome evento |
 | `prefix` | string | Prefisso del topic (default: `chronofit`) |
-| `showPopup` | int | Mostra popup su ricezione MQTT (0/1) |
-| `acquireRow` | int | Acquisisce riga remota nella sessione (0/1) |
-| `immediateMode` | int | Pubblica immediatamente senza conferma (0/1) |
+| `showPopup` | int | Mostra popup UI alla ricezione di un messaggio MQTT (0/1) |
+| `acquireRow` | int | Acquisisce il competitor ricevuto nella lista atleti (0/1) |
+| `immediateMode` | int | Registra la riga ricevuta immediatamente senza conferma utente (0/1) |
 
 ---
 

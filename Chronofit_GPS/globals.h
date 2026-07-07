@@ -67,17 +67,17 @@ extern volatile uint64_t lastRTCTrigger;
 
 // --- Sensori ---
 
-extern String lineIds[5];
-extern int lineDevice[5];   // 0=fpc102 | 1=nongestita
-extern int lineMode[5];     // 0=auto   | 1=manuale
-extern int competitors[5];
-extern unsigned long delays[5];
-extern int lineEnabled[5];
-extern volatile unsigned long lastSensorsSignal[5];
-extern int sensorsPins[5];
-extern volatile  bool lastSensorState[5];
-extern volatile bool sensorTriggered[5];
-extern volatile uint64_t sensorTime[5];
+extern String lineIds[6];
+extern int lineDevice[6];   // 0=fpc102 | 1=nongestita
+extern int lineMode[6];     // 0=auto   | 1=manuale
+extern int competitors[6];
+extern unsigned long delays[6];
+extern int lineEnabled[6];
+extern volatile unsigned long lastSensorsSignal[6];
+extern int sensorsPins[6];
+extern volatile  bool lastSensorState[6];
+extern volatile bool sensorTriggered[6];
+extern volatile uint64_t sensorTime[6];
 
 extern volatile int syncTestRequested;
 

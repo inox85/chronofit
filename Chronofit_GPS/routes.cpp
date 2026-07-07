@@ -631,6 +631,9 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     if (request->hasParam("lineNumber")) {
         lineNumber = request->getParam("lineNumber")->value().toInt();
     }
+    if (request->hasParam("competitor")) {
+        competitors[lineNumber] = request->getParam("competitor")->value().toInt();
+    }
 
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
