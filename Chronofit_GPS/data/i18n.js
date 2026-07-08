@@ -237,6 +237,7 @@ const TRANSLATIONS = {
     'cp.delay_ms':    'Delay (ms)',
     'cp.tipo1_fpc':   'FPC 102',
     'cp.tipo1_none':  'Unmanaged',
+    'cp.tipo1_placeholder': 'e.g. FPC 102',
     'cp.tipo2_auto':  'Auto',
     'cp.tipo2_manual':'Man.',
 
@@ -495,6 +496,7 @@ const TRANSLATIONS = {
     'cp.delay_ms':    'Ritardo (ms)',
     'cp.tipo1_fpc':   'FPC 102',
     'cp.tipo1_none':  'Non gestita',
+    'cp.tipo1_placeholder': 'Es. FPC 102',
     'cp.tipo2_auto':  'Auto',
     'cp.tipo2_manual':'Man.',
 

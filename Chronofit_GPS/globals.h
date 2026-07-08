@@ -68,7 +68,7 @@ extern volatile uint64_t lastRTCTrigger;
 // --- Sensori ---
 
 extern String lineIds[6];
-extern int lineDevice[6];   // 0=fpc102 | 1=nongestita
+extern String lineDevice[6];   // testo libero (default: "FPC 102" / "Non gestita")
 extern int lineMode[6];     // 0=auto   | 1=manuale
 extern int competitors[6];
 extern unsigned long delays[6];

@@ -692,7 +692,7 @@ function maybeAutoAcquireCompetitor(compNum) {
 }
 
 function getLineTipo(line) {
-  return lineTipoConfig[line] ?? { tipo1: 0, tipo2: 0 };
+  return lineTipoConfig[line] ?? { tipo1: 'FPC 102', tipo2: 0 };
 }
 
 function updateTipoDisplays(line) {
@@ -806,7 +806,7 @@ function saveLineEdit() {
     if (dEl) dEl.value = document.getElementById(`le-d-${line}`).value;
 
     lineTipoConfig[line] = {
-      tipo1: Number(document.getElementById(`le-t1-${line}`).value),
+      tipo1: document.getElementById(`le-t1-${line}`).value.trim() || 'FPC 102',
       tipo2: Number(document.getElementById(`le-t2-${line}`).value)
     };
 
@@ -889,7 +889,7 @@ function fillSettingsFields(data){
     const t2 = data[`lt2_${n}`];
     if (t1 !== undefined || t2 !== undefined) {
       lineTipoConfig[n] = {
-        tipo1: t1 ?? lineTipoConfig[n]?.tipo1 ?? 0,
+        tipo1: t1 ?? lineTipoConfig[n]?.tipo1 ?? 'FPC 102',
         tipo2: t2 ?? lineTipoConfig[n]?.tipo2 ?? 0
       };
     }
@@ -2056,7 +2056,7 @@ function applyLineUpdate(data) {
   if (btn && data.e !== undefined) applyLineEnableState(btn, data.e);
   if (data.t1 !== undefined || data.t2 !== undefined) {
     lineTipoConfig[n] = {
-      tipo1: data.t1 ?? lineTipoConfig[n]?.tipo1 ?? 0,
+      tipo1: data.t1 ?? lineTipoConfig[n]?.tipo1 ?? 'FPC 102',
       tipo2: data.t2 ?? lineTipoConfig[n]?.tipo2 ?? 0
     };
     localStorage.setItem(LINE_TIPO_KEY, JSON.stringify(lineTipoConfig));
@@ -2211,6 +2211,13 @@ if ('serviceWorker' in navigator) {
     .then(reg => console.log('✅ Service Worker registrato:', reg))
     .catch(err => console.error('❌ Registrazione SW fallita:', err));
 }
+
+// Su "Invio" (tastiera fisica) o "Vai" (tastiera Android) togli il focus dal campo.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const el = e.target;
+  if (el.matches('input, textarea')) el.blur();
+});
 
 window.addEventListener("load", () => {
   const splash = document.getElementById("splash");

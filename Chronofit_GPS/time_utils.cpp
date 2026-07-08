@@ -181,7 +181,7 @@ void checkPointRoutine(int i) {
   checkpoint[INDEX_FIELD] = sessionRowIndex;
 
   if (printEnabled) {
-    printFormatted(sessionRowIndex, String(i + 1), competitors[i], hh, mm, ss, ms, 1);
+    printFormatted(sessionRowIndex, String(i + 1), competitors[i], hh, mm, ss, ms, 2);
   }
 
   // 🔹 Crea una copia ordinata del JSON (index per primo)

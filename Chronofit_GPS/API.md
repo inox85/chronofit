@@ -129,7 +129,7 @@ Scarica il file di sessione corrente (`session.json`) in streaming chunked.
 | `h`,`m`,`s`,`ms` | Orario evento |
 | `x` | Penalità (secondi) |
 | `e` | Abilitato (1) / disabilitato (0) |
-| `p` | Tipo prova/sensore (`0` = FPC 102, `1` = non gestita) |
+| `p` | Tipo prova/sensore (testo libero impostato dall'utente, es. "FPC 102") |
 | `r` | Modalità trigger (`0` = automatico, `1` = manuale) |
 
 ---

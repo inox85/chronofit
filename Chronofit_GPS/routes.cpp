@@ -1038,14 +1038,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     for (size_t i = 0; i < len; i++) body += (char)data[i];
     debug("Ricevuti nuovi settings: " + body);
 
-    StaticJsonDocument<256> doc;
+    StaticJsonDocument<320> doc;
     deserializeJson(doc, body);
     int line = doc["l"].as<int>();
     int idx = line - 1;
     competitors[idx] = doc["c"].as<int>();
     delays[idx]      = doc["d"].as<int>();
     lineEnabled[idx] = doc["e"].as<int>();
-    if (doc.containsKey("t1")) lineDevice[idx] = doc["t1"].as<int>();
+    if (doc.containsKey("t1")) lineDevice[idx] = doc["t1"].as<String>().substring(0, 32);
     if (doc.containsKey("t2")) lineMode[idx]   = doc["t2"].as<int>();
 
     broadcastLineUpdate(idx);
@@ -1073,7 +1073,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     if (request->hasParam("c"))  competitors[idx] = request->getParam("c")->value().toInt();
     if (request->hasParam("d"))  delays[idx]      = request->getParam("d")->value().toInt();
     if (request->hasParam("e"))  lineEnabled[idx] = request->getParam("e")->value().toInt();
-    if (request->hasParam("t1")) lineDevice[idx]  = request->getParam("t1")->value().toInt();
+    if (request->hasParam("t1")) lineDevice[idx]  = request->getParam("t1")->value().substring(0, 32);
     if (request->hasParam("t2")) lineMode[idx]    = request->getParam("t2")->value().toInt();
 
     broadcastLineUpdate(idx);
@@ -1463,7 +1463,7 @@ server.on("/upload", HTTP_POST,
 }
 
 String serializeSettings(){
-  StaticJsonDocument<1024> doc;
+  StaticJsonDocument<1152> doc;
   doc["t"] = TYPE_PARAMS_UPDATED;
   doc["c1"] = competitors[0];
   doc["c2"] = competitors[1];
@@ -1526,7 +1526,7 @@ void broadCastSettings(){
 }
 
 void broadcastLineUpdate(int idx) {
-  StaticJsonDocument<256> doc;
+  StaticJsonDocument<320> doc;
   doc["t"]  = TYPE_LINE_UPDATED;
   doc["l"]  = idx + 1;
   doc["c"]  = competitors[idx];

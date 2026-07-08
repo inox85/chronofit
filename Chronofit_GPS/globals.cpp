@@ -60,8 +60,8 @@ int syncEnabled = 1;
 
 // --- Sensori ---
 // Indice 4 = linea 5 (sync-test GPS), indice 5 = linea 6 (Fuori pressostato, manuale)
-String lineIds[6]    = {"1", "2", "3", "4", "Sync-test", "Fuori-pressostato"};
-int lineDevice[6] = {0, 0, 0, 0, 0, 1};   // 0=fpc102 | 1=nongestita
+String lineIds[6]    = {"1", "2", "3", "4", "Sync-test", "F.P."};
+String lineDevice[6] = {"", "", "", "", "Serivice", "Services"};
 int lineMode[6]   = {0, 0, 0, 0, 0, 1};   // 0=auto   | 1=manuale
 int competitors[6] = {0, 0, 0, 0, 0, 0};
 unsigned long delays[6] = {0, 0, 0, 0, 0, 0};
