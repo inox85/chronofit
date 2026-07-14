@@ -181,7 +181,7 @@ void checkPointRoutine(int i) {
   checkpoint[INDEX_FIELD] = sessionRowIndex;
 
   if (printEnabled) {
-    printFormatted(sessionRowIndex, String(i + 1), competitors[i], hh, mm, ss, ms, 2);
+    printFormatted(sessionRowIndex, String(i + 1), competitors[i], hh, mm, ss, ms, 3);
   }
 
   // 🔹 Crea una copia ordinata del JSON (index per primo)
@@ -222,8 +222,8 @@ void checkPointRoutine(int i) {
   char mqttPayload[384];
   serializeJson(ordered, mqttPayload, sizeof(mqttPayload));
   mqttPublishCheckpoint(mqttPayload);
-}
 
+}
 
 // ----------------------------------------
 void writeCheckpointFromMqtt(const char* jsonPayload) {

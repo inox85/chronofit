@@ -26,6 +26,8 @@
 //   showDisabled   bool — show disabled rows
 //   showCompList   bool — competitor list card visible
 //   syncMode       0=manual | 1=line-closure | 2=GPS | 3=elapsed(no sync)
+//   bgColor        hex — GUI background color for this discipline (light tint,
+//                  in armonia con --primary-color/--card-border-color di style.css)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DISCIPLINES = [
@@ -42,7 +44,8 @@ const DISCIPLINES = [
       penality: false,      showSendBtn: true,
       showTest: true,     showTrigger: true,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
-      showCompList: true,   syncMode: 0
+      showCompList: true,   syncMode: 0,
+      bgColor: "#f5f5f5"
     }
   },
 
@@ -58,7 +61,25 @@ const DISCIPLINES = [
       penality: false,      showSendBtn: true,
       showTest: true,    showTrigger: true,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
-      showCompList: true,   syncMode: 1
+      showCompList: true,   syncMode: 1,
+      bgColor: "#f2e3c4"
+    }
+  },
+
+  {
+    id: "rally",
+    emoji: "🏎️",
+    label: { en: "Rally", it: "Rally" },
+    prefs: {
+      sortCol: "race-time", reverseOrder: false,
+      showRank: true,       showIndex: false,  showLine: false,
+      showName: true,       showSurname: false,
+      timestamp: false,     deltaTime: true,   elapsedTime: false,
+      penality: false,      showSendBtn: false,
+      showTest: false,    showTrigger: false,
+      splitsMode: true,    timePrecision: 3,  showDisabled: false,
+      showCompList: false,  syncMode: 2,
+      bgColor: "#d9f0d9"
     }
   },
 
@@ -74,41 +95,9 @@ const DISCIPLINES = [
       penality: true,       showSendBtn: false,
       showTest: false,    showTrigger: false,
       splitsMode: true,     timePrecision: 2,  showDisabled: false,
-      showCompList: false,  syncMode: 2
+      showCompList: false,  syncMode: 2,
+      bgColor: "#d7ebf8"
     }
   },
-
-  {
-    id: "cycling",
-    emoji: "🚴",
-    label: { en: "Cycling", it: "Ciclismo" },
-    prefs: {
-      sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false,  showLine: false,
-      showName: true,       showSurname: false,
-      timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: false,      showSendBtn: false,
-      showTest: false,    showTrigger: false,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false,
-      showCompList: false,  syncMode: 2
-    }
-  },
-
-  {
-    id: "mtb",
-    emoji: "🚵",
-    label: { en: "MTB", it: "MTB" },
-    prefs: {
-      sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false,  showLine: false,
-      showName: true,       showSurname: false,
-      timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: false,      showSendBtn: false,
-      showTest: false,    showTrigger: false,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false,
-      showCompList: false,  syncMode: 2
-    }
-  },
-
 
 ];

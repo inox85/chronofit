@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API_public</title>
+<style>
+body { --bg: #0d1117; --bg-secondary: #161b22; --text: #e6edf3; --text-secondary: #8b949e; --border: #30363d; --code-bg: #2a2a2a; --link: #58a6ff; --heading-border: #30363d; --blockquote-border: #30363d; --blockquote-text: #8b949e; --table-header-bg: #161b22; --table-border: #30363d; --hr: #30363d; }
+* { box-sizing: border-box; }
+body {
+  font-family: "Calibri", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text);
+  background: var(--bg);
+  margin: 0;
+  padding: 0;
+}
+.page-wrap {
+  max-width: 1024px;
+  margin: 0 auto;
+}
+.toolbar {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+.toolbar-inner {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 8px 48px;
+  display: flex;
+  justify-content: flex-end;
+}
+.theme-btn {
+  font-size: 13px;
+  font-family: inherit;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text);
+  cursor: pointer;
+}
+.md-body {
+  padding: 48px 48px 96px;
+}
+p {
+  margin-top: 0;
+  margin-bottom: 1em;
+  text-align: justify;
+  hyphens: auto;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Calibri Light", "Calibri", "Segoe UI Light", "Segoe UI", Arial, sans-serif;
+  color: var(--text);
+  margin-top: 1.8em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+}
+h1 { font-size: 2em; border-bottom: 2px solid var(--heading-border); padding-bottom: 0.3em; margin-top: 0; }
+h2 { font-size: 1.5em; border-bottom: 1px solid var(--heading-border); padding-bottom: 0.25em; }
+h3 { font-size: 1.2em; }
+h4 { font-size: 1.05em; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  background: var(--code-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.875em;
+  font-family: "Cascadia Code", "Consolas", "Fira Code", "Courier New", monospace;
+}
+pre {
+  background: var(--code-bg);
+  border-radius: 6px;
+  padding: 16px 20px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 1.2em 0;
+}
+pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.875em;
+}
+ul, ol {
+  margin: 0.5em 0 1em;
+  padding-left: 2em;
+}
+li {
+  margin-bottom: 0.4em;
+  text-align: justify;
+}
+li > p { margin-bottom: 0.25em; }
+blockquote {
+  border-left: 4px solid var(--blockquote-border);
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  color: var(--blockquote-text);
+  background: var(--bg-secondary);
+  border-radius: 0 4px 4px 0;
+}
+blockquote p { margin-bottom: 0; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.2em 0;
+  font-size: 0.95em;
+}
+th {
+  background: var(--table-header-bg);
+  font-weight: 600;
+  text-align: left;
+}
+th, td {
+  border: 1px solid var(--table-border);
+  padding: 8px 14px;
+}
+img { max-width: 100%; height: auto; display: block; margin: 1em auto; }
+hr { border: none; border-top: 1px solid var(--hr); margin: 2.5em 0; }
+.mermaid-container {
+  margin: 1.5em 0;
+  text-align: center;
+  overflow-x: auto;
+}
+.mermaid-container svg {
+  max-width: 100% !important;
+  height: auto;
+}
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+<div class="md-body">
+<h1>Chronofit GPS — API Reference (Public)</h1>
+<p>Tutte le route sono esposte dal server HTTP integrato nel dispositivo Chronofit GPS, raggiungibile:</p>
+<ul>
+<li>In modalità <strong>Access Point</strong>: <code>http://192.168.10.1</code></li>
+<li>In modalità <strong>STA</strong> (collegato a un router): all’IP assegnato dal router</li>
+</ul>
+<hr>
+<h2>Autenticazione</h2>
+<p>Se è configurato un token di accesso, ogni richiesta deve includere l’header:</p>
+<pre><code class="hljs">X-Token: &lt;valore&gt;
+</code></pre>
+<p>Le route che richiedono autorizzazione sono marcate con 🔒.<br>
+Se non è configurato nessun token, tutte le richieste sono autorizzate.</p>
+<hr>
+<h2>WebSocket</h2>
+<h3><code>WS /ws</code></h3>
+<p>Connessione WebSocket per la ricezione in tempo reale degli eventi del dispositivo.</p>
+<p><strong>Messaggi inviati dal server (JSON):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Campo <code>t</code></th>
+<th>Evento</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>Nuovo passaggio</td>
+<td>Checkpoint registrato (trigger HW o manuale)</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>Aggiornamento orologio</td>
+<td>Tick ogni secondo con orario corrente</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>Sessione cancellata</td>
+<td>La sessione è stata azzerata</td>
+</tr>
+<tr>
+<td><code>3</code></td>
+<td>Parametri aggiornati</td>
+<td>Impostazioni di sistema modificate</td>
+</tr>
+<tr>
+<td><code>4</code></td>
+<td>Riga aggiornata</td>
+<td>Un passaggio è stato modificato</td>
+</tr>
+<tr>
+<td><code>5</code></td>
+<td>Messaggio generico</td>
+<td>Notifica testuale</td>
+</tr>
+<tr>
+<td><code>6</code></td>
+<td>Email inviata</td>
+<td>Conferma invio email</td>
+</tr>
+<tr>
+<td><code>11</code></td>
+<td>Linea aggiornata</td>
+<td>Configurazione di una linea modificata</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>Tempo e sincronizzazione</h2>
+<h3><code>GET /time</code></h3>
+<p>Restituisce l’orario corrente del dispositivo.</p>
+<p><strong>Risposta JSON:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span> <span class="hljs-attr">"hh"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">10</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"mm"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">23</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"ss"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">45</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"ms"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">678</span> <span class="hljs-punctuation">}</span>
+</code></pre>
+<hr>
+<h3>🔒 <code>GET /setTime</code></h3>
+<p>Imposta l’orario e la modalità di sincronizzazione.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mode</code></td>
+<td>int</td>
+<td><code>0</code> = manuale, <code>1</code> = sync su chiusura linea, <code>2</code> = GPS, <code>3</code> = elapsed (nessun sync)</td>
+</tr>
+<tr>
+<td><code>hour</code></td>
+<td>int</td>
+<td>Ore (0–23) — usato in modalità 0 e 1</td>
+</tr>
+<tr>
+<td><code>minute</code></td>
+<td>int</td>
+<td>Minuti (0–59)</td>
+</tr>
+<tr>
+<td><code>second</code></td>
+<td>int</td>
+<td>Secondi (0–59)</td>
+</tr>
+<tr>
+<td><code>gpsInterval</code></td>
+<td>int</td>
+<td>Intervallo risincronizzazione GPS in minuti (solo modalità 2)</td>
+</tr>
+<tr>
+<td><code>utcOffset</code></td>
+<td>int</td>
+<td>Offset UTC (-12 … +14)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Risposta:</strong> testo descrittivo dell’operazione eseguita.</p>
+<hr>
+<h3>🔒 <code>GET /setOffset</code></h3>
+<p>Imposta solo l’offset UTC senza cambiare modalità.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>offset</code></td>
+<td>int</td>
+<td>Offset UTC (-12 … +14)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>Checkpoint e sessione</h2>
+<h3><code>GET /checkPoint</code></h3>
+<p>Registra manualmente un passaggio su una linea.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Default</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lineNumber</code></td>
+<td>int</td>
+<td>0</td>
+<td>Numero della linea che ha rilevato il passaggio</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Risposta:</strong> testo di conferma con timestamp.</p>
+<hr>
+<h3><code>GET /getCheckpoints</code></h3>
+<p>Scarica la sessione corrente in formato NDJSON (newline-delimited JSON), una riga per checkpoint.</p>
+<p><strong>Risposta:</strong> stream di righe JSON.</p>
+<p><strong>Formato riga:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span><span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span><span class="hljs-number">1</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"ln"</span><span class="hljs-punctuation">:</span><span class="hljs-number">1</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"lId"</span><span class="hljs-punctuation">:</span><span class="hljs-string">"A1"</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"c"</span><span class="hljs-punctuation">:</span><span class="hljs-number">42</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"h"</span><span class="hljs-punctuation">:</span><span class="hljs-number">10</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"m"</span><span class="hljs-punctuation">:</span><span class="hljs-number">23</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"s"</span><span class="hljs-punctuation">:</span><span class="hljs-number">45</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"ms"</span><span class="hljs-punctuation">:</span><span class="hljs-number">678</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"x"</span><span class="hljs-punctuation">:</span><span class="hljs-number">0</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"e"</span><span class="hljs-punctuation">:</span><span class="hljs-number">1</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"p"</span><span class="hljs-punctuation">:</span><span class="hljs-number">0</span><span class="hljs-punctuation">,</span><span class="hljs-attr">"r"</span><span class="hljs-punctuation">:</span><span class="hljs-number">0</span><span class="hljs-punctuation">}</span>
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>Indice progressivo del passaggio</td>
+</tr>
+<tr>
+<td><code>ln</code></td>
+<td>Numero linea</td>
+</tr>
+<tr>
+<td><code>lId</code></td>
+<td>ID linea (stringa)</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td>Numero competitor</td>
+</tr>
+<tr>
+<td><code>h</code>, <code>m</code>, <code>s</code>, <code>ms</code></td>
+<td>Orario dell’evento</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td>Penalità (secondi)</td>
+</tr>
+<tr>
+<td><code>e</code></td>
+<td>Abilitato: <code>1</code> / disabilitato: <code>0</code></td>
+</tr>
+<tr>
+<td><code>p</code></td>
+<td>Tipo prova/sensore (testo libero impostato dall’utente, es. “FPC 102”)</td>
+</tr>
+<tr>
+<td><code>r</code></td>
+<td>Modalità trigger (<code>0</code> = automatico, <code>1</code> = manuale)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3><code>GET /downloadSession</code></h3>
+<p>Scarica la sessione come file allegato (forza il download nel browser).</p>
+<p>Stesso formato di <code>/getCheckpoints</code>, con header <code>Content-Disposition: attachment</code>.</p>
+<hr>
+<h3>🔒 <code>GET /clearSession</code></h3>
+<p>Cancella l’intera sessione corrente. Notifica tutti i client WebSocket connessi.</p>
+<p><strong>Risposta:</strong> testo di conferma.</p>
+<hr>
+<h3><code>GET /checkPointFields</code></h3>
+<p>Aggiorna la configurazione di una linea via query string. Solo <code>l</code> è obbligatorio.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Obbligatorio</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>l</code></td>
+<td>int</td>
+<td>✅</td>
+<td>Numero linea (1–4)</td>
+</tr>
+<tr>
+<td><code>ld</code></td>
+<td>string</td>
+<td>—</td>
+<td>ID linea</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td>int</td>
+<td>—</td>
+<td>Numero competitor assegnato</td>
+</tr>
+<tr>
+<td><code>d</code></td>
+<td>int</td>
+<td>—</td>
+<td>Delay di rilevamento in millisecondi</td>
+</tr>
+<tr>
+<td><code>e</code></td>
+<td>int</td>
+<td>—</td>
+<td>Abilitato: <code>1</code> / disabilitato: <code>0</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Esempio:</strong> <code>GET /checkPointFields?l=2&amp;c=7&amp;e=1</code></p>
+<hr>
+<h3><code>POST /checkPointFields</code></h3>
+<p>Aggiorna la configurazione di una linea con body JSON.</p>
+<p><strong>Body JSON:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span> <span class="hljs-attr">"l"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"ld"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"A1"</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"c"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">42</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"d"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">500</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"e"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span> <span class="hljs-punctuation">}</span>
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>l</code></td>
+<td>Numero linea (1–4)</td>
+</tr>
+<tr>
+<td><code>ld</code></td>
+<td>ID linea</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td>Numero competitor assegnato</td>
+</tr>
+<tr>
+<td><code>d</code></td>
+<td>Delay in millisecondi</td>
+</tr>
+<tr>
+<td><code>e</code></td>
+<td>Abilitato: <code>1</code> / <code>0</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3><code>POST /sendCheckPointRow</code></h3>
+<p>Invia (o re-invia) un passaggio alla stampante termica e al broker MQTT.</p>
+<p><strong>Body JSON:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"lineNumber"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"index"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">5</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"lineId"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"A1"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"competitor"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">42</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"hour"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">10</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"minute"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">23</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"second"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">45</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"millis"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">678</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<hr>
+<h3><code>POST /updateCheckPointRow</code></h3>
+<p>Modifica un passaggio esistente nella sessione.</p>
+<p><strong>Body JSON:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"index"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">5</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"lineNumber"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"lineId"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"A1"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"competitor"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">42</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"hour"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">10</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"minute"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">23</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"second"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">45</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"millis"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">678</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"penality"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<p>Il campo <code>index</code> identifica il record da modificare. Se non esiste viene creato.</p>
+<hr>
+<h2>Impostazioni di sistema</h2>
+<h3><code>GET /allSettings</code></h3>
+<p>Restituisce la configurazione completa del dispositivo.</p>
+<p><strong>Risposta JSON (campi principali):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>c1</code>–<code>c4</code></td>
+<td>Competitor assegnati alle linee 1–4</td>
+</tr>
+<tr>
+<td><code>l1</code>–<code>l4</code></td>
+<td>ID delle linee 1–4</td>
+</tr>
+<tr>
+<td><code>d1</code>–<code>d4</code></td>
+<td>Delay delle linee 1–4 (ms)</td>
+</tr>
+<tr>
+<td><code>e1</code>–<code>e4</code></td>
+<td>Stato abilitazione linee (1/0)</td>
+</tr>
+<tr>
+<td><code>sm</code></td>
+<td>Modalità di sincronizzazione corrente</td>
+</tr>
+<tr>
+<td><code>si</code></td>
+<td>Intervallo sync GPS (minuti)</td>
+</tr>
+<tr>
+<td><code>utc</code></td>
+<td>Offset UTC</td>
+</tr>
+<tr>
+<td><code>sn</code></td>
+<td>Nome stazione</td>
+</tr>
+<tr>
+<td><code>print</code></td>
+<td>Stampa abilitata (0/1)</td>
+</tr>
+<tr>
+<td><code>bz</code></td>
+<td>Buzzer abilitato (0/1)</td>
+</tr>
+<tr>
+<td><code>mqttAcquireRow</code></td>
+<td>Acquisizione riga MQTT (0/1)</td>
+</tr>
+<tr>
+<td><code>mqttImmediateMode</code></td>
+<td>Modalità immediata MQTT (0/1)</td>
+</tr>
+<tr>
+<td><code>mqttShowPopup</code></td>
+<td>Mostra popup alla ricezione MQTT (0/1)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3>🔒 <code>GET /setAttribute</code></h3>
+<p>Aggiorna attributi generali del dispositivo.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>printEnabled</code></td>
+<td>int</td>
+<td><code>1</code> = stampa abilitata, <code>0</code> = disabilitata</td>
+</tr>
+<tr>
+<td><code>buzzerEnable</code></td>
+<td>int</td>
+<td><code>1</code> = buzzer abilitato</td>
+</tr>
+<tr>
+<td><code>stationName</code></td>
+<td>string</td>
+<td>Nome della stazione di cronometraggio</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>WiFi</h2>
+<h3><code>GET /wifiCredential</code></h3>
+<p>Restituisce lo stato della connessione WiFi STA.</p>
+<p><strong>Risposta JSON:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span> <span class="hljs-attr">"ssid"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"MyNetwork"</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"staConnected"</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"staIp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"192.168.1.42"</span> <span class="hljs-punctuation">}</span>
+</code></pre>
+<hr>
+<h3>🔒 <code>GET /wifiConnect</code></h3>
+<p>Avvia la connessione a una rete WiFi.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ssid</code></td>
+<td>string</td>
+<td>SSID della rete</td>
+</tr>
+<tr>
+<td><code>pw</code></td>
+<td>string</td>
+<td>Password della rete</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Risposta:</strong> testo di conferma (la connessione avviene in background).</p>
+<hr>
+<h3><code>GET /wifiStop</code></h3>
+<p>Interrompe i tentativi di connessione WiFi STA.</p>
+<p><strong>Risposta:</strong> testo di conferma.</p>
+<hr>
+<h3>🔒 <code>GET /setApPassword</code></h3>
+<p>Cambia la password dell’Access Point WiFi.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>current</code></td>
+<td>string</td>
+<td>Password AP attuale</td>
+</tr>
+<tr>
+<td><code>newpwd</code></td>
+<td>string</td>
+<td>Nuova password (minimo 8 caratteri)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Risposta:</strong> testo di conferma o messaggio di errore.</p>
+<hr>
+<h2>MQTT</h2>
+<h3><code>GET /mqttSettings</code></h3>
+<p>Restituisce la configurazione MQTT corrente.</p>
+<p><strong>Risposta JSON:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"subTopic"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"gara1"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"eventName"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"evento"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"prefix"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"chronofit"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"showPopup"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"acquireRow"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"immediateMode"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"brokerHost"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"broker.example.com"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"brokerPort"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1883</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"brokerUser"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">""</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"brokerPass"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">""</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<p>Il topic di pubblicazione dei checkpoint è:</p>
+<pre><code class="hljs">{prefix}/{eventName}/{stationName}/{chipId}/checkpoint
+</code></pre>
+<hr>
+<h3><code>GET /mqttSave</code></h3>
+<p>Salva le impostazioni MQTT generali.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>subTopic</code></td>
+<td>string</td>
+<td>Subtopic (es. nome gara)</td>
+</tr>
+<tr>
+<td><code>eventName</code></td>
+<td>string</td>
+<td>Nome evento</td>
+</tr>
+<tr>
+<td><code>prefix</code></td>
+<td>string</td>
+<td>Prefisso del topic (default: <code>chronofit</code>)</td>
+</tr>
+<tr>
+<td><code>showPopup</code></td>
+<td>int</td>
+<td>Mostra popup UI alla ricezione di un messaggio MQTT (0/1)</td>
+</tr>
+<tr>
+<td><code>acquireRow</code></td>
+<td>int</td>
+<td>Acquisisce il competitor ricevuto nella lista atleti (0/1)</td>
+</tr>
+<tr>
+<td><code>immediateMode</code></td>
+<td>int</td>
+<td>Registra la riga ricevuta immediatamente senza conferma (0/1)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3><code>GET /mqttBrokerSave</code></h3>
+<p>Salva la configurazione del broker MQTT e riconnette.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host</code></td>
+<td>string</td>
+<td>Hostname o IP del broker</td>
+</tr>
+<tr>
+<td><code>port</code></td>
+<td>int</td>
+<td>Porta (default: 1883)</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>string</td>
+<td>Username (opzionale)</td>
+</tr>
+<tr>
+<td><code>pass</code></td>
+<td>string</td>
+<td>Password (opzionale)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3><code>GET /mqttConfirmPending</code></h3>
+<p>Conferma un messaggio MQTT in attesa di approvazione utente.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>string</td>
+<td>ID del messaggio pending</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3><code>GET /mqttDiscardPending</code></h3>
+<p>Scarta un messaggio MQTT in attesa di approvazione utente.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>string</td>
+<td>ID del messaggio pending</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>Email</h2>
+<h3><code>GET /email</code></h3>
+<p>Invia la sessione corrente via email (richiede connessione internet STA attiva).</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>address</code></td>
+<td>string</td>
+<td>Indirizzo email del destinatario</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Risposta:</strong> testo di conferma (l’invio avviene in modo asincrono).</p>
+<hr>
+<h2>Stampa</h2>
+<h3><code>GET /print</code></h3>
+<p>Invia una riga di testo alla stampante termica seriale.</p>
+<p><strong>Parametri:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td>string</td>
+<td>Testo da stampare (URL-encoded)</td>
+</tr>
+<tr>
+<td><code>cr</code></td>
+<td>int</td>
+<td><code>1</code> = aggiunge carriage return a fine riga, <code>0</code> = no</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Utilizzo tipico:</strong> inviare le righe una alla volta con almeno 500 ms di intervallo tra una chiamata e la successiva, per evitare overflow del buffer della stampante.</p>
+<hr>
+<h2>Note generali</h2>
+<ul>
+<li>Le risposte sono in <code>text/plain</code> o <code>application/json</code> a seconda della route.</li>
+<li>Le route GET usano parametri query string: <code>?param=value&amp;param2=value2</code></li>
+<li>Le route POST usano body JSON (<code>Content-Type: application/json</code>) salvo dove indicato diversamente.</li>
+<li>Il WebSocket (<code>/ws</code>) è l’unico canale push; tutte le altre route sono request/response.</li>
+<li>Il dispositivo non implementa CORS — in caso di accesso cross-origin gestire le politiche lato client.</li>
+</ul>
+
+</div>
+</div>
+
+</body>
+</html>

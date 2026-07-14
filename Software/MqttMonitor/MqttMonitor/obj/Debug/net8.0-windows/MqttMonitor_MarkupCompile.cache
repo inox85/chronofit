@@ -1,5 +1,5 @@
 ﻿MqttMonitor
-
+1.0.0.0
 
 winexe
 C#
@@ -12,8 +12,8 @@ TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR
 C:\src\chronofit\Software\MqttMonitor\MqttMonitor\App.xaml
 11407045341
 
-51540615011
-2031417455957
+7663897401
+203986206605
 MainWindow.xaml;
 
 False

@@ -469,6 +469,9 @@ function updateDisciplineNavBtn() {
   if (btn && disc) btn.dataset.emoji = disc.emoji;
   const span = document.getElementById('discipline-nav-emoji');
   if (span && disc) span.textContent = disc.emoji;
+  if (disc?.prefs.bgColor) {
+    document.documentElement.style.setProperty('--background-color', disc.prefs.bgColor);
+  }
 }
 
 function applyDisciplinePreset(prefs) {
@@ -562,7 +565,13 @@ let lineTipoConfig  = JSON.parse(localStorage.getItem(LINE_TIPO_KEY) || '{}');
 const TEST_I18N = { 0: 'cp.tipo1_fpc', 1: 'cp.tipo1_none' };
 const TRIGGER_I18N = { 0: 'cp.tipo2_auto', 1: 'cp.tipo2_manual' };
 
-function translateTest(v) { return t(TEST_I18N[Number(v)] ?? '') || String(v); }
+function translateTest(v) {
+  // Solo i vecchi valori numerici legacy (0/1) passano dalla tabella di traduzione;
+  // '' (mai impostato) o testo libero vengono mostrati così come sono — Number('')
+  // varrebbe 0 e verrebbe letto erroneamente come "FPC 102".
+  if (v === 0 || v === 1 || v === '0' || v === '1') return t(TEST_I18N[Number(v)]);
+  return v ? String(v) : '';
+}
 
 // Per le linee virtuali 5 e 6 la colonna "Test" mostra un'etichetta fissa
 // invece del device tradotto, per semplificare la lettura in tabella.
@@ -692,7 +701,7 @@ function maybeAutoAcquireCompetitor(compNum) {
 }
 
 function getLineTipo(line) {
-  return lineTipoConfig[line] ?? { tipo1: 'FPC 102', tipo2: 0 };
+  return lineTipoConfig[line] ?? { tipo1: '', tipo2: 0 };
 }
 
 function updateTipoDisplays(line) {
@@ -806,7 +815,7 @@ function saveLineEdit() {
     if (dEl) dEl.value = document.getElementById(`le-d-${line}`).value;
 
     lineTipoConfig[line] = {
-      tipo1: document.getElementById(`le-t1-${line}`).value.trim() || 'FPC 102',
+      tipo1: document.getElementById(`le-t1-${line}`).value.trim(),
       tipo2: Number(document.getElementById(`le-t2-${line}`).value)
     };
 
@@ -889,7 +898,7 @@ function fillSettingsFields(data){
     const t2 = data[`lt2_${n}`];
     if (t1 !== undefined || t2 !== undefined) {
       lineTipoConfig[n] = {
-        tipo1: t1 ?? lineTipoConfig[n]?.tipo1 ?? 'FPC 102',
+        tipo1: t1 ?? lineTipoConfig[n]?.tipo1 ?? '',
         tipo2: t2 ?? lineTipoConfig[n]?.tipo2 ?? 0
       };
     }
@@ -2056,7 +2065,7 @@ function applyLineUpdate(data) {
   if (btn && data.e !== undefined) applyLineEnableState(btn, data.e);
   if (data.t1 !== undefined || data.t2 !== undefined) {
     lineTipoConfig[n] = {
-      tipo1: data.t1 ?? lineTipoConfig[n]?.tipo1 ?? 'FPC 102',
+      tipo1: data.t1 ?? lineTipoConfig[n]?.tipo1 ?? '',
       tipo2: data.t2 ?? lineTipoConfig[n]?.tipo2 ?? 0
     };
     localStorage.setItem(LINE_TIPO_KEY, JSON.stringify(lineTipoConfig));
@@ -2216,7 +2225,14 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
   const el = e.target;
-  if (el.matches('input, textarea')) el.blur();
+  if (!el.matches('input, textarea')) return;
+  // Uscita esplicita: annulla il "keep focus" del competitor input, altrimenti
+  // onCompInputBlur() lo ririfocalizza 200ms dopo credendo sia un blur involontario.
+  if (el.classList.contains('comp-input') && activeCompLine === Number(el.dataset.line)) {
+    activeCompLine = null;
+    el.classList.remove('comp-active');
+  }
+  el.blur();
 });
 
 window.addEventListener("load", () => {
@@ -3463,11 +3479,19 @@ function closePrintOverlay() {
   document.getElementById('printOverlay').style.display = 'none';
 }
 
+/* Numero di righe attualmente presenti in tabella (esclude le righe degli split) */
+function _currentTableRowCount() {
+  return document.querySelectorAll('#event-table tbody tr:not(.splits-row)').length;
+}
+
 function _printLoadPrefs() {
   const p = JSON.parse(localStorage.getItem(PRINT_PREFS_KEY) || '{}');
   const s = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-  s('print-from',       p.from      ?? 1);
-  s('print-to',         p.to        ?? '');
+  // From/To riflettono sempre lo stato attuale della tabella — non vengono
+  // persistiti, altrimenti un range usato una volta (es. "fino a 10") resterebbe
+  // come default anche quando la tabella ha un numero diverso di righe.
+  s('print-from', 1);
+  s('print-to',   _currentTableRowCount() || '');
   s('print-row-format', p.format    ?? '#{index} L{line} C{competitor} {name} {surname}  {time}');
   s('print-separator',  p.separator ?? '');
 }
@@ -3475,8 +3499,6 @@ function _printLoadPrefs() {
 function _printSavePrefs() {
   const g = id => document.getElementById(id)?.value ?? '';
   localStorage.setItem(PRINT_PREFS_KEY, JSON.stringify({
-    from:      g('print-from'),
-    to:        g('print-to'),
     format:    g('print-row-format'),
     separator: g('print-separator'),
   }));

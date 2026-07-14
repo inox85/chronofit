@@ -1,7 +1,7 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
-    "net8.0-windows7.0": {
+    "net8.0-windows": {
       "Microsoft.Win32.SystemEvents/10.0.8": {
         "type": "package",
         "compile": {
@@ -239,7 +239,7 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net8.0-windows7.0": [
+    "net8.0-windows": [
       "MQTTnet >= 4.3.7.1207",
       "Newtonsoft.Json >= 13.0.3",
       "System.Drawing.Common >= 10.0.8"
@@ -275,7 +275,7 @@
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net8.0-windows7.0": {
+        "net8.0-windows": {
           "framework": "net8.0-windows7.0",
           "targetAlias": "net8.0-windows",
           "projectReferences": {}
@@ -291,10 +291,10 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.200"
+      "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
-      "net8.0-windows7.0": {
+      "net8.0-windows": {
         "framework": "net8.0-windows7.0",
         "targetAlias": "net8.0-windows",
         "dependencies": {
@@ -330,7 +330,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

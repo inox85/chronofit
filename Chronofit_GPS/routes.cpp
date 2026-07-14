@@ -1045,7 +1045,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     competitors[idx] = doc["c"].as<int>();
     delays[idx]      = doc["d"].as<int>();
     lineEnabled[idx] = doc["e"].as<int>();
-    if (doc.containsKey("t1")) lineDevice[idx] = doc["t1"].as<String>().substring(0, 32);
+    if (doc.containsKey("t1")) {
+      lineDevice[idx] = doc["t1"].as<String>().substring(0, 32);
+      if (idx >= 0 && idx <= 3) writeStringToSettings(("lt1_" + String(idx + 1)).c_str(), lineDevice[idx]);
+    }
     if (doc.containsKey("t2")) lineMode[idx]   = doc["t2"].as<int>();
 
     broadcastLineUpdate(idx);
@@ -1073,7 +1076,10 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     if (request->hasParam("c"))  competitors[idx] = request->getParam("c")->value().toInt();
     if (request->hasParam("d"))  delays[idx]      = request->getParam("d")->value().toInt();
     if (request->hasParam("e"))  lineEnabled[idx] = request->getParam("e")->value().toInt();
-    if (request->hasParam("t1")) lineDevice[idx]  = request->getParam("t1")->value().substring(0, 32);
+    if (request->hasParam("t1")) {
+      lineDevice[idx] = request->getParam("t1")->value().substring(0, 32);
+      writeStringToSettings(("lt1_" + String(idx + 1)).c_str(), lineDevice[idx]);
+    }
     if (request->hasParam("t2")) lineMode[idx]    = request->getParam("t2")->value().toInt();
 
     broadcastLineUpdate(idx);

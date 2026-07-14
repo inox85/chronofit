@@ -205,7 +205,12 @@ void setup() {
 
   stationName       = readStringFromSettings("stationName", "");
   calibrationFactor = readDoubleFromSettings("timeCal", 1.0);
-  
+
+  lineDevice[0] = readStringFromSettings("lt1_1", lineDevice[0]);
+  lineDevice[1] = readStringFromSettings("lt1_2", lineDevice[1]);
+  lineDevice[2] = readStringFromSettings("lt1_3", lineDevice[2]);
+  lineDevice[3] = readStringFromSettings("lt1_4", lineDevice[3]);
+
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
