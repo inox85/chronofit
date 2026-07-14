@@ -813,6 +813,43 @@ pre {
 .discipline-card.active { border-color: #4a9eff; background: #1a2d44; }
 .discipline-card.active .disc-label { color: #fff; }
 
+/* ── Start menu overlay — fullscreen (Utilità / Cronometraggio) ────────────── */
+#startMenuOverlay {
+  background: #1c1c1e;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.start-menu-popup {
+  background: #1c1c1e;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease;
+}
+
+.start-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.start-menu-grid .discipline-card {
+  min-height: 240px;
+}
+
+.start-menu-grid .disc-emoji {
+  font-size: 120px;
+}
+
 /* ── Language switcher ────────────────────────────────────────────────────── */
 #lang-switcher {
   margin-right: 30px;
@@ -1109,6 +1146,12 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   z-index: 9999;
+}
+
+/* Il prompt di richiesta fullscreen deve restare sempre sopra allo start
+   menu / selezione disciplina, che condividono lo stesso z-index 9999. */
+#fullscreenOverlay {
+  z-index: 10000;
 }
 
 /* Contenitore popup */

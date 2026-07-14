@@ -69,7 +69,7 @@ const DISCIPLINES = [
   {
     id: "rally",
     emoji: "🏎️",
-    label: { en: "Rally", it: "Rally" },
+    label: { en: "Enduro", it: "Enduro" },
     prefs: {
       sortCol: "race-time", reverseOrder: false,
       showRank: true,       showIndex: false,  showLine: false,

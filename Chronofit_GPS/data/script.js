@@ -460,8 +460,15 @@ function restoreViewPrefs() {
 
 // ── Discipline presets ────────────────────────────────────────────────────────
 
-const DISCIPLINE_KEY = 'chronofit_discipline';
+const DISCIPLINE_KEY  = 'chronofit_discipline';
+const DISC_LOCK_KEY   = 'chronofit_disc_locked';
+// Uniche discipline selezionabili dal percorso Cronometraggio (Regolarità/Sci/Enduro).
+const STARTUP_DISCIPLINE_IDS = ['regularity', 'ski', 'rally'];
 let activeDisciplineId = localStorage.getItem(DISCIPLINE_KEY) || 'generic';
+
+function isDisciplineLocked() {
+  return localStorage.getItem(DISC_LOCK_KEY) === '1';
+}
 
 function updateDisciplineNavBtn() {
   const disc = DISCIPLINES.find(d => d.id === activeDisciplineId) ?? DISCIPLINES[0];
@@ -526,7 +533,8 @@ function renderDisciplineCards() {
   const grid = document.getElementById('discipline-grid');
   if (!grid) return;
   const lang = currentLang();
-  grid.innerHTML = DISCIPLINES.map(d => `
+  const selectable = DISCIPLINES.filter(d => STARTUP_DISCIPLINE_IDS.includes(d.id));
+  grid.innerHTML = selectable.map(d => `
     <button class="discipline-card${d.id === activeDisciplineId ? ' active' : ''}"
             onclick="selectDiscipline('${d.id}')">
       <span class="disc-emoji">${d.emoji}</span>
@@ -544,16 +552,72 @@ function closeDisciplineOverlay() {
   document.getElementById('disciplineOverlay').style.display = 'none';
 }
 
+function onDisciplineBackClick() {
+  closeDisciplineOverlay();
+  showStartMenu();
+}
+
 function selectDiscipline(id) {
   const disc = DISCIPLINES.find(d => d.id === id);
   if (!disc) return;
   activeDisciplineId = id;
   localStorage.setItem(DISCIPLINE_KEY, id);
+  localStorage.setItem(DISC_LOCK_KEY, '1');
   applyDisciplinePreset(disc.prefs);
   updateDisciplineNavBtn();
   // refresh active highlight without closing
   renderDisciplineCards();
   closeDisciplineOverlay();
+  hideStartMenu();
+}
+
+// ── Start menu (Utilità / Cronometraggio) ──────────────────────────────────────
+
+function showStartMenu() {
+  document.getElementById('startMenuOverlay').style.display = 'flex';
+}
+
+function hideStartMenu() {
+  document.getElementById('startMenuOverlay').style.display = 'none';
+}
+
+function goToUtility() {
+  window.location.href = '/gps.html';
+}
+
+function goToTiming() {
+  hideStartMenu();
+  openDisciplineOverlay();
+}
+
+// ── Uscita dalla disciplina (icona navbar) ─────────────────────────────────────
+// Una volta scelta la disciplina non è possibile cambiarla se non uscendo
+// esplicitamente da questa schermata di conferma, che cancella anche la sessione.
+
+function onDisciplineIconClick() {
+  if (isDisciplineLocked()) {
+    openExitDisciplineConfirm();
+  } else {
+    openDisciplineOverlay();
+  }
+}
+
+function openExitDisciplineConfirm() {
+  const overlay = document.getElementById('exitDisciplineOverlay');
+  overlay.style.display = 'flex';
+
+  document.getElementById('exitDisciplineCancel').onclick = () => {
+    overlay.style.display = 'none';
+  };
+
+  document.getElementById('exitDisciplineConfirm').onclick = () => {
+    overlay.style.display = 'none';
+    fetch('/clearSession').catch(err => console.error('Errore clearSession:', err));
+    localStorage.removeItem(DISC_LOCK_KEY);
+    localStorage.removeItem(DISCIPLINE_KEY);
+    activeDisciplineId = 'generic';
+    openDisciplineOverlay();
+  };
 }
 
 // ── Line edit overlay ─────────────────────────────────────────────────────────
@@ -2241,6 +2305,9 @@ window.addEventListener("load", () => {
   // Inizia la dissolvenza dopo 1 secondo (o subito)
   setTimeout(() => {
     splash.classList.add("finished");
+    // Se non è ancora stata bloccata una disciplina, mostra la schermata
+    // Utilità/Cronometraggio invece di lasciare visibile l'app principale.
+    if (!isDisciplineLocked()) showStartMenu();
   },1000);
 
   // Rimuove l'elemento dal DOM dopo 3 secondi (durata della transizione CSS)

@@ -41,9 +41,18 @@ const TRANSLATIONS = {
     'btn.save_broker':      'Save broker',
     'btn.reset_assigned':   'Reset assigned',
     'btn.open_file':        '📂 Open file',
+    'btn.back':             '← Back',
 
     // ── Splash ────────────────────────────────────────────────────────────────
     'splash.loading': 'Loading session...',
+
+    // ── Start menu ────────────────────────────────────────────────────────────
+    'startmenu.utility': 'Utility',
+    'startmenu.timing':  'Timing',
+
+    // ── Exit discipline confirm ───────────────────────────────────────────────
+    'exit_discipline.title':   'Exit discipline?',
+    'exit_discipline.message': 'This will permanently clear all recorded times for this session. Continue?',
 
     // ── Clear session ─────────────────────────────────────────────────────────
     'clear.title':   'Confirm',
@@ -300,9 +309,18 @@ const TRANSLATIONS = {
     'btn.save_broker':      'Salva broker',
     'btn.reset_assigned':   'Reset assegnati',
     'btn.open_file':        '📂 Apri file',
+    'btn.back':             '← Indietro',
 
     // ── Splash ────────────────────────────────────────────────────────────────
     'splash.loading': 'Caricamento sessione...',
+
+    // ── Start menu ────────────────────────────────────────────────────────────
+    'startmenu.utility': 'Utilità',
+    'startmenu.timing':  'Cronometraggio',
+
+    // ── Exit discipline confirm ───────────────────────────────────────────────
+    'exit_discipline.title':   'Uscire dalla disciplina?',
+    'exit_discipline.message': 'Questa operazione cancellerà definitivamente tutti i tempi registrati in questa sessione. Continuare?',
 
     // ── Clear session ─────────────────────────────────────────────────────────
     'clear.title':   'Conferma',

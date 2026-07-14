@@ -858,7 +858,36 @@
       <h2 data-i18n="discipline.title">Select discipline</h2>
       <div id="discipline-grid" class="discipline-grid"></div>
       <div class="button-row" style="justify-content:center; margin-top:16px;">
-        <button class="big-button" data-i18n="btn.close" onclick="closeDisciplineOverlay()">Close</button>
+        <button class="big-button" data-i18n="btn.back" onclick="onDisciplineBackClick()">← Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start menu overlay — prima schermata dopo lo splash -->
+  <div id="startMenuOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="start-menu-popup">
+      <img src="/logo.png" alt="Logo" class="discipline-logo" onclick="document.getElementById('aboutOverlay').style.display='flex'">
+      <div class="start-menu-grid">
+        <button class="discipline-card" onclick="goToUtility()">
+          <span class="disc-emoji">🛠️</span>
+          <span class="disc-label" data-i18n="startmenu.utility">Utility</span>
+        </button>
+        <button class="discipline-card" onclick="goToTiming()">
+          <span class="disc-emoji">⏱️</span>
+          <span class="disc-label" data-i18n="startmenu.timing">Timing</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay Conferma Uscita Disciplina -->
+  <div id="exitDisciplineOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+      <h2 data-i18n="exit_discipline.title">Exit discipline?</h2>
+      <p data-i18n="exit_discipline.message">This will clear all recorded times for this session. Continue?</p>
+      <div class="button-row">
+        <button class="big-button" id="exitDisciplineCancel"  data-i18n="btn.cancel">Cancel</button>
+        <button class="big-button" id="exitDisciplineConfirm" data-i18n="btn.confirm">Confirm</button>
       </div>
     </div>
   </div>
@@ -866,7 +895,7 @@
   <div class="navbar">
     <img src="/logo.png" alt="Logo" style="cursor:pointer;" onclick="document.getElementById('aboutOverlay').style.display='flex'">
     <div class="navbar-right">
-      <button id="discipline-btn" class="navbar-icon-btn" onclick="openDisciplineOverlay()" title="Select discipline">
+      <button id="discipline-btn" class="navbar-icon-btn" onclick="onDisciplineIconClick()" title="Select discipline">
         <span id="discipline-nav-emoji">⏱️</span>
       </button>
       <div id="lang-switcher">
