@@ -1791,6 +1791,7 @@ function applyLineFilter() {
 
   rows.forEach(row => {
     if (row.classList.contains("diff-row")) return; // gestite da applyCompetitorSplits
+    if (row.classList.contains("diff-hidden")) { row.style.display = "none"; return; } // in splits mode restano nascoste
     const line    = String(row.getAttribute("data-line"));
     const enabled = row.getAttribute("data-enabled") !== "0";
     const lineOk     = activeLines.includes(line);
