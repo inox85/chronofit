@@ -2823,9 +2823,10 @@ function updateRowFromBroadcas(data) {
   const index = Number(data.id);
   if (isNaN(index)) return;
 
-  // trova la riga tramite la colonna #
+  // trova la riga tramite la colonna # (indice), non la prima <td> in assoluto:
+  // quando la colonna rank è visibile è lei la prima cella, non l'indice.
   const row = [...tbody.rows].find(r =>
-    Number(r.querySelector("td")?.textContent) === index
+    Number(r.querySelector("td.col-index")?.textContent) === index
   );
 
   if (!row) {
