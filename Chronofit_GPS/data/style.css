@@ -544,6 +544,18 @@ input[type="password"]
   
 }
 
+#timekeepers-field {
+  font-family: 'Nunito';
+  width: 100%;
+  padding: 6px 8px;
+  margin: 2px 0;
+  border-radius: 0;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
 input[type="email"]{
   font-family: 'Nunito';
   width: 80%;

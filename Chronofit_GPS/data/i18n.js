@@ -42,6 +42,7 @@ const TRANSLATIONS = {
     'btn.reset_assigned':   'Reset assigned',
     'btn.open_file':        '📂 Open file',
     'btn.back':             '← Back',
+    'btn.print_receipt':    '🖨 Print receipt',
 
     // ── Splash ────────────────────────────────────────────────────────────────
     'splash.loading': 'Loading session...',
@@ -139,6 +140,8 @@ const TRANSLATIONS = {
     'table.show_send':       'Show send button',
     'settings.keep_comp_focus': 'Keep competitor input active after detection',
     'settings.propagate_competitor': 'Propagate competitor number to managed, unassigned lines',
+    'settings.timekeepers_label': 'Timekeepers (name & phone) — printed on the receipt',
+    'settings.timekeepers_ph': 'One per line, e.g. Mario Rossi 333-1234567',
     'settings.title':    'Settings',
     'settings.tab_sync':  '🕐 Sync',
     'settings.tab_wifi':  '🌍 WiFi',
@@ -311,6 +314,7 @@ const TRANSLATIONS = {
     'btn.reset_assigned':   'Reset assegnati',
     'btn.open_file':        '📂 Apri file',
     'btn.back':             '← Indietro',
+    'btn.print_receipt':    '🖨 Stampa scontrino',
 
     // ── Splash ────────────────────────────────────────────────────────────────
     'splash.loading': 'Caricamento sessione...',
@@ -408,6 +412,8 @@ const TRANSLATIONS = {
     'table.show_send':       'Mostra pulsante invia',
     'settings.keep_comp_focus': 'Mantieni input competitor attivo dopo rilevazione',
     'settings.propagate_competitor': 'Propaga il numero competitor alle linee gestite non assegnate',
+    'settings.timekeepers_label': 'Cronometristi (nome e telefono) — stampati sullo scontrino',
+    'settings.timekeepers_ph': 'Uno per riga, es. Mario Rossi 333-1234567',
     'settings.title':    'Impostazioni',
     'settings.tab_sync':  '🕐 Sync',
     'settings.tab_wifi':  '🌍 WiFi',

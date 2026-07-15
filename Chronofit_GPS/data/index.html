@@ -851,8 +851,13 @@
           <span class="slider"></span>
         </label>
       </div>
+      <div style="margin-top:12px; text-align:left;">
+        <label for="timekeepers-field" data-i18n="settings.timekeepers_label" style="display:block; margin-bottom:4px; color:#555;">Timekeepers (name &amp; phone) — printed on the receipt</label>
+        <textarea id="timekeepers-field" data-i18n-ph="settings.timekeepers_ph" placeholder="One per line, e.g. Mario Rossi 333-1234567" rows="2"></textarea>
+      </div>
       <div class="button-row" style="justify-content:center; gap:16px; margin-top:12px;">
         <button class="big-button" data-i18n="btn.save"   onclick="saveLineEdit()">Save</button>
+        <button class="big-button" data-i18n="btn.print_receipt" onclick="printLineSettingsReceipt()">🖨 Print receipt</button>
         <button class="big-button" data-i18n="btn.cancel" onclick="closeLineEdit()">Cancel</button>
       </div>
     </div>
