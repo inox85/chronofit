@@ -1655,10 +1655,6 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
 
   tbody.appendChild(row);
 
-  // Aggiorna il timestamp dell'ultima rilevazione nella card principale
-  const lastTimeEl = document.getElementById(`last-time-${lineNumber}`);
-  if (lastTimeEl) lastTimeEl.textContent = timestamp;
-
   updateRankColumn();
 
   // forza reflow (FONDAMENTALE per animazione)

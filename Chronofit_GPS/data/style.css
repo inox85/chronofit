@@ -1362,22 +1362,6 @@ input:checked + .slider:before {
   outline: 2px solid #888;
 }
 
-/* ── Last event time column on main card ── */
-.cp-lasttime-cell {
-  padding: 2px 4px !important;
-  text-align: center;
-  white-space: nowrap;
-}
-.line-last-time {
-  font-size: 30px;
-  letter-spacing: 0.3px;
-}
-
-.line-last-time:empty::before {
-  content: '00:00:00.000';
-  color: #bbb;
-}
-
 /* ── Competitor quick-list card ── */
 /* ── Quick-actions card (top-row, affiancata alla time-card) ── */
 .quick-actions-card {
