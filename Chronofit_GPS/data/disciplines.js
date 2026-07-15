@@ -28,6 +28,12 @@
 //   syncMode       0=manual | 1=line-closure | 2=GPS | 3=elapsed(no sync)
 //   bgColor        hex — GUI background color for this discipline (light tint,
 //                  in armonia con --primary-color/--card-border-color di style.css)
+//   propagateCompetitor  bool — default del toggle "propaga competitor" nel popup
+//                  impostazioni linee: quando true, assegnare un competitor a una
+//                  linea lo riporta automaticamente sulle altre linee gestite
+//                  (device non vuoto) ma ancora senza competitor assegnato (0)
+//   tableAcquireCompetitor  bool — default del toggle "Acquire from arrivals table"
+//                  nel registro competitori (tab Auto)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DISCIPLINES = [
@@ -45,7 +51,9 @@ const DISCIPLINES = [
       showTest: true,     showTrigger: true,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: true,   syncMode: 0,
-      bgColor: "#f5f5f5"
+      bgColor: "#f5f5f5",
+      propagateCompetitor: false,
+      tableAcquireCompetitor: false
     }
   },
 
@@ -62,13 +70,15 @@ const DISCIPLINES = [
       showTest: true,    showTrigger: true,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: true,   syncMode: 1,
-      bgColor: "#f2e3c4"
+      bgColor: "#f2e3c4",
+      propagateCompetitor: false,
+      tableAcquireCompetitor: false
     }
   },
 
   {
-    id: "rally",
-    emoji: "🏎️",
+    id: "enduro",
+    emoji: "🏍️",
     label: { en: "Enduro", it: "Enduro" },
     prefs: {
       sortCol: "race-time", reverseOrder: false,
@@ -78,8 +88,10 @@ const DISCIPLINES = [
       penality: false,      showSendBtn: false,
       showTest: false,    showTrigger: false,
       splitsMode: true,    timePrecision: 3,  showDisabled: false,
-      showCompList: false,  syncMode: 2,
-      bgColor: "#d9f0d9"
+      showCompList: true,  syncMode: 2,
+      bgColor: "#d9f0d9",
+      propagateCompetitor: true,
+      tableAcquireCompetitor: true
     }
   },
 
@@ -96,7 +108,9 @@ const DISCIPLINES = [
       showTest: false,    showTrigger: false,
       splitsMode: true,     timePrecision: 2,  showDisabled: false,
       showCompList: false,  syncMode: 2,
-      bgColor: "#d7ebf8"
+      bgColor: "#d7ebf8",
+      propagateCompetitor: true,
+      tableAcquireCompetitor: false
     }
   },
 

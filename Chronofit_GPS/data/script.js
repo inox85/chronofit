@@ -370,6 +370,7 @@ function saveViewPrefs() {
     showCompList:  document.getElementById('comp-list-card')?.style.display !== 'none',
     syncMode:        Number(document.getElementById('sync-method-select')?.value ?? 0),
     keepCompFocus:   document.getElementById('toggle-keep-comp-focus')?.checked ?? false,
+    propagateCompetitor: document.getElementById('toggle-propagate-competitor')?.checked ?? false,
     lines: {}
   };
   document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
@@ -449,6 +450,8 @@ function restoreViewPrefs() {
     }
     const kcf = document.getElementById('toggle-keep-comp-focus');
     if (kcf && prefs.keepCompFocus !== undefined) kcf.checked = prefs.keepCompFocus;
+    const pc = document.getElementById('toggle-propagate-competitor');
+    if (pc && prefs.propagateCompetitor !== undefined) pc.checked = prefs.propagateCompetitor;
 
     updateVisibleColumns();
     if (prefs.splitsMode) applyCompetitorSplits();
@@ -463,7 +466,7 @@ function restoreViewPrefs() {
 const DISCIPLINE_KEY  = 'chronofit_discipline';
 const DISC_LOCK_KEY   = 'chronofit_disc_locked';
 // Uniche discipline selezionabili dal percorso Cronometraggio (Regolarità/Sci/Enduro).
-const STARTUP_DISCIPLINE_IDS = ['regularity', 'ski', 'rally'];
+const STARTUP_DISCIPLINE_IDS = ['regularity', 'ski', 'enduro'];
 let activeDisciplineId = localStorage.getItem(DISCIPLINE_KEY) || 'generic';
 
 function isDisciplineLocked() {
@@ -498,6 +501,7 @@ function applyDisciplinePreset(prefs) {
   setChk("toggle-test",        prefs.showTest  ?? false);
   setChk("toggle-trigger",          prefs.showTrigger    ?? false);
   setChk("toggle-splits",        prefs.splitsMode  ?? false);
+  setChk("toggle-propagate-competitor", prefs.propagateCompetitor ?? false);
   if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
   if (prefs.timePrecision !== undefined) {
     const val = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
@@ -513,6 +517,16 @@ function applyDisciplinePreset(prefs) {
   if (prefs.showCompList !== undefined) {
     const card = document.getElementById('comp-list-card');
     if (card) card.style.display = prefs.showCompList ? '' : 'none';
+  }
+
+  // Acquisizione automatica competitor dagli arrivi in tabella
+  if (prefs.tableAcquireCompetitor !== undefined) {
+    localStorage.setItem(TABLE_ACQUIRE_KEY, prefs.tableAcquireCompetitor ? "1" : "0");
+    const tableAcquireToggle = document.getElementById('autoAcquireTableToggle');
+    if (tableAcquireToggle) {
+      tableAcquireToggle.checked = prefs.tableAcquireCompetitor;
+      if (typeof updateAutoAcquireLinesUI === 'function') updateAutoAcquireLinesUI();
+    }
   }
 
   // Sync mode (aggiorna solo la UI — l'invio al device resta manuale)
@@ -630,11 +644,9 @@ const TEST_I18N = { 0: 'cp.tipo1_fpc', 1: 'cp.tipo1_none' };
 const TRIGGER_I18N = { 0: 'cp.tipo2_auto', 1: 'cp.tipo2_manual' };
 
 function translateTest(v) {
-  // Solo i vecchi valori numerici legacy (0/1) passano dalla tabella di traduzione;
-  // '' (mai impostato) o testo libero vengono mostrati così come sono — Number('')
-  // varrebbe 0 e verrebbe letto erroneamente come "FPC 102".
-  if (v === 0 || v === 1 || v === '0' || v === '1') return t(TEST_I18N[Number(v)]);
-  return v ? String(v) : '';
+  // Campo testo libero: vuoto → "Non gestita", altrimenti il testo così com'è.
+  if (!v) return t(TEST_I18N[1]);
+  return String(v);
 }
 
 // Per le linee virtuali 5 e 6 la colonna "Test" mostra un'etichetta fissa
@@ -772,7 +784,7 @@ function updateTipoDisplays(line) {
   const cfg = getLineTipo(line);
   const el1 = document.getElementById(`tipo1-display-${line}`);
   const el2 = document.getElementById(`tipo2-display-${line}`);
-  if (el1) el1.textContent = t(TEST_I18N[cfg.tipo1] ?? cfg.tipo1);
+  if (el1) el1.textContent = translateTest(cfg.tipo1);
   if (el2) el2.textContent = t(TRIGGER_I18N[cfg.tipo2] ?? cfg.tipo2);
 }
 
@@ -2108,6 +2120,31 @@ function handleInputUpdate(e) {
   };
 
   sendSettingsRowData(data);
+
+  if (e.target.classList.contains('comp-input') && data.c) {
+    propagateCompetitorIfNeeded(data.l, data.c);
+  }
+}
+
+// Se attivo, riporta il numero competitor appena assegnato su tutte le altre
+// linee gestite (device non vuoto) ma ancora prive di competitor (0).
+function propagateCompetitorIfNeeded(sourceLine, competitor) {
+  if (!document.getElementById('toggle-propagate-competitor')?.checked) return;
+  for (let n = 1; n <= 4; n++) {
+    if (n === Number(sourceLine)) continue;
+    if (!getLineTipo(n).tipo1?.trim()) continue; // linea non gestita
+    const cEl = document.getElementById(`c${n}`);
+    if (!cEl || Number(cEl.value) !== 0) continue; // già assegnata
+    cEl.value = competitor;
+    updateCompDisplay(n);
+    const enableBtn = document.querySelector(`.line-enable-btn[data-line="${n}"]`);
+    sendSettingsRowData({
+      l: n,
+      c: competitor,
+      d: Number(document.getElementById(`d${n}`)?.value) || 0,
+      e: Number(enableBtn?.dataset.enabled ?? 1)
+    });
+  }
 }
 
 function applyLineEnableState(btn, enabled) {
