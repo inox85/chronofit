@@ -404,6 +404,11 @@ void loop() {
         syncStatus = SYNC_GPS_SYNCED;
         RTCTtriggerCount = 0;
         lastGPSSync = millis();
+
+        if (printEnabled) {
+          PreciseTime pt = getPreciseTimeFromSync(thisPpsUs);
+          printSyncStart(MODE_SYNC_GPS, pt.hh, pt.mm, pt.ss, pt.ms);
+        }
       }
     }
 
@@ -478,6 +483,10 @@ void handleSensorTrigger(){
         lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;
         handleLineSync();
+        if (printEnabled) {
+          PreciseTime pt = getPreciseTime();
+          printSyncStart(MODE_SYNC_LINE, pt.hh, pt.mm, pt.ss, pt.ms);
+        }
       }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START)
       {
         lastSyncTrigger = tUs;
@@ -486,12 +495,16 @@ void handleSensorTrigger(){
         handleLineSync();
         checkPointRoutine(i);
       }else{
-        if(i == 4 && printEnabled){
-          printOnPrinter("---GPS SYNC TEST START---", 1);
-        }
-        checkPointRoutine(i);
-        if(i == 4 && printEnabled){
-          printOnPrinter("---GPS SYNC TEST END---", 1);
+        if (i == 4 && printEnabled) {
+          // Conferma/test di sincronizzazione: sostituisce la riga di
+          // checkpoint di questa linea virtuale con lo scontrino dedicato.
+          PreciseTime pt = getPreciseSensorTime(i);
+          printSyncConfirm(syncMode, pt.hh, pt.mm, pt.ss, pt.ms);
+          printEnabled = 0;
+          checkPointRoutine(i);
+          printEnabled = 1;
+        } else {
+          checkPointRoutine(i);
         }
       }
     }

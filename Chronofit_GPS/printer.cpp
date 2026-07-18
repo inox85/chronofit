@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "globals.h"
 #include "services_serial.h"
+#include "params.h"
 
 
 // ===== CONFIG =====
@@ -28,6 +29,38 @@ void printFormatted(int index, String line, int competitor, int hh, int mm, int 
 
   printOnPrinter(text, cr);
 
+}
+
+// ===== Scontrino sincronizzazione =====
+
+const char* syncModeLabel(int mode) {
+  switch (mode) {
+    case MODE_SYNC_MANUAL: return "MAN";
+    case MODE_SYNC_LINE:   return "EST";
+    case MODE_SYNC_GPS:    return "GPS";
+    default:               return "";  // es. MODE_ELAPSED_TIME: nessuna sincronizzazione
+  }
+}
+
+void printSyncStart(int mode, int hh, int mm, int ss, int ms) {
+  const char* label = syncModeLabel(mode);
+  if (!label[0]) return;
+
+  char line[48];
+  snprintf(line, sizeof(line), "SINCRONIZZAZIONE %s", label);
+  printOnPrinter(line, 1);
+  printOnPrinter("------------------------------", 1);
+  snprintf(line, sizeof(line), "ORA SINCRO   %02d:%02d:%02d.%03d %s", hh, mm, ss, ms, label);
+  printOnPrinter(line, 1);
+}
+
+void printSyncConfirm(int mode, int hh, int mm, int ss, int ms) {
+  const char* label = syncModeLabel(mode);
+  if (!label[0]) return;
+
+  char line[48];
+  snprintf(line, sizeof(line), "CONFERMA     %02d:%02d:%02d.%03d %s", hh, mm, ss, ms, label);
+  printOnPrinter(line, 1);
 }
 
 

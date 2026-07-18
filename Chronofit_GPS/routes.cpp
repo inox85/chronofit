@@ -574,6 +574,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
         handleLineSync();
 
+        if (printEnabled) {
+          PreciseTime pt = getPreciseTime();
+          printSyncStart(MODE_SYNC_MANUAL, pt.hh, pt.mm, pt.ss, pt.ms);
+        }
+
         request->send(200, "text/plain", "Time manually set");
 
 
