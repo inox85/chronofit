@@ -42,7 +42,8 @@ const TRANSLATIONS = {
     'btn.reset_assigned':   'Reset assigned',
     'btn.open_file':        '📂 Open file',
     'btn.back':             '← Back',
-    'btn.print_receipt':    '🖨 Print receipt',
+    'btn.save_print':       '🖨 Save & print',
+    'btn.save_close':       'Save & close',
 
     // ── Splash ────────────────────────────────────────────────────────────────
     'splash.loading': 'Loading session...',
@@ -314,7 +315,8 @@ const TRANSLATIONS = {
     'btn.reset_assigned':   'Reset assegnati',
     'btn.open_file':        '📂 Apri file',
     'btn.back':             '← Indietro',
-    'btn.print_receipt':    '🖨 Stampa scontrino',
+    'btn.save_print':       '🖨 Salva e stampa',
+    'btn.save_close':       'Salva e chiudi',
 
     // ── Splash ────────────────────────────────────────────────────────────────
     'splash.loading': 'Caricamento sessione...',

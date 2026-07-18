@@ -872,6 +872,7 @@ function openLineEdit(line, focusField) {
 
   const tkField = document.getElementById('timekeepers-field');
   if (tkField) tkField.value = localStorage.getItem(TIMEKEEPERS_KEY) || '';
+  _lineEditSnapshot.timekeepers = tkField?.value ?? '';
 
   document.getElementById('lineEditOverlay').style.display = 'flex';
 
@@ -895,8 +896,12 @@ function closeLineEdit() {
   _lineEditTarget = null;
 }
 
-function saveLineEdit() {
-  // Save all 4 lines
+// Salva le 4 linee + cronometristi, senza stampare né chiudere il popup.
+// Ritorna quali linee sono realmente cambiate rispetto all'apertura del
+// popup (_lineEditSnapshot), per permettere una stampa mirata al salvataggio.
+function _saveAllLineSettings() {
+  const changedLines = [];
+
   for (let line = 1; line <= 4; line++) {
     const cEl = document.getElementById(`c${line}`);
     const dEl = document.getElementById(`d${line}`);
@@ -922,17 +927,36 @@ function saveLineEdit() {
       t2: lineTipoConfig[line].tipo2
     });
 
-    // Stampa sullo scontrino solo le linee i cui parametri sono realmente cambiati
     const before = _lineEditSnapshot[line] || {};
     const changed = before.tipo1 !== lineTipoConfig[line].tipo1 ||
                     before.tipo2 !== lineTipoConfig[line].tipo2 ||
                     before.delay !== newDelay;
-    if (changed) printLineChangeNotice(line, lineTipoConfig[line].tipo1, lineTipoConfig[line].tipo2, newDelay);
+    if (changed) changedLines.push(line);
   }
 
   localStorage.setItem(LINE_TIPO_KEY, JSON.stringify(lineTipoConfig));
   const tkField = document.getElementById('timekeepers-field');
-  if (tkField) localStorage.setItem(TIMEKEEPERS_KEY, tkField.value);
+  const newTimekeepers = tkField?.value ?? '';
+  const timekeepersChanged = newTimekeepers !== (_lineEditSnapshot.timekeepers ?? '');
+  if (tkField) localStorage.setItem(TIMEKEEPERS_KEY, newTimekeepers);
+
+  return { changedLines, timekeepersChanged };
+}
+
+// "Salva e stampa": salva tutte le linee e stampa lo scontrino completo.
+async function saveAndPrintLineEdit() {
+  _saveAllLineSettings();
+  await printLineSettingsReceipt();
+  closeLineEdit();
+}
+
+// "Salva e chiudi": salva tutte le linee e stampa (stesso template dello
+// scontrino completo) solo le linee/impostazioni realmente cambiate.
+async function saveAndCloseLineEdit() {
+  const { changedLines, timekeepersChanged } = _saveAllLineSettings();
+  if (changedLines.length || timekeepersChanged) {
+    await printLineSettingsReceipt(changedLines, timekeepersChanged);
+  }
   closeLineEdit();
 }
 
@@ -955,65 +979,64 @@ function _lineSettingsLine(n, tipo1, tipo2) {
   return dev ? `L${n} ${dev} ${_lineModeLabel(tipo2)}` : `L${n} NON ASSEGNATA`;
 }
 
-function _buildLineSettingsReceiptLines() {
+// lineNumbers: quali linee includere nelle sezioni "NOME E TIPO"/"TEMPORIZZAZIONE"
+// (default: tutte e 4, per lo scontrino completo; un sottoinsieme per la
+// stampa mirata di "Salva e chiudi"). includeTimekeepers: se includere la
+// sezione cronometristi (sempre per lo scontrino completo; solo se cambiati
+// per la stampa mirata).
+function _buildLineSettingsReceiptLines(lineNumbers = [1, 2, 3, 4], includeTimekeepers = true) {
   const disc = DISCIPLINES.find(d => d.id === activeDisciplineId);
   const discName = (disc?.label?.it ?? 'GENERICO').toUpperCase();
 
   const lines = [discName, RECEIPT_SEP];
 
-  // Riepilogo dei dispositivi in uso: concatenazione dei nomi distinti
-  // assegnati alle 4 linee (nell'ordine L1→L4), es. "FPC01 – FPC02".
-  const devices = [];
-  for (let n = 1; n <= 4; n++) {
-    const dev = getLineTipo(n).tipo1?.trim();
-    if (dev && !devices.includes(dev)) devices.push(dev);
-  }
-  if (devices.length) {
-    lines.push(devices.join(' – '));
+  if (lineNumbers.length) {
+    // Riepilogo dei dispositivi in uso: concatenazione dei nomi distinti
+    // assegnati alle linee incluse, es. "FPC01 – FPC02".
+    const devices = [];
+    for (const n of lineNumbers) {
+      const dev = getLineTipo(n).tipo1?.trim();
+      if (dev && !devices.includes(dev)) devices.push(dev);
+    }
+    if (devices.length) {
+      lines.push(devices.join(' – '));
+      lines.push(RECEIPT_SEP);
+    }
+
+    lines.push('NOME E TIPO RILEVAMENTO LINEE:');
+    for (const n of lineNumbers) {
+      const tipo = getLineTipo(n);
+      lines.push(_lineSettingsLine(n, tipo.tipo1, tipo.tipo2));
+    }
+    lines.push(RECEIPT_SEP);
+
+    lines.push('TEMPORIZZAZIONE LINEE:');
+    for (const n of lineNumbers) {
+      const delay = document.getElementById(`d${n}`)?.value ?? 0;
+      lines.push(`L${n} ${_formatDelayMs(delay)} ms`);
+    }
     lines.push(RECEIPT_SEP);
   }
 
-  lines.push('NOME E TIPO RILEVAMENTO LINEE:');
-  for (let n = 1; n <= 4; n++) {
-    const tipo = getLineTipo(n);
-    lines.push(_lineSettingsLine(n, tipo.tipo1, tipo.tipo2));
-  }
-  lines.push(RECEIPT_SEP);
-
-  lines.push('TEMPORIZZAZIONE LINEE:');
-  for (let n = 1; n <= 4; n++) {
-    const delay = document.getElementById(`d${n}`)?.value ?? 0;
-    lines.push(`L${n} ${_formatDelayMs(delay)} ms`);
-  }
-  lines.push(RECEIPT_SEP);
-
-  const timekeepers = (document.getElementById('timekeepers-field')?.value ?? '')
-    .split('\n').map(s => s.trim()).filter(Boolean);
-  if (timekeepers.length) {
-    lines.push('CRONOMETRISTI:');
-    timekeepers.forEach(t => lines.push(t));
-    lines.push(RECEIPT_SEP);
+  if (includeTimekeepers) {
+    const timekeepers = (document.getElementById('timekeepers-field')?.value ?? '')
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    if (timekeepers.length) {
+      lines.push('CRONOMETRISTI:');
+      timekeepers.forEach(t => lines.push(t));
+      lines.push(RECEIPT_SEP);
+    }
   }
 
   return lines;
 }
 
-async function printLineSettingsReceipt() {
-  const lines = _buildLineSettingsReceiptLines();
+async function printLineSettingsReceipt(lineNumbers = [1, 2, 3, 4], includeTimekeepers = true) {
+  const lines = _buildLineSettingsReceiptLines(lineNumbers, includeTimekeepers);
   for (let i = 0; i < lines.length; i++) {
     await _sendToPrinterAsync(lines[i], 1);
     if (i < lines.length - 1) await sleep(300);
   }
-}
-
-// Notifica compatta stampata in automatico al salvataggio, solo per le
-// linee i cui parametri sono realmente cambiati.
-function printLineChangeNotice(line, tipo1, tipo2, delayMs) {
-  _sendToPrinterAsync('MODIFICA LINEA:', 1)
-    .then(() => sleep(300))
-    .then(() => _sendToPrinterAsync(_lineSettingsLine(line, tipo1, tipo2), 1))
-    .then(() => sleep(300))
-    .then(() => _sendToPrinterAsync(`L${line} ${_formatDelayMs(delayMs)} ms`, 1));
 }
 
 // ======= FINE LOCALSTORAGE =======
