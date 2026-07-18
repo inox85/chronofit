@@ -80,5 +80,7 @@ constexpr const char PENALITY_FIELD[] = "x";
 constexpr const char ENABLED_FIELD[]  = "e";
 constexpr const char LINE_DEVICE_FIELD[] = "p";
 constexpr const char LINE_MODE_FIELD[]   = "r";
+constexpr const char CANCELLED_FIELD[]   = "an";  // annullamento riga (persistito)
+constexpr const char EDITED_FIELD[]      = "ed";  // riga modificata almeno una volta (persistito)
 
 #endif

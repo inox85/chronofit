@@ -1110,7 +1110,9 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     int millis = doc["millis"];
 
     if(printEnabled){
-      printFormatted(id, String(lineNumber), competitor, hour, minute, second, millis, 1);
+      int lMode = (lineNumber >= 1 && lineNumber <= 6) ? lineMode[lineNumber - 1] : 0;
+      const char* flag = checkpointFlagLabel(lineNumber, lMode, false, false);
+      printFormatted(id, String(lineNumber), competitor, hour, minute, second, millis, 1, flag);
     }
 
     char buffer[40];
@@ -1143,7 +1145,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
 
         // --- Parse JSON ricevuto ---
-        StaticJsonDocument<256> doc;
+        StaticJsonDocument<384> doc;
         DeserializationError err = deserializeJson(doc, data, len);
         if (err) {
             request->send(400, "text/plain", "JSON non valido");
@@ -1158,16 +1160,12 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         int second = doc["second"].as<int>();
         int millis = doc["millis"].as<int>();
         int penality = doc["penality"].as<int>();
+        int cancelled = doc["cancelled"] | 0;
 
         #ifdef DEBUG
           Serial.printf("Aggiorno riga index=%d, lineNumber=%d, competitor=%d, %02d:%02d.%d\n",
                       entryIndex, lineNumber, competitor, hour, minute, millis);
         #endif
-
-        if(printEnabled){
-          printOnPrinter("Row edited:", 1);
-          printFormatted(entryIndex, String(lineNumber), competitor, hour, minute, second, millis, 1);
-        }
 
         // --- Apri file originale e temporaneo ---
         File inFile = LittleFS.open("/session.json", "r");
@@ -1192,7 +1190,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
             if (n == 0) continue;
             lineBuf[n] = '\0';
 
-            StaticJsonDocument<256> entry;
+            StaticJsonDocument<384> entry;
             if (deserializeJson(entry, lineBuf, n)) continue;
 
             int currentIndex = entry[INDEX_FIELD].as<int>();
@@ -1206,10 +1204,19 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
                 entry[SECOND_FIELD] = second;
                 entry[MILLIS_FIELD] = millis;
                 entry[PENALITY_FIELD] = penality;
+                entry[CANCELLED_FIELD] = cancelled;
+                entry[EDITED_FIELD] = 1;
 
                 updated = true;
                 debug("Riga aggiornata");
                 broadCastRowEdited(entry);
+
+                if (printEnabled) {
+                  int lMode = entry[LINE_MODE_FIELD] | 0;
+                  const char* flag = checkpointFlagLabel(lineNumber, lMode, cancelled != 0, true);
+                  printOnPrinter("Row edited:", 1);
+                  printFormatted(entryIndex, String(lineNumber), competitor, hour, minute, second, millis, 1, flag);
+                }
             }
 
             serializeJson(entry, outLineBuf, sizeof(outLineBuf));
@@ -1217,7 +1224,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         }
         // --- Se non trovato, aggiungi alla fine ---
         if (!updated) {
-            StaticJsonDocument<256> newEntry;
+            StaticJsonDocument<384> newEntry;
             newEntry[INDEX_FIELD] = entryIndex;
             newEntry[LINE_NUMBER_FIELD] = lineNumber;
             newEntry[COMPETITOR_FIELD] = competitor;
@@ -1226,10 +1233,18 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
             newEntry[SECOND_FIELD] = second;
             newEntry[MILLIS_FIELD] = millis;
             newEntry[PENALITY_FIELD] = penality;
+            newEntry[CANCELLED_FIELD] = cancelled;
+            newEntry[EDITED_FIELD] = 1;
 
             serializeJson(newEntry, outLineBuf, sizeof(outLineBuf));
             outFile.println(outLineBuf);
             debug("Riga aggiunta");
+
+            if (printEnabled) {
+              const char* flag = checkpointFlagLabel(lineNumber, 0, cancelled != 0, true);
+              printOnPrinter("Row edited:", 1);
+              printFormatted(entryIndex, String(lineNumber), competitor, hour, minute, second, millis, 1, flag);
+            }
         }
 
         inFile.close();
@@ -1563,6 +1578,8 @@ void broadCastRowEdited(const JsonDocument& entry){
   doc[SECOND_FIELD] = entry[SECOND_FIELD];
   doc[MILLIS_FIELD] = entry[MILLIS_FIELD];
   doc[PENALITY_FIELD] = entry[PENALITY_FIELD];
+  doc[CANCELLED_FIELD] = entry[CANCELLED_FIELD];
+  doc[EDITED_FIELD] = entry[EDITED_FIELD];
 
   String message;
   serializeJson(doc, message);

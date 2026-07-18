@@ -361,6 +361,7 @@ function saveViewPrefs() {
     showLine:      document.getElementById("toggle-line").checked,
     showName:      document.getElementById("toggle-name")?.checked    ?? false,
     showSurname:   document.getElementById("toggle-surname")?.checked ?? false,
+    showCancelBtn: document.getElementById("toggle-cancel")?.checked ?? true,
     showSendBtn:   document.getElementById("toggle-send-btn").checked,
     showTest:    document.getElementById("toggle-test")?.checked ?? false,
     showTrigger:      document.getElementById("toggle-trigger")?.checked   ?? false,
@@ -404,6 +405,7 @@ function restoreViewPrefs() {
     setChk("toggle-line",          prefs.showLine     ?? true);
     setChk("toggle-name",          prefs.showName     ?? false);
     setChk("toggle-surname",       prefs.showSurname  ?? false);
+    setChk("toggle-cancel",        prefs.showCancelBtn ?? true);
     setChk("toggle-send-btn",      prefs.showSendBtn  ?? true);
     setChk("toggle-test",        prefs.showTest   ?? false);
     setChk("toggle-trigger",          prefs.showTrigger     ?? false);
@@ -497,6 +499,7 @@ function applyDisciplinePreset(prefs) {
   setChk("toggle-line",          prefs.showLine   ?? true);
   setChk("toggle-name",          prefs.showName   ?? false);
   setChk("toggle-surname",       prefs.showSurname ?? false);
+  setChk("toggle-cancel",        prefs.showCancelBtn ?? true);
   setChk("toggle-send-btn",      prefs.showSendBtn ?? true);
   setChk("toggle-test",        prefs.showTest  ?? false);
   setChk("toggle-trigger",          prefs.showTrigger    ?? false);
@@ -1363,7 +1366,9 @@ function handleMessage(data) {
         0,
         data.e ?? 1,
         data.p ?? '',
-        data.r ?? ''
+        data.r ?? '',
+        data.an ?? 0,
+        data.ed ?? 0
       );
       reorderTable();
       if (document.getElementById("toggle-splits").checked) applyCompetitorSplits();
@@ -1725,13 +1730,15 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const enabled = checkpoint.e ?? 1;
   const test    = checkpoint.p ?? '';
   const trigger = checkpoint.r ?? '';
+  const cancelled = checkpoint.an ?? 0;
+  const edited = checkpoint.ed ?? 0;
 
   // Richiama la funzione originale
-  addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger);
+  addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited);
 }
 
 
-function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, test = '', trigger = '') {
+function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, test = '', trigger = '', cancelled = 0, edited = 0) {
   console.log(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled);
 
   if (localStorage.getItem(TABLE_ACQUIRE_KEY) === "1" && getTableAcquireLines().includes(Number(lineNumber))) {
@@ -1743,6 +1750,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
 
   row.classList.add("row-enter");
   if (!enabled) row.classList.add("row-disabled");
+  if (Number(cancelled)) row.classList.add("row-cancelled");
 
   const timestamp = formatTime(hour, minute, seconds, millis);
   const index = rowIndex;
@@ -1766,6 +1774,8 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
   row.setAttribute("data-row-id", rowIndex);
   row.setAttribute("data-test", test);
   row.setAttribute("data-trigger", trigger);
+  row.setAttribute("data-cancelled", Number(cancelled) ? "1" : "0");
+  row.setAttribute("data-edited", Number(edited) ? "1" : "0");
 
   row.innerHTML = `
     <td class="col-rank"></td>
@@ -1781,6 +1791,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
     <td class="delta-time"></td>
     <td class="elapsed-time"></td>
     <td><button class="penality penality-btn">${penality}</button></td>
+    <td><button class="cancel-btn${Number(cancelled) ? ' active' : ''}" title="Annulla">🚫</button></td>
     <td><button class="send-btn">➡</button></td>
   `;
 
@@ -2017,6 +2028,10 @@ function sendUpdatedCheckPointRow(row) {
   const competitor = parseInt(row.dataset.competitor ?? 0);
   const penality   = Number(row.dataset.penality) || 0;
 
+  // Il firmware marca sempre la riga come modificata su /updateCheckPointRow:
+  // rispecchiamo subito lo stesso stato lato client (usato es. dall'export CSV).
+  row.dataset.edited = "1";
+
   const messageObj = {
     index,
     lineNumber,
@@ -2025,7 +2040,8 @@ function sendUpdatedCheckPointRow(row) {
     minute: parseInt(row.dataset.minute  ?? 0),
     second: parseInt(row.dataset.seconds ?? 0),
     millis: parseInt(row.dataset.msRaw   ?? 0),
-    penality
+    penality,
+    cancelled: Number(row.dataset.cancelled) || 0
   };
 
   console.log("Invio aggiornamento riga:", messageObj);
@@ -2697,6 +2713,12 @@ function toggleSendColumn(show) {
   document.querySelectorAll("td:has(.send-btn)").forEach(el => el.style.display = d);
 }
 
+function toggleCancelColumn(show) {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll("th.cancel-col").forEach(el => el.style.display = d);
+  document.querySelectorAll("td:has(.cancel-btn)").forEach(el => el.style.display = d);
+}
+
 function updateTableCorners() {
   // angoli sempre netti — nessun border-radius inline
   const ths = document.querySelectorAll("#event-table thead th");
@@ -2741,6 +2763,7 @@ function updateVisibleColumns(){
   toggleRankColumn(document.getElementById("toggle-rank").checked);
   toggleNameColumn(document.getElementById("toggle-name")?.checked ?? false);
   toggleSurnameColumn(document.getElementById("toggle-surname")?.checked ?? false);
+  toggleCancelColumn(document.getElementById("toggle-cancel")?.checked ?? true);
   toggleSendColumn(document.getElementById("toggle-send-btn").checked);
   toggleTestColumn(document.getElementById("toggle-test")?.checked ?? false);
   toggleTriggerColumn(document.getElementById("toggle-trigger")?.checked ?? false);
@@ -2915,6 +2938,9 @@ document.getElementById("toggle-surname")
 document.getElementById("toggle-send-btn")
 .addEventListener("change", e => { toggleSendColumn(e.target.checked); saveViewPrefs(); });
 
+document.getElementById("toggle-cancel")
+.addEventListener("change", e => { toggleCancelColumn(e.target.checked); saveViewPrefs(); });
+
 document.getElementById("toggle-test")
 .addEventListener("change", e => { toggleTestColumn(e.target.checked); saveViewPrefs(); });
 
@@ -2996,6 +3022,16 @@ function updateRowFromBroadcas(data) {
     penalityBtn.textContent = data.x;
   }
 
+  if (data.an !== undefined) {
+    const cancelled = Number(data.an) ? "1" : "0";
+    row.dataset.cancelled = cancelled;
+    row.querySelector(".cancel-btn")?.classList.toggle("active", cancelled === "1");
+    row.classList.toggle("row-cancelled", cancelled === "1");
+  }
+  if (data.ed !== undefined) {
+    row.dataset.edited = Number(data.ed) ? "1" : "0";
+  }
+
   showGeneralPopup(`Row ${index} has been updated`,  lineColors[data.ln]);
   recalcDeltaTimes();
   recalcElapsedTimes();
@@ -3029,6 +3065,16 @@ document.addEventListener("click", (e) => {
 
     // mostra popup
     document.getElementById("assingPenality").style.display = "flex";
+  }
+
+  if (e.target.classList.contains("cancel-btn")) {
+    const row = e.target.closest("tr");
+    if (!row) return;
+    const cancelled = row.dataset.cancelled === "1" ? "0" : "1";
+    row.dataset.cancelled = cancelled;
+    e.target.classList.toggle("active", cancelled === "1");
+    row.classList.toggle("row-cancelled", cancelled === "1");
+    sendUpdatedCheckPointRow(row);
   }
 });
 
@@ -3089,14 +3135,20 @@ function downloadActualView() {
   headerCells.forEach((th, i) => {
     const text = normalizeHeader(th.innerText);;
 
-    // ❌ escludi Edit e Send
+    // ❌ escludi Edit, Send e Annulla (pulsanti azione, non dati: il loro
+    // simbolo/emoji non è un valore utile nel CSV)
     if (["edit", "send"].includes(text.toLowerCase())) return;
+    if (th.classList.contains("cancel-col")) return;
 
     if (isVisible(th)) {
       visibleIndexes.push(i);
       headerRow.push(text);
     }
   });
+
+  // "ed"/"an" non sono colonne visibili in tabella (solo dataset sulla riga):
+  // le aggiungiamo sempre in coda, indipendentemente dai toggle di visibilità.
+  headerRow.push("ed", "an");
 
   rows.push(headerRow.join(";"));
 
@@ -3122,6 +3174,9 @@ function downloadActualView() {
 
     // ❌ evita righe completamente vuote
     if (row.every(v => v === "")) return;
+
+    row.push(tr.dataset.edited === "1" ? "1" : "0");
+    row.push(tr.dataset.cancelled === "1" ? "1" : "0");
 
     rows.push(row.join(";"));
   });

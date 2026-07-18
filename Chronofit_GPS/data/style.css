@@ -1347,6 +1347,21 @@ input:checked + .slider:before {
   font-style: italic;
 }
 
+#event-table tbody tr.row-cancelled td {
+  text-decoration: line-through;
+  color: #a33;
+}
+
+.cancel-btn {
+  color: white;
+  opacity: 0.4;
+}
+
+.cancel-btn.active {
+  opacity: 1;
+  background-color: #c0392b;
+}
+
 /* ── Race time / Name / Surname columns (hidden by default) ── */
 .race-time-col, td.race-time   { display: none; }
 .col-name-col,  td.col-name    { display: none; }

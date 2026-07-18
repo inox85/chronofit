@@ -175,13 +175,16 @@ void checkPointRoutine(int i) {
   checkpoint[ENABLED_FIELD]     = lineEnabled[i];
   checkpoint[LINE_DEVICE_FIELD] = lineDevice[i];
   checkpoint[LINE_MODE_FIELD]   = lineMode[i];
+  checkpoint[CANCELLED_FIELD]   = 0;
+  checkpoint[EDITED_FIELD]      = 0;
 
   // 🔹 Calcola nuovo index
   sessionRowIndex = sessionRowIndex + 1;
   checkpoint[INDEX_FIELD] = sessionRowIndex;
 
   if (printEnabled) {
-    printFormatted(sessionRowIndex, String(i + 1), competitors[i], hh, mm, ss, ms, 3);
+    const char* flag = checkpointFlagLabel(i + 1, lineMode[i], false, false);
+    printFormatted(sessionRowIndex, String(i + 1), competitors[i], hh, mm, ss, ms, 3, flag);
   }
 
   // 🔹 Crea una copia ordinata del JSON (index per primo)
@@ -199,6 +202,8 @@ void checkPointRoutine(int i) {
   if (checkpoint.containsKey(ENABLED_FIELD))     ordered[ENABLED_FIELD]     = checkpoint[ENABLED_FIELD];
   if (checkpoint.containsKey(LINE_DEVICE_FIELD)) ordered[LINE_DEVICE_FIELD] = checkpoint[LINE_DEVICE_FIELD];
   if (checkpoint.containsKey(LINE_MODE_FIELD))   ordered[LINE_MODE_FIELD]   = checkpoint[LINE_MODE_FIELD];
+  ordered[CANCELLED_FIELD] = checkpoint[CANCELLED_FIELD];
+  ordered[EDITED_FIELD]    = checkpoint[EDITED_FIELD];
 
   // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
   File file = LittleFS.open("/session.json", "a");
@@ -244,8 +249,15 @@ void writeCheckpointFromMqtt(const char* jsonPayload) {
   ordered[ENABLED_FIELD]     = src[ENABLED_FIELD]  | 1;
   if (src.containsKey(LINE_DEVICE_FIELD)) ordered[LINE_DEVICE_FIELD] = src[LINE_DEVICE_FIELD];
   if (src.containsKey(LINE_MODE_FIELD))   ordered[LINE_MODE_FIELD]   = src[LINE_MODE_FIELD];
+  ordered[CANCELLED_FIELD] = src[CANCELLED_FIELD] | 0;
+  ordered[EDITED_FIELD]    = src[EDITED_FIELD]    | 0;
 
   if (printEnabled) {
+    int lineNum = src[LINE_NUMBER_FIELD].as<int>();
+    int lMode   = src[LINE_MODE_FIELD] | 0;
+    bool cancelled = (src[CANCELLED_FIELD] | 0) != 0;
+    bool edited    = (src[EDITED_FIELD]    | 0) != 0;
+    const char* flag = checkpointFlagLabel(lineNum, lMode, cancelled, edited);
     printFormatted(
       sessionRowIndex,
       src[LINE_NUMBER_FIELD].as<String>(),
@@ -254,7 +266,8 @@ void writeCheckpointFromMqtt(const char* jsonPayload) {
       src[MINUTE_FIELD].as<int>(),
       src[SECOND_FIELD].as<int>(),
       src[MILLIS_FIELD].as<int>(),
-      1
+      1,
+      flag
     );
   }
 

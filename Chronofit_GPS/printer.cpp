@@ -19,11 +19,18 @@ static QueueHandle_t printerQueue = NULL;
 
 
 
-void printFormatted(int index, String line, int competitor, int hh, int mm, int ss, int ms, int cr){
+const char* checkpointFlagLabel(int lineNumber, int lineMode, bool cancelled, bool edited) {
+  if (cancelled) return "ANN ";
+  if (edited)    return "EDIT";
+  if (lineNumber == 6) return "SCR ";  // "Fuori pressostato": innescata da pressione schermo
+  return (lineMode == 1) ? "MAN " : "AUT ";
+}
 
-  char buffer[40];
+void printFormatted(int index, String line, int competitor, int hh, int mm, int ss, int ms, int cr, const char* flag){
 
-  sprintf(buffer, "#%03d L%s C%05d T%02d:%02d:%02d.%03d", index, line.c_str(), competitor, hh, mm, ss, ms);
+  char buffer[48];
+
+  sprintf(buffer, "%03d L%s C%04d %02d:%02d:%02d.%03d %s", index, line.c_str(), competitor, hh, mm, ss, ms, flag);
 
   String text = String(buffer);
 

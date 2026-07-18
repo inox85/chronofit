@@ -18,6 +18,7 @@
 //   deltaTime      bool — delta time column
 //   elapsedTime    bool — elapsed time column
 //   penality       bool — penalty column
+//   showCancelBtn  bool — cancel ("annulla") button column
 //   showSendBtn    bool — send button column
 //   showTest     bool — device column
 //   showTrigger       bool — mode column
@@ -47,7 +48,7 @@ const DISCIPLINES = [
       showRank: false,      showIndex: true,   showLine: true,
       showName: false,      showSurname: false,
       timestamp: true,      deltaTime: false,  elapsedTime: false,
-      penality: false,      showSendBtn: true,
+      penality: false,      showCancelBtn: true,  showSendBtn: true,
       showTest: true,     showTrigger: true,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: true,   syncMode: 0,
@@ -66,7 +67,7 @@ const DISCIPLINES = [
       showRank: false,       showIndex: false,  showLine: true,
       showName: false,       showSurname: false,
       timestamp: true,     deltaTime: true,   elapsedTime: false,
-      penality: false,      showSendBtn: true,
+      penality: false,      showCancelBtn: true,  showSendBtn: true,
       showTest: true,    showTrigger: true,
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: true,   syncMode: 1,
@@ -85,7 +86,7 @@ const DISCIPLINES = [
       showRank: true,       showIndex: false,  showLine: false,
       showName: true,       showSurname: false,
       timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: false,      showSendBtn: false,
+      penality: false,      showCancelBtn: false,  showSendBtn: false,
       showTest: false,    showTrigger: false,
       splitsMode: true,    timePrecision: 3,  showDisabled: false,
       showCompList: true,  syncMode: 2,
@@ -104,7 +105,7 @@ const DISCIPLINES = [
       showRank: true,       showIndex: false,  showLine: false,
       showName: true,       showSurname: true,
       timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: true,       showSendBtn: false,
+      penality: true,       showCancelBtn: false,  showSendBtn: false,
       showTest: false,    showTrigger: false,
       splitsMode: true,     timePrecision: 2,  showDisabled: false,
       showCompList: false,  syncMode: 2,
