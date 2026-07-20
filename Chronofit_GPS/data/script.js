@@ -1528,7 +1528,7 @@ function handleMessage(data) {
         reorderTable2();
         if (document.getElementById("toggle-splits-2")?.checked) applyCompetitorSplits2();
       }
-      if (data.ln == netTimesStartLine || data.ln == netTimesFinishLine) rebuildNetTimesTable();
+      if ([netTimesStartLine, netTimesFinishLine, netTimesStartLine2, netTimesFinishLine2].includes(Number(data.ln))) rebuildNetTimesTable();
       break;
 
     case TYPE_TIME_UPDATE:
@@ -2982,6 +2982,8 @@ function rowToMsExact(row) {
 const NET_TIMES_KEY = 'chronofit_net_times_lines';
 let netTimesStartLine = 1;
 let netTimesFinishLine = 3;
+let netTimesStartLine2 = 2;
+let netTimesFinishLine2 = 4;
 
 function _rowAbsoluteTimeText(row) {
   const h  = parseInt(row.dataset.hour    ?? 0);
@@ -3008,47 +3010,65 @@ function _firstRowPerCompetitor(lineNumber) {
   return byCompetitor;
 }
 
-function rebuildNetTimesTable() {
-  const tbody = document.querySelector('#net-times-table tbody');
-  if (!tbody) return;
+// Testo (Start/Finish/Net) per una singola coppia di linee, dato il set di
+// righe-per-competitor già calcolato per ciascuna linea.
+function _netPairText(startByComp, finishByComp, comp) {
+  const sRow = startByComp[comp];
+  const fRow = finishByComp[comp];
 
-  const startByComp  = _firstRowPerCompetitor(netTimesStartLine);
-  const finishByComp = _firstRowPerCompetitor(netTimesFinishLine);
-  const allComps = new Set([...Object.keys(startByComp), ...Object.keys(finishByComp)]);
+  const sText = sRow ? _rowAbsoluteTimeText(sRow) : '—';
+  const fText = fRow ? _rowAbsoluteTimeText(fRow) : '—';
 
-  tbody.innerHTML = '';
+  let netText = '—';
+  if (sRow && fRow) {
+    const diffMs = rowToMsExact(fRow) - rowToMsExact(sRow);
+    if (diffMs >= 0) {
+      const dH  = Math.floor(diffMs / 3600000);
+      const dM  = Math.floor((diffMs % 3600000) / 60000);
+      const dS  = Math.floor((diffMs % 60000) / 1000);
+      const dMs = diffMs % 1000;
+      netText = formatTime(dH, dM, dS, dMs, 3);
+    }
+  }
+  return { sText, fText, netText };
+}
 
-  Array.from(allComps)
+// Righe di un singolo gruppo (coppia di linee) da appendere alla tabella,
+// una riga per competitor, etichettate con le linee usate (es. "L1→L3").
+function _netGroupRows(tbody, startLine, finishLine) {
+  const startByComp  = _firstRowPerCompetitor(startLine);
+  const finishByComp = _firstRowPerCompetitor(finishLine);
+  const comps = new Set([...Object.keys(startByComp), ...Object.keys(finishByComp)]);
+  const pairLabel = `L${startLine}→L${finishLine}`;
+
+  Array.from(comps)
     .sort((a, b) => Number(a) - Number(b))
     .forEach(comp => {
-      const sRow = startByComp[comp];
-      const fRow = finishByComp[comp];
-
-      const sText = sRow ? _rowAbsoluteTimeText(sRow) : '—';
-      const fText = fRow ? _rowAbsoluteTimeText(fRow) : '—';
-
-      let netText = '—';
-      if (sRow && fRow) {
-        const diffMs = rowToMsExact(fRow) - rowToMsExact(sRow);
-        if (diffMs >= 0) {
-          const dH  = Math.floor(diffMs / 3600000);
-          const dM  = Math.floor((diffMs % 3600000) / 60000);
-          const dS  = Math.floor((diffMs % 60000) / 1000);
-          const dMs = diffMs % 1000;
-          netText = formatTime(dH, dM, dS, dMs, 3);
-        }
-      }
-
+      const p = _netPairText(startByComp, finishByComp, comp);
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${comp}</td><td>${sText}</td><td>${fText}</td><td>${netText}</td>`;
+      tr.innerHTML = `<td>${comp}</td><td>${pairLabel}</td><td>${p.sText}</td><td>${p.fText}</td><td>${p.netText}</td>`;
       tbody.appendChild(tr);
     });
 }
 
+function rebuildNetTimesTable() {
+  const tbody = document.querySelector('#net-times-table tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  _netGroupRows(tbody, netTimesStartLine,  netTimesFinishLine);
+  _netGroupRows(tbody, netTimesStartLine2, netTimesFinishLine2);
+}
+
 function onNetTimesLinesChange() {
-  netTimesStartLine  = Number(document.getElementById('net-line-start')?.value  ?? 1);
-  netTimesFinishLine = Number(document.getElementById('net-line-finish')?.value ?? 3);
-  localStorage.setItem(NET_TIMES_KEY, JSON.stringify({ start: netTimesStartLine, finish: netTimesFinishLine }));
+  netTimesStartLine   = Number(document.getElementById('net-line-start')?.value    ?? 1);
+  netTimesFinishLine  = Number(document.getElementById('net-line-finish')?.value   ?? 3);
+  netTimesStartLine2  = Number(document.getElementById('net-line-start-2')?.value  ?? 2);
+  netTimesFinishLine2 = Number(document.getElementById('net-line-finish-2')?.value ?? 4);
+  localStorage.setItem(NET_TIMES_KEY, JSON.stringify({
+    start: netTimesStartLine, finish: netTimesFinishLine,
+    start2: netTimesStartLine2, finish2: netTimesFinishLine2
+  }));
   rebuildNetTimesTable();
 }
 
@@ -3057,8 +3077,10 @@ function restoreNetTimesLines() {
     const raw = localStorage.getItem(NET_TIMES_KEY);
     if (!raw) return;
     const saved = JSON.parse(raw);
-    if (saved.start)  { netTimesStartLine  = saved.start;  const el = document.getElementById('net-line-start');  if (el) el.value = saved.start; }
-    if (saved.finish) { netTimesFinishLine = saved.finish; const el = document.getElementById('net-line-finish'); if (el) el.value = saved.finish; }
+    if (saved.start)   { netTimesStartLine   = saved.start;   const el = document.getElementById('net-line-start');    if (el) el.value = saved.start; }
+    if (saved.finish)  { netTimesFinishLine  = saved.finish;  const el = document.getElementById('net-line-finish');   if (el) el.value = saved.finish; }
+    if (saved.start2)  { netTimesStartLine2  = saved.start2;  const el = document.getElementById('net-line-start-2');  if (el) el.value = saved.start2; }
+    if (saved.finish2) { netTimesFinishLine2 = saved.finish2; const el = document.getElementById('net-line-finish-2'); if (el) el.value = saved.finish2; }
   } catch(e) {
     console.warn('Errore ripristino linee tempi netti:', e);
   }

@@ -1399,12 +1399,31 @@
           <option value="5">L5</option>
           <option value="6">L6</option>
         </select>
+        <label for="net-line-start-2" data-i18n="net.start_line_2">Start line 2</label>
+        <select id="net-line-start-2" onchange="onNetTimesLinesChange()">
+          <option value="1">L1</option>
+          <option value="2" selected>L2</option>
+          <option value="3">L3</option>
+          <option value="4">L4</option>
+          <option value="5">L5</option>
+          <option value="6">L6</option>
+        </select>
+        <label for="net-line-finish-2" data-i18n="net.finish_line_2">Finish line 2</label>
+        <select id="net-line-finish-2" onchange="onNetTimesLinesChange()">
+          <option value="1">L1</option>
+          <option value="2">L2</option>
+          <option value="3">L3</option>
+          <option value="4" selected>L4</option>
+          <option value="5">L5</option>
+          <option value="6">L6</option>
+        </select>
       </div>
       <div class="table-wrapper">
         <table id="net-times-table" class="arrivals-table">
           <thead>
             <tr>
               <th data-i18n="th.competitor">Comp.</th>
+              <th data-i18n="net.pair_col">Lines</th>
               <th data-i18n="net.start_col">Start</th>
               <th data-i18n="net.finish_col">Finish</th>
               <th data-i18n="net.net_time_col">Net time</th>

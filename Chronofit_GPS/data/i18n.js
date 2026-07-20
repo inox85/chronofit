@@ -179,6 +179,9 @@ const TRANSLATIONS = {
     'net.start_col':   'Start',
     'net.finish_col':  'Finish',
     'net.net_time_col': 'Net time',
+    'net.pair_col':    'Lines',
+    'net.start_line_2':  'Start line 2',
+    'net.finish_line_2': 'Finish line 2',
 
     'table.show_test':     'Show test column',
     'table.show_trigger':       'Show detection column',
@@ -469,6 +472,9 @@ const TRANSLATIONS = {
     'net.start_col':   'Partenza',
     'net.finish_col':  'Arrivo',
     'net.net_time_col': 'Tempo netto',
+    'net.pair_col':    'Linee',
+    'net.start_line_2':  'Linea partenza 2',
+    'net.finish_line_2': 'Linea arrivo 2',
 
     'table.show_test':     'Mostra colonna prova',
     'table.show_trigger':       'Mostra colonna rilevamento',
