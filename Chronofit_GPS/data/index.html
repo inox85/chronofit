@@ -177,6 +177,14 @@
           </label>
         </div>
 
+        <div id="autoAcquireTableSource" class="toggle-row" style="display:none;">
+          <span data-i18n="athlete.auto_table_source">Source table</span>
+          <select id="autoAcquireSourceSelect" onchange="onAutoAcquireSourceChange()">
+            <option value="event-table"   data-i18n="card.departures">Departures</option>
+            <option value="event-table-2" data-i18n="card.finish">Finish</option>
+          </select>
+        </div>
+
         <div id="autoAcquireTableLines" style="display:flex; align-items:center; gap:10px; margin:0 0 12px 4px;">
           <span data-i18n="athlete.auto_table_lines" style="color:#555;">Lines:</span>
           <label style="display:flex; align-items:center; gap:4px; background:#ffcccc; padding:4px 8px;">
@@ -209,6 +217,7 @@
         <button class="tab-btn active" data-tab="sort"    data-i18n="table.tab_sort"    onclick="switchSettingsTab('sort')">↕ Sort</button>
         <button class="tab-btn"        data-tab="columns" data-i18n="table.tab_columns" onclick="switchSettingsTab('columns')">📊 Columns</button>
         <button class="tab-btn"        data-tab="rows"    data-i18n="table.tab_rows"    onclick="switchSettingsTab('rows')">☰ Rows</button>
+        <button class="tab-btn"        data-tab="lines"   data-i18n="table.tab_lines"   onclick="switchSettingsTab('lines')">👁 Lines</button>
       </div>
 
       <!-- Tab: Sort -->
@@ -342,20 +351,6 @@
       <!-- Tab: Rows -->
       <div id="stab-rows" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
         <div class="toggle-row">
-          <span data-i18n="table.show_sync_test">Show sync test rows</span>
-          <label class="switch">
-            <input type="checkbox" class="toggle-btn" data-line="5">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="toggle-row">
-          <span data-i18n="table.show_out_of_sensor">Show out-of-sensor rows</span>
-          <label class="switch">
-            <input type="checkbox" class="toggle-btn" data-line="6" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="toggle-row">
           <span data-i18n="table.show_disabled">Show disabled line rows</span>
           <label class="switch">
             <input type="checkbox" id="toggle-disabled-rows" checked>
@@ -371,8 +366,264 @@
         </div>
       </div>
 
+      <!-- Tab: Lines -->
+      <div id="stab-lines" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span data-i18n="table.show_line_1">Show line 1</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="1" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_line_2">Show line 2</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_line_3">Show line 3</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="3" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_line_4">Show line 4</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="4" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_sync_test">Show sync test rows</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="5">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_out_of_sensor">Show out-of-sensor rows</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="6" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
       <div class="button-row">
         <button class="big-button" data-i18n="btn.close" id="closeTablePopup">Close</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Settings popup per la seconda card Arrivi (indipendente dalla prima) -->
+  <div id="tableSettingsOverlay2" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:85vh;">
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="sort"    data-i18n="table.tab_sort"    onclick="switchSettingsTab2('sort')">↕ Sort</button>
+        <button class="tab-btn"        data-tab="columns" data-i18n="table.tab_columns" onclick="switchSettingsTab2('columns')">📊 Columns</button>
+        <button class="tab-btn"        data-tab="rows"    data-i18n="table.tab_rows"    onclick="switchSettingsTab2('rows')">☰ Rows</button>
+        <button class="tab-btn"        data-tab="lines"   data-i18n="table.tab_lines"   onclick="switchSettingsTab2('lines')">👁 Lines</button>
+      </div>
+
+      <!-- Tab: Sort -->
+      <div id="stab-sort-2" class="tab-content" style="overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span data-i18n="table.show_rank">Show rank column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-rank-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="input-row">
+          <label for="sort-col-2" data-i18n="table.order_by" style="font-size:20px;">Order by</label>
+          <select id="sort-col-2" onchange="onSortChange2()">
+            <option value="arrival"      data-i18n="table.arrival">Arrival(default)</option>
+            <option value="line"         data-i18n="table.line">Line</option>
+            <option value="competitor"   data-i18n="table.competitor">Competitor</option>
+            <option value="name"         data-i18n="table.name">Name</option>
+            <option value="surname"      data-i18n="table.surname">Surname</option>
+            <option value="event-time"   data-i18n="table.event_time">Event time</option>
+            <option value="race-time"    data-i18n="table.race_time">Race time</option>
+            <option value="delta-time"   data-i18n="table.delta">Δ time</option>
+            <option value="elapsed-time" data-i18n="table.elapsed">Elapsed</option>
+          </select>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.reverse_order">Reverse row order</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-reverse-order-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Tab: Columns -->
+      <div id="stab-columns-2" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span data-i18n="table.show_index">Show index column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-index-2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_line">Show line column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-line-2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_name">Show name column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-name-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_surname">Show surname column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-surname-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_event_time">Show event time column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-timestamp-2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_delta">Show incremental Δ column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-delta-time-2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_elapsed">Show elapsed time column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-elapsed-time-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_penalty">Show penality column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-penality-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_cancel">Show cancel button</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-cancel-2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_send">Show send button</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-send-btn-2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_test">Show device column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-test-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_trigger">Show mode column</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-trigger-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.time_precision">Time precision decimals</span>
+          <select id="time-precision-2" onchange="onTimePrecisionChange2(this.value)">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tab: Rows -->
+      <div id="stab-rows-2" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span data-i18n="table.show_disabled">Show disabled line rows</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-disabled-rows-2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.splits_mode">Competitor splits mode</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-splits-2">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Tab: Lines -->
+      <div id="stab-lines-2" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span data-i18n="table.show_line_1">Show line 1</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="1" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_line_2">Show line 2</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="2" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_line_3">Show line 3</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="3" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_line_4">Show line 4</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="4" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_sync_test">Show sync test rows</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="5">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.show_out_of_sensor">Show out-of-sensor rows</span>
+          <label class="switch">
+            <input type="checkbox" class="line-vis-toggle" data-line="6" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button class="big-button" data-i18n="btn.close" id="closeTablePopup2">Close</button>
       </div>
 
     </div>
@@ -754,7 +1005,6 @@
               <th data-i18n="cp.tipo_test">Device</th>
               <th data-i18n="cp.tipo_trigger">Mode</th>
               <th data-i18n="cp.ms">ms</th>
-              <th>👁</th>
               <th>✓</th>
               <th>➡</th>
             </tr>
@@ -776,7 +1026,6 @@
                 </select>
               </td>
               <td><input type="number" id="le-d-1" inputmode="numeric" autocomplete="off"></td>
-              <td><button id="le-eye-1"  class="le-action-btn" onclick="leToggle(1)">👁</button></td>
               <td><button id="le-enbl-1" class="le-action-btn" onclick="leEnable(1)">✓</button></td>
               <td><button id="le-snd-1"  class="le-action-btn" onclick="leSend(1)">➡</button></td>
             </tr>
@@ -796,7 +1045,6 @@
                 </select>
               </td>
               <td><input type="number" id="le-d-2" inputmode="numeric" autocomplete="off"></td>
-              <td><button id="le-eye-2"  class="le-action-btn" onclick="leToggle(2)">👁</button></td>
               <td><button id="le-enbl-2" class="le-action-btn" onclick="leEnable(2)">✓</button></td>
               <td><button id="le-snd-2"  class="le-action-btn" onclick="leSend(2)">➡</button></td>
             </tr>
@@ -816,7 +1064,6 @@
                 </select>
               </td>
               <td><input type="number" id="le-d-3" inputmode="numeric" autocomplete="off"></td>
-              <td><button id="le-eye-3"  class="le-action-btn" onclick="leToggle(3)">👁</button></td>
               <td><button id="le-enbl-3" class="le-action-btn" onclick="leEnable(3)">✓</button></td>
               <td><button id="le-snd-3"  class="le-action-btn" onclick="leSend(3)">➡</button></td>
             </tr>
@@ -836,7 +1083,6 @@
                 </select>
               </td>
               <td><input type="number" id="le-d-4" inputmode="numeric" autocomplete="off"></td>
-              <td><button id="le-eye-4"  class="le-action-btn" onclick="leToggle(4)">👁</button></td>
               <td><button id="le-enbl-4" class="le-action-btn" onclick="leEnable(4)">✓</button></td>
               <td><button id="le-snd-4"  class="le-action-btn" onclick="leSend(4)">➡</button></td>
             </tr>
@@ -970,7 +1216,6 @@
               <th data-i18n="cp.line">Line</th>
               <th data-i18n="cp.tipo">Type</th>
               <th data-i18n="cp.comp_abbr">Comp.</th>
-              <th>👁</th>
               <th>✓</th>
             </tr>
           </thead>
@@ -984,7 +1229,6 @@
                 <span id="tipo2-display-1">Automatica</span>
               </td>
               <td class="cp-comp-cell"><input type="number" id="c1" class="comp-input" data-line="1" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(1)" onblur="onCompInputBlur(1)"></td>
-              <td><button data-color="#ffcccc" class="toggle-btn" data-line="1">👁</button></td>
               <td><button data-color="#ffcccc" class="line-enable-btn" data-line="1" onclick="toggleLineEnable(1)">✓</button></td>
             </tr>
 
@@ -996,7 +1240,6 @@
                 <span id="tipo2-display-2">Automatica</span>
               </td>
               <td class="cp-comp-cell"><input type="number" id="c2" class="comp-input" data-line="2" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(2)" onblur="onCompInputBlur(2)"></td>
-              <td><button data-color="#ccffcc" class="toggle-btn" data-line="2">👁</button></td>
               <td><button data-color="#ccffcc" class="line-enable-btn" data-line="2" onclick="toggleLineEnable(2)">✓</button></td>
             </tr>
 
@@ -1008,7 +1251,6 @@
                 <span id="tipo2-display-3">Automatica</span>
               </td>
               <td class="cp-comp-cell"><input type="number" id="c3" class="comp-input" data-line="3" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(3)" onblur="onCompInputBlur(3)"></td>
-              <td><button data-color="#ccccff" class="toggle-btn" data-line="3">👁</button></td>
               <td><button data-color="#ccccff" class="line-enable-btn" data-line="3" onclick="toggleLineEnable(3)">✓</button></td>
             </tr>
 
@@ -1020,7 +1262,6 @@
                 <span id="tipo2-display-4">Automatica</span>
               </td>
               <td class="cp-comp-cell"><input type="number" id="c4" class="comp-input" data-line="4" value="0" inputmode="numeric" autocomplete="off" onfocus="onCompInputFocus(4)" onblur="onCompInputBlur(4)"></td>
-              <td><button data-color="#fff5cc" class="toggle-btn" data-line="4">👁</button></td>
               <td><button data-color="#fff5cc" class="line-enable-btn" data-line="4" onclick="toggleLineEnable(4)">✓</button></td>
             </tr>
 
@@ -1066,43 +1307,125 @@
     </div>
   </div>
 
-  <div class="card table-card right">
-    <div class="card-title" data-i18n="card.arrivals">Arrivals</div>
-    <button class="table-actions-btn" onclick="openTableActions()" title="Actions">⋮</button>
-    <div class="table-wrapper">
-      <table id="event-table">
-        <thead>
-          <tr>
-            <th class="col-rank-col">🏅</th>
-            <th class="col-index-col">#</th>
-            <th class="col-line-col"      data-i18n="th.line">Line</th>
-            <th                           data-i18n="th.competitor">Comp.</th>
-            <th class="col-test-col"    data-i18n="th.test">Device</th>
-            <th class="col-trigger-col"      data-i18n="th.trigger">Mode</th>
-            <th class="col-name-col"      data-i18n="th.name">Name</th>
-            <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
-            <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>
-            <th class="race-time-col"     data-i18n="th.race_time">Race time</th>
-            <th class="delta-time-col">Δ ⏱️</th>
-            <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
-            <th class="penality-col">❌</th>
-            <th class="cancel-col">🚫</th>
-            <th class="col-send-col"      data-i18n="th.send">Send</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <div class="arrivals-area">
+
+    <div class="arrivals-row">
+
+      <div class="card table-card right">
+        <div class="card-title" id="arrivalsCardTitle" data-i18n="card.arrivals">Arrivals</div>
+        <button class="table-actions-btn" onclick="openTableActions()" title="Actions">⋮</button>
+        <div class="table-wrapper">
+          <table id="event-table" class="arrivals-table">
+            <thead>
+              <tr>
+                <th class="col-rank-col">🏅</th>
+                <th class="col-index-col">#</th>
+                <th class="col-line-col"      data-i18n="th.line">Line</th>
+                <th                           data-i18n="th.competitor">Comp.</th>
+                <th class="col-test-col"    data-i18n="th.test">Device</th>
+                <th class="col-trigger-col"      data-i18n="th.trigger">Mode</th>
+                <th class="col-name-col"      data-i18n="th.name">Name</th>
+                <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
+                <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>
+                <th class="race-time-col"     data-i18n="th.race_time">Race time</th>
+                <th class="delta-time-col">Δ ⏱️</th>
+                <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
+                <th class="penality-col">❌</th>
+                <th class="cancel-col">🚫</th>
+                <th class="col-send-col"      data-i18n="th.send">Send</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- Seconda card Arrivi — indipendente, visibilità dipendente dalla disciplina -->
+      <div class="card table-card" id="secondArrivalsCard" style="display:none;">
+        <div class="card-title" id="secondArrivalsCardTitle" data-i18n="card.arrivals">Arrivals</div>
+        <button class="table-actions-btn" onclick="openTableActions2()" title="Actions">⋮</button>
+        <div class="table-wrapper">
+          <table id="event-table-2" class="arrivals-table">
+            <thead>
+              <tr>
+                <th class="col-rank-col">🏅</th>
+                <th class="col-index-col">#</th>
+                <th class="col-line-col"      data-i18n="th.line">Line</th>
+                <th                           data-i18n="th.competitor">Comp.</th>
+                <th class="col-test-col"    data-i18n="th.test">Device</th>
+                <th class="col-trigger-col"      data-i18n="th.trigger">Mode</th>
+                <th class="col-name-col"      data-i18n="th.name">Name</th>
+                <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
+                <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>
+                <th class="race-time-col"     data-i18n="th.race_time">Race time</th>
+                <th class="delta-time-col">Δ ⏱️</th>
+                <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
+                <th class="penality-col">❌</th>
+                <th class="cancel-col">🚫</th>
+                <th class="col-send-col"      data-i18n="th.send">Send</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Terza card: tempi netti tra una linea di partenza e una di arrivo,
+         scelte liberamente dall'operatore (non legate a quale card mostra
+         quale linea). Calcolata sempre sui dati completi di #event-table,
+         che riceve ogni checkpoint indipendentemente dai filtri di visibilità. -->
+    <div class="card table-card net-times-card" id="netTimesCard">
+      <div class="card-title" data-i18n="card.net_times">Net times</div>
+      <div class="net-times-controls">
+        <label for="net-line-start" data-i18n="net.start_line">Start line</label>
+        <select id="net-line-start" onchange="onNetTimesLinesChange()">
+          <option value="1">L1</option>
+          <option value="2">L2</option>
+          <option value="3">L3</option>
+          <option value="4">L4</option>
+          <option value="5">L5</option>
+          <option value="6">L6</option>
+        </select>
+        <label for="net-line-finish" data-i18n="net.finish_line">Finish line</label>
+        <select id="net-line-finish" onchange="onNetTimesLinesChange()">
+          <option value="1">L1</option>
+          <option value="2">L2</option>
+          <option value="3" selected>L3</option>
+          <option value="4">L4</option>
+          <option value="5">L5</option>
+          <option value="6">L6</option>
+        </select>
+      </div>
+      <div class="table-wrapper">
+        <table id="net-times-table" class="arrivals-table">
+          <thead>
+            <tr>
+              <th data-i18n="th.competitor">Comp.</th>
+              <th data-i18n="net.start_col">Start</th>
+              <th data-i18n="net.finish_col">Finish</th>
+              <th data-i18n="net.net_time_col">Net time</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
   </div>
 
-  <!-- Table actions popup -->
+  <!-- Table actions popup (condiviso: Download session/Clear session riguardano l'intero
+       device; Download view/Send email agiscono sulla tabella che ha aperto il popup,
+       tracciata da tableActionsTarget) -->
   <div id="tableActionsOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeTableActions()">
     <div class="fullscreen-popup" style="max-width:340px; padding:24px;">
       <h2 data-i18n="btn.actions">Actions</h2>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <button class="big-button" data-i18n="btn.download_session" onclick="downloadSession()">Download session</button>
-        <button class="big-button" data-i18n="btn.download_view"    onclick="downloadActualView()">Download view</button>
+        <button class="big-button" data-i18n="btn.download_view"    onclick="downloadActualViewTarget()">Download view</button>
         <button class="big-button" data-i18n="btn.send_email"       id="sendEmailBtn" onclick="sendActualView()">Send via email</button>
         <button class="big-button" data-i18n="btn.clear_session"    style="background:#c0392b;" onclick="clearSession()">Clear session</button>
         <button class="big-button" data-i18n="btn.close"            onclick="closeTableActions()">Close</button>

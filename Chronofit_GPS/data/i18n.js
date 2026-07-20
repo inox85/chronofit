@@ -111,12 +111,14 @@ const TRANSLATIONS = {
     'athlete.auto_info':      'Automatically add a competitor to the registry the first time its number appears from a live source. Both sources can be active at the same time.',
     'athlete.auto_mqtt':      'Acquire from MQTT',
     'athlete.auto_table':     'Acquire from arrivals table',
+    'athlete.auto_table_source': 'Source table',
     'athlete.auto_table_lines': 'Lines:',
 
     // ── Table settings ────────────────────────────────────────────────────────
     'table.tab_sort':        '↕ Sort',
     'table.tab_columns':     '📊 Columns',
     'table.tab_rows':        '☰ Rows',
+    'table.tab_lines':       '👁 Lines',
     'table.show_rank':       'Show rank column',
     'table.order_by':        'Order by',
     'table.arrival':         'Arrival (default)',
@@ -167,10 +169,24 @@ const TRANSLATIONS = {
     'card.checkpoints': 'Checkpoints',
     'card.status':      'Status',
     'card.arrivals':    'Arrivals',
+    'card.departures':  'Departures',
+    'card.finish':      'Finish',
+    'card.net_times':   'Net times',
+
+    // ── Net times card ─────────────────────────────────────────────────────────
+    'net.start_line':  'Start line',
+    'net.finish_line': 'Finish line',
+    'net.start_col':   'Start',
+    'net.finish_col':  'Finish',
+    'net.net_time_col': 'Net time',
 
     'table.show_test':     'Show test column',
     'table.show_trigger':       'Show detection column',
     'table.time_precision':  'Time precision decimals',
+    'table.show_line_1':     'Show line 1',
+    'table.show_line_2':     'Show line 2',
+    'table.show_line_3':     'Show line 3',
+    'table.show_line_4':     'Show line 4',
     'table.show_sync_test':  'Show sync test rows',
     'table.show_out_of_sensor': 'Show out-of-sensor rows',
     'table.show_disabled':   'Show disabled line rows',
@@ -385,12 +401,14 @@ const TRANSLATIONS = {
     'athlete.auto_info':      'Aggiunge automaticamente un competitore al registro la prima volta che il suo numero arriva da una fonte live. Entrambe le fonti possono essere attive insieme.',
     'athlete.auto_mqtt':      'Acquisisci da MQTT',
     'athlete.auto_table':     'Acquisisci dalla tabella arrivi',
+    'athlete.auto_table_source': 'Tabella sorgente',
     'athlete.auto_table_lines': 'Linee:',
 
     // ── Table settings ────────────────────────────────────────────────────────
     'table.tab_sort':        '↕ Ordina',
     'table.tab_columns':     '📊 Colonne',
     'table.tab_rows':        '☰ Righe',
+    'table.tab_lines':       '👁 Linee',
     'table.show_rank':       'Mostra colonna classifica',
     'table.order_by':        'Ordina per',
     'table.arrival':         'Arrivo (default)',
@@ -441,10 +459,24 @@ const TRANSLATIONS = {
     'card.checkpoints': 'Gestione transiti',
     'card.status':      'Utilità',
     'card.arrivals':    'Lista passaggi',
+    'card.departures':  'Partenze',
+    'card.finish':      'Arrivi',
+    'card.net_times':   'Tempi netti',
+
+    // ── Net times card ─────────────────────────────────────────────────────────
+    'net.start_line':  'Linea partenza',
+    'net.finish_line': 'Linea arrivo',
+    'net.start_col':   'Partenza',
+    'net.finish_col':  'Arrivo',
+    'net.net_time_col': 'Tempo netto',
 
     'table.show_test':     'Mostra colonna prova',
     'table.show_trigger':       'Mostra colonna rilevamento',
     'table.time_precision':  'Decimali precisione tempo',
+    'table.show_line_1':     'Mostra linea 1',
+    'table.show_line_2':     'Mostra linea 2',
+    'table.show_line_3':     'Mostra linea 3',
+    'table.show_line_4':     'Mostra linea 4',
     'table.show_sync_test':  'Mostra righe test sync',
     'table.show_out_of_sensor': 'Mostra righe fuori pressostato',
     'table.show_disabled':   'Mostra righe linee disabilitate',
@@ -598,6 +630,7 @@ function applyTranslations() {
   document.documentElement.lang = _lang;
   // Refresh any dynamic displays that use t() at runtime
   if (typeof updateAllLineDisplays === 'function') updateAllLineDisplays();
+  if (typeof updateArrivalsCardTitles === 'function') updateArrivalsCardTitles();
 }
 
 /**

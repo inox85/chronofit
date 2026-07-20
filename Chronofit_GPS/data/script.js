@@ -55,6 +55,7 @@ const lineColors = {
 // ── Precisione temporale ──────────────────────────────────────
 // 1 = decimi, 2 = centesimi, 3 = millisecondi
 let timePrecision = 3;
+let timePrecision2 = 3;
 
 function onTimePrecisionChange(val) {
   val = Math.max(1, Math.min(3, parseInt(val) || 3));
@@ -66,31 +67,45 @@ function onTimePrecisionChange(val) {
   saveViewPrefs();
 }
 
-function truncateMs(ms) {
-  if (timePrecision === 1) return Math.floor(ms / 100) * 100;
-  if (timePrecision === 2) return Math.floor(ms / 10)  * 10;
+function onTimePrecisionChange2(val) {
+  val = Math.max(1, Math.min(3, parseInt(val) || 3));
+  timePrecision2 = val;
+  document.getElementById("time-precision-2").value = val;
+  refreshAllTimestamps2();
+  recalcDeltaTimes2();
+  recalcElapsedTimes2();
+  saveViewPrefs();
+}
+
+function truncateMs(ms, precision = timePrecision) {
+  if (precision === 1) return Math.floor(ms / 100) * 100;
+  if (precision === 2) return Math.floor(ms / 10)  * 10;
   return ms;
 }
 
-function refreshAllTimestamps() {
-  document.querySelectorAll("#event-table tbody tr").forEach(row => {
+function refreshAllTimestamps(tableId = "event-table", precision = timePrecision) {
+  document.querySelectorAll(`#${tableId} tbody tr`).forEach(row => {
     const tsCell = row.querySelector(".timestamp");
     if (!tsCell || tsCell.querySelector("input")) return;
     const h  = parseInt(row.dataset.hour     ?? 0);
     const m  = parseInt(row.dataset.minute   ?? 0);
     const s  = parseInt(row.dataset.seconds  ?? 0);
     const ms = parseInt(row.dataset.msRaw    ?? 0);
-    tsCell.textContent = formatTime(h, m, s, ms);
+    tsCell.textContent = formatTime(h, m, s, ms, precision);
   });
 }
 
+function refreshAllTimestamps2() {
+  refreshAllTimestamps("event-table-2", timePrecision2);
+}
+
 // Converte i data-* raw di una riga in ms (con troncamento precisione)
-function rowToMs(row) {
+function rowToMs(row, precision = timePrecision) {
   const h  = parseInt(row.dataset.hour    ?? 0);
   const m  = parseInt(row.dataset.minute  ?? 0);
   const s  = parseInt(row.dataset.seconds ?? 0);
   const ms = parseInt(row.dataset.msRaw   ?? 0);
-  return ((h * 3600 + m * 60 + s) * 1000) + truncateMs(ms);
+  return ((h * 3600 + m * 60 + s) * 1000) + truncateMs(ms, precision);
 }
 
 async function cacheAudioFiles(url) {
@@ -241,12 +256,37 @@ const ATHLETES_KEY = "chronofit_athletes";
 const MQTT_ACQUIRE_KEY  = "mqttAcquireCompetitor";
 const TABLE_ACQUIRE_KEY = "tableAcquireCompetitor";
 const TABLE_ACQUIRE_LINES_KEY = "tableAcquireLines";
+const TABLE_ACQUIRE_SOURCE_KEY = "tableAcquireSource";
 
 // Linee che, se abilitato "Acquire from arrivals table", possono innescare l'acquisizione
 function getTableAcquireLines() {
   const raw = localStorage.getItem(TABLE_ACQUIRE_LINES_KEY);
   if (!raw) return [1, 2, 3, 4];
   try { return JSON.parse(raw); } catch (e) { return [1, 2, 3, 4]; }
+}
+
+// Quale tabella arrivi alimenta l'acquisizione automatica. Con una sola
+// card visibile (la maggior parte delle discipline) è sempre "event-table":
+// la scelta ha senso solo quando entrambe le card sono attive (es. Enduro).
+function getTableAcquireSource() {
+  if (!isSecondArrivalsCardActive()) return 'event-table';
+  return localStorage.getItem(TABLE_ACQUIRE_SOURCE_KEY) || 'event-table';
+}
+
+// Mostra/nasconde e sincronizza il selettore "tabella sorgente" in base a
+// quante card Arrivi sono attualmente visibili.
+function updateAutoAcquireSourceUI() {
+  const row = document.getElementById('autoAcquireTableSource');
+  if (!row) return;
+  const dual = isSecondArrivalsCardActive();
+  row.style.display = dual ? '' : 'none';
+  const sel = document.getElementById('autoAcquireSourceSelect');
+  if (sel) sel.value = getTableAcquireSource();
+}
+
+function onAutoAcquireSourceChange() {
+  const sel = document.getElementById('autoAcquireSourceSelect');
+  if (sel) localStorage.setItem(TABLE_ACQUIRE_SOURCE_KEY, sel.value);
 }
 
 function findAthlete(competitorNum) {
@@ -270,6 +310,8 @@ function getAthleteSurname(competitorNum) {
 
 let reverseOrder = false;
 let sortCol = 'arrival';
+let reverseOrder2 = false;
+let sortCol2 = 'arrival';
 
 function parseTimeMs(txt) {
   if (!txt || txt === '—' || txt.trim() === '') return Infinity;
@@ -283,8 +325,8 @@ function parseTimeMs(txt) {
   return neg ? -ms : ms;
 }
 
-function getRowSortVal(row) {
-  switch (sortCol) {
+function getRowSortVal(row, sc = sortCol) {
+  switch (sc) {
     case 'arrival':      return Number(row.dataset.rowId || row.dataset.seq || 0);
     case 'line':         return Number(row.dataset.line) || 0;
     case 'competitor':   return Number(row.dataset.competitor) || 0;
@@ -298,24 +340,28 @@ function getRowSortVal(row) {
   }
 }
 
-function applyTableSort() {
-  const tbody = document.querySelector('#event-table tbody');
+function applyTableSort(tableId = 'event-table', sc = sortCol, rev = reverseOrder, splitsToggleId = 'toggle-splits') {
+  const tbody = document.querySelector(`#${tableId} tbody`);
   if (!tbody) return;
-  const splitsMode = document.getElementById("toggle-splits")?.checked;
+  const splitsMode = document.getElementById(splitsToggleId)?.checked;
   // In splits mode ordina le diff-row visibili; altrimenti le righe normali
   const selector = splitsMode ? 'tr.diff-row' : 'tr:not(.diff-row)';
   const rows = Array.from(tbody.querySelectorAll(selector));
   // Per colonne temporali il verso naturale è crescente (tempo minore = rank migliore)
-  const naturalAsc = ['race-time', 'delta-time', 'elapsed-time', 'event-time'].includes(sortCol);
+  const naturalAsc = ['race-time', 'delta-time', 'elapsed-time', 'event-time'].includes(sc);
   rows.sort((a, b) => {
-    const av = getRowSortVal(a);
-    const bv = getRowSortVal(b);
+    const av = getRowSortVal(a, sc);
+    const bv = getRowSortVal(b, sc);
     let cmp = typeof av === 'string' ? av.localeCompare(bv) : (av - bv);
     // XOR: reverseOrder inverte il verso naturale della colonna
-    return (!reverseOrder !== naturalAsc) ? cmp : -cmp;
+    return (!rev !== naturalAsc) ? cmp : -cmp;
   });
   rows.forEach(r => tbody.appendChild(r));
-  updateRankColumn();
+  updateRankColumn(tableId);
+}
+
+function applyTableSort2() {
+  applyTableSort('event-table-2', sortCol2, reverseOrder2, 'toggle-splits-2');
 }
 
 function toggleColPanel() {
@@ -348,6 +394,21 @@ function onSortChange() {
   saveViewPrefs();
 }
 
+function onSortChange2() {
+  sortCol2 = document.getElementById('sort-col-2').value;
+  applyTableSort2();
+  saveViewPrefs();
+}
+
+// Legge lo stato delle 6 checkbox linea di un tab "Lines" (main o secondaria).
+function _readLinesPrefs(containerId) {
+  const lines = {};
+  document.querySelectorAll(`#${containerId} .line-vis-toggle`).forEach(el => {
+    lines[el.dataset.line] = el.checked;
+  });
+  return lines;
+}
+
 function saveViewPrefs() {
   const prefs = {
     timestamp:     document.getElementById("toggle-timestamp").checked,
@@ -369,18 +430,33 @@ function saveViewPrefs() {
     timePrecision: document.getElementById("time-precision").value,
     sortCol:       sortCol,
     showCompList:  document.getElementById('comp-list-card')?.style.display !== 'none',
+    showSecondArrivalsCard: document.getElementById('secondArrivalsCard')?.style.display !== 'none',
     syncMode:        Number(document.getElementById('sync-method-select')?.value ?? 0),
     keepCompFocus:   document.getElementById('toggle-keep-comp-focus')?.checked ?? false,
     propagateCompetitor: document.getElementById('toggle-propagate-competitor')?.checked ?? false,
-    lines: {}
-  };
-  document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
-    if (btn.tagName === "BUTTON") {
-      prefs.lines[btn.dataset.line] = !btn.classList.contains("inactive");
-    } else if (btn.tagName === "INPUT" && btn.type === "checkbox") {
-      prefs.lines[btn.dataset.line] = btn.checked;
+    lines: _readLinesPrefs('stab-lines'),
+    secondary: {
+      timestamp:     document.getElementById("toggle-timestamp-2")?.checked ?? true,
+      deltaTime:     document.getElementById("toggle-delta-time-2")?.checked ?? true,
+      elapsedTime:   document.getElementById("toggle-elapsed-time-2")?.checked ?? false,
+      penality:      document.getElementById("toggle-penality-2")?.checked ?? false,
+      showDisabled:  document.getElementById("toggle-disabled-rows-2")?.checked ?? true,
+      reverseOrder:  document.getElementById("toggle-reverse-order-2")?.checked ?? false,
+      showRank:      document.getElementById("toggle-rank-2")?.checked ?? false,
+      showIndex:     document.getElementById("toggle-index-2")?.checked ?? true,
+      showLine:      document.getElementById("toggle-line-2")?.checked ?? true,
+      showName:      document.getElementById("toggle-name-2")?.checked ?? false,
+      showSurname:   document.getElementById("toggle-surname-2")?.checked ?? false,
+      showCancelBtn: document.getElementById("toggle-cancel-2")?.checked ?? true,
+      showSendBtn:   document.getElementById("toggle-send-btn-2")?.checked ?? true,
+      showTest:      document.getElementById("toggle-test-2")?.checked ?? false,
+      showTrigger:   document.getElementById("toggle-trigger-2")?.checked ?? false,
+      splitsMode:    document.getElementById("toggle-splits-2")?.checked ?? false,
+      timePrecision: document.getElementById("time-precision-2")?.value ?? 3,
+      sortCol:       sortCol2,
+      lines: _readLinesPrefs('stab-lines-2')
     }
-  });
+  };
   localStorage.setItem(VIEW_PREFS_KEY, JSON.stringify(prefs));
 }
 
@@ -419,21 +495,9 @@ function restoreViewPrefs() {
     }
 
     if (prefs.lines) {
-      document.querySelectorAll(".toggle-btn[data-line]").forEach(btn => {
-        const active = prefs.lines[btn.dataset.line];
-        if (active === undefined) return;
-        if (btn.tagName === "BUTTON") {
-          const color = btn.dataset.color;
-          if (active) {
-            btn.classList.remove("inactive");
-            btn.style.backgroundColor = color;
-          } else {
-            btn.classList.add("inactive");
-            btn.style.backgroundColor = "#ccc";
-          }
-        } else if (btn.tagName === "INPUT" && btn.type === "checkbox") {
-          btn.checked = active;
-        }
+      document.querySelectorAll('#stab-lines .line-vis-toggle').forEach(el => {
+        const active = prefs.lines[el.dataset.line];
+        if (active !== undefined) el.checked = active;
       });
     }
 
@@ -442,6 +506,9 @@ function restoreViewPrefs() {
     if (prefs.showCompList !== undefined) {
       const card = document.getElementById('comp-list-card');
       if (card) card.style.display = prefs.showCompList ? '' : 'none';
+    }
+    if (prefs.showSecondArrivalsCard !== undefined) {
+      setSecondArrivalsCardVisible(prefs.showSecondArrivalsCard);
     }
     if (prefs.syncMode !== undefined) {
       const sel = document.getElementById('sync-method-select');
@@ -458,6 +525,48 @@ function restoreViewPrefs() {
     updateVisibleColumns();
     if (prefs.splitsMode) applyCompetitorSplits();
     else reorderTable();
+
+    // ── Seconda card ──
+    const sec = prefs.secondary;
+    if (sec) {
+      setChk("toggle-timestamp-2",     sec.timestamp);
+      setChk("toggle-delta-time-2",    sec.deltaTime);
+      setChk("toggle-elapsed-time-2",  sec.elapsedTime);
+      setChk("toggle-penality-2",      sec.penality);
+      setChk("toggle-disabled-rows-2", sec.showDisabled);
+      setChk("toggle-reverse-order-2", sec.reverseOrder);
+      setChk("toggle-rank-2",          sec.showRank     ?? false);
+      setChk("toggle-index-2",         sec.showIndex    ?? true);
+      setChk("toggle-line-2",          sec.showLine     ?? true);
+      setChk("toggle-name-2",          sec.showName     ?? false);
+      setChk("toggle-surname-2",       sec.showSurname  ?? false);
+      setChk("toggle-cancel-2",        sec.showCancelBtn ?? true);
+      setChk("toggle-send-btn-2",      sec.showSendBtn  ?? true);
+      setChk("toggle-test-2",          sec.showTest   ?? false);
+      setChk("toggle-trigger-2",       sec.showTrigger     ?? false);
+      setChk("toggle-splits-2",        sec.splitsMode   ?? false);
+      if (sec.reverseOrder !== undefined) reverseOrder2 = sec.reverseOrder;
+
+      if (sec.timePrecision !== undefined) {
+        const val = Math.max(1, Math.min(3, parseInt(sec.timePrecision) || 3));
+        timePrecision2 = val;
+        const el2 = document.getElementById("time-precision-2");
+        if (el2) el2.value = val;
+      }
+
+      if (sec.lines) {
+        document.querySelectorAll('#stab-lines-2 .line-vis-toggle').forEach(el => {
+          const active = sec.lines[el.dataset.line];
+          if (active !== undefined) el.checked = active;
+        });
+      }
+
+      if (sec.sortCol) { sortCol2 = sec.sortCol; const el2 = document.getElementById('sort-col-2'); if (el2) el2.value = sortCol2; }
+
+      updateVisibleColumns2();
+      if (sec.splitsMode) applyCompetitorSplits2();
+      else reorderTable2();
+    }
   } catch(e) {
     console.warn("Errore ripristino preferenze:", e);
   }
@@ -484,6 +593,21 @@ function updateDisciplineNavBtn() {
   if (disc?.prefs.bgColor) {
     document.documentElement.style.setProperty('--background-color', disc.prefs.bgColor);
   }
+}
+
+// Default di fabbrica (identico ai "checked" hardcoded in index.html): usato
+// quando una disciplina non specifica "lines"/"linesSecondary", per evitare
+// che restino le impostazioni "sporche" della disciplina selezionata prima.
+const DEFAULT_LINE_VISIBILITY = { "1": true, "2": true, "3": true, "4": true, "5": false, "6": true };
+
+// Applica un preset di visibilità linee (chiavi "1".."6") alle checkbox di un
+// tab "Lines" (main o secondaria).
+function _applyLinesPrefs(containerId, lines) {
+  const effective = lines || DEFAULT_LINE_VISIBILITY;
+  document.querySelectorAll(`#${containerId} .line-vis-toggle`).forEach(el => {
+    const val = effective[el.dataset.line];
+    if (val !== undefined) el.checked = val;
+  });
 }
 
 function applyDisciplinePreset(prefs) {
@@ -541,9 +665,68 @@ function applyDisciplinePreset(prefs) {
     }
   }
 
+  _applyLinesPrefs('stab-lines', prefs.lines);
+  applyLineFilter();
+
   updateVisibleColumns();
   if (prefs.splitsMode) applyCompetitorSplits(); else { clearCompetitorSplits(); reorderTable(); }
+
+  // Seconda card Arrivi: stessa visibilità e stessi default della prima
+  // (sort/colonne/split), così le due card partono allineate — l'operatore
+  // può poi personalizzarle indipendentemente dal proprio popup impostazioni.
+  if (prefs.showSecondArrivalsCard !== undefined) {
+    setSecondArrivalsCardVisible(prefs.showSecondArrivalsCard);
+  }
+
+  setChk("toggle-timestamp-2",     prefs.timestamp);
+  setChk("toggle-delta-time-2",    prefs.deltaTime);
+  setChk("toggle-elapsed-time-2",  prefs.elapsedTime);
+  setChk("toggle-penality-2",      prefs.penality);
+  setChk("toggle-disabled-rows-2", prefs.showDisabled);
+  setChk("toggle-reverse-order-2", prefs.reverseOrder);
+  setChk("toggle-rank-2",          prefs.showRank   ?? false);
+  setChk("toggle-index-2",         prefs.showIndex  ?? true);
+  setChk("toggle-line-2",          prefs.showLine   ?? true);
+  setChk("toggle-name-2",          prefs.showName   ?? false);
+  setChk("toggle-surname-2",       prefs.showSurname ?? false);
+  setChk("toggle-cancel-2",        prefs.showCancelBtn ?? true);
+  setChk("toggle-send-btn-2",      prefs.showSendBtn ?? true);
+  setChk("toggle-test-2",          prefs.showTest  ?? false);
+  setChk("toggle-trigger-2",       prefs.showTrigger    ?? false);
+  setChk("toggle-splits-2",        prefs.splitsMode  ?? false);
+  if (prefs.reverseOrder !== undefined) reverseOrder2 = prefs.reverseOrder;
+  if (prefs.timePrecision !== undefined) {
+    const val2 = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
+    timePrecision2 = val2;
+    const tp2 = document.getElementById("time-precision-2");
+    if (tp2) tp2.value = val2;
+  }
+  if (prefs.sortCol) {
+    sortCol2 = prefs.sortCol;
+    const sc2 = document.getElementById('sort-col-2');
+    if (sc2) sc2.value = sortCol2;
+  }
+
+  _applyLinesPrefs('stab-lines-2', prefs.linesSecondary);
+  applyLineFilter2();
+
+  updateVisibleColumns2();
+  if (prefs.splitsMode) applyCompetitorSplits2(); else { clearCompetitorSplits2(); reorderTable2(); }
+
+  updateArrivalsCardTitles();
+
   saveViewPrefs();
+}
+
+// Titoli delle due card Arrivi: "Arrivals" di default, personalizzabili per
+// disciplina (es. Enduro → Partenze/Arrivi). Richiamata anche da
+// applyTranslations() (i18n.js) ad ogni cambio lingua.
+function updateArrivalsCardTitles() {
+  const disc = DISCIPLINES.find(d => d.id === activeDisciplineId);
+  const title1 = document.getElementById('arrivalsCardTitle');
+  const title2 = document.getElementById('secondArrivalsCardTitle');
+  if (title1) title1.textContent = t(disc?.prefs?.firstCardTitleKey  || 'card.arrivals');
+  if (title2) title2.textContent = t(disc?.prefs?.secondCardTitleKey || 'card.arrivals');
 }
 
 function renderDisciplineCards() {
@@ -811,16 +994,6 @@ function updateAllLineDisplays() {
 
 // ── Line edit overlay helpers ─────────────────────────────────────────
 
-function _syncLeEye(n) {
-  const actual = document.querySelector(`.toggle-btn[data-line="${n}"]`);
-  const btn    = document.getElementById(`le-eye-${n}`);
-  if (!actual || !btn) return;
-  const color    = lineColors[n] || '#e0e0e0';
-  const inactive = actual.classList.contains('inactive');
-  btn.style.backgroundColor = inactive ? '#aaa' : color;
-  btn.style.opacity          = inactive ? '0.5' : '1';
-}
-
 function _syncLeEnable(n) {
   const actual = document.querySelector(`.line-enable-btn[data-line="${n}"]`);
   const btn    = document.getElementById(`le-enbl-${n}`);
@@ -829,12 +1002,6 @@ function _syncLeEnable(n) {
   const enabled = (actual.dataset.enabled ?? '1') !== '0';
   btn.style.backgroundColor = enabled ? color : '#888';
   btn.style.opacity          = enabled ? '1'  : '0.5';
-}
-
-function leToggle(n) {
-  const actual = document.querySelector(`.toggle-btn[data-line="${n}"]`);
-  if (actual) actual.click();
-  _syncLeEye(n);
 }
 
 function leEnable(n) {
@@ -869,7 +1036,6 @@ function openLineEdit(line, focusField) {
     // Sync send button color
     const snd = document.getElementById(`le-snd-${n}`);
     if (snd) snd.style.backgroundColor = lineColors[n] || '#e0e0e0';
-    _syncLeEye(n);
     _syncLeEnable(n);
   }
 
@@ -1355,23 +1521,14 @@ function handleMessage(data) {
   switch (data.t) {
     case TYPE_CHECKPOINT:
       if (data.ln !== 5) resetLineCompetitor(data.ln);
-      addEventToTable(
-        data.id,
-        data.ln,
-        data.c,
-        data.h,
-        data.m,
-        data.s,
-        data.ms,
-        0,
-        data.e ?? 1,
-        data.p ?? '',
-        data.r ?? '',
-        data.an ?? 0,
-        data.ed ?? 0
-      );
+      addEventToTableFromCheckpoint({ ...data, x: 0 });
       reorderTable();
       if (document.getElementById("toggle-splits").checked) applyCompetitorSplits();
+      if (isSecondArrivalsCardActive()) {
+        reorderTable2();
+        if (document.getElementById("toggle-splits-2")?.checked) applyCompetitorSplits2();
+      }
+      if (data.ln == netTimesStartLine || data.ln == netTimesFinishLine) rebuildNetTimesTable();
       break;
 
     case TYPE_TIME_UPDATE:
@@ -1656,6 +1813,8 @@ let eventRows = []; // esempio
 
 function clearEventTableRows() {
   document.querySelector("#event-table tbody").innerHTML = "";
+  const tbody2 = document.querySelector("#event-table-2 tbody");
+  if (tbody2) tbody2.innerHTML = "";
   eventRows = []; // reset array interno
 }
 
@@ -1677,6 +1836,8 @@ async function populateTableFromSaved() {
     });
 
     reorderTable();
+    if (isSecondArrivalsCardActive()) reorderTable2();
+    rebuildNetTimesTable();
 
   } catch (err) {
     console.error("Errore caricamento checkpoint:", err);
@@ -1733,35 +1894,39 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const cancelled = checkpoint.an ?? 0;
   const edited = checkpoint.ed ?? 0;
 
-  // Richiama la funzione originale
-  addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited);
+  // Suono di notifica: una sola volta per checkpoint, indipendentemente da
+  // quante card (tabelle) riceveranno la riga.
+  if (lineNumber != 5 && lineNumber != 6 && isLineVisible('event-table', lineNumber)) {
+    playSound("/sound" + lineNumber + ".mp3");
+  }
+
+  addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table', timePrecision);
+
+  if (isSecondArrivalsCardActive()) {
+    addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table-2', timePrecision2);
+  }
 }
 
 
-function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, test = '', trigger = '', cancelled = 0, edited = 0) {
+function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, test = '', trigger = '', cancelled = 0, edited = 0, tableId = 'event-table', precision = timePrecision) {
   console.log(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled);
 
-  if (localStorage.getItem(TABLE_ACQUIRE_KEY) === "1" && getTableAcquireLines().includes(Number(lineNumber))) {
+  // Auto-acquisizione competitor da tabella: solo dalla card scelta come
+  // sorgente (Partenze/Arrivi se entrambe visibili, altrimenti l'unica presente).
+  if (tableId === getTableAcquireSource() && localStorage.getItem(TABLE_ACQUIRE_KEY) === "1" && getTableAcquireLines().includes(Number(lineNumber))) {
     maybeAutoAcquireCompetitor(Number(competitor));
   }
 
-  const tbody = document.querySelector("#event-table tbody");
+  const tbody = document.querySelector(`#${tableId} tbody`);
   const row = document.createElement("tr");
 
   row.classList.add("row-enter");
   if (!enabled) row.classList.add("row-disabled");
   if (Number(cancelled)) row.classList.add("row-cancelled");
 
-  const timestamp = formatTime(hour, minute, seconds, millis);
+  const timestamp = formatTime(hour, minute, seconds, millis, precision);
   const index = rowIndex;
 
-  const activeLines = Array.from(document.querySelectorAll(".toggle-btn:not(.inactive)"))
-  .map(btn => btn.dataset.line);
-  
-  if(lineNumber != 5 && lineNumber != 6 && activeLines.map(Number).includes(Number(lineNumber))){
-    playSound("/sound"+lineNumber+".mp3");
-  }
-  
   // Crea la riga HTML
   row.setAttribute("data-line", lineNumber);
   row.setAttribute("data-competitor", competitor);
@@ -1803,7 +1968,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
 
   tbody.appendChild(row);
 
-  updateRankColumn();
+  updateRankColumn(tableId);
 
   // forza reflow (FONDAMENTALE per animazione)
   row.offsetHeight;
@@ -1856,27 +2021,31 @@ function formatDelta(ms, signed) {
 
 
 
-function recalcElapsedTimes() {
+function recalcElapsedTimes(tableId = "event-table", precision = timePrecision) {
   // Ordine cronologico (dal più vecchio al più nuovo) indipendente dalla visualizzazione
   const rows = Array.from(
-    document.querySelectorAll("#event-table tbody tr")
+    document.querySelectorAll(`#${tableId} tbody tr`)
   ).filter(row => row.style.display !== "none")
    .sort((a, b) => (Number(a.dataset.rowId) || 0) - (Number(b.dataset.rowId) || 0));
 
-  const firstTimeMs = rows.length > 0 ? rowToMs(rows[0]) : null;
+  const firstTimeMs = rows.length > 0 ? rowToMs(rows[0], precision) : null;
 
   rows.forEach(row => {
     const deltaCell = row.querySelector(".elapsed-time");
     if (!deltaCell) return;
-    const delta = firstTimeMs - rowToMs(row);
+    const delta = firstTimeMs - rowToMs(row, precision);
     deltaCell.textContent = formatDelta(delta, false);
   });
 }
 
-function recalcDeltaTimes() {
+function recalcElapsedTimes2() {
+  recalcElapsedTimes("event-table-2", timePrecision2);
+}
+
+function recalcDeltaTimes(tableId = "event-table", precision = timePrecision) {
   // Ordine cronologico (dal più vecchio al più nuovo) indipendente dalla visualizzazione
   const rows = Array.from(
-    document.querySelectorAll("#event-table tbody tr")
+    document.querySelectorAll(`#${tableId} tbody tr`)
   ).filter(row => row.style.display !== "none")
    .sort((a, b) => (Number(a.dataset.rowId) || 0) - (Number(b.dataset.rowId) || 0));
 
@@ -1894,7 +2063,7 @@ function recalcDeltaTimes() {
       row.classList.add("negative-row");
     }
 
-    const currentMs = rowToMs(row);
+    const currentMs = rowToMs(row, precision);
 
     if (prevTime === null) {
       deltaCell.textContent = "—";
@@ -1911,19 +2080,43 @@ function recalcDeltaTimes() {
   });
 }
 
+function recalcDeltaTimes2() {
+  recalcDeltaTimes("event-table-2", timePrecision2);
+}
 
-function applyLineFilter() {
-  const activeLines = Array.from(document.querySelectorAll(".toggle-btn"))
-    .filter(el => {
-      if (el.tagName === "BUTTON") return !el.classList.contains("inactive");
-      if (el.tagName === "INPUT" && el.type === "checkbox") return el.checked;
-      return false;
-    })
+// Ritorna se una linea (1-6) è selezionata nel tab "Lines" della tabella
+// indicata (default true se, per qualche motivo, il checkbox non esiste).
+function isLineVisible(tableId, lineNumber) {
+  const containerId = tableId === 'event-table-2' ? 'stab-lines-2' : 'stab-lines';
+  const el = document.querySelector(`#${containerId} .line-vis-toggle[data-line="${lineNumber}"]`);
+  return el ? el.checked : true;
+}
+
+function isSecondArrivalsCardActive() {
+  const card = document.getElementById('secondArrivalsCard');
+  return !!card && card.style.display !== 'none';
+}
+
+// Mostra/nasconde insieme la seconda card Arrivi e la card Tempi netti
+// (entrambe fanno parte dello stesso concetto "doppia linea", es. Enduro).
+// Quando attive, .has-net-times fa passare la riga arrivi ad altezza fissa
+// e i tempi netti a riempire il resto fino a pari con la card Utilità.
+function setSecondArrivalsCardVisible(visible) {
+  const card2 = document.getElementById('secondArrivalsCard');
+  if (card2) card2.style.display = visible ? '' : 'none';
+  const area = document.querySelector('.arrivals-area');
+  if (area) area.classList.toggle('has-net-times', visible);
+  if (typeof updateAutoAcquireSourceUI === 'function') updateAutoAcquireSourceUI();
+}
+
+function applyLineFilter(tableId = 'event-table', linesContainerId = 'stab-lines', disabledToggleId = 'toggle-disabled-rows') {
+  const activeLines = Array.from(document.querySelectorAll(`#${linesContainerId} .line-vis-toggle`))
+    .filter(el => el.checked)
     .map(el => el.dataset.line);
 
-  const showDisabled = document.getElementById("toggle-disabled-rows")?.checked ?? true;
+  const showDisabled = document.getElementById(disabledToggleId)?.checked ?? true;
 
-  const rows = document.querySelectorAll("#event-table tbody tr");
+  const rows = document.querySelectorAll(`#${tableId} tbody tr`);
 
   rows.forEach(row => {
     if (row.classList.contains("diff-row")) return; // gestite da applyCompetitorSplits
@@ -1936,10 +2129,15 @@ function applyLineFilter() {
   });
 
   // 🔥 ricalcolo intertempi DOPO il filtro
-  recalcDeltaTimes();
-  recalcElapsedTimes();
-  updateVisibleColumns();
-  updateRankColumn();
+  const precision = tableId === 'event-table-2' ? timePrecision2 : timePrecision;
+  recalcDeltaTimes(tableId, precision);
+  recalcElapsedTimes(tableId, precision);
+  if (tableId === 'event-table-2') updateVisibleColumns2(); else updateVisibleColumns();
+  updateRankColumn(tableId);
+}
+
+function applyLineFilter2() {
+  applyLineFilter('event-table-2', 'stab-lines-2', 'toggle-disabled-rows-2');
 }
 
 function editRow(row) {
@@ -2093,32 +2291,12 @@ function sendCheckPointRow(data) {
     .catch(err => console.error("Error sending JSON to ESP:", err));
 }
 
-document.querySelectorAll('.toggle-btn').forEach(el => {
-  if (el.tagName === "BUTTON") {
-    const color = el.dataset.color; // colore originale
-    el.style.backgroundColor = color;
+document.querySelectorAll('#stab-lines .line-vis-toggle').forEach(el => {
+  el.addEventListener('change', () => { applyLineFilter(); saveViewPrefs(); });
+});
 
-    el.addEventListener('click', () => {
-      if (el.classList.contains('inactive')) {
-        el.classList.remove('inactive');
-        el.style.backgroundColor = color;
-      } else {
-        el.classList.add('inactive');
-        el.style.backgroundColor = '#ccc';
-      }
-
-      // Aggiorna lo stato active
-      el.classList.toggle('active');
-
-      // Aggiorna il filtro
-      applyLineFilter();
-      saveViewPrefs();
-    });
-  } 
-  else if (el.tagName === "INPUT" && el.type === "checkbox") {
-    // checkbox: basta monitorare il cambio
-    el.addEventListener('change', () => { applyLineFilter(); saveViewPrefs(); });
-  }
+document.querySelectorAll('#stab-lines-2 .line-vis-toggle').forEach(el => {
+  el.addEventListener('change', () => { applyLineFilter2(); saveViewPrefs(); });
 });
 
 
@@ -2383,6 +2561,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Ripristino preferenze visualizzazione...");
     restoreViewPrefs();
+    restoreNetTimesLines();
     updateDisciplineNavBtn();
     updateAllLineDisplays();
 
@@ -2594,75 +2773,52 @@ function onApplyClick() {
   }
 }
 
-function toggleDeltaTimeColumn(show) {
+function toggleDeltaTimeColumn(show, tableId = 'event-table') {
   const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
-
-  // header
-  document.querySelectorAll("th.delta-time-col").forEach(th => {
-    th.style.display = display;
-  });
-
-  // celle
-  document.querySelectorAll("td.delta-time").forEach(td => {
-    td.style.display = display;
-  });
+  document.querySelectorAll(`#${tableId} th.delta-time-col`).forEach(th => th.style.display = display);
+  document.querySelectorAll(`#${tableId} td.delta-time`).forEach(td => td.style.display = display);
 
   // se la mostri, ricalcola i delta
-  if (show) recalcDeltaTimes();
-  if (show) recalcElapsedTimes();
+  if (show) {
+    const precision = tableId === 'event-table-2' ? timePrecision2 : timePrecision;
+    recalcDeltaTimes(tableId, precision);
+    recalcElapsedTimes(tableId, precision);
+  }
 }
+function toggleDeltaTimeColumn2(show) { toggleDeltaTimeColumn(show, 'event-table-2'); }
 
-function toggleTimestampColumn(show) {
+function toggleTimestampColumn(show, tableId = 'event-table') {
   const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
-
-  // header
-  document.querySelectorAll("th.timestamp-col").forEach(th => {
-    th.style.display = display;
-  });
-
-  // celle
-  document.querySelectorAll("td.timestamp").forEach(td => {
-    td.style.display = display;
-  });
-
+  document.querySelectorAll(`#${tableId} th.timestamp-col`).forEach(th => th.style.display = display);
+  document.querySelectorAll(`#${tableId} td.timestamp`).forEach(td => td.style.display = display);
 }
+function toggleTimestampColumn2(show) { toggleTimestampColumn(show, 'event-table-2'); }
 
-function toggleElapsedTimeColumn(show) {
+function toggleElapsedTimeColumn(show, tableId = 'event-table') {
   const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
-
-  // header
-  document.querySelectorAll("th.elapsed-time-col").forEach(th => {
-    th.style.display = display;
-  });
-
-  // celle
-  document.querySelectorAll("td.elapsed-time").forEach(td => {
-    td.style.display = display;
-  });
+  document.querySelectorAll(`#${tableId} th.elapsed-time-col`).forEach(th => th.style.display = display);
+  document.querySelectorAll(`#${tableId} td.elapsed-time`).forEach(td => td.style.display = display);
 
   // se la mostri, ricalcola i delta
-
-  if (show) recalcElapsedTimes();
+  if (show) {
+    const precision = tableId === 'event-table-2' ? timePrecision2 : timePrecision;
+    recalcElapsedTimes(tableId, precision);
+  }
 }
+function toggleElapsedTimeColumn2(show) { toggleElapsedTimeColumn(show, 'event-table-2'); }
 
-
-function togglePenalityColumn(show) {
+function togglePenalityColumn(show, tableId = 'event-table') {
   const display = show ? "table-cell" : "none"; // usa table-cell per rimuovere problemi di layout
-
-  // header
-  document.querySelectorAll("th.penality-col").forEach(th => {
-    th.style.display = display;
-  });
-
-  // celle
-  document.querySelectorAll("td:has(.penality)").forEach(td => {
-    td.style.display = display;
-  });
+  document.querySelectorAll(`#${tableId} th.penality-col`).forEach(th => th.style.display = display);
+  document.querySelectorAll(`#${tableId} td:has(.penality)`).forEach(td => td.style.display = display);
 
   // se la mostri, ricalcola i delta
-
-  if (show) recalcElapsedTimes();
+  if (show) {
+    const precision = tableId === 'event-table-2' ? timePrecision2 : timePrecision;
+    recalcElapsedTimes(tableId, precision);
+  }
 }
+function togglePenalityColumn2(show) { togglePenalityColumn(show, 'event-table-2'); }
 
 
 function reorderTable() {
@@ -2670,18 +2826,25 @@ function reorderTable() {
   applyLineFilter();
 }
 
-function toggleIndexColumn(show) {
-  const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-index-col, td.col-index").forEach(el => el.style.display = d);
+function reorderTable2() {
+  applyTableSort2();
+  applyLineFilter2();
 }
 
-function toggleRankColumn(show) {
+function toggleIndexColumn(show, tableId = 'event-table') {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-rank-col, td.col-rank").forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} th.col-index-col, #${tableId} td.col-index`).forEach(el => el.style.display = d);
 }
+function toggleIndexColumn2(show) { toggleIndexColumn(show, 'event-table-2'); }
 
-function updateRankColumn() {
-  const rows = Array.from(document.querySelectorAll("#event-table tbody tr"));
+function toggleRankColumn(show, tableId = 'event-table') {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll(`#${tableId} th.col-rank-col, #${tableId} td.col-rank`).forEach(el => el.style.display = d);
+}
+function toggleRankColumn2(show) { toggleRankColumn(show, 'event-table-2'); }
+
+function updateRankColumn(tableId = 'event-table') {
+  const rows = Array.from(document.querySelectorAll(`#${tableId} tbody tr`));
   let rank = 0;
   rows.forEach(row => {
     const td = row.querySelector("td.col-rank");
@@ -2690,67 +2853,79 @@ function updateRankColumn() {
   });
 }
 
-function toggleLineColumn(show) {
+function updateRankColumn2() { updateRankColumn('event-table-2'); }
+
+function toggleLineColumn(show, tableId = 'event-table') {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-line-col, td.col-line").forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} th.col-line-col, #${tableId} td.col-line`).forEach(el => el.style.display = d);
+}
+function toggleLineColumn2(show) { toggleLineColumn(show, 'event-table-2'); }
+
+
+function toggleRaceTimeColumn(show, tableId = 'event-table') {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll(`#${tableId} th.race-time-col, #${tableId} td.race-time`).forEach(el => el.style.display = d);
+}
+function toggleRaceTimeColumn2(show) { toggleRaceTimeColumn(show, 'event-table-2'); }
+
+function toggleEditColumn(show, tableId = 'event-table') {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll(`#${tableId} th.col-edit-col`).forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} td:has(.edit-btn)`).forEach(el => el.style.display = d);
 }
 
-
-function toggleRaceTimeColumn(show) {
+function toggleSendColumn(show, tableId = 'event-table') {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.race-time-col, td.race-time").forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} th.col-send-col`).forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} td:has(.send-btn)`).forEach(el => el.style.display = d);
 }
+function toggleSendColumn2(show) { toggleSendColumn(show, 'event-table-2'); }
 
-function toggleEditColumn(show) {
+function toggleCancelColumn(show, tableId = 'event-table') {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-edit-col").forEach(el => el.style.display = d);
-  document.querySelectorAll("td:has(.edit-btn)").forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} th.cancel-col`).forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} td:has(.cancel-btn)`).forEach(el => el.style.display = d);
 }
+function toggleCancelColumn2(show) { toggleCancelColumn(show, 'event-table-2'); }
 
-function toggleSendColumn(show) {
-  const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-send-col").forEach(el => el.style.display = d);
-  document.querySelectorAll("td:has(.send-btn)").forEach(el => el.style.display = d);
-}
-
-function toggleCancelColumn(show) {
-  const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.cancel-col").forEach(el => el.style.display = d);
-  document.querySelectorAll("td:has(.cancel-btn)").forEach(el => el.style.display = d);
-}
-
-function updateTableCorners() {
+function updateTableCorners(tableId = 'event-table') {
   // angoli sempre netti — nessun border-radius inline
-  const ths = document.querySelectorAll("#event-table thead th");
+  const ths = document.querySelectorAll(`#${tableId} thead th`);
   ths.forEach(th => {
     th.style.borderTopLeftRadius = "0";
     th.style.borderTopRightRadius = "0";
   });
 }
 
-function toggleNameColumn(show) {
-  const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-name-col").forEach(el => el.style.display = d);
-  document.querySelectorAll("td.col-name").forEach(el => el.style.display = d);
-  updateTableCorners();
-}
+function updateTableCorners2() { updateTableCorners('event-table-2'); }
 
-function toggleSurnameColumn(show) {
+function toggleNameColumn(show, tableId = 'event-table') {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-surname-col").forEach(el => el.style.display = d);
-  document.querySelectorAll("td.col-surname").forEach(el => el.style.display = d);
-  updateTableCorners();
+  document.querySelectorAll(`#${tableId} th.col-name-col`).forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} td.col-name`).forEach(el => el.style.display = d);
+  updateTableCorners(tableId);
 }
+function toggleNameColumn2(show) { toggleNameColumn(show, 'event-table-2'); }
 
-function toggleTestColumn(show) {
+function toggleSurnameColumn(show, tableId = 'event-table') {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-test-col, td.col-test").forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} th.col-surname-col`).forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} td.col-surname`).forEach(el => el.style.display = d);
+  updateTableCorners(tableId);
 }
+function toggleSurnameColumn2(show) { toggleSurnameColumn(show, 'event-table-2'); }
 
-function toggleTriggerColumn(show) {
+function toggleTestColumn(show, tableId = 'event-table') {
   const d = show ? "table-cell" : "none";
-  document.querySelectorAll("th.col-trigger-col, td.col-trigger").forEach(el => el.style.display = d);
+  document.querySelectorAll(`#${tableId} th.col-test-col, #${tableId} td.col-test`).forEach(el => el.style.display = d);
 }
+function toggleTestColumn2(show) { toggleTestColumn(show, 'event-table-2'); }
+
+function toggleTriggerColumn(show, tableId = 'event-table') {
+  const d = show ? "table-cell" : "none";
+  document.querySelectorAll(`#${tableId} th.col-trigger-col, #${tableId} td.col-trigger`).forEach(el => el.style.display = d);
+}
+function toggleTriggerColumn2(show) { toggleTriggerColumn(show, 'event-table-2'); }
 
 function updateVisibleColumns(){
   toggleTimestampColumn(document.getElementById("toggle-timestamp").checked);
@@ -2770,6 +2945,24 @@ function updateVisibleColumns(){
   updateTableCorners();
 }
 
+function updateVisibleColumns2(){
+  toggleTimestampColumn2(document.getElementById("toggle-timestamp-2").checked);
+  toggleElapsedTimeColumn2(document.getElementById("toggle-elapsed-time-2").checked);
+  toggleDeltaTimeColumn2(document.getElementById("toggle-delta-time-2").checked);
+  togglePenalityColumn2(document.getElementById("toggle-penality-2").checked);
+  toggleIndexColumn2(document.getElementById("toggle-index-2").checked);
+  toggleLineColumn2(document.getElementById("toggle-line-2").checked);
+  toggleRaceTimeColumn2(document.getElementById("toggle-splits-2").checked);
+  toggleRankColumn2(document.getElementById("toggle-rank-2").checked);
+  toggleNameColumn2(document.getElementById("toggle-name-2")?.checked ?? false);
+  toggleSurnameColumn2(document.getElementById("toggle-surname-2")?.checked ?? false);
+  toggleCancelColumn2(document.getElementById("toggle-cancel-2")?.checked ?? true);
+  toggleSendColumn2(document.getElementById("toggle-send-btn-2").checked);
+  toggleTestColumn2(document.getElementById("toggle-test-2")?.checked ?? false);
+  toggleTriggerColumn2(document.getElementById("toggle-trigger-2")?.checked ?? false);
+  updateTableCorners2();
+}
+
 // ── Competitor splits ─────────────────────────────────────────
 function rowToMsExact(row) {
   const h  = parseInt(row.dataset.hour    ?? 0);
@@ -2779,9 +2972,101 @@ function rowToMsExact(row) {
   return ((h * 3600 + m * 60 + s) * 1000) + ms;
 }
 
-function applyCompetitorSplits() {
-  clearCompetitorSplits();
-  const tbody = document.querySelector("#event-table tbody");
+// ── Tempi netti (terza card) ──────────────────────────────────────────────
+// Calcola, per ogni concorrente, il tempo netto tra una linea di partenza e
+// una di arrivo scelte liberamente dall'operatore. Legge sempre da
+// #event-table (che riceve ogni checkpoint indipendentemente da filtri di
+// visibilità/seconda card), quindi non dipende da quali linee sono mostrate
+// nelle due card sopra.
+
+const NET_TIMES_KEY = 'chronofit_net_times_lines';
+let netTimesStartLine = 1;
+let netTimesFinishLine = 3;
+
+function _rowAbsoluteTimeText(row) {
+  const h  = parseInt(row.dataset.hour    ?? 0);
+  const m  = parseInt(row.dataset.minute  ?? 0);
+  const s  = parseInt(row.dataset.seconds ?? 0);
+  const ms = parseInt(row.dataset.msRaw   ?? 0);
+  return formatTime(h, m, s, ms, 3);
+}
+
+// Prima riga (cronologicamente) per ogni concorrente su una data linea,
+// escludendo le diff-row sintetiche dello split-mode e le righe senza
+// concorrente assegnato.
+function _firstRowPerCompetitor(lineNumber) {
+  const rows = Array.from(document.querySelectorAll('#event-table tbody tr:not(.diff-row)'))
+    .filter(r => String(r.dataset.line) === String(lineNumber))
+    .filter(r => { const c = (r.dataset.competitor ?? '').trim(); return c && c !== '0'; })
+    .sort((a, b) => rowToMsExact(a) - rowToMsExact(b));
+
+  const byCompetitor = {};
+  rows.forEach(r => {
+    const c = r.dataset.competitor;
+    if (!(c in byCompetitor)) byCompetitor[c] = r;
+  });
+  return byCompetitor;
+}
+
+function rebuildNetTimesTable() {
+  const tbody = document.querySelector('#net-times-table tbody');
+  if (!tbody) return;
+
+  const startByComp  = _firstRowPerCompetitor(netTimesStartLine);
+  const finishByComp = _firstRowPerCompetitor(netTimesFinishLine);
+  const allComps = new Set([...Object.keys(startByComp), ...Object.keys(finishByComp)]);
+
+  tbody.innerHTML = '';
+
+  Array.from(allComps)
+    .sort((a, b) => Number(a) - Number(b))
+    .forEach(comp => {
+      const sRow = startByComp[comp];
+      const fRow = finishByComp[comp];
+
+      const sText = sRow ? _rowAbsoluteTimeText(sRow) : '—';
+      const fText = fRow ? _rowAbsoluteTimeText(fRow) : '—';
+
+      let netText = '—';
+      if (sRow && fRow) {
+        const diffMs = rowToMsExact(fRow) - rowToMsExact(sRow);
+        if (diffMs >= 0) {
+          const dH  = Math.floor(diffMs / 3600000);
+          const dM  = Math.floor((diffMs % 3600000) / 60000);
+          const dS  = Math.floor((diffMs % 60000) / 1000);
+          const dMs = diffMs % 1000;
+          netText = formatTime(dH, dM, dS, dMs, 3);
+        }
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${comp}</td><td>${sText}</td><td>${fText}</td><td>${netText}</td>`;
+      tbody.appendChild(tr);
+    });
+}
+
+function onNetTimesLinesChange() {
+  netTimesStartLine  = Number(document.getElementById('net-line-start')?.value  ?? 1);
+  netTimesFinishLine = Number(document.getElementById('net-line-finish')?.value ?? 3);
+  localStorage.setItem(NET_TIMES_KEY, JSON.stringify({ start: netTimesStartLine, finish: netTimesFinishLine }));
+  rebuildNetTimesTable();
+}
+
+function restoreNetTimesLines() {
+  try {
+    const raw = localStorage.getItem(NET_TIMES_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved.start)  { netTimesStartLine  = saved.start;  const el = document.getElementById('net-line-start');  if (el) el.value = saved.start; }
+    if (saved.finish) { netTimesFinishLine = saved.finish; const el = document.getElementById('net-line-finish'); if (el) el.value = saved.finish; }
+  } catch(e) {
+    console.warn('Errore ripristino linee tempi netti:', e);
+  }
+}
+
+function applyCompetitorSplits(tableId = 'event-table') {
+  clearCompetitorSplits(tableId);
+  const tbody = document.querySelector(`#${tableId} tbody`);
   const allRows = Array.from(tbody.querySelectorAll("tr:not(.diff-row)"));
 
   // Raggruppa per competitor (tutte le righe, indipendentemente dalla visibilità)
@@ -2824,7 +3109,7 @@ function applyCompetitorSplits() {
           <td class="col-name">${getAthleteName(comp)}</td>
           <td class="col-surname">${getAthleteSurname(comp)}</td>
           <td class="timestamp">—</td>
-          <td class="race-time diff-time">${formatTime(dH, dM, dS, dMs)}</td>
+          <td class="race-time diff-time">${formatTime(dH, dM, dS, dMs, tableId === 'event-table-2' ? timePrecision2 : timePrecision)}</td>
           <td class="delta-time">—</td>
           <td class="elapsed-time">—</td>
           <td></td><td></td><td></td>
@@ -2852,18 +3137,26 @@ function applyCompetitorSplits() {
     }
   });
 
-  updateVisibleColumns();
-  applyTableSort();   // applica l'ordinamento corrente sulle diff-row appena create
+  if (tableId === 'event-table-2') { updateVisibleColumns2(); applyTableSort2(); }
+  else { updateVisibleColumns(); applyTableSort(); }   // applica l'ordinamento corrente sulle diff-row appena create
 }
 
-function clearCompetitorSplits() {
-  const tbody = document.querySelector("#event-table tbody");
+function applyCompetitorSplits2() {
+  applyCompetitorSplits('event-table-2');
+}
+
+function clearCompetitorSplits(tableId = 'event-table') {
+  const tbody = document.querySelector(`#${tableId} tbody`);
   tbody.querySelectorAll(".diff-row").forEach(r => r.remove());
   tbody.querySelectorAll(".diff-hidden").forEach(r => {
     r.classList.remove("diff-hidden");
     r.style.display = "";
   });
-  applyLineFilter();
+  if (tableId === 'event-table-2') applyLineFilter2(); else applyLineFilter();
+}
+
+function clearCompetitorSplits2() {
+  clearCompetitorSplits('event-table-2');
 }
 
 document
@@ -2947,6 +3240,65 @@ document.getElementById("toggle-test")
 document.getElementById("toggle-trigger")
 .addEventListener("change", e => { toggleTriggerColumn(e.target.checked); saveViewPrefs(); });
 
+// ── Stessi listener per la seconda card Arrivi ──
+
+document.getElementById("toggle-delta-time-2")
+.addEventListener("change", e => { toggleDeltaTimeColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-timestamp-2")
+.addEventListener("change", e => { toggleTimestampColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-elapsed-time-2")
+.addEventListener("change", e => { toggleElapsedTimeColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-penality-2")
+.addEventListener("change", e => { togglePenalityColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-disabled-rows-2")
+.addEventListener("change", () => { applyLineFilter2(); saveViewPrefs(); });
+
+document.getElementById("toggle-reverse-order-2")
+.addEventListener("change", e => {
+  reverseOrder2 = e.target.checked;
+  reorderTable2();
+  saveViewPrefs();
+});
+
+document.getElementById("toggle-rank-2")
+.addEventListener("change", e => { toggleRankColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-index-2")
+.addEventListener("change", e => { toggleIndexColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-line-2")
+.addEventListener("change", e => { toggleLineColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-splits-2")
+.addEventListener("change", e => {
+  toggleRaceTimeColumn2(e.target.checked);
+  if (e.target.checked) applyCompetitorSplits2();
+  else clearCompetitorSplits2();
+  saveViewPrefs();
+});
+
+document.getElementById("toggle-name-2")
+.addEventListener("change", e => { toggleNameColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-surname-2")
+.addEventListener("change", e => { toggleSurnameColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-send-btn-2")
+.addEventListener("change", e => { toggleSendColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-cancel-2")
+.addEventListener("change", e => { toggleCancelColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-test-2")
+.addEventListener("change", e => { toggleTestColumn2(e.target.checked); saveViewPrefs(); });
+
+document.getElementById("toggle-trigger-2")
+.addEventListener("change", e => { toggleTriggerColumn2(e.target.checked); saveViewPrefs(); });
+
 
 
 // seleziona l'intera riga dell'header
@@ -2965,83 +3317,108 @@ document.getElementById("closeTablePopup").addEventListener("click", () => {
   document.getElementById("tableSettingsOverlay").style.display = "none";
 });
 
+// Stessa cosa per la seconda card Arrivi (se presente in pagina).
+const headerRow2 = document.querySelector("#event-table-2 thead tr");
+if (headerRow2) {
+  headerRow2.style.cursor = "pointer";
+  headerRow2.addEventListener("click", () => {
+    document.getElementById("tableSettingsOverlay2").style.display = "flex";
+  });
+}
 
+document.getElementById("closeTablePopup2")?.addEventListener("click", () => {
+  document.getElementById("tableSettingsOverlay2").style.display = "none";
+});
+
+
+// Aggiorna, in TUTTE le tabelle attive (main + seconda se presente), la riga
+// con quell'indice. Un checkpoint può avere una riga indipendente in ciascuna
+// card (stesso data-row-id), quindi un solo edit va rispecchiato in entrambe.
 function updateRowFromBroadcas(data) {
-  const table = document.getElementById("event-table");
-  const tbody = table.querySelector("tbody");
-
-  console.log("Aggiorno riga da broadcast:", data);
-
   const index = Number(data.id);
   if (isNaN(index)) return;
 
-  // trova la riga tramite la colonna # (indice), non la prima <td> in assoluto:
-  // quando la colonna rank è visibile è lei la prima cella, non l'indice.
-  const row = [...tbody.rows].find(r =>
-    Number(r.querySelector("td.col-index")?.textContent) === index
-  );
+  const tableIds = ['event-table'];
+  if (isSecondArrivalsCardActive()) tableIds.push('event-table-2');
 
-  if (!row) {
-    console.warn("Row not found:", index);
-    return;
-  }
+  tableIds.forEach(tableId => {
+    const table = document.getElementById(tableId);
+    const tbody = table?.querySelector("tbody");
+    if (!tbody) return;
 
-  // se la riga è in edit, evita overwrite
-  if (row.querySelector("input")) {
-    console.warn("Row in edit, skipped:", index);
-    return;
-  }
-
-  // aggiorna competitor
-  const competitorCell = row.querySelector(".col-competitor");
-  if (competitorCell && data.c !== undefined) {
-    competitorCell.textContent = data.c > 0 ? data.c : '';
-    const nc = row.querySelector(".col-name");
-    const sc = row.querySelector(".col-surname");
-    if (nc) nc.textContent = getAthleteName(data.c);
-    if (sc) sc.textContent = getAthleteSurname(data.c);
-  }
-
-  // aggiorna event time
-  const timeCell = row.querySelector(".timestamp");
-  if (timeCell) {
-    row.dataset.hour    = data.h ?? row.dataset.hour;
-    row.dataset.minute  = data.m ?? row.dataset.minute;
-    row.dataset.seconds = data.s ?? row.dataset.seconds;
-    row.dataset.msRaw   = data.ms ?? row.dataset.msRaw;
-    timeCell.textContent = formatTime(
-      parseInt(row.dataset.hour),
-      parseInt(row.dataset.minute),
-      parseInt(row.dataset.seconds),
-      parseInt(row.dataset.msRaw)
+    // trova la riga tramite la colonna # (indice), non la prima <td> in assoluto:
+    // quando la colonna rank è visibile è lei la prima cella, non l'indice.
+    const row = [...tbody.rows].find(r =>
+      Number(r.querySelector("td.col-index")?.textContent) === index
     );
-  }
 
-  const penalityBtn = row.querySelector(".penality");
-  if (penalityBtn) {
-    penalityBtn.textContent = data.x;
-  }
+    if (!row) {
+      console.warn("Row not found:", index, "in", tableId);
+      return;
+    }
 
-  if (data.an !== undefined) {
-    const cancelled = Number(data.an) ? "1" : "0";
-    row.dataset.cancelled = cancelled;
-    row.querySelector(".cancel-btn")?.classList.toggle("active", cancelled === "1");
-    row.classList.toggle("row-cancelled", cancelled === "1");
-  }
-  if (data.ed !== undefined) {
-    row.dataset.edited = Number(data.ed) ? "1" : "0";
-  }
+    // se la riga è in edit, evita overwrite
+    if (row.querySelector("input")) {
+      console.warn("Row in edit, skipped:", index);
+      return;
+    }
+
+    // aggiorna competitor
+    const competitorCell = row.querySelector(".col-competitor");
+    if (competitorCell && data.c !== undefined) {
+      competitorCell.textContent = data.c > 0 ? data.c : '';
+      row.dataset.competitor = data.c;
+      const nc = row.querySelector(".col-name");
+      const sc = row.querySelector(".col-surname");
+      if (nc) nc.textContent = getAthleteName(data.c);
+      if (sc) sc.textContent = getAthleteSurname(data.c);
+    }
+
+    // aggiorna event time
+    const timeCell = row.querySelector(".timestamp");
+    if (timeCell) {
+      row.dataset.hour    = data.h ?? row.dataset.hour;
+      row.dataset.minute  = data.m ?? row.dataset.minute;
+      row.dataset.seconds = data.s ?? row.dataset.seconds;
+      row.dataset.msRaw   = data.ms ?? row.dataset.msRaw;
+      const precision = tableId === 'event-table-2' ? timePrecision2 : timePrecision;
+      timeCell.textContent = formatTime(
+        parseInt(row.dataset.hour),
+        parseInt(row.dataset.minute),
+        parseInt(row.dataset.seconds),
+        parseInt(row.dataset.msRaw),
+        precision
+      );
+    }
+
+    const penalityBtn = row.querySelector(".penality");
+    if (penalityBtn) {
+      penalityBtn.textContent = data.x;
+    }
+
+    if (data.an !== undefined) {
+      const cancelled = Number(data.an) ? "1" : "0";
+      row.dataset.cancelled = cancelled;
+      row.querySelector(".cancel-btn")?.classList.toggle("active", cancelled === "1");
+      row.classList.toggle("row-cancelled", cancelled === "1");
+    }
+    if (data.ed !== undefined) {
+      row.dataset.edited = Number(data.ed) ? "1" : "0";
+    }
+
+    if (tableId === 'event-table-2') { recalcDeltaTimes2(); recalcElapsedTimes2(); }
+    else { recalcDeltaTimes(); recalcElapsedTimes(); }
+  });
 
   showGeneralPopup(`Row ${index} has been updated`,  lineColors[data.ln]);
-  recalcDeltaTimes();
-  recalcElapsedTimes();
+  rebuildNetTimesTable();
 }
 
-function formatTime(h, m, s, ms) {
-  const msT = truncateMs(ms);
-  const msStr = timePrecision === 1
+function formatTime(h, m, s, ms, precision = timePrecision) {
+  const msT = truncateMs(ms, precision);
+  const msStr = precision === 1
     ? String(Math.floor(msT / 100))
-    : timePrecision === 2
+    : precision === 2
       ? String(Math.floor(msT / 10)).padStart(2, "0")
       : String(msT).padStart(3, "0");
   return (
@@ -3109,14 +3486,14 @@ function normalizeHeader(text) {
     .trim();
 }
 
-function downloadActualView() {
+function downloadActualView(tableId = 'event-table') {
 
   const now = new Date();
   const timestamp = now.toISOString().replace(/[:.]/g,'-');
 
   filename = `table_view_${timestamp}.csv`;
 
-  const table = document.getElementById("event-table");
+  const table = document.getElementById(tableId);
   if (!table) return;
 
   const isVisible = (el) => {
@@ -3193,6 +3570,10 @@ function downloadActualView() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function downloadActualView2() {
+  downloadActualView('event-table-2');
 }
 
 function clearWifiError() {
@@ -3665,6 +4046,7 @@ function updateAutoAcquireLinesUI() {
   autoAcquireLineCbs.forEach(cb => cb.disabled = !enabled);
 }
 updateAutoAcquireLinesUI();
+updateAutoAcquireSourceUI();
 
 // ── Long press helper ──
 function addLongPress(el, callback, ms = 600) {
@@ -3705,11 +4087,24 @@ function addLongPress(el, callback, ms = 600) {
 // (registrazione long press spostata in DOMContentLoaded)
 
 // ── Table actions popup ──
+// Quale card ha aperto il popup azioni: decide su quale tabella agiscono
+// "Download view" e "Send via email" (le altre azioni sono globali al device).
+let tableActionsTarget = 'event-table';
+
 function openTableActions() {
+  tableActionsTarget = 'event-table';
+  document.getElementById("tableActionsOverlay").style.display = "flex";
+}
+function openTableActions2() {
+  tableActionsTarget = 'event-table-2';
   document.getElementById("tableActionsOverlay").style.display = "flex";
 }
 function closeTableActions() {
   document.getElementById("tableActionsOverlay").style.display = "none";
+}
+function downloadActualViewTarget() {
+  if (tableActionsTarget === 'event-table-2') downloadActualView2();
+  else downloadActualView();
 }
 
 // ── Modal open / close ──
@@ -3723,6 +4118,7 @@ function openAthleteModal(lineNumber) {
   document.getElementById("athlete-load-status").textContent = "";
   switchAthleteTab("select");
   renderAthleteList("");
+  updateAutoAcquireSourceUI();
   document.getElementById("athleteOverlay").style.display = "flex";
 }
 
@@ -3942,6 +4338,15 @@ function switchSettingsTab(tab) {
   overlay.querySelectorAll(".tab-content").forEach(c =>
     c.style.display = "none");
   document.getElementById(`stab-${tab}`).style.display = "";
+}
+
+function switchSettingsTab2(tab) {
+  const overlay = document.getElementById("tableSettingsOverlay2");
+  overlay.querySelectorAll(".tab-btn").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.tab === tab));
+  overlay.querySelectorAll(".tab-content").forEach(c =>
+    c.style.display = "none");
+  document.getElementById(`stab-${tab}-2`).style.display = "";
 }
 
 // ── Athlete list rendering ──

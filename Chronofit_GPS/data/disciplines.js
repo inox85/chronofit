@@ -35,6 +35,13 @@
 //                  (device non vuoto) ma ancora senza competitor assegnato (0)
 //   tableAcquireCompetitor  bool — default del toggle "Acquire from arrivals table"
 //                  nel registro competitori (tab Auto)
+//   showSecondArrivalsCard  bool — mostra la seconda card Arrivi (linee, ordinamento
+//                  e colonne configurabili indipendentemente dalla prima card)
+//   firstCardTitleKey   chiave i18n per il titolo della prima card (default "card.arrivals")
+//   secondCardTitleKey  chiave i18n per il titolo della seconda card (default "card.arrivals")
+//   lines               { "1".."6": bool } — linee visibili di default nella prima card
+//                  (tab "Lines" del popup impostazioni tabella). Chiavi omesse = invariate.
+//   linesSecondary      come "lines" ma per la seconda card Arrivi
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DISCIPLINES = [
@@ -54,7 +61,8 @@ const DISCIPLINES = [
       showCompList: true,   syncMode: 0,
       bgColor: "#f5f5f5",
       propagateCompetitor: false,
-      tableAcquireCompetitor: false
+      tableAcquireCompetitor: false,
+      showSecondArrivalsCard: false
     }
   },
 
@@ -73,7 +81,8 @@ const DISCIPLINES = [
       showCompList: true,   syncMode: 1,
       bgColor: "#f2e3c4",
       propagateCompetitor: false,
-      tableAcquireCompetitor: false
+      tableAcquireCompetitor: false,
+      showSecondArrivalsCard: false
     }
   },
 
@@ -83,16 +92,21 @@ const DISCIPLINES = [
     label: { en: "Enduro", it: "Enduro" },
     prefs: {
       sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false,  showLine: false,
-      showName: true,       showSurname: false,
-      timestamp: false,     deltaTime: true,   elapsedTime: false,
+      showRank: false,      showIndex: false,  showLine: true,
+      showName: false,      showSurname: false,
+      timestamp: true,      deltaTime: false,  elapsedTime: false,
       penality: false,      showCancelBtn: false,  showSendBtn: false,
       showTest: false,    showTrigger: false,
-      splitsMode: true,    timePrecision: 3,  showDisabled: false,
+      splitsMode: false,   timePrecision: 3,  showDisabled: false,
       showCompList: true,  syncMode: 2,
       bgColor: "#d9f0d9",
       propagateCompetitor: true,
-      tableAcquireCompetitor: true
+      tableAcquireCompetitor: true,
+      showSecondArrivalsCard: true,
+      firstCardTitleKey: "card.departures",
+      secondCardTitleKey: "card.finish",
+      lines: { "1": true, "2": true, "3": false, "4": false, "5": false, "6": true },
+      linesSecondary: { "1": false, "2": false, "3": true, "4": true, "5": false, "6": true }
     }
   },
 
@@ -111,7 +125,8 @@ const DISCIPLINES = [
       showCompList: false,  syncMode: 2,
       bgColor: "#d7ebf8",
       propagateCompetitor: true,
-      tableAcquireCompetitor: false
+      tableAcquireCompetitor: false,
+      showSecondArrivalsCard: false
     }
   },
 

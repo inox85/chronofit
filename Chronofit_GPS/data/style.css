@@ -119,11 +119,91 @@ span{
   min-height: 0;
 }
 
+/* Area arrivi: le due card Arrivi affiancate sopra + (quando presente, es.
+   Enduro) tempi netti a piena larghezza sotto. Prende il posto che
+   occupavano le due card Arrivi come item dirette di .container.
+   Default (nessun tempi netti, es. Regolarità): la riga arrivi riempie
+   tutta l'altezza disponibile, pari alla card Utilità.
+   Con .has-net-times (Enduro): la riga arrivi ha altezza fissa, e i tempi
+   netti riempiono il resto fino a pari con la card Utilità.
+   max-height: 652px — pari al fondo reale di .comp-list-card (max-height
+   640px + 12px di padding verticale, essendo content-box), così né questa
+   né la card Utilità si espandono oltre l'altezza della finestra di
+   scelta competitor. */
+.arrivals-area {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 620px;
+  gap: 5px;    /* pari al gap tra Checkpoints e Utilità nel sidebar */
+  min-height: 0;
+  max-height: 652px;
+}
+
+.arrivals-row {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  gap: 5px;    /* pari al gap tra Checkpoints e Utilità nel sidebar */
+  min-height: 0;
+}
+
+.arrivals-area.has-net-times .arrivals-row {
+  flex: 0 0 280px;
+}
+
+.card.table-card.net-times-card {
+  display: none;
+}
+
+.arrivals-area.has-net-times .card.table-card.net-times-card {
+  display: flex;
+  flex: 1;
+}
+
+/* Le card dentro .arrivals-row/.arrivals-area non usano più i vincoli di
+   larghezza/altezza pensati per quando erano item dirette di .container.
+   box-sizing:border-box — .card ha padding:15px in content-box, che altrimenti
+   si somma a width/flex-basis facendo eccedere la card dal proprio contenitore
+   (visibile soprattutto su .net-times-card, con width:100% pieno). */
+.arrivals-row .card.table-card {
+  flex: 1 1 50%;
+  min-width: 300px;
+  max-width: none;
+  min-height: 0;
+  max-height: none;
+  height: auto;    /* .card impone height:fit-content — qui serve auto perché lo stretch funzioni */
+  box-sizing: border-box;
+}
+
+.card.table-card.net-times-card {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  max-height: none;
+  height: auto;
+  box-sizing: border-box;
+}
+
+.net-times-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.net-times-controls select {
+  padding: 4px 6px;
+}
+
 /* Angoli della prima/ultima cella dell'header — nessun arrotondamento */
-#event-table thead th:first-child,
-#event-table thead th:last-child,
-#event-table tbody td:first-child,
-#event-table tbody td:last-child {
+.arrivals-table thead th:first-child,
+.arrivals-table thead th:last-child,
+.arrivals-table tbody td:first-child,
+.arrivals-table tbody td:last-child {
   border-radius: 0;
 }
 
@@ -213,6 +293,23 @@ span{
     width: 100%;
     box-sizing: border-box;
   }
+  .container > .arrivals-area {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+  /* Le tre card (arrivi, arrivi 2, tempi netti) si impilano tutte a colonna */
+  .arrivals-row {
+    flex-direction: column;
+  }
+  /* Su mobile tutto si impila e scorre in verticale: niente altezza fissa */
+  .arrivals-area.has-net-times .arrivals-row {
+    flex: none;
+  }
+  .arrivals-row .card.table-card,
+  .card.table-card.net-times-card {
+    min-height: 400px;
+  }
 
   /* sidebar-stack si estende per riempire lo spazio residuo accanto alla comp-list-card
      (o tutta la sidebar quando la comp-list-card è nascosta) */
@@ -247,6 +344,7 @@ span{
   .comp-list-card  { order: unset; }
   .sidebar-stack   { order: unset; }
   .table-card      { order: unset; }
+  .arrivals-area   { order: unset; }
 }
 
 h2 {
@@ -309,7 +407,7 @@ hr {
 /* ======= SHARED TABLE HEADER ======= */
 
 .checkpoint-settings th,
-#event-table th {
+.arrivals-table th {
   background-color: #333;
   color: #fff;
   text-align: center;
@@ -323,7 +421,7 @@ hr {
 
 /* divisore bianco tra celle header (sfondo scuro) */
 .checkpoint-settings th:not(:last-child)::after,
-#event-table th:not(:last-child)::after {
+.arrivals-table th:not(:last-child)::after {
   content: '';
   position: absolute;
   right: 0;
@@ -335,7 +433,7 @@ hr {
 
 /* divisore scuro tra celle body (sfondo chiaro) */
 .checkpoint-settings td:not(:last-child)::after,
-#event-table td:not(:last-child)::after {
+.arrivals-table td:not(:last-child)::after {
   content: '';
   position: absolute;
   right: 0;
@@ -974,7 +1072,7 @@ input:checked + .slider:before {
   margin-bottom: 10px;
 }
 
-#event-table {
+.arrivals-table {
   width: 100%;
   border-collapse: collapse;
   font-family: 'Nunito';
@@ -982,18 +1080,18 @@ input:checked + .slider:before {
   table-layout: auto;
 }
 
-#event-table td {
+.arrivals-table td {
   height: 36px;
   vertical-align: middle;
   text-align: center;
   position: relative;
 }
 
-#event-table tr:nth-child(even) {
+.arrivals-table tr:nth-child(even) {
   background-color: #fafafa;
 }
 
-#event-table tr:hover {
+.arrivals-table tr:hover {
   background-color: #f0f0f0;
   transition: background-color 0.2s;
 }
@@ -1008,12 +1106,12 @@ input:checked + .slider:before {
 }
 
 /* --- Pulsante nella tabella event-table --- */
-#event-table td:last-child {
+.arrivals-table td:last-child {
   align-items: center;
   justify-content: center;
 }
 
-#event-table .send-btn .edit-btn {
+.arrivals-table .send-btn .edit-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1030,7 +1128,7 @@ input:checked + .slider:before {
   transition: opacity 0.2s, background-color 0.2s;
 }
 
-#event-table .send-btn:hover {
+.arrivals-table .send-btn:hover {
   opacity: 0.8;
   background-color: #aa9b9b;
 }
@@ -1319,35 +1417,35 @@ input:checked + .slider:before {
   color: #000; 
 }
 
-#event-table tr.row-enter td {
+.arrivals-table tr.row-enter td {
   opacity: 0;
 }
 
-#event-table tr.row-enter td > * {
+.arrivals-table tr.row-enter td > * {
   transform: translateY(-10px);
 }
 
-#event-table tr.row-enter.row-enter-active td {
+.arrivals-table tr.row-enter.row-enter-active td {
   opacity: 1;
   transition: opacity 1000ms ease;
 }
 
-#event-table tr.row-enter.row-enter-active td > * {
+.arrivals-table tr.row-enter.row-enter-active td > * {
   transform: translateY(0);
   transition: transform 1000ms ease;
 }
 
-#event-table tbody tr.negative-row td {
+.arrivals-table tbody tr.negative-row td {
   background-color: #888;
 }
 
-#event-table tbody tr.row-disabled td {
+.arrivals-table tbody tr.row-disabled td {
   background-color: #b0b0b0;
   color: #555;
   font-style: italic;
 }
 
-#event-table tbody tr.row-cancelled td {
+.arrivals-table tbody tr.row-cancelled td {
   text-decoration: line-through;
   color: #a33;
 }
@@ -1368,10 +1466,10 @@ input:checked + .slider:before {
 .col-surname-col, td.col-surname { display: none; }
 
 /* ── Competitor splits diff rows ── */
-#event-table tbody tr.diff-row td {
+.arrivals-table tbody tr.diff-row td {
   font-style: italic;
 }
-#event-table tbody tr.diff-row .diff-time {
+.arrivals-table tbody tr.diff-row .diff-time {
   font-weight: 700;
 }
 
@@ -1659,7 +1757,7 @@ input:checked + .slider:before {
 }
 
 /* Assicurati che anche tr non abbia altezza fissa */
-#event-table tr {
+.arrivals-table tr {
   vertical-align: middle;
 }
 
@@ -1826,6 +1924,7 @@ input#mqtt-broker-pass {
   gap: 5px;
   min-height: 0;
   flex: 0 0 auto;
+  max-height: 652px;   /* pari al fondo reale di .comp-list-card, v. .arrivals-area */
 }
 
 /* ── Checkpoint settings card — si adatta al contenuto, niente scroll ── */
@@ -1860,11 +1959,16 @@ input#mqtt-broker-pass {
   letter-spacing: 0.3px;
 }
 
-/* ── Notifications card ── */
+/* ── Notifications card ──
+   flex:1 (invece di 0 0 auto) + overflow-y:auto: si adatta allo spazio
+   rimasto dentro .sidebar-stack dopo la card Checkpoints, invece di
+   eccedere l'altezza disponibile (il che spingerebbe il suo fondo oltre
+   quello di .container, disallineandolo dalla colonna arrivi a destra). */
 .card.notifications-card {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   padding: 6px 10px;
-  min-height: 161px;
+  min-height: 0;
+  overflow-y: auto;
 }
 .card.notifications-card #status {
   margin-top: 25px;
@@ -2058,16 +2162,16 @@ input#mqtt-broker-pass {
 }
 
 /* ── Long-press row edit indicator ── */
-#event-table tbody tr {
+.arrivals-table tbody tr {
   cursor: pointer;
   user-select: none;
 }
-#event-table tbody tr.row-editing {
+.arrivals-table tbody tr.row-editing {
   outline: 2px solid #3b55ff;
   outline-offset: -2px;
   cursor: default;
 }
-#event-table tbody tr.row-editing input {
+.arrivals-table tbody tr.row-editing input {
   cursor: text;
   font: inherit;
   text-align: center;
