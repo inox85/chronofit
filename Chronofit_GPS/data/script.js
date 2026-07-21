@@ -1897,8 +1897,12 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const edited = checkpoint.ed ?? 0;
 
   // Suono di notifica: una sola volta per checkpoint, indipendentemente da
-  // quante card (tabelle) riceveranno la riga.
-  if (lineNumber != 5 && lineNumber != 6 && isLineVisible('event-table', lineNumber)) {
+  // quante card (tabelle) riceveranno la riga. Visibile in almeno una delle
+  // due card Arrivi (non solo la prima: con Enduro le linee di arrivo
+  // possono essere visibili solo nella seconda card).
+  const audibleInMain      = isLineVisible('event-table', lineNumber);
+  const audibleInSecondary = isSecondArrivalsCardActive() && isLineVisible('event-table-2', lineNumber);
+  if (lineNumber != 5 && lineNumber != 6 && (audibleInMain || audibleInSecondary)) {
     playSound("/sound" + lineNumber + ".mp3");
   }
 
