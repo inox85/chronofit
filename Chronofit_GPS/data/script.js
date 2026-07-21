@@ -1816,6 +1816,8 @@ function clearEventTableRows() {
   const tbody2 = document.querySelector("#event-table-2 tbody");
   if (tbody2) tbody2.innerHTML = "";
   eventRows = []; // reset array interno
+  const netTbody = document.querySelector("#net-times-table tbody");
+  if (netTbody) netTbody.innerHTML = "";
 }
 
 async function populateTableFromSaved() {
