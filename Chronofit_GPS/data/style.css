@@ -66,6 +66,11 @@ span{
   margin: 0;
   margin-top: 60px;
   padding: 5px;
+  /* Altezza di contenuto realmente disponibile per i figli diretti (navbar
+     60px + padding verticale 5px+5px). Usata dai cap in px di arrivals-area/
+     sidebar-stack/comp-list-card per restringersi su schermi bassi invece
+     di eccedere e venire tagliati dall'overflow:hidden qui sopra. */
+  --content-h: calc(100vh - 70px);
 }
 
 .time-header {
@@ -126,10 +131,10 @@ span{
    tutta l'altezza disponibile, pari alla card Utilità.
    Con .has-net-times (Enduro): la riga arrivi ha altezza fissa, e i tempi
    netti riempiono il resto fino a pari con la card Utilità.
-   max-height: 652px — pari al fondo reale di .comp-list-card (max-height
-   640px + 12px di padding verticale, essendo content-box), così né questa
-   né la card Utilità si espandono oltre l'altezza della finestra di
-   scelta competitor. */
+   max-height: var(--content-h) — pari all'altezza realmente disponibile
+   in .container (navbar + padding già sottratti), così la card riempie
+   tutto lo schermo invece di fermarsi a un tetto fisso, restando comunque
+   pari a .sidebar-stack/.comp-list-card. */
 .arrivals-area {
   order: 2;
   display: flex;
@@ -138,7 +143,7 @@ span{
   min-width: 620px;
   gap: 5px;    /* pari al gap tra Checkpoints e Utilità nel sidebar */
   min-height: 0;
-  max-height: 652px;
+  max-height: var(--content-h);
 }
 
 .arrivals-row {
@@ -1042,7 +1047,7 @@ input:checked + .slider:before {
 }
 
 .card.table-card {
-  min-height: 622px;
+  min-height: min(622px, var(--content-h, 622px));
   display: flex;
   flex-direction: column;
   flex: 1 1 350px;
@@ -1524,7 +1529,7 @@ input:checked + .slider:before {
 
 /* ── Comp-list card: stretch all'altezza totale della sidebar-stack ── */
 .comp-list-card {
-  max-height: 640px;
+  max-height: calc(var(--content-h) - 12px);   /* -12px: padding verticale della card stessa, content-box */
   flex: 0 0 90px;
   min-width: 70px;
   max-width: 110px;
@@ -1764,7 +1769,7 @@ input:checked + .slider:before {
 
 .status-icon {
   font-weight: bold;
-  font-size: 20px;
+  font-size: 40px;
   cursor: pointer;
 }
 
@@ -1911,7 +1916,7 @@ input#mqtt-broker-pass {
   gap: 5px;
   min-height: 0;
   flex: 0 0 auto;
-  max-height: 652px;   /* pari al fondo reale di .comp-list-card, v. .arrivals-area */
+  max-height: var(--content-h);   /* pari al fondo reale di .comp-list-card, v. .arrivals-area */
 }
 
 /* ── Checkpoint settings card — si adatta al contenuto, niente scroll ── */
