@@ -26,7 +26,7 @@ Connessione WebSocket per la ricezione in tempo reale degli eventi del dispositi
 
 **Messaggi inviati dal server (JSON):**
 
-| Campo `t` | Evento | Descrizione |
+| Campo `t` | Evento | Descrizione | 
 |---|---|---|
 | `0` | Nuovo passaggio | Checkpoint registrato (trigger HW o manuale) |
 | `1` | Aggiornamento orologio | Tick ogni secondo con orario corrente |

@@ -180,6 +180,8 @@ const TRANSLATIONS = {
     'net.finish_col':  'Finish',
     'net.net_time_col': 'Net time',
     'net.pair_col':    'Lines',
+    'net.pair1_enabled': 'Enable pair 1',
+    'net.pair2_enabled': 'Enable pair 2',
     'net.start_line_2':  'Start line 2',
     'net.finish_line_2': 'Finish line 2',
 
@@ -243,6 +245,7 @@ const TRANSLATIONS = {
     'discipline.title': 'Select discipline',
 
     // ── About overlay ─────────────────────────────────────────────────────────
+    'about.firmware': '🔧 Firmware',
     'about.manual':   '📄 Manual',
     'about.wifi_fix': '🖥️ WiFi fix tool',
 
@@ -473,6 +476,8 @@ const TRANSLATIONS = {
     'net.finish_col':  'Arrivo',
     'net.net_time_col': 'Tempo netto',
     'net.pair_col':    'Linee',
+    'net.pair1_enabled': 'Abilita coppia 1',
+    'net.pair2_enabled': 'Abilita coppia 2',
     'net.start_line_2':  'Linea partenza 2',
     'net.finish_line_2': 'Linea arrivo 2',
 
@@ -536,6 +541,7 @@ const TRANSLATIONS = {
     'discipline.title': 'Seleziona disciplina',
 
     // ── About overlay ─────────────────────────────────────────────────────────
+    'about.firmware': '🔧 Firmware',
     'about.manual':   '📄 Manuale',
     'about.wifi_fix': '🖥️ Strumento fix WiFi',
 

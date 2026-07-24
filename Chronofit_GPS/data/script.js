@@ -1393,6 +1393,19 @@ function clearSession() {
   };
 }
 
+// Popup "About": mostra anche la versione firmware del device, letta al volo
+// da /systemSettings (lo stesso endpoint usato da admin.html/update.html).
+function openAboutOverlay() {
+  document.getElementById('aboutOverlay').style.display = 'flex';
+  const el = document.getElementById('aboutFwVersion');
+  if (!el) return;
+  el.textContent = '—';
+  fetch('/systemSettings')
+    .then(res => res.json())
+    .then(data => { el.textContent = data.fwVer ? ('v' + data.fwVer) : '—'; })
+    .catch(err => console.error('Errore lettura versione firmware:', err));
+}
+
 let wakeLock = null;
 
 async function keepScreenOn() {
@@ -2990,6 +3003,9 @@ let netTimesStartLine = 1;
 let netTimesFinishLine = 3;
 let netTimesStartLine2 = 2;
 let netTimesFinishLine2 = 4;
+let netTimesSortCol = 'competitor';
+let netTimesPair1Enabled = true;
+let netTimesPair2Enabled = true;
 
 function _rowAbsoluteTimeText(row) {
   const h  = parseInt(row.dataset.hour    ?? 0);
@@ -3016,8 +3032,9 @@ function _firstRowPerCompetitor(lineNumber) {
   return byCompetitor;
 }
 
-// Testo (Start/Finish/Net) per una singola coppia di linee, dato il set di
-// righe-per-competitor già calcolato per ciascuna linea.
+// Testo (Start/Finish/Net) + valori grezzi in ms (per l'ordinamento) per una
+// singola coppia di linee, dato il set di righe-per-competitor già calcolato
+// per ciascuna linea.
 function _netPairText(startByComp, finishByComp, comp) {
   const sRow = startByComp[comp];
   const fRow = finishByComp[comp];
@@ -3026,6 +3043,7 @@ function _netPairText(startByComp, finishByComp, comp) {
   const fText = fRow ? _rowAbsoluteTimeText(fRow) : '—';
 
   let netText = '—';
+  let netMs = null;
   if (sRow && fRow) {
     const diffMs = rowToMsExact(fRow) - rowToMsExact(sRow);
     if (diffMs >= 0) {
@@ -3034,9 +3052,25 @@ function _netPairText(startByComp, finishByComp, comp) {
       const dS  = Math.floor((diffMs % 60000) / 1000);
       const dMs = diffMs % 1000;
       netText = formatTime(dH, dM, dS, dMs, 3);
+      netMs = diffMs;
     }
   }
-  return { sText, fText, netText };
+  const startMs  = sRow ? rowToMsExact(sRow) : null;
+  const finishMs = fRow ? rowToMsExact(fRow) : null;
+  return { sText, fText, netText, startMs, finishMs, netMs };
+}
+
+// Chiave numerica di ordinamento per una riga già calcolata, secondo la
+// colonna scelta dall'operatore (competitor di default). I valori assenti
+// (nessun passaggio su quella linea) vanno sempre in fondo.
+function _netSortKey(comp, p) {
+  switch (netTimesSortCol) {
+    case 'start':  return p.startMs  ?? Infinity;
+    case 'finish': return p.finishMs ?? Infinity;
+    case 'net':    return p.netMs    ?? Infinity;
+    case 'competitor':
+    default:       return Number(comp);
+  }
 }
 
 // Righe di un singolo gruppo (coppia di linee) da appendere alla tabella,
@@ -3048,9 +3082,9 @@ function _netGroupRows(tbody, startLine, finishLine) {
   const pairLabel = `L${startLine}→L${finishLine}`;
 
   Array.from(comps)
-    .sort((a, b) => Number(a) - Number(b))
-    .forEach(comp => {
-      const p = _netPairText(startByComp, finishByComp, comp);
+    .map(comp => ({ comp, p: _netPairText(startByComp, finishByComp, comp) }))
+    .sort((a, b) => (_netSortKey(a.comp, a.p) - _netSortKey(b.comp, b.p)) || (Number(a.comp) - Number(b.comp)))
+    .forEach(({ comp, p }) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${comp}</td><td>${pairLabel}</td><td>${p.sText}</td><td>${p.fText}</td><td>${p.netText}</td>`;
       tbody.appendChild(tr);
@@ -3062,8 +3096,41 @@ function rebuildNetTimesTable() {
   if (!tbody) return;
 
   tbody.innerHTML = '';
-  _netGroupRows(tbody, netTimesStartLine,  netTimesFinishLine);
-  _netGroupRows(tbody, netTimesStartLine2, netTimesFinishLine2);
+  if (netTimesPair1Enabled) _netGroupRows(tbody, netTimesStartLine,  netTimesFinishLine);
+  if (netTimesPair2Enabled) _netGroupRows(tbody, netTimesStartLine2, netTimesFinishLine2);
+}
+
+// Abilita/disabilita una delle due coppie partenza/arrivo: quando disattiva,
+// le sue righe scompaiono dalla tabella e le select restano visibili ma
+// disattivate (stessa UX del toggle "Acquire from arrivals table").
+function updateNetPairEnabledUI(pairNum) {
+  const enabled  = pairNum === 2 ? netTimesPair2Enabled : netTimesPair1Enabled;
+  const startId  = pairNum === 2 ? 'net-line-start-2'  : 'net-line-start';
+  const finishId = pairNum === 2 ? 'net-line-finish-2' : 'net-line-finish';
+  [startId, finishId].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = !enabled;
+    el.style.opacity = enabled ? '1' : '0.4';
+  });
+}
+
+function onNetPairEnabledChange(pairNum) {
+  const id = pairNum === 2 ? 'net-pair2-enabled' : 'net-pair1-enabled';
+  const val = document.getElementById(id)?.checked ?? true;
+  if (pairNum === 2) netTimesPair2Enabled = val; else netTimesPair1Enabled = val;
+  updateNetPairEnabledUI(pairNum);
+  _saveNetTimesPrefs();
+  rebuildNetTimesTable();
+}
+
+function _saveNetTimesPrefs() {
+  localStorage.setItem(NET_TIMES_KEY, JSON.stringify({
+    start: netTimesStartLine, finish: netTimesFinishLine,
+    start2: netTimesStartLine2, finish2: netTimesFinishLine2,
+    sortCol: netTimesSortCol,
+    enabled: netTimesPair1Enabled, enabled2: netTimesPair2Enabled
+  }));
 }
 
 function onNetTimesLinesChange() {
@@ -3071,11 +3138,22 @@ function onNetTimesLinesChange() {
   netTimesFinishLine  = Number(document.getElementById('net-line-finish')?.value   ?? 3);
   netTimesStartLine2  = Number(document.getElementById('net-line-start-2')?.value  ?? 2);
   netTimesFinishLine2 = Number(document.getElementById('net-line-finish-2')?.value ?? 4);
-  localStorage.setItem(NET_TIMES_KEY, JSON.stringify({
-    start: netTimesStartLine, finish: netTimesFinishLine,
-    start2: netTimesStartLine2, finish2: netTimesFinishLine2
-  }));
+  _saveNetTimesPrefs();
   rebuildNetTimesTable();
+}
+
+function onNetTimesSortChange() {
+  netTimesSortCol = document.getElementById('net-sort-col')?.value ?? 'competitor';
+  _saveNetTimesPrefs();
+  rebuildNetTimesTable();
+}
+
+function switchNetTimesSettingsTab(tab) {
+  const overlay = document.getElementById('netTimesSettingsOverlay');
+  overlay.querySelectorAll('.tab-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.tab === tab));
+  overlay.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById(`nettab-${tab}`).style.display = '';
 }
 
 function restoreNetTimesLines() {
@@ -3087,6 +3165,11 @@ function restoreNetTimesLines() {
     if (saved.finish)  { netTimesFinishLine  = saved.finish;  const el = document.getElementById('net-line-finish');   if (el) el.value = saved.finish; }
     if (saved.start2)  { netTimesStartLine2  = saved.start2;  const el = document.getElementById('net-line-start-2');  if (el) el.value = saved.start2; }
     if (saved.finish2) { netTimesFinishLine2 = saved.finish2; const el = document.getElementById('net-line-finish-2'); if (el) el.value = saved.finish2; }
+    if (saved.sortCol) { netTimesSortCol     = saved.sortCol; const el = document.getElementById('net-sort-col');      if (el) el.value = saved.sortCol; }
+    if (saved.enabled  !== undefined) { netTimesPair1Enabled = saved.enabled;  const el = document.getElementById('net-pair1-enabled'); if (el) el.checked = saved.enabled; }
+    if (saved.enabled2 !== undefined) { netTimesPair2Enabled = saved.enabled2; const el = document.getElementById('net-pair2-enabled'); if (el) el.checked = saved.enabled2; }
+    updateNetPairEnabledUI(1);
+    updateNetPairEnabledUI(2);
   } catch(e) {
     console.warn('Errore ripristino linee tempi netti:', e);
   }
@@ -3356,6 +3439,20 @@ if (headerRow2) {
 
 document.getElementById("closeTablePopup2")?.addEventListener("click", () => {
   document.getElementById("tableSettingsOverlay2").style.display = "none";
+});
+
+// Stessa cosa per la card Tempi netti: click sull'header apre il popup con
+// le linee delle due coppie partenza/arrivo e la colonna di ordinamento.
+const netTimesHeaderRow = document.querySelector("#net-times-table thead tr");
+if (netTimesHeaderRow) {
+  netTimesHeaderRow.style.cursor = "pointer";
+  netTimesHeaderRow.addEventListener("click", () => {
+    document.getElementById("netTimesSettingsOverlay").style.display = "flex";
+  });
+}
+
+document.getElementById("closeNetTimesSettings")?.addEventListener("click", () => {
+  document.getElementById("netTimesSettingsOverlay").style.display = "none";
 });
 
 

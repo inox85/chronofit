@@ -186,19 +186,6 @@ span{
   box-sizing: border-box;
 }
 
-.net-times-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding: 0 0 8px 0;
-  font-size: 14px;
-}
-
-.net-times-controls select {
-  padding: 4px 6px;
-}
-
 /* Angoli della prima/ultima cella dell'header — nessun arrotondamento */
 .arrivals-table thead th:first-child,
 .arrivals-table thead th:last-child,

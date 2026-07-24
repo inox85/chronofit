@@ -260,7 +260,7 @@ void writeCheckpointFromMqtt(const char* jsonPayload) {
     const char* flag = checkpointFlagLabel(lineNum, lMode, cancelled, edited);
     printFormatted(
       sessionRowIndex,
-      src[LINE_NUMBER_FIELD].as<String>(),
+      String(lineNum),
       src[COMPETITOR_FIELD].as<int>(),
       src[HOUR_FIELD].as<int>(),
       src[MINUTE_FIELD].as<int>(),
