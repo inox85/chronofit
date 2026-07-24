@@ -3079,14 +3079,13 @@ function _netGroupRows(tbody, startLine, finishLine) {
   const startByComp  = _firstRowPerCompetitor(startLine);
   const finishByComp = _firstRowPerCompetitor(finishLine);
   const comps = new Set([...Object.keys(startByComp), ...Object.keys(finishByComp)]);
-  const pairLabel = `L${startLine}→L${finishLine}`;
 
   Array.from(comps)
     .map(comp => ({ comp, p: _netPairText(startByComp, finishByComp, comp) }))
     .sort((a, b) => (_netSortKey(a.comp, a.p) - _netSortKey(b.comp, b.p)) || (Number(a.comp) - Number(b.comp)))
     .forEach(({ comp, p }) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${comp}</td><td>${pairLabel}</td><td>${p.sText}</td><td>${p.fText}</td><td>${p.netText}</td>`;
+      tr.innerHTML = `<td>${comp}</td><td>${p.sText}</td><td>${p.fText}</td><td>${p.netText}</td>`;
       tbody.appendChild(tr);
     });
 }
