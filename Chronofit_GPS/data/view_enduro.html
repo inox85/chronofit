@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0">
+  <title>Chronofit</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+  <!-- COLORE DELLA STATUS BAR SU ANDROID -->
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="/manifest.json">
+  <script src="/i18n.js"></script>
+
+  <!-- Questa pagina non ha la navbar della GUI operatore (che riserva 60px
+       in cima e per cui .container/.card.table-card hanno vincoli di
+       larghezza/altezza pensati per condividere lo spazio con una sidebar):
+       qui la card deve riempire l'intero schermo. -->
+  <style>
+    #view_container {
+      height: 100vh;
+    }
+    #view_container .card.table-card {
+      max-width: none;
+      max-height: none;
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="splash">
+    <div class="splash-logos">
+      <img src="/logo.webp" alt="Logo">
+      <div class="splash-divider"></div>
+      <img src="/sponsor.png" alt="Sponsor">
+    </div>
+    <p class="splash-label" data-i18n="splash.loading">Loading session...</p>
+  </div>
+
+  <div id="popup" class="popup hidden">No connection to Chronofit device</div>
+
+  <div id="view_container" class="container">
+
+    <div class="card table-card">
+
+      <div class="time-header">
+        <img src="/logo-black.png" alt="Logo" class="sponsor-logo">
+        <img src="/sponsor.png" alt="Sponsor" class="sponsor-img">
+      </div>
+
+      <div class="card-title" data-i18n="card.net_times">Net times</div>
+
+      <div class="table-wrapper">
+        <table id="net-times-table" class="arrivals-table">
+          <thead>
+            <tr>
+              <th data-i18n="th.competitor">Comp.</th>
+              <th data-i18n="net.start_col">Start</th>
+              <th data-i18n="net.finish_col">Finish</th>
+              <th data-i18n="net.net_time_col">Net time</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Tabella dati grezzi, mai mostrata: memorizza i checkpoint ricevuti via
+       WebSocket/sessione salvata, usata solo per calcolare i tempi netti. -->
+  <table id="event-table" style="display:none"><tbody></tbody></table>
+
+  <!-- Settings popup della card Tempi netti (identico a quello della GUI
+       principale): linee usate per le due coppie partenza/arrivo + colonna
+       di ordinamento delle righe risultanti. -->
+  <div id="netTimesSettingsOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:85vh;">
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="lines" data-i18n="table.tab_lines" onclick="switchNetTimesSettingsTab('lines')">👁 Lines</button>
+        <button class="tab-btn"        data-tab="sort"  data-i18n="table.tab_sort"  onclick="switchNetTimesSettingsTab('sort')">↕ Sort</button>
+      </div>
+
+      <!-- Tab: Lines -->
+      <div id="nettab-lines" class="tab-content" style="overflow-y:auto; flex:1;">
+        <div class="toggle-row">
+          <span data-i18n="net.pair1_enabled">Enable pair 1</span>
+          <label class="switch">
+            <input type="checkbox" id="net-pair1-enabled" checked onchange="onNetPairEnabledChange(1)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="input-row">
+          <label for="net-line-start" data-i18n="net.start_line" style="font-size:20px;">Start line</label>
+          <select id="net-line-start" onchange="onNetTimesLinesChange()">
+            <option value="1">L1</option>
+            <option value="2">L2</option>
+            <option value="3">L3</option>
+            <option value="4">L4</option>
+            <option value="5">L5</option>
+            <option value="6">L6</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <label for="net-line-finish" data-i18n="net.finish_line" style="font-size:20px;">Finish line</label>
+          <select id="net-line-finish" onchange="onNetTimesLinesChange()">
+            <option value="1">L1</option>
+            <option value="2">L2</option>
+            <option value="3" selected>L3</option>
+            <option value="4">L4</option>
+            <option value="5">L5</option>
+            <option value="6">L6</option>
+          </select>
+        </div>
+        <hr class="divider">
+        <div class="toggle-row">
+          <span data-i18n="net.pair2_enabled">Enable pair 2</span>
+          <label class="switch">
+            <input type="checkbox" id="net-pair2-enabled" checked onchange="onNetPairEnabledChange(2)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="input-row">
+          <label for="net-line-start-2" data-i18n="net.start_line_2" style="font-size:20px;">Start line 2</label>
+          <select id="net-line-start-2" onchange="onNetTimesLinesChange()">
+            <option value="1">L1</option>
+            <option value="2" selected>L2</option>
+            <option value="3">L3</option>
+            <option value="4">L4</option>
+            <option value="5">L5</option>
+            <option value="6">L6</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <label for="net-line-finish-2" data-i18n="net.finish_line_2" style="font-size:20px;">Finish line 2</label>
+          <select id="net-line-finish-2" onchange="onNetTimesLinesChange()">
+            <option value="1">L1</option>
+            <option value="2">L2</option>
+            <option value="3">L3</option>
+            <option value="4" selected>L4</option>
+            <option value="5">L5</option>
+            <option value="6">L6</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tab: Sort -->
+      <div id="nettab-sort" class="tab-content" style="display:none; overflow-y:auto; flex:1;">
+        <div class="input-row">
+          <label for="net-sort-col" data-i18n="table.order_by" style="font-size:20px;">Order by</label>
+          <select id="net-sort-col" onchange="onNetTimesSortChange()">
+            <option value="competitor" data-i18n="th.competitor">Comp.</option>
+            <option value="start"      data-i18n="net.start_col">Start</option>
+            <option value="finish"     data-i18n="net.finish_col">Finish</option>
+            <option value="net"        data-i18n="net.net_time_col">Net time</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button class="big-button" data-i18n="btn.close" id="closeNetTimesSettings">Close</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/script_view_enduro.js"></script>
+
+</body>
+</html>

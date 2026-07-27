@@ -273,6 +273,44 @@ function getTableAcquireSource() {
   return localStorage.getItem(TABLE_ACQUIRE_SOURCE_KEY) || 'event-table';
 }
 
+// ── Auto-annullamento trigger ravvicinati sulla stessa linea ────────────────
+// A differenza del debounce hardware (gestito lato firmware sul singolo
+// sensore), qui la soglia è impostabile dall'operatore: se due battute sulla
+// STESSA linea arrivano a una distanza inferiore alla soglia, la seconda viene
+// marcata automaticamente come annullata (stesso meccanismo del pulsante 🚫
+// manuale, compreso l'invio al firmware).
+const AUTO_CANCEL_KEY = "chronofit_auto_cancel";
+let autoCancelEnabled = false;
+let autoCancelThresholdMs = 500;
+
+// Ultimo istante (ms nel giorno) di checkpoint ricevuto per ciascuna linea.
+let lastLineCheckpointMs = {};
+
+function restoreAutoCancelSettings() {
+  try {
+    const raw = localStorage.getItem(AUTO_CANCEL_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved.enabled !== undefined) autoCancelEnabled = !!saved.enabled;
+      if (saved.thresholdMs !== undefined) autoCancelThresholdMs = Number(saved.thresholdMs) || 0;
+    }
+  } catch (e) {
+    console.warn("Errore ripristino impostazioni auto-annulla:", e);
+  }
+  const toggle = document.getElementById("autoCancelToggle");
+  if (toggle) toggle.checked = autoCancelEnabled;
+  const input = document.getElementById("autoCancelThreshold");
+  if (input) input.value = autoCancelThresholdMs;
+}
+
+function onAutoCancelChange() {
+  autoCancelEnabled = document.getElementById("autoCancelToggle")?.checked ?? false;
+  autoCancelThresholdMs = Number(document.getElementById("autoCancelThreshold")?.value) || 0;
+  localStorage.setItem(AUTO_CANCEL_KEY, JSON.stringify({
+    enabled: autoCancelEnabled, thresholdMs: autoCancelThresholdMs
+  }));
+}
+
 // Mostra/nasconde e sincronizza il selettore "tabella sorgente" in base a
 // quante card Arrivi sono attualmente visibili.
 function updateAutoAcquireSourceUI() {
@@ -1843,7 +1881,7 @@ async function populateTableFromSaved() {
       if (line.trim().length > 0) {
         try {
           const checkpoint = JSON.parse(line);
-          addEventToTableFromCheckpoint(checkpoint);
+          addEventToTableFromCheckpoint(checkpoint, false);
         } catch (err) {
           console.warn("Errore parsing JSON:", err, line);
         }
@@ -1892,8 +1930,11 @@ function sendToPrinter(text, cr) {
     });
 }
 
-// Overload compatibile: accetta un oggetto checkpoint
-function addEventToTableFromCheckpoint(checkpoint) {
+// Overload compatibile: accetta un oggetto checkpoint. isLive=false durante il
+// replay della sessione salvata all'avvio: aggiorna comunque il tracking per
+// linea (serve da base per il primo checkpoint live), ma non invia annullamenti
+// automatici al firmware per righe già storiche.
+function addEventToTableFromCheckpoint(checkpoint, isLive = true) {
   // checkpoint deve avere: index, lineNumber, competitor, hour, minute, millis
   const rowIndex = checkpoint.id;
   const lineNumber = checkpoint.ln;
@@ -1906,8 +1947,23 @@ function addEventToTableFromCheckpoint(checkpoint) {
   const enabled = checkpoint.e ?? 1;
   const test    = checkpoint.p ?? '';
   const trigger = checkpoint.r ?? '';
-  const cancelled = checkpoint.an ?? 0;
+  const alreadyCancelled = checkpoint.an ?? 0;
   const edited = checkpoint.ed ?? 0;
+
+  // Auto-annullamento: se il delta dalla precedente battuta sulla STESSA linea
+  // è sotto la soglia configurata, marca automaticamente la riga come annullata
+  // (a differenza del debounce hardware lato firmware, qui la soglia è
+  // impostabile dall'operatore e gestita interamente lato web).
+  const currentMs = ((hour * 3600 + minute * 60 + second) * 1000) + millis;
+  const prevMs = lastLineCheckpointMs[lineNumber];
+  let autoCancelled = false;
+  if (autoCancelEnabled && prevMs !== undefined) {
+    const delta = currentMs - prevMs;
+    if (delta >= 0 && delta < autoCancelThresholdMs) autoCancelled = true;
+  }
+  lastLineCheckpointMs[lineNumber] = currentMs;
+
+  const cancelled = alreadyCancelled || (autoCancelled ? 1 : 0);
 
   // Suono di notifica: una sola volta per checkpoint, indipendentemente da
   // quante card (tabelle) riceveranno la riga. Visibile in almeno una delle
@@ -1919,10 +1975,17 @@ function addEventToTableFromCheckpoint(checkpoint) {
     playSound("/sound" + lineNumber + ".mp3");
   }
 
-  addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table', timePrecision);
+  const row = addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table', timePrecision);
 
   if (isSecondArrivalsCardActive()) {
     addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table-2', timePrecision2);
+  }
+
+  // Notifica il firmware (e gli altri client) solo se SIAMO noi a introdurre
+  // l'annullamento adesso, dal vivo — non durante il replay della sessione
+  // salvata, e non se il firmware l'aveva già marcata annullata.
+  if (isLive && autoCancelled && !alreadyCancelled && row) {
+    sendUpdatedCheckPointRow(row);
   }
 }
 
@@ -1996,6 +2059,8 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
     row.classList.remove("row-enter");
     row.classList.remove("row-enter-active");
   }, 1500);
+
+  return row;
 }
 
 function timestampToMs(ts) {
@@ -2581,6 +2646,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Ripristino preferenze visualizzazione...");
     restoreViewPrefs();
     restoreNetTimesLines();
+    restoreAutoCancelSettings();
     updateDisciplineNavBtn();
     updateAllLineDisplays();
 

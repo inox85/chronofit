@@ -258,6 +258,8 @@ const TRANSLATIONS = {
     'main.print':            'Print on paper',
     'main.buzzer':           'Buzzer enable',
     'main.fullscreen':       'Fullscreen',
+    'main.auto_cancel':      'Auto-cancel close triggers',
+    'main.auto_cancel_threshold': 'Threshold (ms)',
     'main.error_send':       'Error sending data',
 
     // ── Checkpoint settings table headers ─────────────────────────────────────
@@ -554,6 +556,8 @@ const TRANSLATIONS = {
     'main.print':            'Stampa su carta',
     'main.buzzer':           'Abilita buzzer',
     'main.fullscreen':       'Schermo intero',
+    'main.auto_cancel':      'Auto-annulla battute ravvicinate',
+    'main.auto_cancel_threshold': 'Soglia (ms)',
     'main.error_send':       'Errore invio dati',
 
     // ── Checkpoint settings table headers ─────────────────────────────────────
