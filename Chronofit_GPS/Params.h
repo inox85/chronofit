@@ -1,7 +1,7 @@
 // Stati sincronizzazione orologio
 //#define VER2
 
-#define FW_VERSION "2.8.0a"
+#define FW_VERSION "2.9.0a"
 #define DEV_NAME    "Chronofit"
 #define HW_NAME      "HW VER. 2.0"
 

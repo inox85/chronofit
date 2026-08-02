@@ -63,7 +63,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 200,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -72,6 +72,47 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "frmMain.cs [Progettazione]",
+              "DocumentMoniker": "C:\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
+              "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
+              "ToolTip": "C:\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs [Progettazione]",
+              "RelativeToolTip": "ChronoUpdater\\frmMain.cs [Progettazione]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-20T11:42:53.82Z",
+              "EditorCaption": " [Progettazione]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "AssemblyLoader.cs",
+              "DocumentMoniker": "C:\\Users\\innocenti\\AppData\\Local\\Temp\\.vsdbgsrc\\d3dcc91b7aa33e7d96d9904a880bba49de505f8b3a6e276fa2a5755178f7e733\\AssemblyLoader.cs",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\Users\\innocenti\\AppData\\Local\\Temp\\.vsdbgsrc\\d3dcc91b7aa33e7d96d9904a880bba49de505f8b3a6e276fa2a5755178f7e733\\AssemblyLoader.cs",
+              "ToolTip": "C:\\Users\\innocenti\\AppData\\Local\\Temp\\.vsdbgsrc\\d3dcc91b7aa33e7d96d9904a880bba49de505f8b3a6e276fa2a5755178f7e733\\AssemblyLoader.cs [Sola lettura]",
+              "RelativeToolTip": "..\\..\\..\\..\\Users\\innocenti\\AppData\\Local\\Temp\\.vsdbgsrc\\d3dcc91b7aa33e7d96d9904a880bba49de505f8b3a6e276fa2a5755178f7e733\\AssemblyLoader.cs [Sola lettura]",
+              "ViewState": "AgIAAG0AAAAAAAAAAAAUwHcAAAA3AAAAAQAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-13T08:21:58.065Z",
+              "EditorCaption": " [Sola lettura]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "Secrets.cs",
+              "DocumentMoniker": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
+              "ToolTip": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
+              "RelativeToolTip": "..\\..\\..\\..\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAACHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-18T14:26:12.497Z"
             },
             {
               "$type": "Document",
@@ -123,18 +164,6 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "frmMain.cs [Progettazione]",
-              "DocumentMoniker": "C:\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
-              "RelativeDocumentMoniker": "ChronoUpdater\\frmMain.cs",
-              "ToolTip": "C:\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs [Progettazione]",
-              "RelativeToolTip": "ChronoUpdater\\frmMain.cs [Progettazione]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-20T11:42:53.82Z",
-              "EditorCaption": " [Progettazione]"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 3,
               "Title": "frmMain.cs",
               "DocumentMoniker": "C:\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\frmMain.cs",
@@ -167,31 +196,6 @@
               "ViewState": "AgIAABsAAAAAAAAAAAAEwDYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-13T08:50:44.636Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "AssemblyLoader.cs",
-              "DocumentMoniker": "C:\\Users\\innocenti\\AppData\\Local\\Temp\\.vsdbgsrc\\d3dcc91b7aa33e7d96d9904a880bba49de505f8b3a6e276fa2a5755178f7e733\\AssemblyLoader.cs",
-              "RelativeDocumentMoniker": "..\\..\\..\\..\\Users\\innocenti\\AppData\\Local\\Temp\\.vsdbgsrc\\d3dcc91b7aa33e7d96d9904a880bba49de505f8b3a6e276fa2a5755178f7e733\\AssemblyLoader.cs",
-              "ToolTip": "C:\\Users\\innocenti\\AppData\\Local\\Temp\\.vsdbgsrc\\d3dcc91b7aa33e7d96d9904a880bba49de505f8b3a6e276fa2a5755178f7e733\\AssemblyLoader.cs [Sola lettura]",
-              "RelativeToolTip": "..\\..\\..\\..\\Users\\innocenti\\AppData\\Local\\Temp\\.vsdbgsrc\\d3dcc91b7aa33e7d96d9904a880bba49de505f8b3a6e276fa2a5755178f7e733\\AssemblyLoader.cs [Sola lettura]",
-              "ViewState": "AgIAAG0AAAAAAAAAAAAUwHcAAAA3AAAAAQAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-13T08:21:58.065Z",
-              "EditorCaption": " [Sola lettura]"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "Secrets.cs",
-              "DocumentMoniker": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
-              "RelativeDocumentMoniker": "..\\..\\..\\..\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
-              "ToolTip": "C:\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
-              "RelativeToolTip": "..\\..\\..\\..\\Users\\inox8\\OneDrive\\Documenti\\src\\chronofit\\Software\\ChronoUpdater\\ChronoUpdater\\Secrets.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAACHAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-18T14:26:12.497Z"
             },
             {
               "$type": "Document",

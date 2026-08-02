@@ -28,6 +28,19 @@
       height: 100%;
       box-sizing: border-box;
     }
+    /* .time-header non ha qui l'orologio centrale di view.html (unico
+       contenuto in flusso normale che gli dava altezza, e che con
+       align-items:center centrava indirettamente i loghi): senza, i loghi
+       (position:absolute, top non impostato) restano appiccicati al bordo
+       superiore. Impostiamo un top esplicito invece di affidarci al
+       posizionamento statico automatico. */
+    #view_container .time-header {
+      min-height: 50px;
+    }
+    #view_container .sponsor-logo,
+    #view_container .sponsor-img {
+      top: 10px;
+    }
   </style>
 </head>
 <body>
