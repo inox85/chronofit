@@ -158,6 +158,7 @@ const TRANSLATIONS = {
     'print.from':       'From #',
     'print.to':         'To #',
     'print.row_format': 'Row format',
+    'print.default_format': 'Default',
     'print.fields':     'Fields',
     'print.separator':  'Row separator',
     'print.preview':    'Preview',
@@ -184,6 +185,18 @@ const TRANSLATIONS = {
     'net.pair2_enabled': 'Enable pair 2',
     'net.start_line_2':  'Start line 2',
     'net.finish_line_2': 'Finish line 2',
+
+    // ── Enduro competitor screens (last departure / last arrival) ─────────────
+    'enduro.last_departure':    'Last departure',
+    'enduro.last_arrival':      'Last arrival',
+    'enduro.start_time':        'Start time',
+    'enduro.position':          'Position',
+    'enduro.net_time_label':    'Time',
+    'enduro.gap_leader':        'Gap from leader',
+    'enduro.leader':            'Leader',
+    'enduro.waiting_departure': 'Waiting for first departure...',
+    'enduro.waiting_arrival':   'Waiting for first arrival...',
+    'enduro.any_line':          'Any',
 
     'table.show_test':     'Show test column',
     'table.show_trigger':       'Show detection column',
@@ -236,10 +249,6 @@ const TRANSLATIONS = {
     'email.confirmed': 'Email confirmed ✔',
     'email.sent':      'Request sent ✔',
     'email.error':     'Error sending email',
-
-    // ── Fullscreen overlay ────────────────────────────────────────────────────
-    'fullscreen.title':    'Fullscreen Mode',
-    'fullscreen.question': 'Would you like to enable fullscreen mode for a better experience?',
 
     // ── Discipline overlay ────────────────────────────────────────────────────
     'discipline.title': 'Select discipline',
@@ -456,6 +465,7 @@ const TRANSLATIONS = {
     'print.from':       'Da #',
     'print.to':         'A #',
     'print.row_format': 'Formato riga',
+    'print.default_format': 'Predefinito',
     'print.fields':     'Campi',
     'print.separator':  'Separatore righe',
     'print.preview':    'Anteprima',
@@ -482,6 +492,18 @@ const TRANSLATIONS = {
     'net.pair2_enabled': 'Abilita coppia 2',
     'net.start_line_2':  'Linea partenza 2',
     'net.finish_line_2': 'Linea arrivo 2',
+
+    // ── Schermate concorrente enduro (ultima partenza / ultimo arrivo) ─────────
+    'enduro.last_departure':    'Ultima partenza',
+    'enduro.last_arrival':      'Ultimo arrivo',
+    'enduro.start_time':        'Orario di partenza',
+    'enduro.position':          'Posizione',
+    'enduro.net_time_label':    'Tempo impiegato',
+    'enduro.gap_leader':        'Distacco dal primo',
+    'enduro.leader':            'Leader',
+    'enduro.waiting_departure': 'In attesa della prima partenza...',
+    'enduro.waiting_arrival':   'In attesa del primo arrivo...',
+    'enduro.any_line':          'Qualsiasi',
 
     'table.show_test':     'Mostra colonna prova',
     'table.show_trigger':       'Mostra colonna rilevamento',
@@ -535,10 +557,6 @@ const TRANSLATIONS = {
     'email.sent':      'Richiesta inviata ✔',
     'email.error':     'Errore nell\'invio dell\'email',
 
-    // ── Fullscreen overlay ────────────────────────────────────────────────────
-    'fullscreen.title':    'Modalità schermo intero',
-    'fullscreen.question': 'Vuoi abilitare la modalità schermo intero per una migliore esperienza?',
-
     // ── Discipline overlay ────────────────────────────────────────────────────
     'discipline.title': 'Seleziona disciplina',
 
@@ -580,7 +598,7 @@ const TRANSLATIONS = {
 
     // ── Event table headers ───────────────────────────────────────────────────
     'th.line':       'Linea',
-    'th.competitor': 'Comp.',
+    'th.competitor': 'Conc.',
     'th.name':       'Nome',
     'th.surname':    'Cognome',
     'th.event_time': 'Evento ⏱️',

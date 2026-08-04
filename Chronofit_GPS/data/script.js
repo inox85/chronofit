@@ -498,9 +498,28 @@ function saveViewPrefs() {
   localStorage.setItem(VIEW_PREFS_KEY, JSON.stringify(prefs));
 }
 
+// Preset linee della disciplina attualmente bloccata (se esiste): usato come
+// fallback quando le preferenze salvate non specificano la visibilità linee,
+// per non lasciare mai in piedi i default HTML "grezzi" (linea 1 sempre
+// visibile in entrambe le card) — es. la card Arrivi dell'Enduro, che deve
+// escludere la linea 1 (di partenza).
+function _currentDisciplinePrefs() {
+  return DISCIPLINES.find(d => d.id === activeDisciplineId)?.prefs;
+}
+
 function restoreViewPrefs() {
   const raw = localStorage.getItem(VIEW_PREFS_KEY);
-  if (!raw) return;
+  if (!raw) {
+    const disc = _currentDisciplinePrefs();
+    if (disc) {
+      if (disc.showSecondArrivalsCard !== undefined) setSecondArrivalsCardVisible(disc.showSecondArrivalsCard);
+      _applyLinesPrefs('stab-lines', disc.lines);
+      _applyLinesPrefs('stab-lines-2', disc.linesSecondary);
+      applyLineFilter();
+      applyLineFilter2();
+    }
+    return;
+  }
   try {
     const prefs = JSON.parse(raw);
 
@@ -537,6 +556,8 @@ function restoreViewPrefs() {
         const active = prefs.lines[el.dataset.line];
         if (active !== undefined) el.checked = active;
       });
+    } else {
+      _applyLinesPrefs('stab-lines', _currentDisciplinePrefs()?.lines);
     }
 
     if (prefs.sortCol) { sortCol = prefs.sortCol; const el = document.getElementById('sort-col'); if (el) el.value = sortCol; }
@@ -597,6 +618,8 @@ function restoreViewPrefs() {
           const active = sec.lines[el.dataset.line];
           if (active !== undefined) el.checked = active;
         });
+      } else {
+        _applyLinesPrefs('stab-lines-2', _currentDisciplinePrefs()?.linesSecondary);
       }
 
       if (sec.sortCol) { sortCol2 = sec.sortCol; const el2 = document.getElementById('sort-col-2'); if (el2) el2.value = sortCol2; }
@@ -604,6 +627,14 @@ function restoreViewPrefs() {
       updateVisibleColumns2();
       if (sec.splitsMode) applyCompetitorSplits2();
       else reorderTable2();
+    } else if (_currentDisciplinePrefs()?.showSecondArrivalsCard) {
+      // Preferenze "secondary" del tutto assenti (blob salvato da una versione
+      // precedente di Chronofit) ma la disciplina attiva prevede la seconda
+      // card Arrivi: non lasciare il default HTML grezzo (linea 1 sempre
+      // visibile, card magari ancora nascosta) — riapplica lo stato corretto.
+      setSecondArrivalsCardVisible(true);
+      _applyLinesPrefs('stab-lines-2', _currentDisciplinePrefs()?.linesSecondary);
+      applyLineFilter2();
     }
   } catch(e) {
     console.warn("Errore ripristino preferenze:", e);
@@ -969,11 +1000,14 @@ function openAthleteFromList(competitor) {
 function renderCompQuickList(scrollToCompetitor = null) {
   const container = document.getElementById('comp-quick-list');
   if (!container) return;
-  if (!athleteRegistry || athleteRegistry.length === 0) {
+  // Chi è già "uscito" (arrived=true) resta nel registro — serve ancora per
+  // i nomi in tabella — ma sparisce dalla quick-list degli Attesi.
+  const waiting = athleteRegistry.filter(a => !a.arrived);
+  if (waiting.length === 0) {
     container.innerHTML = '<p class="comp-list-empty">—</p>';
     return;
   }
-  const sorted = [...athleteRegistry].sort((a, b) => Number(a.competitor) - Number(b.competitor));
+  const sorted = waiting.sort((a, b) => Number(a.competitor) - Number(b.competitor));
   container.innerHTML = sorted.map(a => {
     const nameParts = [a.name, a.surname].filter(s => s && s !== '-').join(' ');
     return `<div class="comp-list-item" data-competitor="${a.competitor}"
@@ -989,6 +1023,18 @@ function renderCompQuickList(scrollToCompetitor = null) {
     const target = container.querySelector(`[data-competitor="${scrollToCompetitor}"]`);
     if (target) target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
+}
+
+// Toglie il competitor dalla quick-list "Attesi" quando transita su una linea
+// di Arrivi (seconda card, finish): l'anagrafica resta nel registro — serve
+// ancora per i nomi in tabella — solo il flag "arrived" la nasconde dalla
+// quick-list di inserimento rapido.
+function markAthleteArrived(compNum) {
+  const a = athleteRegistry.find(x => Number(x.competitor) === Number(compNum));
+  if (!a || a.arrived) return;
+  a.arrived = true;
+  localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+  renderCompQuickList();
 }
 
 // Aggiunge il competitor al registro se non è già presente (usato dalle fonti di auto-acquisizione)
@@ -1568,6 +1614,13 @@ const TYPE_MQTT_NOTIFICATION = 9;
 const TYPE_MQTT_PENDING      = 10;
 const TYPE_LINE_UPDATED      = 11;
 
+// Tiene sempre visibile l'ultimo concorrente transitato (centrato: mostra
+// fino a ~3 righe prima/dopo, se esistono — meno agli estremi della tabella).
+function scrollRowIntoView(tableId, selector) {
+  const row = document.querySelector(`#${tableId} tbody ${selector}`);
+  if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
 function handleMessage(data) {
   switch (data.t) {
     case TYPE_CHECKPOINT:
@@ -1580,6 +1633,16 @@ function handleMessage(data) {
         if (document.getElementById("toggle-splits-2")?.checked) applyCompetitorSplits2();
       }
       if ([netTimesStartLine, netTimesFinishLine, netTimesStartLine2, netTimesFinishLine2].includes(Number(data.ln))) rebuildNetTimesTable();
+
+      if (isLineVisible('event-table', data.ln)) {
+        scrollRowIntoView('event-table', `tr[data-row-id="${data.id}"]`);
+      }
+      if (isSecondArrivalsCardActive() && isLineVisible('event-table-2', data.ln)) {
+        scrollRowIntoView('event-table-2', `tr[data-row-id="${data.id}"]`);
+      }
+      if ([netTimesStartLine, netTimesFinishLine, netTimesStartLine2, netTimesFinishLine2].includes(Number(data.ln))) {
+        scrollRowIntoView('net-times-table', `tr[data-competitor="${data.c}"]`);
+      }
       break;
 
     case TYPE_TIME_UPDATE:
@@ -1975,6 +2038,12 @@ function addEventToTableFromCheckpoint(checkpoint, isLive = true) {
     playSound("/sound" + lineNumber + ".mp3");
   }
 
+  // Una linea visibile nella seconda card Arrivi (finish) = il concorrente è
+  // "uscito": non serve più comparire negli Attesi.
+  if (audibleInSecondary && Number(competitor) > 0) {
+    markAthleteArrived(competitor);
+  }
+
   const row = addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table', timePrecision);
 
   if (isSecondArrivalsCardActive()) {
@@ -1989,6 +2058,33 @@ function addEventToTableFromCheckpoint(checkpoint, isLive = true) {
   }
 }
 
+
+// Evidenzia i "doppi" inserimenti: stesso competitor più volte sulla STESSA
+// linea (probabile errore di battitura/scansione — una coppia entrata-uscita
+// finirebbe per appartenere a un altro concorrente). Le righe annullate non
+// contano: l'operatore le ha già riconosciute come anomalia risolta.
+function updateDuplicateHighlights(tableId) {
+  const rows = Array.from(document.querySelectorAll(`#${tableId} tbody tr`))
+    .filter(r => !r.classList.contains('diff-row') && r.dataset.cancelled !== '1');
+
+  const countByLineComp = {};
+  rows.forEach(r => {
+    const comp = (r.dataset.competitor ?? '').trim();
+    if (!comp || comp === '0') return;
+    const key = `${r.dataset.line}|${comp}`;
+    countByLineComp[key] = (countByLineComp[key] || 0) + 1;
+  });
+
+  rows.forEach(r => {
+    const comp = (r.dataset.competitor ?? '').trim();
+    const cell = r.querySelector('.col-competitor');
+    if (!cell) return;
+    if (!comp || comp === '0') { r.classList.remove('row-dup-competitor'); return; }
+    const isDup = countByLineComp[`${r.dataset.line}|${comp}`] > 1;
+    r.classList.toggle('row-dup-competitor', isDup);
+    cell.textContent = isDup ? `${comp} *` : comp;
+  });
+}
 
 function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, test = '', trigger = '', cancelled = 0, edited = 0, tableId = 'event-table', precision = timePrecision) {
   console.log(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled);
@@ -2051,6 +2147,7 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
   tbody.appendChild(row);
 
   updateRankColumn(tableId);
+  updateDuplicateHighlights(tableId);
 
   // forza reflow (FONDAMENTALE per animazione)
   row.offsetHeight;
@@ -2302,6 +2399,8 @@ function saveRow(row) {
 
   sendUpdatedCheckPointRow(row);
   recalcDeltaTimes();
+  const table = row.closest("table");
+  if (table) updateDuplicateHighlights(table.id);
 }
 
 function sendUpdatedCheckPointRow(row) {
@@ -2530,24 +2629,47 @@ function handleInputUpdate(e) {
   }
 }
 
-// Se attivo, riporta il numero competitor appena assegnato su tutte le altre
-// linee gestite (device non vuoto) ma ancora prive di competitor (0).
+// Se attivo, riporta il numero competitor appena assegnato su altre linee.
+// Il comportamento è parametrico per disciplina — vedi "propagationPairs" in
+// disciplines.js:
+// - Se la disciplina attiva definisce propagationPairs (es. Enduro:
+//   { "1": 2, "3": 4 }): propaga SOLO sulla linea indicata per quella linea
+//   sorgente, sovrascrivendo sempre il valore precedente.
+// - Se non lo definisce (es. Regolarità): comportamento storico, propaga su
+//   tutte le altre linee gestite (device non vuoto) ma ancora prive di
+//   competitor (0), senza sovrascrivere.
+function _propagateCompetitorToLine(targetLine, competitor) {
+  const cEl = document.getElementById(`c${targetLine}`);
+  if (!cEl) return;
+  cEl.value = competitor;
+  updateCompDisplay(targetLine);
+  const enableBtn = document.querySelector(`.line-enable-btn[data-line="${targetLine}"]`);
+  sendSettingsRowData({
+    l: targetLine,
+    c: competitor,
+    d: Number(document.getElementById(`d${targetLine}`)?.value) || 0,
+    e: Number(enableBtn?.dataset.enabled ?? 1)
+  });
+}
+
 function propagateCompetitorIfNeeded(sourceLine, competitor) {
   if (!document.getElementById('toggle-propagate-competitor')?.checked) return;
+
+  const pairs = _currentDisciplinePrefs()?.propagationPairs;
+  if (pairs) {
+    const targetLine = pairs[sourceLine];
+    if (!targetLine) return;
+    if (!getLineTipo(targetLine).tipo1?.trim()) return; // linea non gestita
+    _propagateCompetitorToLine(targetLine, competitor);
+    return;
+  }
+
   for (let n = 1; n <= 4; n++) {
     if (n === Number(sourceLine)) continue;
     if (!getLineTipo(n).tipo1?.trim()) continue; // linea non gestita
     const cEl = document.getElementById(`c${n}`);
     if (!cEl || Number(cEl.value) !== 0) continue; // già assegnata
-    cEl.value = competitor;
-    updateCompDisplay(n);
-    const enableBtn = document.querySelector(`.line-enable-btn[data-line="${n}"]`);
-    sendSettingsRowData({
-      l: n,
-      c: competitor,
-      d: Number(document.getElementById(`d${n}`)?.value) || 0,
-      e: Number(enableBtn?.dataset.enabled ?? 1)
-    });
+    _propagateCompetitorToLine(n, competitor);
   }
 }
 
@@ -2601,16 +2723,42 @@ function sendSettingsRowData(data) {
   .catch(err => console.error('Errore di rete:', err));
 }
 
+// ── Fullscreen: entra subito all'avvio (nessun popup di conferma), resta
+// comunque disattivabile/riattivabile dalle impostazioni. La preferenza è
+// persistita così un "No" esplicito non viene riproposto ad ogni avvio. ──
+const FULLSCREEN_PREF_KEY = 'chronofit_fullscreen_pref';
+
+function isFullscreenActive() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+function fullscreenPreferenceEnabled() {
+  return localStorage.getItem(FULLSCREEN_PREF_KEY) !== '0'; // default: abilitato
+}
+
+function requestAppFullscreen() {
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return;
+  try {
+    const p = req.call(el);
+    if (p && p.catch) p.catch(() => {}); // il browser può rifiutare senza gesture utente: fallback al primo tocco
+  } catch (e) {}
+}
+
+function syncFullscreenToggleUI() {
+  const chk = document.getElementById('fullscreenToggle');
+  if (chk) chk.checked = isFullscreenActive();
+}
+
+document.addEventListener('fullscreenchange', syncFullscreenToggleUI);
+document.addEventListener('webkitfullscreenchange', syncFullscreenToggleUI);
+
 function toggleFullscreen(checkbox) {
+  localStorage.setItem(FULLSCREEN_PREF_KEY, checkbox.checked ? '1' : '0');
   if (checkbox.checked) {
-    // Entra in fullscreen
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen();
-    } else if (document.documentElement.webkitRequestFullscreen) { // Safari
-      document.documentElement.webkitRequestFullscreen();
-    }
+    requestAppFullscreen();
   } else {
-    // Esci da fullscreen
     if (document.exitFullscreen) {
       document.exitFullscreen();
     } else if (document.webkitExitFullscreen) { // Safari
@@ -2650,6 +2798,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateDisciplineNavBtn();
     updateAllLineDisplays();
 
+    const fullscreenChk = document.getElementById("fullscreenToggle");
+    if (fullscreenChk) fullscreenChk.checked = fullscreenPreferenceEnabled();
+
     updateTableCorners();
 
     // Long press su comp-input (card principale) → apre il form di caricamento competitor
@@ -2672,20 +2823,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCompQuickList();
 });
 
-
-// Gestione pulsanti
-document.getElementById('yesFullscreen').addEventListener('click', async () => {
-  try {
-    await document.documentElement.requestFullscreen();
-  } catch (err) {
-    console.error('Errore fullscreen:', err);
-  }
-  document.getElementById('fullscreenOverlay').style.display = 'none';
-});
-
-document.getElementById('noFullscreen').addEventListener('click', () => {
-  document.getElementById('fullscreenOverlay').style.display = 'none';
-});
 
 function preloadLineAudio() {
   const params = new URLSearchParams(window.location.search);
@@ -2755,8 +2892,16 @@ window.addEventListener("load", () => {
   }, 1000 + 1000); // 1s attesa + 3s dissolvenza
   
   setTimeout(() => {
-    console.log("Richiedo Full-screen popup..."); 
-    document.getElementById('fullscreenOverlay').style.display = 'flex';
+    if (!fullscreenPreferenceEnabled()) return;
+    console.log("Richiedo Full-screen...");
+    requestAppFullscreen();
+    // Se il browser rifiuta la richiesta perché non è partita da un gesture
+    // utente, il primo tocco/click sullo schermo la riattiva silenziosamente.
+    const onFirstInteract = () => {
+      if (!isFullscreenActive()) requestAppFullscreen();
+    };
+    document.addEventListener('click', onFirstInteract, { once: true });
+    document.addEventListener('touchstart', onFirstInteract, { once: true });
   }, 1000 + 1000 + 500); // 1s attesa + 3s dissolvenza
 });
 
@@ -3072,13 +3217,22 @@ let netTimesFinishLine2 = 4;
 let netTimesSortCol = 'competitor';
 let netTimesPair1Enabled = true;
 let netTimesPair2Enabled = true;
+let netTimesPrecision = 3;
+
+function onNetTimesPrecisionChange(val) {
+  val = Math.max(1, Math.min(3, parseInt(val) || 3));
+  netTimesPrecision = val;
+  document.getElementById('net-time-precision').value = val;
+  _saveNetTimesPrefs();
+  rebuildNetTimesTable();
+}
 
 function _rowAbsoluteTimeText(row) {
   const h  = parseInt(row.dataset.hour    ?? 0);
   const m  = parseInt(row.dataset.minute  ?? 0);
   const s  = parseInt(row.dataset.seconds ?? 0);
   const ms = parseInt(row.dataset.msRaw   ?? 0);
-  return formatTime(h, m, s, ms, 3);
+  return formatTime(h, m, s, ms, netTimesPrecision);
 }
 
 // Prima riga (cronologicamente) per ogni concorrente su una data linea,
@@ -3117,7 +3271,7 @@ function _netPairText(startByComp, finishByComp, comp) {
       const dM  = Math.floor((diffMs % 3600000) / 60000);
       const dS  = Math.floor((diffMs % 60000) / 1000);
       const dMs = diffMs % 1000;
-      netText = formatTime(dH, dM, dS, dMs, 3);
+      netText = formatTime(dH, dM, dS, dMs, netTimesPrecision);
       netMs = diffMs;
     }
   }
@@ -3139,19 +3293,42 @@ function _netSortKey(comp, p) {
   }
 }
 
+// Competitor con più di un passaggio (non annullato) sulla STESSA linea:
+// probabile errore di battitura/scansione — una coppia entrata-uscita
+// finirebbe per appartenere a un altro concorrente.
+function getDuplicateCompetitorsOnLine(lineNumber) {
+  const rows = Array.from(document.querySelectorAll('#event-table tbody tr:not(.diff-row)'))
+    .filter(r => r.dataset.cancelled !== '1')
+    .filter(r => String(r.dataset.line) === String(lineNumber));
+  const counts = {};
+  rows.forEach(r => {
+    const c = (r.dataset.competitor ?? '').trim();
+    if (!c || c === '0') return;
+    counts[c] = (counts[c] || 0) + 1;
+  });
+  return new Set(Object.keys(counts).filter(c => counts[c] > 1));
+}
+
 // Righe di un singolo gruppo (coppia di linee) da appendere alla tabella,
-// una riga per competitor, etichettate con le linee usate (es. "L1→L3").
+// una riga per competitor: solo Comp./Start/Finish/Net, senza indicare quali
+// linee sono state usate per il calcolo (non serve all'operatore).
 function _netGroupRows(tbody, startLine, finishLine) {
   const startByComp  = _firstRowPerCompetitor(startLine);
   const finishByComp = _firstRowPerCompetitor(finishLine);
   const comps = new Set([...Object.keys(startByComp), ...Object.keys(finishByComp)]);
+
+  const startDup  = getDuplicateCompetitorsOnLine(startLine);
+  const finishDup = getDuplicateCompetitorsOnLine(finishLine);
 
   Array.from(comps)
     .map(comp => ({ comp, p: _netPairText(startByComp, finishByComp, comp) }))
     .sort((a, b) => (_netSortKey(a.comp, a.p) - _netSortKey(b.comp, b.p)) || (Number(a.comp) - Number(b.comp)))
     .forEach(({ comp, p }) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${comp}</td><td>${p.sText}</td><td>${p.fText}</td><td>${p.netText}</td>`;
+      tr.dataset.competitor = comp;
+      const isDup = startDup.has(comp) || finishDup.has(comp);
+      if (isDup) tr.classList.add('row-dup-competitor');
+      tr.innerHTML = `<td class="col-competitor">${isDup ? comp + ' *' : comp}</td><td>${p.sText}</td><td>${p.fText}</td><td>${p.netText}</td>`;
       tbody.appendChild(tr);
     });
 }
@@ -3194,7 +3371,8 @@ function _saveNetTimesPrefs() {
     start: netTimesStartLine, finish: netTimesFinishLine,
     start2: netTimesStartLine2, finish2: netTimesFinishLine2,
     sortCol: netTimesSortCol,
-    enabled: netTimesPair1Enabled, enabled2: netTimesPair2Enabled
+    enabled: netTimesPair1Enabled, enabled2: netTimesPair2Enabled,
+    precision: netTimesPrecision
   }));
 }
 
@@ -3233,6 +3411,7 @@ function restoreNetTimesLines() {
     if (saved.sortCol) { netTimesSortCol     = saved.sortCol; const el = document.getElementById('net-sort-col');      if (el) el.value = saved.sortCol; }
     if (saved.enabled  !== undefined) { netTimesPair1Enabled = saved.enabled;  const el = document.getElementById('net-pair1-enabled'); if (el) el.checked = saved.enabled; }
     if (saved.enabled2 !== undefined) { netTimesPair2Enabled = saved.enabled2; const el = document.getElementById('net-pair2-enabled'); if (el) el.checked = saved.enabled2; }
+    if (saved.precision) { netTimesPrecision = saved.precision; const el = document.getElementById('net-time-precision'); if (el) el.value = saved.precision; }
     updateNetPairEnabledUI(1);
     updateNetPairEnabledUI(2);
   } catch(e) {
@@ -3642,6 +3821,8 @@ document.addEventListener("click", (e) => {
     e.target.classList.toggle("active", cancelled === "1");
     row.classList.toggle("row-cancelled", cancelled === "1");
     sendUpdatedCheckPointRow(row);
+    const table = row.closest("table");
+    if (table) updateDuplicateHighlights(table.id);
   }
 });
 
@@ -4360,7 +4541,7 @@ function _printLoadPrefs() {
   // come default anche quando la tabella ha un numero diverso di righe.
   s('print-from', 1);
   s('print-to',   _currentTableRowCount() || '');
-  s('print-row-format', p.format    ?? '#{index} L{line} C{competitor} {name} {surname}  {time}');
+  s('print-row-format', p.format    ?? PRINT_ROW_FORMAT_DEFAULT);
   s('print-separator',  p.separator ?? '');
 }
 
@@ -4444,6 +4625,16 @@ function updatePrintPreview() {
   const more  = rows.length > 3 ? `\n… (+${rows.length - 3} more)` : '';
   if (previewEl) previewEl.textContent = lines.join('\n') + more;
   if (countEl)   countEl.textContent   = `${rows.length} row${rows.length !== 1 ? 's' : ''} selected`;
+}
+
+const PRINT_ROW_FORMAT_DEFAULT = '#{index} {test} {competitor} {line} {delta}';
+
+/* Ripristina il formato riga standard, sovrascrivendo eventuali modifiche */
+function resetPrintRowFormatToDefault() {
+  const el = document.getElementById('print-row-format');
+  if (!el) return;
+  el.value = PRINT_ROW_FORMAT_DEFAULT;
+  updatePrintPreview();
 }
 
 /* Inserisce un tag {field} alla posizione del cursore senza togliere il focus all'input

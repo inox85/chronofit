@@ -174,6 +174,14 @@
             <option value="net"        data-i18n="net.net_time_col">Net time</option>
           </select>
         </div>
+        <div class="input-row">
+          <label for="net-time-precision" data-i18n="table.time_precision" style="font-size:20px;">Time precision decimals</label>
+          <select id="net-time-precision" onchange="onNetTimesPrecisionChange(this.value)">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+          </select>
+        </div>
       </div>
 
       <div class="button-row">

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0">
+  <title>Chronofit</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+  <!-- COLORE DELLA STATUS BAR SU ANDROID -->
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="/manifest.json">
+  <script src="/i18n.js"></script>
+
+  <!-- Stessa struttura di view_enduro.html: pagina senza navbar, la card
+       riempie l'intero schermo (pensata per un secondo monitor/proiettore). -->
+  <style>
+    #view_container {
+      height: 100vh;
+    }
+    #view_container .card.table-card {
+      max-width: none;
+      max-height: none;
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+    #view_container .time-header {
+      min-height: 50px;
+    }
+    #view_container .sponsor-logo,
+    #view_container .sponsor-img {
+      top: 10px;
+    }
+
+    /* ── Vista ultimo concorrente ─────────────────────────────────────── */
+    #ecompWrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 18px;
+      padding: 10px;
+    }
+    #ecompWrap.waiting .ecomp-data { display: none; }
+    #ecompWrap:not(.waiting) .ecomp-waiting { display: none; }
+
+    .ecomp-data { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; }
+
+    #ecompNumber {
+      font-size: min(22vw, 220px);
+      line-height: 1;
+      font-weight: 900;
+      color: var(--primary-color);
+    }
+    #ecompName {
+      font-size: min(6vw, 56px);
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #ecompTeam {
+      font-size: min(3vw, 28px);
+      color: var(--secondary-color);
+      opacity: 0.75;
+      margin-top: -8px;
+    }
+
+    .ecomp-stats {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .ecomp-stat { display: flex; flex-direction: column; align-items: center; }
+    .ecomp-stat-label {
+      font-size: min(2.4vw, 20px);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+    .ecomp-stat-value {
+      font-size: min(6vw, 52px);
+      font-family: monospace;
+      font-weight: 900;
+      color: var(--primary-color);
+    }
+
+    .ecomp-waiting {
+      font-size: min(4vw, 32px);
+      opacity: 0.55;
+    }
+
+    @keyframes ecompFlash {
+      0%   { box-shadow: inset 0 0 0 0 rgba(128,0,32,0); }
+      25%  { box-shadow: inset 0 0 0 8px rgba(128,0,32,0.5); }
+      100% { box-shadow: inset 0 0 0 0 rgba(128,0,32,0); }
+    }
+    #ecompWrap.ecomp-flash { animation: ecompFlash 0.9s ease-out; }
+  </style>
+</head>
+<body data-mode="start">
+
+  <div id="splash">
+    <div class="splash-logos">
+      <img src="/logo.webp" alt="Logo">
+      <div class="splash-divider"></div>
+      <img src="/sponsor.png" alt="Sponsor">
+    </div>
+    <p class="splash-label" data-i18n="splash.loading">Loading session...</p>
+  </div>
+
+  <div id="popup" class="popup hidden">No connection to Chronofit device</div>
+
+  <div id="view_container" class="container">
+
+    <div class="card table-card">
+
+      <div class="time-header">
+        <img src="/logo-black.png" alt="Logo" class="sponsor-logo">
+        <img src="/sponsor.png" alt="Sponsor" class="sponsor-img">
+      </div>
+
+      <div class="card-title" id="ecompTitle" data-i18n="enduro.last_departure">Last departure</div>
+
+      <div id="ecompWrap" class="waiting">
+        <div class="ecomp-data">
+          <div id="ecompNumber">—</div>
+          <div id="ecompName">—</div>
+          <div id="ecompTeam"></div>
+          <div class="ecomp-stats">
+            <div class="ecomp-stat">
+              <div class="ecomp-stat-label" data-i18n="enduro.start_time">Start time</div>
+              <div class="ecomp-stat-value" id="ecompTime">—</div>
+            </div>
+            <div class="ecomp-stat">
+              <div class="ecomp-stat-label" data-i18n="enduro.position">Position</div>
+              <div class="ecomp-stat-value" id="ecompPosition">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="ecomp-waiting" data-i18n="enduro.waiting_departure">Waiting for first departure...</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Tabella dati grezzi, mai mostrata: memorizza i checkpoint ricevuti via
+       WebSocket/sessione salvata, usata solo per calcolare l'ultimo transitato. -->
+  <table id="event-table" style="display:none"><tbody></tbody></table>
+
+  <!-- Impostazioni: quale linea monitorare come partenza -->
+  <div id="ecompSettingsOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup" style="display:flex; flex-direction:column;">
+      <div class="input-row">
+        <label for="ecomp-start-line" data-i18n="net.start_line" style="font-size:20px;">Start line</label>
+        <select id="ecomp-start-line" onchange="onEcompLineChange()">
+          <option value="1" selected>L1</option>
+          <option value="2">L2</option>
+          <option value="3">L3</option>
+          <option value="4">L4</option>
+          <option value="5">L5</option>
+          <option value="6">L6</option>
+          <option value="any" data-i18n="enduro.any_line">Any</option>
+        </select>
+      </div>
+      <div class="button-row">
+        <button class="big-button" data-i18n="btn.close" id="closeEcompSettings">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/script_enduro_competitor.js"></script>
+
+</body>
+</html>

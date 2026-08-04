@@ -14,8 +14,7 @@ let netTimesFinishLine2 = 4;
 let netTimesSortCol     = 'competitor';
 let netTimesPair1Enabled = true;
 let netTimesPair2Enabled = true;
-
-let timePrecision = 3;
+let netTimesPrecision = 3;
 
 function restoreNetTimesSettings() {
   try {
@@ -29,6 +28,7 @@ function restoreNetTimesSettings() {
     if (saved.sortCol) { netTimesSortCol     = saved.sortCol; const el = document.getElementById('net-sort-col');      if (el) el.value = saved.sortCol; }
     if (saved.enabled  !== undefined) { netTimesPair1Enabled = saved.enabled;  const el = document.getElementById('net-pair1-enabled'); if (el) el.checked = saved.enabled; }
     if (saved.enabled2 !== undefined) { netTimesPair2Enabled = saved.enabled2; const el = document.getElementById('net-pair2-enabled'); if (el) el.checked = saved.enabled2; }
+    if (saved.precision) { netTimesPrecision = saved.precision; const el = document.getElementById('net-time-precision'); if (el) el.value = saved.precision; }
     updateNetPairEnabledUI(1);
     updateNetPairEnabledUI(2);
   } catch (e) {
@@ -41,8 +41,17 @@ function _saveNetTimesPrefs() {
     start: netTimesStartLine, finish: netTimesFinishLine,
     start2: netTimesStartLine2, finish2: netTimesFinishLine2,
     sortCol: netTimesSortCol,
-    enabled: netTimesPair1Enabled, enabled2: netTimesPair2Enabled
+    enabled: netTimesPair1Enabled, enabled2: netTimesPair2Enabled,
+    precision: netTimesPrecision
   }));
+}
+
+function onNetTimesPrecisionChange(val) {
+  val = Math.max(1, Math.min(3, parseInt(val) || 3));
+  netTimesPrecision = val;
+  document.getElementById('net-time-precision').value = val;
+  _saveNetTimesPrefs();
+  rebuildNetTimesTable();
 }
 
 function onNetTimesLinesChange() {
@@ -92,13 +101,13 @@ function switchNetTimesSettingsTab(tab) {
   document.getElementById(`nettab-${tab}`).style.display = '';
 }
 
-function truncateMs(ms, precision = timePrecision) {
+function truncateMs(ms, precision = netTimesPrecision) {
   if (precision === 1) return Math.floor(ms / 100) * 100;
   if (precision === 2) return Math.floor(ms / 10)  * 10;
   return ms;
 }
 
-function formatTime(h, m, s, ms, precision = timePrecision) {
+function formatTime(h, m, s, ms, precision = netTimesPrecision) {
   const msT = truncateMs(ms, precision);
   const msStr = precision === 1
     ? String(Math.floor(msT / 100))
@@ -126,7 +135,7 @@ function _rowAbsoluteTimeText(row) {
   const m  = parseInt(row.dataset.minute  ?? 0);
   const s  = parseInt(row.dataset.seconds ?? 0);
   const ms = parseInt(row.dataset.msRaw   ?? 0);
-  return formatTime(h, m, s, ms, 3);
+  return formatTime(h, m, s, ms, netTimesPrecision);
 }
 
 // Prima riga (cronologicamente) per ogni concorrente su una data linea.
@@ -163,7 +172,7 @@ function _netPairText(startByComp, finishByComp, comp) {
       const dM  = Math.floor((diffMs % 3600000) / 60000);
       const dS  = Math.floor((diffMs % 60000) / 1000);
       const dMs = diffMs % 1000;
-      netText = formatTime(dH, dM, dS, dMs, 3);
+      netText = formatTime(dH, dM, dS, dMs, netTimesPrecision);
       netMs = diffMs;
     }
   }

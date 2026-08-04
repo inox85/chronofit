@@ -938,18 +938,6 @@
     </div>
   </div>
 
-
-  <div id="fullscreenOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup">
-      <h2 data-i18n="fullscreen.title">Fullscreen Mode</h2>
-      <p data-i18n="fullscreen.question">Would you like to enable fullscreen mode for a better experience?</p>
-      <div class="fullscreen-buttons">
-        <button class="big-button confirm" data-i18n="btn.yes" id="yesFullscreen">Yes</button>
-        <button class="big-button cancel"  data-i18n="btn.no"  id="noFullscreen">No</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Overlay About Chronofit -->
   <div id="aboutOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
@@ -1504,6 +1492,14 @@
             <option value="net"        data-i18n="net.net_time_col">Net time</option>
           </select>
         </div>
+        <div class="input-row">
+          <label for="net-time-precision" data-i18n="table.time_precision" style="font-size:20px;">Time precision decimals</label>
+          <select id="net-time-precision" onchange="onNetTimesPrecisionChange(this.value)">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+          </select>
+        </div>
       </div>
 
       <div class="button-row">
@@ -1547,7 +1543,10 @@
 
       <!-- Row format -->
       <div class="print-section">
-        <div class="print-section-label" data-i18n="print.row_format">Row format</div>
+        <div class="print-section-label" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <span data-i18n="print.row_format">Row format</span>
+          <button type="button" class="print-tag" onclick="resetPrintRowFormatToDefault()" data-i18n="print.default_format">Default</button>
+        </div>
         <input type="text" id="print-row-format" class="print-text-input"
                placeholder="#{index} L{line} C{competitor} {name} {time}" oninput="updatePrintPreview()">
 

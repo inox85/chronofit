@@ -31,8 +31,16 @@
 //                  in armonia con --primary-color/--card-border-color di style.css)
 //   propagateCompetitor  bool — default del toggle "propaga competitor" nel popup
 //                  impostazioni linee: quando true, assegnare un competitor a una
-//                  linea lo riporta automaticamente sulle altre linee gestite
-//                  (device non vuoto) ma ancora senza competitor assegnato (0)
+//                  linea lo riporta automaticamente su altre linee (vedi
+//                  propagationPairs sotto per la disciplina attiva)
+//   propagationPairs    { sourceLine: targetLine } — se definito, la propagazione
+//                  (quando attiva) riporta il competitor SOLO sulla linea indicata
+//                  per quella linea sorgente, sovrascrivendo sempre il valore
+//                  precedente (es. Enduro: { "1": 2, "3": 4 }, la linea di
+//                  ingresso di ogni coppia comanda sempre la sua di uscita).
+//                  Se omesso: comportamento storico, propaga su TUTTE le altre
+//                  linee gestite (device non vuoto) ma ancora prive di
+//                  competitor (0), senza sovrascrivere (es. Regolarità).
 //   tableAcquireCompetitor  bool — default del toggle "Acquire from arrivals table"
 //                  nel registro competitori (tab Auto)
 //   showSecondArrivalsCard  bool — mostra la seconda card Arrivi (linee, ordinamento
@@ -101,6 +109,7 @@ const DISCIPLINES = [
       showCompList: true,  syncMode: 2,
       bgColor: "#d9f0d9",
       propagateCompetitor: true,
+      propagationPairs: { "1": 2, "3": 4 },
       tableAcquireCompetitor: true,
       showSecondArrivalsCard: true,
       firstCardTitleKey: "card.departures",
