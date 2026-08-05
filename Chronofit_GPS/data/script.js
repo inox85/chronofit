@@ -2059,32 +2059,6 @@ function addEventToTableFromCheckpoint(checkpoint, isLive = true) {
 }
 
 
-// Evidenzia i "doppi" inserimenti: stesso competitor in più di una riga di
-// questa tabella, indipendentemente dalla linea (confronto solo sul numero,
-// non più ristretto alla stessa linea). Le righe annullate non contano:
-// l'operatore le ha già riconosciute come anomalia risolta.
-function updateDuplicateHighlights(tableId) {
-  const rows = Array.from(document.querySelectorAll(`#${tableId} tbody tr`))
-    .filter(r => !r.classList.contains('diff-row') && r.dataset.cancelled !== '1');
-
-  const countByComp = {};
-  rows.forEach(r => {
-    const comp = (r.dataset.competitor ?? '').trim();
-    if (!comp || comp === '0') return;
-    countByComp[comp] = (countByComp[comp] || 0) + 1;
-  });
-
-  rows.forEach(r => {
-    const comp = (r.dataset.competitor ?? '').trim();
-    const cell = r.querySelector('.col-competitor');
-    if (!cell) return;
-    if (!comp || comp === '0') { r.classList.remove('row-dup-competitor'); return; }
-    const isDup = countByComp[comp] > 1;
-    r.classList.toggle('row-dup-competitor', isDup);
-    cell.textContent = isDup ? `${comp} *` : comp;
-  });
-}
-
 function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled = 1, test = '', trigger = '', cancelled = 0, edited = 0, tableId = 'event-table', precision = timePrecision) {
   console.log(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality, enabled);
 
@@ -2146,7 +2120,6 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
   tbody.appendChild(row);
 
   updateRankColumn(tableId);
-  updateDuplicateHighlights(tableId);
 
   // forza reflow (FONDAMENTALE per animazione)
   row.offsetHeight;
@@ -2398,8 +2371,6 @@ function saveRow(row) {
 
   sendUpdatedCheckPointRow(row);
   recalcDeltaTimes();
-  const table = row.closest("table");
-  if (table) updateDuplicateHighlights(table.id);
 }
 
 function sendUpdatedCheckPointRow(row) {
@@ -3818,8 +3789,6 @@ document.addEventListener("click", (e) => {
     e.target.classList.toggle("active", cancelled === "1");
     row.classList.toggle("row-cancelled", cancelled === "1");
     sendUpdatedCheckPointRow(row);
-    const table = row.closest("table");
-    if (table) updateDuplicateHighlights(table.id);
   }
 });
 
