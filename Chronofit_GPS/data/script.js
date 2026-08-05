@@ -2059,20 +2059,19 @@ function addEventToTableFromCheckpoint(checkpoint, isLive = true) {
 }
 
 
-// Evidenzia i "doppi" inserimenti: stesso competitor più volte sulla STESSA
-// linea (probabile errore di battitura/scansione — una coppia entrata-uscita
-// finirebbe per appartenere a un altro concorrente). Le righe annullate non
-// contano: l'operatore le ha già riconosciute come anomalia risolta.
+// Evidenzia i "doppi" inserimenti: stesso competitor in più di una riga di
+// questa tabella, indipendentemente dalla linea (confronto solo sul numero,
+// non più ristretto alla stessa linea). Le righe annullate non contano:
+// l'operatore le ha già riconosciute come anomalia risolta.
 function updateDuplicateHighlights(tableId) {
   const rows = Array.from(document.querySelectorAll(`#${tableId} tbody tr`))
     .filter(r => !r.classList.contains('diff-row') && r.dataset.cancelled !== '1');
 
-  const countByLineComp = {};
+  const countByComp = {};
   rows.forEach(r => {
     const comp = (r.dataset.competitor ?? '').trim();
     if (!comp || comp === '0') return;
-    const key = `${r.dataset.line}|${comp}`;
-    countByLineComp[key] = (countByLineComp[key] || 0) + 1;
+    countByComp[comp] = (countByComp[comp] || 0) + 1;
   });
 
   rows.forEach(r => {
@@ -2080,7 +2079,7 @@ function updateDuplicateHighlights(tableId) {
     const cell = r.querySelector('.col-competitor');
     if (!cell) return;
     if (!comp || comp === '0') { r.classList.remove('row-dup-competitor'); return; }
-    const isDup = countByLineComp[`${r.dataset.line}|${comp}`] > 1;
+    const isDup = countByComp[comp] > 1;
     r.classList.toggle('row-dup-competitor', isDup);
     cell.textContent = isDup ? `${comp} *` : comp;
   });
@@ -3293,32 +3292,25 @@ function _netSortKey(comp, p) {
   }
 }
 
-// Competitor con più di un passaggio (non annullato) sulla STESSA linea:
-// probabile errore di battitura/scansione — una coppia entrata-uscita
-// finirebbe per appartenere a un altro concorrente.
-function getDuplicateCompetitorsOnLine(lineNumber) {
-  const rows = Array.from(document.querySelectorAll('#event-table tbody tr:not(.diff-row)'))
-    .filter(r => r.dataset.cancelled !== '1')
-    .filter(r => String(r.dataset.line) === String(lineNumber));
-  const counts = {};
-  rows.forEach(r => {
-    const c = (r.dataset.competitor ?? '').trim();
-    if (!c || c === '0') return;
-    counts[c] = (counts[c] || 0) + 1;
-  });
-  return new Set(Object.keys(counts).filter(c => counts[c] > 1));
+// Competitor che compaiono nell'output di una coppia partenza/arrivo (hanno
+// almeno un passaggio su una delle due linee, quindi otterranno una riga
+// nella tabella Tempi netti).
+function _competitorsForPair(startLine, finishLine) {
+  const startByComp  = _firstRowPerCompetitor(startLine);
+  const finishByComp = _firstRowPerCompetitor(finishLine);
+  return new Set([...Object.keys(startByComp), ...Object.keys(finishByComp)]);
 }
 
 // Righe di un singolo gruppo (coppia di linee) da appendere alla tabella,
 // una riga per competitor: solo Comp./Start/Finish/Net, senza indicare quali
 // linee sono state usate per il calcolo (non serve all'operatore).
-function _netGroupRows(tbody, startLine, finishLine) {
+// dupComps: competitor da evidenziare perché compaiono in PIÙ di una riga
+// della tabella Tempi netti stessa (hanno un risultato valido in entrambe le
+// coppie) — non ha a che fare con quante volte passano sulle linee grezze.
+function _netGroupRows(tbody, startLine, finishLine, dupComps) {
   const startByComp  = _firstRowPerCompetitor(startLine);
   const finishByComp = _firstRowPerCompetitor(finishLine);
   const comps = new Set([...Object.keys(startByComp), ...Object.keys(finishByComp)]);
-
-  const startDup  = getDuplicateCompetitorsOnLine(startLine);
-  const finishDup = getDuplicateCompetitorsOnLine(finishLine);
 
   Array.from(comps)
     .map(comp => ({ comp, p: _netPairText(startByComp, finishByComp, comp) }))
@@ -3326,7 +3318,7 @@ function _netGroupRows(tbody, startLine, finishLine) {
     .forEach(({ comp, p }) => {
       const tr = document.createElement('tr');
       tr.dataset.competitor = comp;
-      const isDup = startDup.has(comp) || finishDup.has(comp);
+      const isDup = dupComps.has(comp);
       if (isDup) tr.classList.add('row-dup-competitor');
       tr.innerHTML = `<td class="col-competitor">${isDup ? comp + ' *' : comp}</td><td>${p.sText}</td><td>${p.fText}</td><td>${p.netText}</td>`;
       tbody.appendChild(tr);
@@ -3338,8 +3330,13 @@ function rebuildNetTimesTable() {
   if (!tbody) return;
 
   tbody.innerHTML = '';
-  if (netTimesPair1Enabled) _netGroupRows(tbody, netTimesStartLine,  netTimesFinishLine);
-  if (netTimesPair2Enabled) _netGroupRows(tbody, netTimesStartLine2, netTimesFinishLine2);
+
+  const comps1 = netTimesPair1Enabled ? _competitorsForPair(netTimesStartLine,  netTimesFinishLine)  : new Set();
+  const comps2 = netTimesPair2Enabled ? _competitorsForPair(netTimesStartLine2, netTimesFinishLine2) : new Set();
+  const dupComps = new Set([...comps1].filter(c => comps2.has(c)));
+
+  if (netTimesPair1Enabled) _netGroupRows(tbody, netTimesStartLine,  netTimesFinishLine,  dupComps);
+  if (netTimesPair2Enabled) _netGroupRows(tbody, netTimesStartLine2, netTimesFinishLine2, dupComps);
 }
 
 // Abilita/disabilita una delle due coppie partenza/arrivo: quando disattiva,

@@ -435,11 +435,39 @@ hr {
   background: rgba(0,0,0,0.12);
 }
 
-/* ======= CHECKPOINT SETTINGS TABLE ======= */
+/* ======= CHECKPOINT SETTINGS TABLE — layout colonne ======= */
+/* Tabella "Gestione transiti": 4 colonne (Linea | Tipo | Conc. | ✓) gestite
+   con CSS Grid invece del normale table-layout (che con contenuti lunghi in
+   Tipo può far crescere l'intera tabella in modo imprevedibile). Il markup
+   resta una <table> vera — thead/tbody/tr diventano solo "trasparenti" al
+   layout (display:contents) così i loro th/td condividono un'unica griglia
+   a 4 colonne.
 
+   Regole di ciascuna colonna:
+   - Linea e ✓ (76px / 44px): larghezza fissa, non cambiano mai.
+   - Tipo: si dimensiona sul proprio contenuto (il nome del dispositivo), tra
+     un minimo di 70px e un tetto massimo di 180px oltre il quale il testo
+     va in ellissi "..." invece di continuare ad allargare la colonna (il
+     tetto è su .cp-tipo-cell più sotto — "min(max-content, Npx)" scritto
+     qui non è supportato ovunque e romperebbe silenziosamente l'intera
+     dichiarazione, collassando la griglia a una sola colonna).
+   - Conc. (1fr): riempie sempre lo spazio che Tipo non usa, fino a un
+     minimo di 85px.
+   I minimi (70px/85px) sono: larghezza del testo header in IT+EN, misurata
+   col font reale (Nunito 700 20px) + il padding dell'header (8px per lato,
+   v. riga 406) + un margine extra — così "Linea"/"Tipo"/"Conc." non vanno
+   mai in clip, in nessuna lingua. */
 .checkpoint-settings {
   width: 100%;
   border-collapse: collapse;
+  display: grid;
+  grid-template-columns: 76px minmax(70px, max-content) minmax(85px, 1fr) 44px;
+}
+
+.checkpoint-settings thead,
+.checkpoint-settings tbody,
+.checkpoint-settings tr {
+  display: contents;
 }
 
 .checkpoint-settings td {
@@ -449,8 +477,9 @@ hr {
   position: relative;
 }
 
-.checkpoint-settings tbody tr {
-  height: 46px;
+/* tr ha display:contents (sopra): l'altezza di riga va sulle celle stesse */
+.checkpoint-settings tbody td {
+  min-height: 46px;
 }
 
 .checkpoint-settings td button,
@@ -460,7 +489,20 @@ hr {
   font-size: 30px;
 }
 
-/* ── Tipo cell (two-row display) ─────────────────────────────────────── */
+/* ── Colonna Linea (fissa) ─────────────────────────────────────────────── */
+.cp-line-send {
+  cursor: pointer !important;
+  font-weight: bold;
+  user-select: none;
+  transition: filter 0.15s;
+  font-size: 30px;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+.cp-line-send:hover  { filter: brightness(0.88); }
+.cp-line-send:active { filter: brightness(0.75); }
+
+/* ── Colonna Tipo (due righe: nome dispositivo + auto/manuale) ──────────── */
 .cp-tipo-cell,
 .cp-val-cell {
   cursor: pointer;
@@ -475,11 +517,16 @@ hr {
 .cp-tipo-cell {
   line-height: 1.3;
   white-space: nowrap;
+  overflow: hidden;
+  min-width: 0;     /* può restringersi sotto la sua larghezza "naturale" */
+  max-width: 180px; /* tetto massimo — v. commento sopra .checkpoint-settings */
 }
 
 .cp-tipo-cell span {
   font-size: 20px;
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cp-val-cell span {
@@ -494,16 +541,31 @@ hr {
   margin: 2px 4px;
 }
 
-.cp-line-send {
-  cursor: pointer !important;
-  font-weight: bold;
-  font-size: 18px;
-  user-select: none;
-  transition: filter 0.15s;
-  font-size: 30px;
+/* ── Colonna Concorrente (1fr — riempie lo spazio che Tipo non usa) ─────── */
+.cp-comp-cell {
+  padding: 2px 4px !important;
 }
-.cp-line-send:hover  { filter: brightness(0.88); }
-.cp-line-send:active { filter: brightness(0.75); }
+
+.comp-input {
+  /* Riempie la cella fino a un tetto di sicurezza di 200px: oltre quel
+     valore la larghezza "intrinseca" dell'input farebbe crescere l'intera
+     card oltre le dimensioni di .card.notifications-card (che deve restarci
+     sempre identica — v. .container .card.left) invece di restare fissa.
+     200px è il valore più alto risultato stabile in prova.
+     !important: la regola generica "input[type=number]" (elemento+attributo,
+     riga ~655) ha più specificità della sola classe .comp-input e
+     vincerebbe altrimenti, riportando la larghezza fissa a 100%/240px. */
+  width: 100% !important;
+  max-width: 200px !important;
+  min-width: 0;
+  text-align: center;
+  font-size: 24px;
+}
+
+.comp-input.comp-active {
+  background-color: #d8d8d8 !important;
+  outline: 2px solid #888;
+}
 
 /* ── Line edit overlay ───────────────────────────────────────────────── */
 #lineEditOverlay .fullscreen-popup.line-edit-popup {
@@ -1465,23 +1527,6 @@ input:checked + .slider:before {
   font-weight: 700;
 }
 
-/* ── Competitor input on main card ── */
-.cp-comp-cell {
-  padding: 2px 4px !important;
-  max-width: 100px;
-}
-
-.comp-input {
-  width: 100%;
-  min-width: 0;
-  text-align: center;
-}
-
-.comp-input.comp-active {
-  background-color: #d8d8d8 !important;
-  outline: 2px solid #888;
-}
-
 /* ── Competitor quick-list card ── */
 /* ── Quick-actions card (top-row, affiancata alla time-card) ── */
 .quick-actions-card {
@@ -1919,7 +1964,13 @@ input#mqtt-broker-pass {
   max-height: var(--content-h);   /* pari al fondo reale di .comp-list-card, v. .arrivals-area */
 }
 
-/* ── Checkpoint settings card — si adatta al contenuto, niente scroll ── */
+/* ── Checkpoint settings card — si adatta al contenuto, niente scroll ──
+   Nessuna larghezza propria qui apposta: deve restare identica a
+   .card.notifications-card, sua "vicina" nello stesso .sidebar-stack —
+   entrambe si affidano allo stesso stretch/min-width di base (.card).
+   La larghezza della tabella .checkpoint-settings al suo interno (colonne
+   Linea/Tipo/Conc./✓) è quindi "presa in prestito" da qui — v. il blocco
+   "CHECKPOINT SETTINGS TABLE — layout colonne" più sopra nel file. */
 .container .card.left {
   overflow: visible;
   height: fit-content;
