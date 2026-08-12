@@ -130,6 +130,17 @@ function rowToMsExact(row) {
   return ((h * 3600 + m * 60 + s) * 1000) + ms;
 }
 
+// Come rowToMsExact, ma tronca i ms alla precisione scelta PRIMA di comporre
+// il totale: usato per i calcoli (Net = Finish - Start), così i risultati
+// restano coerenti con i tempi Start/Finish mostrati.
+function rowToMs(row, precision = netTimesPrecision) {
+  const h  = parseInt(row.dataset.hour    ?? 0);
+  const m  = parseInt(row.dataset.minute  ?? 0);
+  const s  = parseInt(row.dataset.seconds ?? 0);
+  const ms = parseInt(row.dataset.msRaw   ?? 0);
+  return ((h * 3600 + m * 60 + s) * 1000) + truncateMs(ms, precision);
+}
+
 function _rowAbsoluteTimeText(row) {
   const h  = parseInt(row.dataset.hour    ?? 0);
   const m  = parseInt(row.dataset.minute  ?? 0);
@@ -163,10 +174,15 @@ function _netPairText(startByComp, finishByComp, comp) {
   const sText = sRow ? _rowAbsoluteTimeText(sRow) : '—';
   const fText = fRow ? _rowAbsoluteTimeText(fRow) : '—';
 
+  // Tronca Start/Finish alla precisione scelta PRIMA di calcolare il Net,
+  // così Net = Finish - Start torna sempre coerente con i tempi mostrati.
+  const startMs  = sRow ? rowToMs(sRow, netTimesPrecision) : null;
+  const finishMs = fRow ? rowToMs(fRow, netTimesPrecision) : null;
+
   let netText = '—';
   let netMs = null;
-  if (sRow && fRow) {
-    const diffMs = rowToMsExact(fRow) - rowToMsExact(sRow);
+  if (startMs !== null && finishMs !== null) {
+    const diffMs = finishMs - startMs;
     if (diffMs >= 0) {
       const dH  = Math.floor(diffMs / 3600000);
       const dM  = Math.floor((diffMs % 3600000) / 60000);
@@ -176,8 +192,6 @@ function _netPairText(startByComp, finishByComp, comp) {
       netMs = diffMs;
     }
   }
-  const startMs  = sRow ? rowToMsExact(sRow) : null;
-  const finishMs = fRow ? rowToMsExact(fRow) : null;
   return { sText, fText, netText, startMs, finishMs, netMs };
 }
 

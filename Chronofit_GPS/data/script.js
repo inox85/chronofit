@@ -3232,10 +3232,15 @@ function _netPairText(startByComp, finishByComp, comp) {
   const sText = sRow ? _rowAbsoluteTimeText(sRow) : '—';
   const fText = fRow ? _rowAbsoluteTimeText(fRow) : '—';
 
+  // Tronca Start/Finish alla precisione scelta PRIMA di calcolare il Net,
+  // così Net = Finish - Start torna sempre coerente con i tempi mostrati.
+  const startMs  = sRow ? rowToMs(sRow, netTimesPrecision) : null;
+  const finishMs = fRow ? rowToMs(fRow, netTimesPrecision) : null;
+
   let netText = '—';
   let netMs = null;
-  if (sRow && fRow) {
-    const diffMs = rowToMsExact(fRow) - rowToMsExact(sRow);
+  if (startMs !== null && finishMs !== null) {
+    const diffMs = finishMs - startMs;
     if (diffMs >= 0) {
       const dH  = Math.floor(diffMs / 3600000);
       const dM  = Math.floor((diffMs % 3600000) / 60000);
@@ -3245,8 +3250,6 @@ function _netPairText(startByComp, finishByComp, comp) {
       netMs = diffMs;
     }
   }
-  const startMs  = sRow ? rowToMsExact(sRow) : null;
-  const finishMs = fRow ? rowToMsExact(fRow) : null;
   return { sText, fText, netText, startMs, finishMs, netMs };
 }
 
@@ -3401,6 +3404,8 @@ function applyCompetitorSplits(tableId = 'event-table') {
     groups[comp].push(row);
   });
 
+  const splitsPrecision = tableId === 'event-table-2' ? timePrecision2 : timePrecision;
+
   Object.values(groups).forEach(compRows => {
     // Ordina cronologicamente (crescente per tempo assoluto)
     compRows.sort((a, b) => rowToMsExact(a) - rowToMsExact(b));
@@ -3411,7 +3416,8 @@ function applyCompetitorSplits(tableId = 'event-table') {
         const r1 = compRows[i];      // evento precedente
         const r2 = compRows[i + 1]; // evento successivo
 
-        const diffMs = rowToMsExact(r2) - rowToMsExact(r1);
+        // Tronca prima di calcolare il diff, così è coerente con i tempi mostrati
+        const diffMs = rowToMs(r2, splitsPrecision) - rowToMs(r1, splitsPrecision);
         const dH  = Math.floor(diffMs / 3600000);
         const dM  = Math.floor((diffMs % 3600000) / 60000);
         const dS  = Math.floor((diffMs % 60000) / 1000);
@@ -3432,7 +3438,7 @@ function applyCompetitorSplits(tableId = 'event-table') {
           <td class="col-name">${getAthleteName(comp)}</td>
           <td class="col-surname">${getAthleteSurname(comp)}</td>
           <td class="timestamp">—</td>
-          <td class="race-time diff-time">${formatTime(dH, dM, dS, dMs, tableId === 'event-table-2' ? timePrecision2 : timePrecision)}</td>
+          <td class="race-time diff-time">${formatTime(dH, dM, dS, dMs, splitsPrecision)}</td>
           <td class="delta-time">—</td>
           <td class="elapsed-time">—</td>
           <td></td><td></td><td></td>

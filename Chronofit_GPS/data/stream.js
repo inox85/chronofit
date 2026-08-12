@@ -318,7 +318,8 @@ function applyCompetitorSplits() {
       for (let i = 0; i < compRows.length - 1; i++) {
         const r1 = compRows[i];
         const r2 = compRows[i + 1];
-        const diffMs = rowToMsExact(r2) - rowToMsExact(r1);
+        // Tronca prima di calcolare il diff, così è coerente con i tempi mostrati
+        const diffMs = rowToMs(r2) - rowToMs(r1);
         const dH  = Math.floor(diffMs / 3600000);
         const dM  = Math.floor((diffMs % 3600000) / 60000);
         const dS  = Math.floor((diffMs % 60000) / 1000);

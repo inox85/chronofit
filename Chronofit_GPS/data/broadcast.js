@@ -151,15 +151,16 @@ function computeLtTime(competitorNum, eventData) {
 
   if (ltTimeMode === "delta") {
     if (allRows.length < 2) return { label: "DELTA", text: "—" };
-    const diffMs = rowToMsExact(allRows[allRows.length - 1])
-                 - rowToMsExact(allRows[allRows.length - 2]);
+    // Tronca prima di calcolare il diff, così è coerente con i tempi mostrati
+    const diffMs = rowToMs(allRows[allRows.length - 1])
+                 - rowToMs(allRows[allRows.length - 2]);
     return { label: "DELTA", text: formatDuration(diffMs) };
   }
 
   if (ltTimeMode === "elapsed") {
     if (allRows.length < 2) return { label: "ELAPSED", text: "—" };
-    const diffMs = rowToMsExact(allRows[allRows.length - 1])
-                 - rowToMsExact(allRows[0]);
+    const diffMs = rowToMs(allRows[allRows.length - 1])
+                 - rowToMs(allRows[0]);
     return { label: "ELAPSED", text: formatDuration(diffMs) };
   }
 
@@ -397,7 +398,8 @@ function applyCompetitorSplits() {
       for (let i = 0; i < compRows.length - 1; i++) {
         const r1 = compRows[i];
         const r2 = compRows[i + 1];
-        const diffMs = rowToMsExact(r2) - rowToMsExact(r1);
+        // Tronca prima di calcolare il diff, così è coerente con i tempi mostrati
+        const diffMs = rowToMs(r2) - rowToMs(r1);
         const dH  = Math.floor(diffMs / 3600000);
         const dM  = Math.floor((diffMs % 3600000) / 60000);
         const dS  = Math.floor((diffMs % 60000) / 1000);
