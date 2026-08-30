@@ -288,6 +288,7 @@ const TRANSLATIONS = {
     'cp.tipo1_placeholder': 'e.g. FPC 102',
     'cp.tipo2_auto':  'Auto',
     'cp.tipo2_manual':'Man.',
+    'cp.save_error':  '⚠ Could not save line {0} settings on the device (connection error). The device may still show the old configuration. Please retry.',
 
     // ── Event table headers ───────────────────────────────────────────────────
     'th.line':       'Line',
@@ -595,6 +596,7 @@ const TRANSLATIONS = {
     'cp.tipo1_placeholder': 'Es. FPC 102',
     'cp.tipo2_auto':  'Auto',
     'cp.tipo2_manual':'Man.',
+    'cp.save_error':  '⚠ Impossibile salvare le impostazioni della linea {0} sul dispositivo (errore di connessione). Il dispositivo potrebbe mostrare ancora la configurazione precedente. Riprova.',
 
     // ── Event table headers ───────────────────────────────────────────────────
     'th.line':       'Linea',

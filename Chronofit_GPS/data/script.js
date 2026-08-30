@@ -1151,9 +1151,16 @@ function closeLineEdit() {
 
 // Salva le 4 linee + cronometristi, senza stampare né chiudere il popup.
 // Ritorna quali linee sono realmente cambiate rispetto all'apertura del
-// popup (_lineEditSnapshot), per permettere una stampa mirata al salvataggio.
-function _saveAllLineSettings() {
+// popup (_lineEditSnapshot), per permettere una stampa mirata al salvataggio,
+// e quali linee NON sono state confermate dal dispositivo (es. WiFi instabile
+// sul campo gara): il localStorage del browser viene comunque aggiornato
+// subito (serve per la UI), quindi senza questo controllo l'operatore vede
+// il campo "Prova" valorizzato pur non essendo mai arrivato al firmware —
+// che per ogni battuta continua a riportare il dispositivo linea vuoto
+// ("Non gestita" in tabella tempi).
+async function _saveAllLineSettings() {
   const changedLines = [];
+  const failedLines = [];
 
   for (let line = 1; line <= 4; line++) {
     const cEl = document.getElementById(`c${line}`);
@@ -1171,7 +1178,11 @@ function _saveAllLineSettings() {
     updateDelayDisplay(line);
 
     const enableBtn = document.querySelector(`.line-enable-btn[data-line="${line}"]`);
-    sendSettingsRowData({
+    // Una richiesta alla volta, attesa prima di passare alla prossima: 4 POST
+    // sparate in parallelo mettevano sotto stress il web server dell'ESP32,
+    // causando fallimenti intermittenti (quindi popup mai chiuso) anche
+    // quando la connessione era in realtà a posto.
+    const ok = await sendSettingsRowData({
       l:  Number(line),
       c:  Number(cEl?.value) || 0,
       d:  newDelay,
@@ -1179,6 +1190,7 @@ function _saveAllLineSettings() {
       t1: lineTipoConfig[line].tipo1,
       t2: lineTipoConfig[line].tipo2
     });
+    if (!ok) failedLines.push(line);
 
     const before = _lineEditSnapshot[line] || {};
     const changed = before.tipo1 !== lineTipoConfig[line].tipo1 ||
@@ -1193,20 +1205,31 @@ function _saveAllLineSettings() {
   const timekeepersChanged = newTimekeepers !== (_lineEditSnapshot.timekeepers ?? '');
   if (tkField) localStorage.setItem(TIMEKEEPERS_KEY, newTimekeepers);
 
-  return { changedLines, timekeepersChanged };
+  return { changedLines, timekeepersChanged, failedLines };
 }
 
 // "Salva e stampa": salva tutte le linee e stampa lo scontrino completo.
+// Se il dispositivo non conferma il salvataggio di una o più linee, avvisa
+// l'operatore e NON stampa/chiude: il popup resta aperto per poter ritentare.
 async function saveAndPrintLineEdit() {
-  _saveAllLineSettings();
+  const { failedLines } = await _saveAllLineSettings();
+  if (failedLines.length) {
+    alert(t('cp.save_error', failedLines.join(', ')));
+    return;
+  }
   await printLineSettingsReceipt();
   closeLineEdit();
 }
 
 // "Salva e chiudi": salva tutte le linee e stampa (stesso template dello
 // scontrino completo) solo le linee/impostazioni realmente cambiate.
+// Come sopra: su mancata conferma dal dispositivo avvisa e non chiude.
 async function saveAndCloseLineEdit() {
-  const { changedLines, timekeepersChanged } = _saveAllLineSettings();
+  const { changedLines, timekeepersChanged, failedLines } = await _saveAllLineSettings();
+  if (failedLines.length) {
+    alert(t('cp.save_error', failedLines.join(', ')));
+    return;
+  }
   if (changedLines.length || timekeepersChanged) {
     await printLineSettingsReceipt(changedLines, timekeepersChanged);
   }
@@ -1932,6 +1955,15 @@ function clearEventTableRows() {
   eventRows = []; // reset array interno
   const netTbody = document.querySelector("#net-times-table tbody");
   if (netTbody) netTbody.innerHTML = "";
+
+  // Reset sessione = reset anche della lista concorrenti attesi: il roster
+  // (nomi/numeri) e lo stato "arrivato" sono legati alla sessione appena
+  // cancellata, quindi vanno ricaricati da capo per la prossima.
+  athleteRegistry = [];
+  assignedCompetitorSet.clear();
+  localStorage.removeItem(ATHLETES_KEY);
+  localStorage.removeItem("chronofit_assigned");
+  renderCompQuickList();
 }
 
 async function populateTableFromSaved() {
@@ -2526,31 +2558,27 @@ function jsonToCsv(array) {
 function jsonToCsvTimeStamp(array) {
   if (!array.length) return '';
 
-  const keys = Object.keys(array[0]);
-
-  // Header CSV: prime 3 colonne + timestamp
+  // Header CSV: ID, Line number, Competitor + timestamp — 4 colonne, esatte
+  // ed esclusive (niente colonne aggiuntive non dichiarate nell'intestazione).
   const header = `ID;Line number;Competitor;Timestamp`;
 
   const rows = array.map(obj => {
-    
-    // Prime 4 colonne normalmente
-    const fixedCols = keys.slice(0, 4).map(k => {
-      let val = obj[k];
-      if (typeof val === 'string') {
-        val = '"' + val.replace(/"/g, '""') + '"';
-      }
-      return val;
-    }).join(';');
+    // Accesso per nome (non per indice posizionale): l'ordine delle chiavi
+    // nel JSON del checkpoint può variare (es. righe di sessioni salvate da
+    // versioni firmware precedenti, o campi opzionali assenti) — indicizzare
+    // per posizione disallineava le colonne, facendo apparire "null" dove in
+    // realtà mancava solo un campo intermedio.
+    const hh = String(obj.h  ?? 0).padStart(2, '0');
+    const mm = String(obj.m  ?? 0).padStart(2, '0');
+    const ss = String(obj.s  ?? 0).padStart(2, '0');
+    const ms = String(obj.ms ?? 0).padStart(3, '0');
 
-    // Colonne 4–7 → timestamp
-    const h   = obj[keys[4]];
-    const min = obj[keys[5]];
-    const sec = obj[keys[6]];
-    const ms  = obj[keys[7]];
+    // Virgola (non due punti) tra secondi e millesimi: i due punti aggiuntivi
+    // in un valore che sembra un orario confondono Excel in fase di
+    // importazione/elaborazione dei dati.
+    const timestamp = `${hh}:${mm}:${ss},${ms}`;
 
-    const timestamp = `${h}:${min}:${sec}:${ms}`;
-
-    return `${fixedCols};${timestamp}`;
+    return `${obj.id};${obj.ln};${obj.c};${timestamp}`;
   });
 
   return [header, ...rows].join('\r\n');
@@ -2668,7 +2696,7 @@ function applyLineUpdate(data) {
   updateDelayDisplay(n);
 }
 
-function toggleLineEnable(line) {
+async function toggleLineEnable(line) {
   const btn = document.querySelector(`.line-enable-btn[data-line="${line}"]`);
   const currentEnabled = (btn.dataset.enabled ?? "1") !== "0";
   const newEnabled = currentEnabled ? 0 : 1;
@@ -2679,18 +2707,34 @@ function toggleLineEnable(line) {
     e:  newEnabled
   };
   applyLineEnableState(btn, newEnabled); // aggiornamento ottimistico
-  sendSettingsRowData(data);
+  const ok = await sendSettingsRowData(data);
+  if (!ok) {
+    // Il dispositivo non ha confermato: annulla l'aggiornamento ottimistico
+    // per non far credere all'operatore che la linea sia davvero attiva.
+    applyLineEnableState(btn, currentEnabled ? 1 : 0);
+    _syncLeEnable(line);
+    alert(t('cp.save_error', line));
+  }
 }
 
+// Ritorna true/false in base all'esito reale del salvataggio sul dispositivo
+// (mai un reject: i chiamanti possono sempre fare "if (!ok)" senza try/catch).
 function sendSettingsRowData(data) {
   console.log("Invio dati al server:", data);
-  fetch('/checkPointFields', {
+  return fetch('/checkPointFields', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   })
-  .then(res => res.ok ? console.log(`✅ Riga ${data.l} aggiornata`) : console.error(`❌ Errore aggiornando linea ${data.l}`))
-  .catch(err => console.error('Errore di rete:', err));
+  .then(res => {
+    if (res.ok) { console.log(`✅ Riga ${data.l} aggiornata`); return true; }
+    console.error(`❌ Errore aggiornando linea ${data.l}`);
+    return false;
+  })
+  .catch(err => {
+    console.error('Errore di rete:', err);
+    return false;
+  });
 }
 
 // ── Fullscreen: entra subito all'avvio (nessun popup di conferma), resta

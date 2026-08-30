@@ -843,17 +843,30 @@ async function downloadSession() {
 
 function jsonToCsvTimeStamp(array) {
   if (!array.length) return '';
-  const keys = Object.keys(array[0]);
-  const header = `ID;Line number;Line ID;Competitor;Timestamp`;
+
+  // Header CSV: ID, Line number, Competitor + timestamp — 4 colonne, esatte
+  // ed esclusive ("Line ID" non è mai valorizzato dal firmware: rimosso per
+  // non disallineare intestazione e dati).
+  const header = `ID;Line number;Competitor;Timestamp`;
+
   const rows = array.map(obj => {
-    const fixedCols = keys.slice(0, 4).map(k => {
-      let val = obj[k];
-      if (typeof val === 'string') val = '"' + val.replace(/"/g, '""') + '"';
-      return val;
-    }).join(';');
-    const h = obj[keys[4]], min = obj[keys[5]], sec = obj[keys[6]], ms = obj[keys[7]];
-    return `${fixedCols};${h}:${min}:${sec}:${ms}`;
+    // Accesso per nome (non per indice posizionale): l'ordine delle chiavi
+    // nel JSON del checkpoint può variare — indicizzare per posizione
+    // disallineava le colonne, facendo apparire "null" dove in realtà
+    // mancava solo un campo intermedio.
+    const hh = String(obj.h  ?? 0).padStart(2, '0');
+    const mm = String(obj.m  ?? 0).padStart(2, '0');
+    const ss = String(obj.s  ?? 0).padStart(2, '0');
+    const ms = String(obj.ms ?? 0).padStart(3, '0');
+
+    // Virgola (non due punti) tra secondi e millesimi: i due punti aggiuntivi
+    // in un valore che sembra un orario confondono Excel in fase di
+    // importazione/elaborazione dei dati.
+    const timestamp = `${hh}:${mm}:${ss},${ms}`;
+
+    return `${obj.id};${obj.ln};${obj.c};${timestamp}`;
   });
+
   return [header, ...rows].join('\r\n');
 }
 

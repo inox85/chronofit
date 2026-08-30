@@ -30,7 +30,7 @@ void printFormatted(int index, String line, int competitor, int hh, int mm, int 
 
   char buffer[48];
 
-  sprintf(buffer, "%03d L%s C%04d %02d:%02d:%02d.%03d %s", index, line.c_str(), competitor, hh, mm, ss, ms, flag);
+  sprintf(buffer, "%03d L%s %5d %02d:%02d:%02d.%03d %s", index, line.c_str(), competitor, hh, mm, ss, ms, flag);
 
   String text = String(buffer);
 

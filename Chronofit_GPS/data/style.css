@@ -1573,6 +1573,7 @@ input:checked + .slider:before {
 
 .top-row .card.time-card {
   flex: 1;   /* occupa lo spazio rimasto dopo la quick-actions-card */
+  min-width: 0;   /* override .card min-width: 400px, altrimenti blocca il restringimento orizzontale */
 }
 
 /* ── Comp-list card: stretch all'altezza totale della sidebar-stack ── */
