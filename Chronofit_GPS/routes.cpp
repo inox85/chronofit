@@ -833,6 +833,47 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     wifiRxActivity();
   });
 
+  // ── Branding e discipline (licensing dealer) ──────────────────────────────
+  // discFlags: blob JSON { "<disciplineId>": 0|1 } con lo stato abilitato/
+  // bloccato di ogni disciplina nella schermata di selezione. Una sola chiave
+  // NVS (stringa) invece di una chiave per disciplina: il limite NVS è sulla
+  // lunghezza della CHIAVE (15 caratteri), non del valore.
+  server.on("/brandingSettings", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String flagsJson = readStringFromSettings("discFlags", "{}");
+    StaticJsonDocument<512> flagsDoc;
+    DeserializationError err = deserializeJson(flagsDoc, flagsJson);
+
+    StaticJsonDocument<768> out;
+    JsonObject disciplines = out["disciplines"].to<JsonObject>();
+    if (!err && flagsDoc.is<JsonObject>()) {
+      for (JsonPair kv : flagsDoc.as<JsonObject>()) {
+        disciplines[kv.key()] = kv.value();
+      }
+    }
+    // showSponsor: visibilità dell'immagine sponsor.png già esistente (vedi
+    // sponsor.html per il suo upload) — default 1 (visibile), per non
+    // cambiare comportamento sui device esistenti che la mostrano già oggi.
+    out["showSponsorLogo"]   = readIntFromSettings("showSponsor", 1);
+    out["sponsorLogoExists"] = LittleFS.exists("/sponsor.png");
+
+    String json;
+    serializeJson(out, json);
+    request->send(200, "application/json", json);
+    wifiRxActivity();
+  });
+
+  server.on("/brandingSave", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
+    if (request->hasParam("disciplines")) {
+      writeStringToSettings("discFlags", request->getParam("disciplines")->value());
+    }
+    if (request->hasParam("showSponsorLogo")) {
+      writeIntToSettings("showSponsor", request->getParam("showSponsorLogo")->value().toInt());
+    }
+    request->send(200, "text/plain", "OK");
+    wifiRxActivity();
+  });
+
   server.on("/mqttDiscardPending", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("id")) {
       int id = request->getParam("id")->value().toInt();

@@ -1057,6 +1057,25 @@ window.addEventListener("beforeunload", () => {
 });
 
 // ── Init ──────────────────────────────────────────────────────
+// ── Branding dealer (logo opzionale accanto a quello Chronofit) ────────────
+// BRANDING_CACHE_KEY è letta in modo sincrono da un piccolo script inline
+// subito dopo lo splash (vedi l'HTML), per evitare che sponsor/separatore
+// lampeggino mentre si attende la risposta (asincrona) di /brandingSettings.
+const BRANDING_CACHE_KEY = 'chronofit_branding_cache';
+async function applyBrandingSettings() {
+  try {
+    const res = await fetch('/brandingSettings');
+    const data = await res.json();
+    const showSponsorLogo   = !!data.showSponsorLogo;
+    const sponsorLogoExists = !!data.sponsorLogoExists;
+    const show = showSponsorLogo && sponsorLogoExists;
+    document.querySelectorAll('.sponsor-visibility-toggle, .splash-divider').forEach(el => el.style.display = show ? '' : 'none');
+    try { localStorage.setItem(BRANDING_CACHE_KEY, JSON.stringify({ showSponsorLogo, sponsorLogoExists })); } catch (e) {}
+  } catch (e) {
+    console.warn('Errore lettura impostazioni branding:', e);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   updateLineBarColor(1);
   restoreStreamPrefs();
@@ -1064,6 +1083,7 @@ document.addEventListener("DOMContentLoaded", () => {
   connectWebSocket();
   keepScreenOn();
   populateTableFromSaved();
+  applyBrandingSettings();
 
   // ── Resize handle ──────────────────────────────────────────
   initResizablePanel();

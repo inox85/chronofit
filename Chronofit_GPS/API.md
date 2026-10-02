@@ -271,6 +271,49 @@ Riavvia il dispositivo (reboot).
 
 ---
 
+## Branding e discipline
+
+Impostazioni di branding/licensing a livello dealer: quali discipline sono
+sbloccate nella schermata di selezione e se mostrare il logo sponsor
+(`sponsor.png`, caricato da `sponsor.html`) sulle pagine. Pensate per essere
+gestite da un tool esterno al dealer (o dalla pagina `branding.html`), non
+dal cliente finale.
+
+### `GET /brandingSettings`
+Restituisce lo stato corrente di branding/licensing.
+
+**Risposta JSON:**
+```json
+{
+  "disciplines": { "regularity": 1, "ski": 1, "enduro": 1, "equestrian": 0 },
+  "showSponsorLogo": 1,
+  "sponsorLogoExists": true
+}
+```
+`disciplines` è una mappa `id disciplina → 0|1` (1 = abilitata, 0 = visibile
+ma bloccata nella schermata di selezione). Un id assente equivale a `1`
+(abilitata). `showSponsorLogo` di default è `1` (per non cambiare il
+comportamento sui device esistenti, dove `sponsor.png` è sempre mostrato
+oggi). `sponsorLogoExists` indica se `/sponsor.png` è già stato caricato
+(vedi `POST /upload`, o la pagina `sponsor.html`).
+
+---
+
+### 🔒 `GET /brandingSave`
+Aggiorna lo stato di branding/licensing. Ogni parametro è opzionale: se
+omesso, il relativo valore resta invariato.
+
+**Parametri:**
+
+| Parametro | Tipo | Descrizione |
+|---|---|---|
+| `disciplines` | string (JSON) | Mappa `{"id":0\|1, ...}` da salvare così com'è |
+| `showSponsorLogo` | int | `1` = mostra `sponsor.png` sulle pagine, `0` = nascondilo |
+
+**Risposta:** testo di conferma `OK`.
+
+---
+
 ## WiFi
 
 ### `GET /wifiCredential`

@@ -79,12 +79,14 @@ No framework, no build tool beyond the minify/gzip pass described above. Pages a
 | `index.html` | `script.js` (~5k lines, the largest module) + `i18n.js` + `disciplines.js` | Main operator console: checkpoint capture, session/line management, settings |
 | `view.html` | `script_view.js` | Read-only session/results view |
 | `view_enduro.html` | `script_view_enduro.js` + `i18n.js` | Enduro-discipline results view |
+| `view_equitazione.html` | `script_view_equitazione.js` + `i18n.js` | Equestrian-discipline results view (clock + ranked results table) |
 | `enduro_competitor_start.html` / `enduro_competitor_finish.html` | `script_enduro_competitor.js` + `i18n.js` | Competitor-facing start/finish screens for enduro events |
 | `admin.html` | inline | Admin/maintenance page |
 | `gps.html` | inline | GPS diagnostics page |
 | `stream.html` / `broadcast.html` | `stream.js` / `broadcast.js` | HLS video stream viewer/broadcast (via `hls.js` from CDN) |
 | `update.html` | inline | Firmware/filesystem OTA update UI |
 | `sponsor.html` | inline | Sponsor display page |
+| `branding.html` | inline | Dealer-only admin page: per-discipline licensing (enabled/locked) + sponsor.png visibility toggle, via the `/brandingSettings`/`/brandingSave` 🔒 API |
 
 `i18n.js` is a small hand-rolled i18n engine (`TRANSLATIONS` object per language, `t(key, ...args)`, `setLanguage()`, `data-i18n` attribute binding) — see the comment block at the top of the file for how to add a language. Pages communicate with the device over the routes documented in `API.md`, plus the `/ws` WebSocket for realtime push (checkpoint events, time ticks, settings/row updates — see the event type table in `API.md` and the matching `TYPE_*` constants in `Params.h`).
 

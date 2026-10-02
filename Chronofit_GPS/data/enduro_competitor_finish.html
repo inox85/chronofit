@@ -112,10 +112,26 @@
     <div class="splash-logos">
       <img src="/logo.webp" alt="Logo">
       <div class="splash-divider"></div>
-      <img src="/sponsor.png" alt="Sponsor">
+      <img src="/sponsor.png" alt="Sponsor" class="sponsor-visibility-toggle">
     </div>
     <p class="splash-label" data-i18n="splash.loading">Loading session...</p>
   </div>
+
+  <script>
+    // Applica subito (sincrono) l'ultimo stato sponsor noto in cache, prima
+    // che il browser disegni lo splash: evita il lampeggio sponsor/separatore
+    // mentre si attende la risposta (per forza asincrona) di /brandingSettings.
+    (function() {
+      try {
+        var c = JSON.parse(localStorage.getItem('chronofit_branding_cache') || 'null');
+        if (c && !(c.showSponsorLogo && c.sponsorLogoExists)) {
+          document.querySelectorAll('.sponsor-visibility-toggle, .splash-divider').forEach(function(el) {
+            el.style.display = 'none';
+          });
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   <div id="popup" class="popup hidden">No connection to Chronofit device</div>
 
@@ -125,7 +141,7 @@
 
       <div class="time-header">
         <img src="/logo-black.png" alt="Logo" class="sponsor-logo">
-        <img src="/sponsor.png" alt="Sponsor" class="sponsor-img">
+        <img src="/sponsor.png" alt="Sponsor" class="sponsor-img sponsor-visibility-toggle">
       </div>
 
       <div class="card-title" id="ecompTitle" data-i18n="enduro.last_arrival">Last arrival</div>

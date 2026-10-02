@@ -52,6 +52,11 @@
 //   linesSecondary      come "lines" ma per la seconda card Arrivi
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Uniche discipline selezionabili dal percorso Cronometraggio (Regolarità/Sci/
+// Enduro/Equitazione). Qui (non in script.js) perché anche branding.html, che
+// non include script.js, ne ha bisogno per elencare i toggle di abilitazione.
+const STARTUP_DISCIPLINE_IDS = ['regularity', 'ski', 'enduro', 'equestrian'];
+
 const DISCIPLINES = [
 
   {
@@ -134,6 +139,31 @@ const DISCIPLINES = [
       showCompList: false,  syncMode: 2,
       bgColor: "#d7ebf8",
       propagateCompetitor: true,
+      tableAcquireCompetitor: false,
+      showSecondArrivalsCard: false
+    }
+  },
+
+  {
+    id: "equestrian",
+    emoji: "🐎",
+    label: { en: "Equestrian", it: "Equitazione" },
+    prefs: {
+      // Prova individuale a cronometro (salto ostacoli): tempo di gara relativo
+      // (race-time) come ordinamento di default, penalità (abbattimenti/rifiuti)
+      // e distacco dal leader visibili, nessuna riga Arrivi/Partenze doppia.
+      // showLine: true — più ostacoli/prove possono essere seguiti su linee
+      // diverse, quindi sapere da quale linea arriva ogni passaggio è utile.
+      sortCol: "race-time", reverseOrder: false,
+      showRank: true,       showIndex: false,  showLine: true,
+      showName: true,       showSurname: true,
+      timestamp: false,     deltaTime: true,   elapsedTime: false,
+      penality: true,       showCancelBtn: false,  showSendBtn: false,
+      showTest: false,    showTrigger: false,
+      splitsMode: false,    timePrecision: 2,  showDisabled: false,
+      showCompList: true,   syncMode: 3,
+      bgColor: "#e6d2b5",
+      propagateCompetitor: false,
       tableAcquireCompetitor: false,
       showSecondArrivalsCard: false
     }

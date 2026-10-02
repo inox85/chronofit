@@ -173,6 +173,7 @@ const TRANSLATIONS = {
     'card.departures':  'Departures',
     'card.finish':      'Finish',
     'card.net_times':   'Net times',
+    'card.results':     'Results',
 
     // ── Net times card ─────────────────────────────────────────────────────────
     'net.start_line':  'Start line',
@@ -252,6 +253,7 @@ const TRANSLATIONS = {
 
     // ── Discipline overlay ────────────────────────────────────────────────────
     'discipline.title': 'Select discipline',
+    'discipline.locked_message': 'This discipline is not available on this device. Contact your dealer to unlock it.',
 
     // ── About overlay ─────────────────────────────────────────────────────────
     'about.firmware': '🔧 Firmware',
@@ -481,6 +483,7 @@ const TRANSLATIONS = {
     'card.departures':  'Partenze',
     'card.finish':      'Arrivi',
     'card.net_times':   'Tempi netti',
+    'card.results':     'Classifica',
 
     // ── Net times card ─────────────────────────────────────────────────────────
     'net.start_line':  'Linea partenza',
@@ -560,6 +563,7 @@ const TRANSLATIONS = {
 
     // ── Discipline overlay ────────────────────────────────────────────────────
     'discipline.title': 'Seleziona disciplina',
+    'discipline.locked_message': 'Questa disciplina non è disponibile su questo dispositivo. Contatta il rivenditore per sbloccarla.',
 
     // ── About overlay ─────────────────────────────────────────────────────────
     'about.firmware': '🔧 Firmware',

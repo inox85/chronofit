@@ -95,6 +95,19 @@ span{
   left: 0;
 }
 
+/* Logo sponsor nella navbar (index.html, che non ha un .time-header): a
+   differenza di .sponsor-img (position:absolute, pensato per .time-header)
+   qui serve in flusso normale, affiancato al logo Chronofit. Nascosto di
+   default, mostrato da applyBrandingSettings() quando sponsor.png esiste ed
+   è abilitato — stesso toggle che su .sponsor-img nelle pagine view
+   (.sponsor-visibility-toggle, in entrambi i casi). */
+.navbar-sponsor-logo {
+  max-height: 36px;
+  height: auto;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
 .container#view_container {
     margin-top: 0px;
 }
@@ -949,6 +962,7 @@ pre {
 }
 
 .discipline-card {
+  position: relative;   /* ancora per il badge .disc-package-lock */
   background: #2c2c2e;
   border: 2px solid transparent;
   border-radius: 0;
@@ -963,6 +977,21 @@ pre {
   width: auto;
   height: 100%;         /* riempie la cella della grid */
   box-sizing: border-box;
+}
+
+/* Disciplina presente ma non sbloccata per questo device (vendita a
+   pacchetti): resta visibile per l'upsell ma non selezionabile. */
+.discipline-card.package-locked {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.discipline-card.package-locked:hover { background: #2c2c2e; }
+.disc-package-lock {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 22px;
+  line-height: 1;
 }
 
 .disc-emoji {

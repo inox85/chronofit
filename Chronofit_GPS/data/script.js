@@ -645,8 +645,7 @@ function restoreViewPrefs() {
 
 const DISCIPLINE_KEY  = 'chronofit_discipline';
 const DISC_LOCK_KEY   = 'chronofit_disc_locked';
-// Uniche discipline selezionabili dal percorso Cronometraggio (Regolarità/Sci/Enduro).
-const STARTUP_DISCIPLINE_IDS = ['regularity', 'ski', 'enduro'];
+// STARTUP_DISCIPLINE_IDS è definita in disciplines.js (serve anche a branding.html).
 let activeDisciplineId = localStorage.getItem(DISCIPLINE_KEY) || 'generic';
 
 function isDisciplineLocked() {
@@ -725,12 +724,21 @@ function applyDisciplinePreset(prefs) {
     }
   }
 
-  // Sync mode (aggiorna solo la UI — l'invio al device resta manuale)
+  // Sync mode: aggiorna la combobox e, per le modalità che non richiedono un
+  // orario manuale (GPS/Elapsed — stesso criterio di onApplyClick(): riga
+  // .manual-sync nascosta), la applica subito al device con setTimeSyncMode(),
+  // come se l'operatore avesse premuto Apply. Per manuale/chiusura linea
+  // (che richiedono un orario valido inserito a mano) resta invariato:
+  // l'operatore deve comunque inserire l'orario e premere Apply.
   if (prefs.syncMode !== undefined) {
     const sel = document.getElementById('sync-method-select');
     if (sel) {
       sel.value = String(prefs.syncMode);
       if (typeof updateTimeSettingsVisibility === 'function') updateTimeSettingsVisibility();
+      const manualSyncRow = document.querySelector('.toggle-row.manual-sync');
+      if (manualSyncRow?.classList.contains('hidden') && typeof setTimeSyncMode === 'function') {
+        setTimeSyncMode();
+      }
     }
   }
 
@@ -803,13 +811,74 @@ function renderDisciplineCards() {
   if (!grid) return;
   const lang = currentLang();
   const selectable = DISCIPLINES.filter(d => STARTUP_DISCIPLINE_IDS.includes(d.id));
-  grid.innerHTML = selectable.map(d => `
-    <button class="discipline-card${d.id === activeDisciplineId ? ' active' : ''}"
-            onclick="selectDiscipline('${d.id}')">
+  grid.innerHTML = selectable.map(d => {
+    const packageLocked = isDisciplinePackageLocked(d.id);
+    const classes = 'discipline-card'
+      + (d.id === activeDisciplineId ? ' active' : '')
+      + (packageLocked ? ' package-locked' : '');
+    const onclick = packageLocked ? `onPackageLockedDisciplineClick('${d.id}')` : `selectDiscipline('${d.id}')`;
+    return `
+    <button class="${classes}" onclick="${onclick}">
       <span class="disc-emoji">${d.emoji}</span>
       <span class="disc-label">${d.label[lang] ?? d.label.en}</span>
+      ${packageLocked ? '<span class="disc-package-lock">🔒</span>' : ''}
     </button>
-  `).join('');
+  `;
+  }).join('');
+}
+
+// ── Branding/licensing dealer (stato device, via /brandingSettings) ───────────
+// Distinto da isDisciplineLocked()/DISC_LOCK_KEY sopra, che riguarda invece il
+// "blocco" della disciplina già scelta per la sessione corrente in corso.
+let disciplinePackageFlags = {};
+let showSponsorLogo   = true;
+let sponsorLogoExists = false;
+
+function isDisciplinePackageLocked(id) {
+  // Il device risponde con 0/1 (JSON numerico), non booleani: tratta anche
+  // '0'/0 come bloccata, non solo `false` in senso stretto.
+  const v = disciplinePackageFlags[id];
+  return v === false || v === 0 || v === '0';
+}
+
+function onPackageLockedDisciplineClick(id) {
+  if (typeof showGeneralPopup === 'function') {
+    showGeneralPopup(t('discipline.locked_message'), '#800020', 3000);
+  }
+}
+
+// Cache del solo stato "sponsor visibile" in localStorage: letta in modo
+// sincrono da un piccolo script inline subito dopo lo splash (vedi index.html),
+// così al refresh successivo lo sponsor/separatore non lampeggia più mentre
+// si attende la risposta di /brandingSettings (che è per forza asincrona).
+const BRANDING_CACHE_KEY = 'chronofit_branding_cache';
+function cacheBrandingVisibility(show, exists) {
+  try {
+    localStorage.setItem(BRANDING_CACHE_KEY, JSON.stringify({ showSponsorLogo: show, sponsorLogoExists: exists }));
+  } catch (e) {}
+}
+
+function applySponsorVisibility(show) {
+  // .splash-divider: il trattino tra logo Chronofit e sponsor nello splash,
+  // non ha senso lasciarlo visibile quando lo sponsor accanto è nascosto.
+  document.querySelectorAll('.sponsor-visibility-toggle, .splash-divider').forEach(el => {
+    el.style.display = show ? '' : 'none';
+  });
+}
+
+async function applyBrandingSettings() {
+  try {
+    const res = await fetch('/brandingSettings');
+    const data = await res.json();
+    disciplinePackageFlags = data.disciplines || {};
+    showSponsorLogo   = !!data.showSponsorLogo;
+    sponsorLogoExists = !!data.sponsorLogoExists;
+    applySponsorVisibility(showSponsorLogo && sponsorLogoExists);
+    cacheBrandingVisibility(showSponsorLogo, sponsorLogoExists);
+    renderDisciplineCards();
+  } catch (e) {
+    console.warn('Errore lettura impostazioni branding:', e);
+  }
 }
 
 function openDisciplineOverlay() {
@@ -829,6 +898,7 @@ function onDisciplineBackClick() {
 function selectDiscipline(id) {
   const disc = DISCIPLINES.find(d => d.id === id);
   if (!disc) return;
+  if (isDisciplinePackageLocked(id)) return; // difesa in profondità oltre al blocco in UI
   activeDisciplineId = id;
   localStorage.setItem(DISCIPLINE_KEY, id);
   localStorage.setItem(DISC_LOCK_KEY, '1');
@@ -2800,6 +2870,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Richiedo always on display...");
     keepScreenOn();
+
+    console.log("Carico impostazioni branding...");
+    applyBrandingSettings();
 
     console.log("Timposto toggle delta time a default...")
     const chk = document.getElementById("toggle-delta-time");
