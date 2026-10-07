@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chronofit — Fotocellula</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <style>
+    :root { --primary: #800020; --ok: #2e7d32; --warn: #ef6c00; --bad: #c62828; }
+
+    @font-face {
+      font-family: 'Nunito';
+      src: url('/Nunito-Bold.woff2') format('woff2');
+      font-weight: bold;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      font-weight: bold;
+      background: #f0f0f0;
+      margin: 0; padding: 0;
+    }
+
+    .navbar {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 56px;
+      background: #111;
+      display: flex; align-items: center;
+      padding: 0 20px; gap: 12px;
+      z-index: 1000;
+    }
+    .navbar-title { color: #fff; font-size: 18px; letter-spacing: 1px; }
+    .navbar-fw { color: #888; font-size: 12px; margin-left: auto; }
+
+    .page { max-width: 560px; margin: 0 auto; padding: 76px 16px 40px; }
+
+    .section-title {
+      font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: #888; margin: 24px 0 12px;
+    }
+
+    .card {
+      background: #fff; border-radius: 12px; padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 16px;
+    }
+
+    .row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+      font-size: 15px; color: #333;
+    }
+    .row:last-child { border-bottom: none; }
+    .row .k { color: #666; }
+    .row .v { text-align: right; word-break: break-all; }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      font-size: 13px; color: #fff; background: #999;
+    }
+    .copy-ip { cursor: pointer; text-decoration: underline dotted; }
+    .badge.ok { background: var(--ok); }
+    .badge.warn { background: var(--warn); }
+    .badge.bad { background: var(--bad); }
+
+    details.legend summary { cursor: pointer; font-size: 15px; color: #333; }
+    details.legend .row { align-items: flex-start; font-size: 13px; }
+    details.legend .row .k { white-space: nowrap; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .field label { font-size: 13px; color: #555; }
+    .field .hint { font-size: 12px; color: #aaa; font-weight: normal; }
+    .field input[type=text], .field input[type=password], .field input[type=number], .field select {
+      font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 14px;
+      padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff;
+    }
+    .inline { display: flex; gap: 8px; }
+    .inline > input, .inline > select { flex: 1; }
+
+    .btn {
+      display: block; width: 100%; margin-top: 14px; padding: 12px;
+      background: var(--primary); color: #fff; border: none; border-radius: 8px;
+      font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 15px;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn.secondary { background: #444; }
+    .btn.small { width: auto; margin-top: 0; padding: 10px 14px; font-size: 13px; }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .error-msg {
+      font-size: 13px; color: var(--bad); background: #fce4ec;
+      border-radius: 6px; padding: 8px 12px; margin-top: 10px; display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #222; color: #fff; font-size: 14px; padding: 10px 20px;
+      border-radius: 8px; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s; z-index: 9999;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok { background: var(--ok); }
+    #toast.err { background: var(--bad); }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <img src="/logo.png" alt="Chronofit" style="height:32px;" onerror="this.style.display='none'"/>
+    <span class="navbar-title">Fotocellula wireless</span>
+    <span class="navbar-fw" id="fw"></span>
+  </div>
+
+  <div class="page">
+
+    <div class="section-title">Stato</div>
+    <div class="card">
+      <div class="row"><span class="k">Base</span><span class="v"><span class="badge" id="st-link">—</span></span></div>
+      <div class="row"><span class="k">Rete / IP</span><span class="v" id="st-net">—</span></div>
+      <div class="row"><span class="k">Segnale (RSSI)</span><span class="v" id="st-rssi">—</span></div>
+      <div class="row"><span class="k">Clock sincronizzato</span><span class="v"><span class="badge" id="st-sync">—</span></span></div>
+      <div class="row"><span class="k">Offset / RTT</span><span class="v" id="st-offset">—</span></div>
+      <div class="row"><span class="k">Ultimo campione</span><span class="v" id="st-age">—</span></div>
+      <div class="row"><span class="k">Ingresso sensore</span><span class="v"><span class="badge" id="st-input">—</span></span></div>
+      <div class="row"><span class="k">Linea sul base</span><span class="v" id="st-line">—</span></div>
+      <div class="row"><span class="k">Eventi</span><span class="v" id="st-events">—</span></div>
+      <div class="row"><span class="k">Ultimo errore</span><span class="v" id="st-error">—</span></div>
+      <div class="row"><span class="k">Client su questa AP</span><span class="v" id="st-clients">—</span></div>
+      <button class="btn secondary" id="btn-test" onclick="sendTest()">Invia evento di test</button>
+    </div>
+
+    <details class="card legend">
+      <summary>Significato dei LED</summary>
+      <div class="row"><span class="k">LED 1 · collegamento</span><span class="v">viola lampeggiante = SSID non configurato · rosso = non collegata · giallo = clock non sincronizzato · verde = ok · arancione = ok ma rete lenta</span></div>
+      <div class="row"><span class="k">LED 2 · segnale</span><span class="v">verde = buono · giallo = medio · rosso = debole · spento = non collegata</span></div>
+      <div class="row"><span class="k">LED 3 · sensore</span><span class="v">bianco = ingresso attivo (allineamento) · lampo blu = passaggio rilevato</span></div>
+      <div class="row"><span class="k">LED 4 · consegna</span><span class="v">rosso = errore recente · arancione = eventi in coda · lampo verde = consegnato al base · ciano fioco = qualcuno connesso a questa AP</span></div>
+    </details>
+
+    <div class="section-title">Accesso</div>
+    <div class="card">
+      <div class="field">
+        <label for="auth-token">Token API di questa cella <span class="hint">(solo se configurato)</span></label>
+        <input type="password" id="auth-token" placeholder="X-Token" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="section-title">Rete verso il base</div>
+    <div class="card">
+      <div class="field">
+        <label for="base-ssid">SSID del base</label>
+        <div class="inline">
+          <input type="text" id="base-ssid" placeholder="Chronofit_xxxxxxxx" autocomplete="off">
+          <button class="btn small secondary" id="btn-scan" onclick="scanNetworks()">Cerca</button>
+        </div>
+        <select id="scan-list" style="display:none;" onchange="pickNetwork(this.value)"></select>
+      </div>
+      <div class="field">
+        <label for="base-pass">Password del base <span class="hint" id="base-pass-hint"></span></label>
+        <input type="password" id="base-pass" placeholder="(invariata)" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="base-host">Indirizzo del base</label>
+        <input type="text" id="base-host" placeholder="192.168.10.1" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="base-token">Token API del base <span class="hint" id="base-token-hint"></span></label>
+        <input type="password" id="base-token" placeholder="(invariato)" autocomplete="new-password">
+      </div>
+    </div>
+
+    <div class="section-title">Sensore</div>
+    <div class="card">
+      <div class="field">
+        <label for="cfg-line">Linea del base simulata</label>
+        <select id="cfg-line">
+          <option value="1">Linea 1</option>
+          <option value="2">Linea 2</option>
+          <option value="3">Linea 3</option>
+          <option value="4">Linea 4</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="cfg-input">Ingresso fisico</label>
+        <select id="cfg-input">
+          <option value="1">IN1</option>
+          <option value="2">IN2</option>
+          <option value="3">IN3</option>
+          <option value="4">IN4</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="cfg-lockout">Lockout dopo un passaggio (ms)</label>
+        <input type="number" id="cfg-lockout" min="0" max="60000" step="10">
+      </div>
+      <div class="field">
+        <label><input type="checkbox" id="cfg-buzzer"> Beep a ogni passaggio</label>
+      </div>
+    </div>
+
+    <div class="section-title">Sicurezza di questa cella</div>
+    <div class="card">
+      <div class="field">
+        <label for="cfg-ap-pass">Nuova password della AP <span class="hint">(min. 8 caratteri; vuoto = invariata)</span></label>
+        <input type="password" id="cfg-ap-pass" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="cfg-api-token">Nuovo token API <span class="hint" id="api-token-hint">(vuoto = invariato)</span></label>
+        <input type="password" id="cfg-api-token" autocomplete="new-password">
+      </div>
+    </div>
+
+    <button class="btn" id="btn-save" onclick="saveSettings()">Salva e riavvia</button>
+    <div class="error-msg" id="save-error"></div>
+
+  </div>
+
+  <div id="toast"></div>
+  <script src="/script_cell.js"></script>
+</body>
+</html>

@@ -8,6 +8,10 @@ Chronofit GPS is the firmware + web UI for an ESP32-based race-timing device (ph
 
 The repository root (`C:\src\chronofit`) also contains hardware design files (KiCad schematics/PCB in `Schematic/`, mechanical STLs in `Drawings/`), and a couple of standalone Windows companion apps under `Software/` (`ChronoUpdater` — C# firmware updater/flasher, `MqttMonitor` — WPF MQTT debug tool) plus a minimal standalone test sketch `Chrono_MQTT/Chrono_MQTT.ino`. These are separate from this firmware project — nearly all active development happens in this `Chronofit_GPS/` folder.
 
+A sibling firmware, `Chronofit_Cell/` (same hardware, own sketch/`data/`/`build_cell.bat`, API in `Chronofit_Cell/API_CELL.md`), turns a unit into a **wireless photocell**: it hosts its own config AP (`192.168.11.1`) and joins this base's AP as a station, timestamps the beam break locally, estimates its clock offset via `GET /clockSync`, and delivers the event with `GET /remoteCheckpoint` (both routes live in this project's `routes.cpp`, documented in `API.md`). The `/clockSync` call doubles as a presence heartbeat (`cell`, `line`, `rssi`, `rtt`, `fw`): `cells.cpp/.h` keeps the registry, `GET /cells` + WebSocket `TYPE_CELLS_UPDATED` (12) expose it, and the operator UI shows per-line badges, a Status-card counter and a detail overlay. `Chronofit_Cell/settings.cpp/.h` is a copy of this project's NVS wrapper — keep them in sync if the wrapper changes.
+
+`Chronofit_Main_Cell/` is a **fork of this base without GPS sync, the DS3231 RTC, the printer and MQTT** (time from `esp_timer` only; sync modes manual / line closure / elapsed), meant as the central unit of the wireless-cell system; see `Chronofit_Main_Cell/CLAUDE.md`. It is a copy-and-delete fork, so fixes in shared areas (MQTT, cells registry, branding, sessions, console UI) must be ported to it by hand.
+
 ## Build / flash commands
 
 Toolchain: `arduino-cli` targeting FQBN `esp32:esp32:esp32` (ESP32 Dev Module). Several overlapping scripts exist (evolved over time) — the ones actually in use:

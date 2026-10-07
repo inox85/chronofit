@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chronofit — Manuale utente Main Cell</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  :root {
+    --primary: #8b0a1a; --text: #222; --muted: #666; --line: #e3e3e3;
+    --bg: #f6f6f4; --card: #fff; --accent: #1565c0; --ok: #2e7d32; --warn: #ef6c00; --err: #c62828;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; color: var(--text); background: var(--bg); line-height: 1.55; font-size: 16px; }
+  header { background: #111; color: #fff; padding: 18px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header img { height: 38px; }
+  header h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  header .sub { color: #bbb; font-size: 14px; }
+  .print-btn { margin-left: auto; background: var(--primary); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1180px; margin: 0 auto; gap: 24px; padding: 24px 16px; }
+  nav.toc { position: sticky; top: 16px; align-self: start; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; max-height: calc(100vh - 32px); overflow: auto; }
+  nav.toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin: 4px 0; font-size: 14px; }
+  nav.toc a { color: var(--text); text-decoration: none; }
+  nav.toc a:hover { color: var(--primary); }
+  main { min-width: 0; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; margin-bottom: 18px; }
+  section h2 { margin: 0 0 12px; font-size: 21px; color: var(--primary); border-bottom: 2px solid #f0e3e5; padding-bottom: 6px; }
+  section h3 { font-size: 17px; margin: 18px 0 6px; }
+  p { margin: 8px 0; }
+  ul, ol { margin: 6px 0 10px; padding-left: 22px; }
+  li { margin: 3px 0; }
+  code, kbd { background: #f1f1f1; border-radius: 4px; padding: 1px 5px; font-family: Consolas, monospace; font-size: 14px; }
+  kbd { border: 1px solid #ccc; border-bottom-width: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 15px; }
+  th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: #fafafa; color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .03em; }
+  .note, .tip, .warn { border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: 15px; }
+  .note { background: #eef4fc; border-left: 4px solid var(--accent); }
+  .tip  { background: #edf7ee; border-left: 4px solid var(--ok); }
+  .warn { background: #fff4e5; border-left: 4px solid var(--warn); }
+  .steps { counter-reset: s; list-style: none; padding-left: 0; }
+  .steps > li { counter-increment: s; position: relative; padding-left: 38px; margin: 10px 0; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .diagram { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+  .box { border: 2px solid var(--primary); border-radius: 10px; padding: 8px 14px; text-align: center; background: #fff; font-size: 14px; }
+  .box b { display: block; font-size: 15px; }
+  .arrow { color: var(--muted); font-size: 14px; text-align: center; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .cardlet { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: #fcfcfc; }
+  .cardlet h4 { margin: 0 0 6px; font-size: 15px; }
+  /* LED RGB della scheda */
+  .led { display: inline-block; width: 13px; height: 13px; border-radius: 50%; background: #cfcfcf; vertical-align: -1px; margin-right: 6px; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); --c: #e53935; }
+  .led.red    { --c: #e53935; } .led.green  { --c: #2e9d3a; } .led.yellow { --c: #f2c200; }
+  .led.blue   { --c: #1e63e0; } .led.orange { --c: #ff7a00; } .led.purple { --c: #8e24aa; }
+  .led.white  { --c: #ffffff; } .led.cyan   { --c: #0aa6a6; } .led.dim { --c: #5a9f9f; }
+  .led.on, .led.red, .led.green, .led.yellow, .led.blue, .led.orange, .led.purple, .led.white, .led.cyan, .led.dim { background: var(--c); box-shadow: 0 0 6px 2px color-mix(in srgb, var(--c) 55%, transparent); }
+  .led.white { border: 1px solid #bbb; }
+  .led.off { background: #cfcfcf; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); }
+  @keyframes blink { 0%,49.9% { background: var(--c); box-shadow: 0 0 6px 2px color-mix(in srgb, var(--c) 55%, transparent) } 50%,100% { background:#cfcfcf; box-shadow:none } }
+  @keyframes blip  { 0%,14.9% { background: var(--c); box-shadow: 0 0 6px 2px color-mix(in srgb, var(--c) 55%, transparent) } 15%,100% { background:#cfcfcf; box-shadow:none } }
+  .led.slow { animation: blink 1s infinite; } .led.blip { animation: blip 1s infinite; }
+  .badge { display: inline-block; font-size: 12px; font-weight: bold; border-radius: 10px; padding: 1px 8px; color: #fff; }
+  .b-ok { background: var(--ok); } .b-grey { background: #9e9e9e; } .b-err { background: var(--err); }
+  .bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; vertical-align: -2px; margin-right: 4px; }
+  .bars i { width: 4px; background: #cfd4da; border-radius: 1px; }
+  .bars i:nth-child(1){height:5px} .bars i:nth-child(2){height:8px} .bars i:nth-child(3){height:11px} .bars i:nth-child(4){height:14px}
+  .g4 i { background: var(--ok); } .g3 i:nth-child(-n+3) { background: var(--ok); } .g2 i:nth-child(-n+2) { background: var(--warn); } .g1 i:nth-child(1) { background: var(--err); }
+  pre { background: #f4f4f4; border-radius: 8px; padding: 10px 12px; overflow: auto; font-size: 14px; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 10px 0 30px; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; max-height: none; } }
+  @media print {
+    body { background: #fff; font-size: 12pt; }
+    header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+    header img { filter: invert(1); }
+    .print-btn, nav.toc { display: none; }
+    .layout { display: block; padding: 0; }
+    section { border: 0; padding: 0 0 8px; break-inside: avoid-page; }
+    .led { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="/logo.webp" alt="Chronofit">
+  <div>
+    <h1>Manuale utente — Chronofit Main Cell</h1>
+    <div class="sub">Unità centrale con console web · ingressi cablati · fotocellule wireless Chronofit Cell</div>
+  </div>
+  <button class="print-btn" onclick="window.print()">🖨 Stampa / PDF</button>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h2>Indice</h2>
+    <ol>
+      <li><a href="#sistema">Il sistema</a></li>
+      <li><a href="#alimentazione">Alimentazione e collegamenti</a></li>
+      <li><a href="#collegarsi">Collegarsi alla Main Cell</a></li>
+      <li><a href="#avvio">Menu iniziale e discipline</a></li>
+      <li><a href="#console">La console</a></li>
+      <li><a href="#transiti">Gestione transiti (linee)</a></li>
+      <li><a href="#tempo">Il cronometro</a></li>
+      <li><a href="#passaggi">Lista passaggi</a></li>
+      <li><a href="#atleti">Registro atleti e file CSV</a></li>
+      <li><a href="#sessione">Sessione ed email</a></li>
+      <li><a href="#fotocellule">Fotocellule wireless</a></li>
+      <li><a href="#led">Significato dei LED</a></li>
+      <li><a href="#wifi">WiFi esterna e internet</a></li>
+      <li><a href="#viste">Viste per secondo schermo</a></li>
+      <li><a href="#aggiornamento">Aggiornamento firmware</a></li>
+      <li><a href="#specifiche">Specifiche tecniche</a></li>
+      <li><a href="#problemi">Risoluzione dei problemi</a></li>
+      <li><a href="#api">API per sviluppatori</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="sistema">
+      <h2>1. Il sistema</h2>
+      <p>La <b>Main Cell</b> è l'unità centrale di un sistema di cronometraggio con fotocellule wireless. Registra i passaggi che arrivano da <b>ingressi cablati</b> (fino a 4 contatti puliti) e dalle <b>fotocellule wireless Chronofit Cell</b>, li assegna alle linee e li mostra nella <b>console</b>: la apri dal browser di un telefono, tablet o PC, senza installare nulla.</p>
+      <div class="diagram">
+        <div class="box"><b>📱 Telefono / PC</b>console nel browser</div>
+        <div class="arrow">WiFi<br>⟷</div>
+        <div class="box"><b>Main Cell</b>console · ingressi IN1–IN4</div>
+        <div class="arrow">WiFi<br>⟷</div>
+        <div class="box"><b>Chronofit Cell</b>fotocellule wireless</div>
+      </div>
+      <ul>
+        <li>Ogni passaggio è assegnato a una <b>linea</b> (1–4): per esempio linea 1 partenza, linea 2 arrivo.</li>
+        <li>La Main Cell lavora sempre a <b>tempo trascorso</b>: non ha GPS né orologio da impostare. Il cronometro parte dal primo passaggio.</li>
+        <li>Non ha stampante né MQTT. Può inviare la sessione via email se collegata a internet.</li>
+      </ul>
+      <div class="note">Le fotocellule sono sincronizzate con la Main Cell al millisecondo: l'errore tipico è di 1–2 ms. Se la Main Cell si spegne e si riaccende, le celle si risincronizzano da sole entro pochi secondi.</div>
+    </section>
+
+    <section id="alimentazione">
+      <h2>2. Alimentazione e collegamenti</h2>
+      <table>
+        <tr><th>Connettore</th><th>Funzione</th></tr>
+        <tr><td><b>Ingressi sensori IN1–IN4</b></td><td>Sensori a <b>contatto pulito normalmente aperto (N.O.)</b>, uno per linea.</td></tr>
+        <tr><td><b>Massa sensori</b></td><td>Riferimento di massa del contatto pulito.</td></tr>
+        <tr><td><b>USB Type-C "seriale"</b></td><td>Porta di comunicazione verso dispositivi esterni.</td></tr>
+        <tr><td><b>USB Type-C "alimentazione"</b></td><td>Ingresso per power bank o alimentatore USB.</td></tr>
+        <tr><td><b>Jack 2,5 × 5,5 mm</b></td><td>Ingresso per alimentazione a 12 V (per esempio batteria da 12 V).</td></tr>
+        <tr><td><b>LED di segnalazione</b></td><td>Quattro LED RGB: vedi <a href="#led">Significato dei LED</a>.</td></tr>
+      </table>
+      <div class="tip">Senza stampante basta un alimentatore USB da 1 A, un power bank, oppure il jack a 12 V.</div>
+    </section>
+
+    <section id="collegarsi">
+      <h2>3. Collegarsi alla Main Cell</h2>
+      <ol class="steps">
+        <li>Accendi la Main Cell: i LED fanno una breve sequenza di colori (rosso, verde, blu, giallo).</li>
+        <li>Sul telefono o PC collegati alla rete WiFi <code>ChronofitMainCell_…</code>. La <b>password di fabbrica</b> coincide con la parte del nome dopo il trattino basso (l'identificativo della scheda), salvo che sia stata cambiata.</li>
+        <li>Apri il browser all'indirizzo <code>http://192.168.10.1</code>.</li>
+      </ol>
+      <div class="tip">Possono collegarsi più dispositivi insieme: per esempio un telefono come console e un PC con una vista a schermo intero. La card <b>Utilità</b> mostra quanti client sono collegati (icona 🔗). Le fotocellule si collegano a questa stessa rete.</div>
+      <p>La password della rete si cambia dalla pagina di amministrazione (<a href="/admin.html" target="_blank"><code>/admin.html</code></a>), dove vedi anche lo stato del dispositivo e i file.</p>
+    </section>
+
+    <section id="avvio">
+      <h2>4. Menu iniziale e discipline</h2>
+      <p>All'apertura compare il menu iniziale:</p>
+      <ul>
+        <li><b>⏱️ Cronometraggio</b>: scegli la disciplina ed entri nella console.</li>
+        <li><b>🛠️ Utilità</b>: pagina di amministrazione (stato del dispositivo, file, password della rete).</li>
+      </ul>
+      <p>La <b>disciplina</b> imposta in automatico le colonne e l'ordinamento della lista passaggi:</p>
+      <table>
+        <tr><th>Disciplina</th><th>Uso tipico</th></tr>
+        <tr><td>Generico</td><td>uso libero, tutte le colonne principali</td></tr>
+        <tr><td>Regolarità</td><td>prove di regolarità</td></tr>
+        <tr><td>Enduro</td><td>partenze e arrivi su due tabelle, tempi netti</td></tr>
+        <tr><td>Sci</td><td>discese a cronometro</td></tr>
+        <tr><td>Equitazione</td><td>prova a tempo con penalità e classifica</td></tr>
+      </table>
+      <p>Alcune discipline possono essere <b>bloccate</b> sul tuo dispositivo (pacchetti a licenza): compaiono ma non si aprono. Contatta il rivenditore per sbloccarle.</p>
+      <p>Per cambiare disciplina tocca l'icona della disciplina in alto a destra. <b>Uscendo dalla disciplina la sessione viene cancellata</b>: prima scarica i tempi. Le bandierine in alto cambiano la lingua (italiano o inglese).</p>
+    </section>
+
+    <section id="console">
+      <h2>5. La console</h2>
+      <p>A sinistra i comandi, a destra la lista dei passaggi.</p>
+      <table>
+        <tr><th>Card</th><th>Contenuto</th></tr>
+        <tr><td><b>Attesi</b></td><td>Gli atleti del registro non ancora transitati.</td></tr>
+        <tr><td><b>Orario</b></td><td>Il tempo trascorso, che parte dal primo passaggio.</td></tr>
+        <tr><td><b>Gestione transiti</b></td><td>I pulsanti <b>Start</b> / <b>Stop</b> e <b>Reset</b> del cronometro e una riga per linea: numero, tipo, concorrente, abilitazione. Vedi <a href="#transiti">Gestione transiti</a>.</td></tr>
+        <tr><td><b>Utilità</b> (stato)</td><td>🔗 client collegati · 🌍 stato di internet · icona del segnale = fotocellule wireless. Toccando 🔗 o 🌍 si aprono le impostazioni WiFi, toccando la cella si apre il dettaglio delle fotocellule.</td></tr>
+        <tr><td><b>Lista passaggi</b></td><td>I passaggi registrati, in tempo reale.</td></tr>
+      </table>
+      <p>Il pulsante ⚙️ apre le <b>impostazioni</b>: scheda <b>WiFi</b> e scheda <b>Dispositivo</b> (nome della stazione, buzzer, schermo intero).</p>
+    </section>
+
+    <section id="transiti">
+      <h2>6. Gestione transiti (linee)</h2>
+      <p>La card <b>Gestione transiti</b> ha una riga per ogni linea (1–4):</p>
+      <table>
+        <tr><th>Elemento</th><th>Cosa fa</th></tr>
+        <tr><td><b>Numero di linea</b> (riquadro colorato)</td><td><b>Tocco</b>: registra un passaggio manuale su quella linea.<br><b>Pressione lunga (1 s)</b>: registra un passaggio "fuori pressostato" (linea F.P.) per il concorrente della linea.<br>Sotto il numero compare l'icona del <b>segnale</b> della fotocellula wireless assegnata alla linea.</td></tr>
+        <tr><td><b>Tipo</b></td><td>Tocca per aprire le impostazioni della linea: nome (campo <b>Prova</b>, per esempio "Barriera 1"), rilevamento <b>Auto/Man.</b>, <b>Ritardo (ms)</b>.</td></tr>
+        <tr><td><b>Concorrente</b></td><td>Il numero del concorrente atteso su quella linea, assegnato al prossimo passaggio. <b>Pressione lunga</b>: apre il registro atleti.</td></tr>
+        <tr><td><b>✓</b></td><td>Abilita o disabilita la linea. Una linea disabilitata registra comunque i passaggi, ma li segna come disabilitati.</td></tr>
+      </table>
+      <div class="note"><b>Ritardo (ms)</b> è il tempo minimo fra due segnali sugli <b>ingressi cablati</b> della stessa linea: dopo un passaggio, per quel tempo, gli altri fronti vengono ignorati. Le fotocellule wireless hanno il proprio <i>lockout</i>, impostato dalla pagina della cella.</div>
+    </section>
+
+    <section id="tempo">
+      <h2>7. Il cronometro</h2>
+      <p>La Main Cell lavora a <b>tempo trascorso</b>: all'accensione o dopo un <b>Reset</b> l'orologio resta a <code>00:00:00.000</code> (lo stato lo indica come "in attesa dello start") e <b>parte con il primo passaggio</b>, su qualsiasi linea.</p>
+      <ul>
+        <li><b>Start</b>: registra un passaggio sulla linea 1; se il cronometro è in attesa lo avvia. A tempo avviato il pulsante diventa <b>Stop</b> e registra un altro passaggio sulla linea 1, senza fermare il conteggio.</li>
+        <li><b>Reset</b>: riporta il cronometro in attesa del prossimo passaggio. I tempi già registrati restano.</li>
+      </ul>
+      <div class="warn">Dopo un riavvio della Main Cell il cronometro riparte da zero. Se riavvii a metà gara, i nuovi tempi non sono confrontabili con quelli registrati prima.</div>
+    </section>
+
+    <section id="passaggi">
+      <h2>8. Lista passaggi</h2>
+      <p>Ogni passaggio diventa una riga, colorata come la linea da cui arriva. Le colonne <b>fisse</b> sono sempre presenti, quelle <b>opzionali</b> si attivano a seconda della prova.</p>
+      <table>
+        <tr><th>Colonna</th><th>Descrizione</th><th>Modificabile</th></tr>
+        <tr><td>Evento</td><td>Numero progressivo, in ordine di rilevazione.</td><td>No</td></tr>
+        <tr><td>Linea</td><td>Linea o ingresso che ha generato l'evento.</td><td>Sì</td></tr>
+        <tr><td>Concorrente</td><td>Pettorale o codice atleta.</td><td>Sì</td></tr>
+        <tr><td>Evento ⏱️ (opz.)</td><td>Tempo trascorso al momento del passaggio.</td><td>Sì</td></tr>
+        <tr><td>Δ (opz.)</td><td>Tempo rispetto al passaggio precedente.</td><td>Automatica</td></tr>
+        <tr><td>Trascorso (opz.)</td><td>Tempo dal primo passaggio della sessione.</td><td>Automatica</td></tr>
+        <tr><td>Penalità ❌ (opz.)</td><td>Penalità legata alla riga: tocca la cella e inserisci il valore.</td><td>Sì</td></tr>
+      </table>
+      <div class="note">Le colonne opzionali non sono salvate: sono <b>calcolate</b> in base alla vista. Se nascondi alcune righe, i Δ si ricalcolano di conseguenza.</div>
+      <table>
+        <tr><th>Azione</th><th>Come</th></tr>
+        <tr><td>Impostazioni della tabella</td><td>Tocca l'<b>intestazione</b>: schede <i>Ordina</i>, <i>Colonne</i>, <i>Righe</i>, <i>Linee</i> (quali linee mostrare), decimali dei tempi.</td></tr>
+        <tr><td>Annullare un passaggio</td><td>Tocca 🚫: la riga resta, barrata, ed è esclusa dai calcoli. Tocca di nuovo per ripristinarla.</td></tr>
+        <tr><td>Modificare una riga</td><td><b>Pressione lunga</b> sulla riga: concorrente e altri campi.</td></tr>
+        <tr><td>Azioni ⋮</td><td><b>Scarica sessione</b> · <b>Scarica vista</b> · <b>Invia via email</b> · <b>Cancella sessione</b>.</td></tr>
+      </table>
+      <div class="tip">Con <b>Auto-annulla battute ravvicinate</b> (nelle impostazioni di una linea) una seconda battuta sulla stessa linea entro la soglia viene annullata in automatico.</div>
+    </section>
+
+    <section id="atleti">
+      <h2>9. Registro atleti e file CSV</h2>
+      <p>Con il registro, nella lista passaggi compaiono nome e cognome accanto al numero. Si apre con una <b>pressione lunga</b> sul campo concorrente di una linea. Le schede sono:</p>
+      <ul>
+        <li><b>Seleziona</b>: cerca un atleta e assegnalo alla linea.</li>
+        <li><b>Carica</b>: importa l'elenco da file <b>CSV</b> o JSON.</li>
+        <li><b>Manuale</b>: aggiungi un atleta alla volta.</li>
+        <li><b>Auto</b>: aggiunge da solo i numeri che arrivano dalla tabella arrivi.</li>
+      </ul>
+      <h3>Formato del file CSV</h3>
+      <ul>
+        <li>Separatore <b>punto e virgola</b> <code>;</code> (è il "CSV" di Excel in italiano).</li>
+        <li>Prima riga con i nomi delle colonne. <code>competitor</code> (il numero di pettorale) è <b>obbligatoria</b>.</li>
+        <li><code>name</code> e <code>surname</code> vanno nelle colonne Nome e Cognome. Puoi aggiungere altre colonne (squadra, categoria…): compaiono nella scheda dell'atleta.</li>
+        <li>Non usare il <code>;</code> dentro i valori.</li>
+      </ul>
+      <pre>competitor;name;surname;team;category
+1;Mario;Rossi;ASD Firenze;Senior
+2;Giulia;Bianchi;ASD Firenze;Junior
+3;Luca;Verdi;Polisportiva Prato;Senior</pre>
+      <div class="note">Salvando da Excel scegli <b>"CSV UTF-8"</b> se ci sono lettere accentate. Il registro è salvato nel <b>browser</b>: va caricato su ogni dispositivo che usi come console o come vista.</div>
+    </section>
+
+    <section id="sessione">
+      <h2>10. Sessione ed email</h2>
+      <table>
+        <tr><th>Azione</th><th>Cosa fa</th></tr>
+        <tr><td><b>Scarica sessione</b> (raw)</td><td>Scarica il file completo con i dati grezzi, come registrati. Non include le elaborazioni (Δ, tempi trascorsi).</td></tr>
+        <tr><td><b>Scarica vista</b></td><td>Scarica la tabella come la vedi, con solo righe e colonne visibili e tutte le elaborazioni (Δ, trascorsi, filtri).</td></tr>
+        <tr><td><b>Invia via email</b></td><td>Invia la sessione (file raw) via posta elettronica. Richiede internet: vedi <a href="#wifi">WiFi esterna</a>.</td></tr>
+        <tr><td><b>Cancella sessione</b></td><td>Elimina definitivamente i dati e ne crea una nuova, vuota.</td></tr>
+      </table>
+      <div class="warn">La cancellazione <b>non è reversibile</b>: scarica o invia i dati prima.</div>
+    </section>
+
+    <section id="fotocellule">
+      <h2>11. Fotocellule wireless</h2>
+      <p>Le <b>Chronofit Cell</b> (stessa scheda, firmware dedicato) si collegano via WiFi alla Main Cell, cronometrano il passaggio con la propria precisione e lo inviano. Ogni cella corrisponde a una <b>linea</b> della Main Cell.</p>
+      <h3>Configurare una cella</h3>
+      <ol class="steps">
+        <li>Accendi la cella e collegati alla sua rete <code>ChronofitCell_…</code> (password di fabbrica = identificativo dopo il trattino basso). Apri <code>http://192.168.11.1</code>.</li>
+        <li>In <b>Rete verso il base</b> premi <b>Cerca</b>, scegli la rete della Main Cell (<code>ChronofitMainCell_…</code>) e inserisci la sua password. L'indirizzo del base di solito resta <code>192.168.10.1</code>.</li>
+        <li>Scegli la <b>linea del base</b> (1–4), l'<b>ingresso fisico</b> (IN1–IN4) e il <b>lockout</b> dopo un passaggio (evita i doppi tempi).</li>
+        <li>Premi <b>Salva e riavvia</b>. La cella si collega da sola: accesa prima o dopo la Main Cell, si riaggancia ogni volta.</li>
+      </ol>
+      <h3>Stato sulla Main Cell</h3>
+      <p>Sotto il numero di ogni linea compare l'icona del <b>segnale</b> della cella. Nella card <b>Utilità</b> il contatore e il dettaglio (tocca l'icona) mostrano linea, stato, segnale, RTT, versione e ultimo passaggio. Quando una cella si collega o si perde compare un avviso a schermo. Una cella <span class="badge b-ok">Connessa</span> è stata sentita negli ultimi 10 s; se non si sente più diventa <span class="badge b-grey">Persa</span> e resta in elenco; se due celle usano la stessa linea compare <span class="badge b-err">Conflitto</span>.</p>
+      <p>Segnale:
+        <span class="bars g4"><i></i><i></i><i></i><i></i></span>ottimo ·
+        <span class="bars g3"><i></i><i></i><i></i><i></i></span>buono ·
+        <span class="bars g2"><i></i><i></i><i></i><i></i></span>medio ·
+        <span class="bars g1"><i></i><i></i><i></i><i></i></span>debole. Tieni la cella sollevata da terra e in vista della Main Cell.</p>
+      <div class="tip">Un passaggio non consegnato resta in coda nella cella (fino a 5 minuti) e viene reinviato: non va perso. Se riavvii la Main Cell a metà gara, le celle si riagganciano da sole e riprendono a consegnare.</div>
+    </section>
+
+    <section id="led">
+      <h2>12. Significato dei LED</h2>
+      <p>La Main Cell ha <b>4 LED RGB</b> (numerati da 1 nell'ordine della scheda). All'accensione fanno una sequenza <span class="led red"></span><span class="led green"></span><span class="led blue"></span><span class="led yellow"></span> e poi segnalano lo stato.</p>
+      <div class="grid2">
+        <div class="cardlet">
+          <h4>Main Cell</h4>
+          <table>
+            <tr><td><b>LED1</b><br>WiFi</td><td><span class="led red"></span>nessun dispositivo collegato alla rete della Main Cell<br><span class="led yellow"></span>dispositivo collegato, <b>senza internet</b><br><span class="led green"></span>dispositivo collegato e internet disponibile</td></tr>
+            <tr><td><b>LED2</b><br>Traffico</td><td><span class="led green"></span>invio dati al browser<br><span class="led orange"></span>ricezione di una richiesta<br><span class="led off"></span>nessun traffico</td></tr>
+            <tr><td><b>LED3</b><br>Linee</td><td>Si accende quando un ingresso è <b>chiuso</b>. Ogni ingresso ha il suo colore: <span class="led red"></span>IN1 · <span class="led green"></span>IN2 · <span class="led blue"></span>IN3 · <span class="led yellow"></span>IN4. Più ingressi chiusi insieme sommano i colori. <span class="led off"></span>tutti aperti.</td></tr>
+            <tr><td><b>LED4</b></td><td><span class="led off"></span>non usato (sempre spento)</td></tr>
+          </table>
+        </div>
+        <div class="cardlet">
+          <h4>Fotocellula Cell (wireless)</h4>
+          <table>
+            <tr><td><b>LED1</b><br>Collegamento</td><td><span class="led purple slow"></span>SSID del base non configurato<br><span class="led red"></span>non collegata al base<br><span class="led yellow"></span>collegata, clock non ancora sincronizzato<br><span class="led green"></span>collegata e sincronizzata<br><span class="led orange"></span>sincronizzata ma rete lenta (RTT &gt; 20 ms)</td></tr>
+            <tr><td><b>LED2</b><br>Segnale</td><td><span class="led green"></span>buono (≥ −60 dBm)<br><span class="led yellow"></span>medio (≥ −75 dBm)<br><span class="led red"></span>debole<br><span class="led off"></span>non collegata</td></tr>
+            <tr><td><b>LED3</b><br>Sensore</td><td><span class="led white"></span>ingresso attivo: utile per allineare la fotocellula<br><span class="led blue blip"></span>lampo = passaggio rilevato</td></tr>
+            <tr><td><b>LED4</b><br>Consegna</td><td><span class="led red"></span>errore negli ultimi 10 s<br><span class="led orange"></span>passaggi in coda, non ancora consegnati<br><span class="led green blip"></span>lampo = consegnato alla Main Cell<br><span class="led dim"></span>qualcuno è collegato alla rete di configurazione della cella<br><span class="led off"></span>nulla da segnalare</td></tr>
+          </table>
+        </div>
+      </div>
+      <p>La cella emette anche un <b>beep breve</b> a ogni passaggio (disattivabile dalla sua pagina). La Main Cell ha il <b>buzzer</b>, abilitabile in <b>⚙️ → Dispositivo</b>: suona a ogni passaggio con un pattern diverso per linea.</p>
+    </section>
+
+    <section id="wifi">
+      <h2>13. WiFi esterna e internet</h2>
+      <p>La Main Cell può collegarsi anche a una rete WiFi esistente (router o hotspot del telefono): serve per inviare email e per aggiornare il firmware. Apri <b>⚙️ → WiFi</b> (o tocca 🌍 oppure 🔗):</p>
+      <ol class="steps">
+        <li>Premi <b>🔍 Cerca reti</b> e scegli la rete dall'elenco (🔒 = protetta), oppure scrivi l'SSID.</li>
+        <li>Inserisci la password e premi <b>Connetti</b>.</li>
+        <li>A connessione avvenuta compare l'<b>indirizzo IP</b> ricevuto. Toccalo per copiarlo, oppure usa <b>📋 Copia link</b> e <b>↗ Apri</b> per aprire la console da quella rete.</li>
+      </ol>
+      <div class="warn"><b>Importante:</b> la scheda ha una sola radio. Quando la Main Cell si collega a una rete WiFi, la sua rete (access point) <b>si sposta sullo stesso canale</b> di quella rete: i dispositivi collegati, <b>comprese le fotocellule</b>, cadono per qualche secondo prima di riagganciarsi. Collega la WiFi esterna <b>a gara ferma</b>, non durante le prove. Se il router è sul <b>canale 6</b> fisso (2,4 GHz) la caduta non avviene.</div>
+      <div class="note">Il link <code>http://&lt;IP&gt;/</code> funziona solo dai dispositivi collegati a quella stessa rete WiFi, non da chi è sulla rete della Main Cell. Il pulsante <b>⛔ Disconnetti</b> scollega la rete esterna.</div>
+    </section>
+
+    <section id="viste">
+      <h2>14. Viste per secondo schermo</h2>
+      <p>Da un altro dispositivo collegato alla Main Cell (TV, proiettore, tablet) puoi aprire una vista di sola lettura, che si aggiorna in tempo reale:</p>
+      <table>
+        <tr><th>Indirizzo</th><th>Contenuto</th></tr>
+        <tr><td><a href="/view.html" target="_blank"><code>/view.html</code></a></td><td>orologio e lista passaggi</td></tr>
+        <tr><td><a href="/view_equitazione.html" target="_blank"><code>/view_equitazione.html</code></a></td><td>orologio e classifica per l'equitazione</td></tr>
+        <tr><td><a href="/view_enduro.html" target="_blank"><code>/view_enduro.html</code></a></td><td>vista Enduro con tempi netti</td></tr>
+        <tr><td><a href="/enduro_competitor_start.html" target="_blank"><code>/enduro_competitor_start.html</code></a> · <a href="/enduro_competitor_finish.html" target="_blank"><code>…_finish.html</code></a></td><td>schermate per i concorrenti: ultima partenza e ultimo arrivo</td></tr>
+        <tr><td><a href="/sponsor.html" target="_blank"><code>/sponsor.html</code></a></td><td>schermata sponsor</td></tr>
+      </table>
+      <div class="note">Nome e cognome compaiono solo se nel browser di quel dispositivo è stato caricato il registro atleti.</div>
+    </section>
+
+    <section id="aggiornamento">
+      <h2>15. Aggiornamento firmware</h2>
+      <p>Dalla pagina <a href="/update.html" target="_blank"><code>/update.html</code></a> carichi il nuovo firmware (<code>fw.bin</code>) o la nuova interfaccia (<code>fs.bin</code>). La versione installata è nelle informazioni del dispositivo (tocca il logo in alto).</p>
+      <div class="warn">L'aggiornamento dell'<b>interfaccia</b> (<code>fs.bin</code>) cancella la sessione: scarica prima i tempi. L'aggiornamento del solo <b>firmware</b> non cancella nulla.</div>
+    </section>
+
+    <section id="specifiche">
+      <h2>16. Specifiche tecniche</h2>
+      <table>
+        <tr><th>Caratteristica</th><th>Valore</th></tr>
+        <tr><td>Scheda</td><td>stessa del Chronofit GPS (senza GPS, orologio RTC e stampante)</td></tr>
+        <tr><td>Ingressi</td><td>4 contatti puliti N.O. + fotocellule wireless</td></tr>
+        <tr><td>Potenza di trasmissione WiFi</td><td>100 mW</td></tr>
+        <tr><td>Alimentazione</td><td>USB Type-C 5 V · jack 2,5 × 5,5 mm 12 V</td></tr>
+        <tr><td>Risoluzione temporale</td><td>0,001 s</td></tr>
+        <tr><td>Interfaccia</td><td>WiFi 2,4 GHz (access point + station), console web</td></tr>
+      </table>
+    </section>
+
+    <section id="problemi">
+      <h2>17. Risoluzione dei problemi</h2>
+      <table>
+        <tr><th>Problema</th><th>Cosa fare</th></tr>
+        <tr><td>"Nessuna connessione al dispositivo"</td><td>Verifica di essere collegato alla rete WiFi della Main Cell e ricarica la pagina.</td></tr>
+        <tr><td>Una cella resta "Persa"</td><td>Controlla che sia accesa (LED1 verde) e vicina; apri la sua pagina <code>http://192.168.11.1</code> e verifica SSID e password della Main Cell.</td></tr>
+        <tr><td>La cella è collegata ma i passaggi non arrivano</td><td>Guarda LED4 della cella: rosso = errore, arancione = in coda. Controlla che la linea della cella non sia la stessa di un'altra cella o di un ingresso (conflitto).</td></tr>
+        <tr><td>Doppi passaggi</td><td>Aumenta il <b>Ritardo (ms)</b> della linea per gli ingressi cablati, o il <b>lockout</b> della cella.</td></tr>
+        <tr><td>Passaggi mancanti di atleti vicini</td><td>Il lockout è troppo lungo: riducilo.</td></tr>
+        <tr><td>Il cronometro non parte</td><td>Parte al primo passaggio: premi <b>Start</b> o fai un passaggio. Dopo un riavvio riparte da zero.</td></tr>
+        <tr><td>Si perde la connessione dopo aver collegato la WiFi esterna</td><td>È normale: la rete della Main Cell cambia canale. Attendi qualche secondo e riconnettiti; vedi <a href="#wifi">WiFi esterna</a>.</td></tr>
+        <tr><td>Nome e cognome vuoti</td><td>Carica il registro atleti nel browser del dispositivo che stai usando.</td></tr>
+      </table>
+    </section>
+
+    <section id="api">
+      <h2>18. API per sviluppatori</h2>
+      <p>Il dispositivo risponde a richieste HTTP GET: si possono leggere valori, interrogare lo stato e leggere la configurazione da qualsiasi software. Alcuni esempi (indirizzo della rete della Main Cell):</p>
+      <table>
+        <tr><th>Richiesta</th><th>Descrizione</th></tr>
+        <tr><td><code>http://192.168.10.1/time</code></td><td>Orario attuale (JSON)</td></tr>
+        <tr><td><code>http://192.168.10.1/getCheckpoints</code></td><td>Elenco dei passaggi della sessione (JSON)</td></tr>
+        <tr><td><code>http://192.168.10.1/cells</code></td><td>Elenco delle fotocellule wireless e del loro stato</td></tr>
+        <tr><td><code>http://192.168.10.1/allSettings</code></td><td>Impostazioni del sistema</td></tr>
+        <tr><td><code>http://192.168.10.1/downloadSession</code></td><td>Scarica il file della sessione</td></tr>
+        <tr><td><code>http://192.168.10.1/clearSession</code></td><td>Cancella la sessione (protetta da token, se impostato)</td></tr>
+      </table>
+      <p>L'elenco completo delle route, con parametri e formato delle risposte, è nel documento <b>API</b> del prodotto.</p>
+    </section>
+
+    <footer>Chronofit · Main Cell <span id="fw"></span> · <a href="mailto:info@chronofit.it">info@chronofit.it</a></footer>
+  </main>
+</div>
+
+<script>
+  // Versione firmware in fondo alla pagina (se il dispositivo risponde)
+  fetch('/systemSettings').then(r => r.json()).then(d => {
+    if (d.fwVer) document.getElementById('fw').textContent = d.fwVer;
+  }).catch(() => {});
+</script>
+</body>
+</html>

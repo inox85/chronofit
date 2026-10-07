@@ -1,0 +1,2144 @@
+:root {
+  --primary-color: #800020;
+  --secondary-color: #333333;
+  --background-color: #f5f5f5;
+  --card-border-color: #800020;
+}
+
+
+/* @font-face { 
+  font-family: 'Nunito';
+  src: url('/Nunito-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+} */
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('/Nunito-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+}
+
+
+body {
+  font-family: 'Nunito';
+  background: var(--background-color);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  font-weight: bold;
+  transition: transform 0.3s ease, background 0.3s ease;
+  transform-origin: top left; /* punto di origine per lo zoom */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+th {
+  font-size: 20px;
+}
+
+td {
+  font-size: 20px;
+}
+
+span{
+  font-size: 20px;
+}
+/* ======= STRUTTURA ======= */
+
+.container {
+
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  gap: 5px;
+  width: 100%;
+  /* Altezza fissa = viewport meno la navbar.
+     Tutti i figli si estendono alla stessa altezza (align-items:stretch)
+     e il contenuto che eccede scorre internamente — senza allungare il layout. */
+  height: calc(100vh - 60px);
+  overflow: hidden;              /* solo il contenuto delle card scorre */
+  box-sizing: border-box;
+  margin: 0;
+  margin-top: 60px;
+  padding: 5px;
+  /* Altezza di contenuto realmente disponibile per i figli diretti (navbar
+     60px + padding verticale 5px+5px). Usata dai cap in px di arrivals-area/
+     sidebar-stack/comp-list-card per restringersi su schermi bassi invece
+     di eccedere e venire tagliati dall'overflow:hidden qui sopra. */
+  --content-h: calc(100vh - 70px);
+}
+
+.time-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centra il tempo */
+}
+
+/* immagini agli estremi */
+.sponsor-img {
+  max-height: 50px;
+  height: auto;
+  position: absolute;
+  right: 0;
+}
+
+.sponsor-logo {
+  max-height: 30px;
+  height: auto;
+  position: absolute;
+  left: 0;
+}
+
+/* Logo sponsor nella navbar (index.html, che non ha un .time-header): a
+   differenza di .sponsor-img (position:absolute, pensato per .time-header)
+   qui serve in flusso normale, affiancato al logo Chronofit. Nascosto di
+   default, mostrato da applyBrandingSettings() quando sponsor.png esiste ed
+   è abilitato — stesso toggle che su .sponsor-img nelle pagine view
+   (.sponsor-visibility-toggle, in entrambi i casi). */
+.navbar-sponsor-logo {
+  max-height: 36px;
+  height: auto;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.container#view_container {
+    margin-top: 0px;
+}
+
+
+/* Sidebar cards: si estendono all'altezza del container, scorrevoli internamente */
+.container .card:not(.table-card) {
+  position: static;
+  align-self: auto;
+  overflow-y: auto;
+}
+
+/* Card lista competitor: a sinistra della card principale */
+.comp-list-card  { order: 0; }
+.sidebar-stack   { order: 1; }
+.table-card      { order: 2; }
+
+/* La card con tabella occupa il resto dello spazio */
+.container .table-card {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0;     /* forza angoli netti — override esplicito */
+  position: relative;   /* ancora per il pulsante azioni */
+  min-height: 0;
+}
+
+/* Area arrivi: le due card Arrivi affiancate sopra + (quando presente, es.
+   Enduro) tempi netti a piena larghezza sotto. Prende il posto che
+   occupavano le due card Arrivi come item dirette di .container.
+   Default (nessun tempi netti, es. Regolarità): la riga arrivi riempie
+   tutta l'altezza disponibile, pari alla card Utilità.
+   Con .has-net-times (Enduro): la riga arrivi ha altezza fissa, e i tempi
+   netti riempiono il resto fino a pari con la card Utilità.
+   max-height: var(--content-h) — pari all'altezza realmente disponibile
+   in .container (navbar + padding già sottratti), così la card riempie
+   tutto lo schermo invece di fermarsi a un tetto fisso, restando comunque
+   pari a .sidebar-stack/.comp-list-card. */
+.arrivals-area {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 620px;
+  gap: 5px;    /* pari al gap tra Checkpoints e Utilità nel sidebar */
+  min-height: 0;
+  max-height: var(--content-h);
+}
+
+.arrivals-row {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  gap: 5px;    /* pari al gap tra Checkpoints e Utilità nel sidebar */
+  min-height: 0;
+}
+
+.arrivals-area.has-net-times .arrivals-row {
+  flex: 0 0 280px;
+}
+
+.card.table-card.net-times-card {
+  display: none;
+}
+
+.arrivals-area.has-net-times .card.table-card.net-times-card {
+  display: flex;
+  flex: 1;
+}
+
+/* Le card dentro .arrivals-row/.arrivals-area non usano più i vincoli di
+   larghezza/altezza pensati per quando erano item dirette di .container.
+   box-sizing:border-box — .card ha padding:15px in content-box, che altrimenti
+   si somma a width/flex-basis facendo eccedere la card dal proprio contenitore
+   (visibile soprattutto su .net-times-card, con width:100% pieno). */
+.arrivals-row .card.table-card {
+  flex: 1 1 50%;
+  min-width: 300px;
+  max-width: none;
+  min-height: 0;
+  max-height: none;
+  height: auto;    /* .card impone height:fit-content — qui serve auto perché lo stretch funzioni */
+  box-sizing: border-box;
+}
+
+.card.table-card.net-times-card {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  max-height: none;
+  height: auto;
+  box-sizing: border-box;
+}
+
+/* Angoli della prima/ultima cella dell'header — nessun arrotondamento */
+.arrivals-table thead th:first-child,
+.arrivals-table thead th:last-child,
+.arrivals-table tbody td:first-child,
+.arrivals-table tbody td:last-child {
+  border-radius: 0;
+}
+
+/* Solo il wrapper della tabella scorre */
+.container .table-card .table-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.edit-btn {
+  color: white;
+  height: 100%;
+}
+
+.penality-btn {
+  color: white;
+}
+
+.big-button{
+  color: white;
+  min-height: 50px;
+  font-size: 20px;
+}
+
+.big-button.disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.small-button{
+  color: white;
+  height: 50px;
+  font-size: 20px;
+}
+
+/* ── Pulsante azioni griglia (⋮) ── */
+.table-actions-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 0;
+  border: none;
+  background: var(--primary-color);
+  color: white;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.table-actions-btn:hover { opacity: 0.85; }
+
+/* Mobile: layout verticale — sidebar e tabella si impilano con la stessa larghezza */
+@media (max-width: 800px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  /* Fix allineamento a qualsiasi livello di zoom:
+     align-items:stretch calcola la cross-size di ogni figlio in modo indipendente;
+     a zoom non interi i valori frazionari vengono arrotondati separatamente e
+     possono differire di 1px. Con width:100% esplicito entrambi riferiscono lo
+     stesso valore del genitore, il rounding avviene sulla stessa base. */
+  .container > .sidebar {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .container > .card.table-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .container > .arrivals-area {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+  /* Le tre card (arrivi, arrivi 2, tempi netti) si impilano tutte a colonna */
+  .arrivals-row {
+    flex-direction: column;
+  }
+  /* Su mobile tutto si impila e scorre in verticale: niente altezza fissa */
+  .arrivals-area.has-net-times .arrivals-row {
+    flex: none;
+  }
+  .arrivals-row .card.table-card,
+  .card.table-card.net-times-card {
+    min-height: 400px;
+  }
+
+  /* sidebar-stack si estende per riempire lo spazio residuo accanto alla comp-list-card
+     (o tutta la sidebar quando la comp-list-card è nascosta) */
+  .sidebar-stack {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Le card dentro sidebar-stack non usano il min-width:400px né il flex-basis:350px
+     del layout desktop — si adattano alla larghezza disponibile.
+     width:100% + box-sizing:border-box: stesso fix sub-pixel applicato al livello
+     della sidebar-stack (flex column) — tutti i figli riferiscono lo stesso valore. */
+  .sidebar-stack > .card,
+  .sidebar-stack > .top-row {
+    min-width: 0;
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .container .card:not(.table-card) {
+    position: static;
+    overflow-y: visible;
+  }
+  .container .table-card {
+    overflow: visible;
+  }
+  .container .table-card .table-wrapper {
+    overflow-y: auto;
+    max-height: 60vh;
+  }
+  .comp-list-card  { order: unset; }
+  .sidebar-stack   { order: unset; }
+  .table-card      { order: unset; }
+  .arrivals-area   { order: unset; }
+}
+
+h2 {
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 20px;
+}
+
+h3 {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 22px;
+  font-weight: bold;
+  margin: 0px;
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: #ccc;
+  margin: 20px 0;
+}
+
+/* ======= CARD ======= */
+
+.card {
+  height: fit-content;
+  margin: 0;
+  min-width: 400px;
+  flex: 0 0 350px;
+  background: white;
+  padding: 15px;
+  border-radius: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;                 /* spazio tra i bottoni */
+  margin-top: 10px;
+  margin-bottom: 25px;
+}
+
+.card p {
+  margin: 8px 0;
+  text-align: center;
+}
+
+#pos, #sync-msg {
+  text-align: center;
+  cursor: pointer;
+}
+
+.card #time {
+  font-size: 60px;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* ======= SHARED TABLE HEADER ======= */
+
+.checkpoint-settings th,
+.arrivals-table th {
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 8px;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* divisore bianco tra celle header (sfondo scuro) */
+.checkpoint-settings th:not(:last-child)::after,
+.arrivals-table th:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 1px;
+  background: rgba(255,255,255,0.25);
+}
+
+/* divisore scuro tra celle body (sfondo chiaro) */
+.checkpoint-settings td:not(:last-child)::after,
+.arrivals-table td:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 1px;
+  background: rgba(0,0,0,0.12);
+}
+
+/* ======= CHECKPOINT SETTINGS TABLE — layout colonne ======= */
+/* Tabella "Gestione transiti": 4 colonne (Linea | Tipo | Conc. | ✓) gestite
+   con CSS Grid invece del normale table-layout (che con contenuti lunghi in
+   Tipo può far crescere l'intera tabella in modo imprevedibile). Il markup
+   resta una <table> vera — thead/tbody/tr diventano solo "trasparenti" al
+   layout (display:contents) così i loro th/td condividono un'unica griglia
+   a 4 colonne.
+
+   PER CAMBIARE LE DIMENSIONI DELLE COLONNE: modifica solo le 3 variabili qui
+   sotto (--cp-col-linea / --cp-col-tipo / --cp-col-check), in pixel. Non
+   serve toccare altro. Concorrente non ha una variabile: riempie sempre da
+   sola lo spazio che le altre tre non usano (1fr) — è per questo che la
+   tabella non va mai in scroll orizzontale, qualunque valore scegli qui:
+   le prime tre colonne hanno una dimensione fissa e prevedibile, Concorrente
+   si adatta sempre a quel che resta, senza mai richiedere più spazio di
+   quanto la card ne abbia. */
+.checkpoint-settings {
+  --cp-col-linea: 76px;
+  --cp-col-tipo: 300px;
+  --cp-col-check: 44px;
+
+  width: 100%;
+  border-collapse: collapse;
+  display: grid;
+  grid-template-columns: var(--cp-col-linea) var(--cp-col-tipo) 1fr var(--cp-col-check);
+}
+
+/* .table-wrapper (condiviso da tutte le tabelle) ha overflow-x:auto come
+   rete di sicurezza generica — qui non deve mai servire (v. sopra), quindi
+   niente scrollbar orizzontale per questa card specifica. */
+.card.left .table-wrapper {
+  overflow-x: hidden;
+}
+
+.checkpoint-settings thead,
+.checkpoint-settings tbody,
+.checkpoint-settings tr {
+  display: contents;
+}
+
+.checkpoint-settings td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 4px 3px;
+  position: relative;
+}
+
+/* tr ha display:contents (sopra): l'altezza di riga va sulle celle stesse */
+.checkpoint-settings tbody td {
+  min-height: 46px;
+}
+
+.checkpoint-settings td button,
+.checkpoint-settings td input {
+  vertical-align: middle;
+  display: inline-block;
+  font-size: 30px;
+}
+
+/* ── Colonna Linea (fissa) ─────────────────────────────────────────────── */
+.cp-line-send {
+  cursor: pointer !important;
+  font-weight: bold;
+  user-select: none;
+  transition: filter 0.15s;
+  font-size: 30px;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+.cp-line-send:hover  { filter: brightness(0.88); }
+.cp-line-send:active { filter: brightness(0.75); }
+
+/* ── Colonna Tipo (due righe: nome dispositivo + auto/manuale) ──────────── */
+.cp-tipo-cell,
+.cp-val-cell {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+  padding: 4px 6px !important;
+}
+
+.cp-tipo-cell:hover,
+.cp-val-cell:hover { background: rgba(0,0,0,0.06); }
+
+.cp-tipo-cell {
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden; /* nome dispositivo troppo lungo per --cp-col-tipo → ellissi, invece di allargare la colonna */
+}
+
+.cp-tipo-cell span {
+  font-size: 20px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cp-val-cell span {
+  font-size: inherit;
+  display: block;
+  font-size: 30px;
+}
+
+.cp-tipo-sep {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 2px 4px;
+}
+
+/* ── Colonna Concorrente (1fr — riempie lo spazio che Tipo non usa) ─────── */
+.cp-comp-cell {
+  padding: 2px 4px !important;
+}
+
+.comp-input {
+  /* Riempie la cella fino a un tetto di sicurezza di 200px: oltre quel
+     valore la larghezza "intrinseca" dell'input farebbe crescere l'intera
+     card oltre le dimensioni di .card.notifications-card (che deve restarci
+     sempre identica — v. .container .card.left) invece di restare fissa.
+     200px è il valore più alto risultato stabile in prova.
+     !important: la regola generica "input[type=number]" (elemento+attributo,
+     riga ~655) ha più specificità della sola classe .comp-input e
+     vincerebbe altrimenti, riportando la larghezza fissa a 100%/240px. */
+  width: 100% !important;
+  max-width: 131px !important;
+  min-width: 0;
+  text-align: center;
+  font-size: 24px;
+}
+
+.comp-input.comp-active {
+  background-color: #d8d8d8 !important;
+  outline: 2px solid #888;
+}
+
+/* ── Line edit overlay ───────────────────────────────────────────────── */
+#lineEditOverlay .fullscreen-popup.line-edit-popup {
+  width: min(98vw, 720px);
+  max-width: 98vw;
+  padding: 18px 14px;
+}
+
+.le-scroll-wrapper {
+  overflow-x: auto;
+  margin: 10px 0 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* table */
+.line-edit-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 520px;
+}
+
+.line-edit-table th {
+  background: #f0f0f0;
+  color: #333;
+  font-size: 13px;
+  padding: 6px 6px;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 2px solid #ccc;
+}
+
+.line-edit-table td {
+  padding: 6px 5px;
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+
+/* inputs inside the table */
+.line-edit-table input[type="text"],
+.line-edit-table input[type="number"] {
+  font-size: 16px;
+  min-height: 34px;
+  margin: 0;
+  padding: 2px 4px;
+}
+
+/* selects inside the table */
+.line-edit-table select {
+  font-family: 'Nunito';
+  font-size: 15px;
+  min-height: 36px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 0;
+  padding: 2px 4px;
+  background: #fff;
+}
+
+/* line number cell */
+.le-linenum-cell {
+  min-width: 54px;
+  white-space: nowrap;
+}
+
+.le-linenum {
+  font-size: 22px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+/* select cells keep a reasonable min-width */
+.le-select-cell {
+  min-width: 110px;
+}
+
+/* competitor cell: input + 👤 button affiancati */
+.le-comp-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.le-comp-cell input {
+  flex: 1;
+  min-width: 0;
+  width: 0;        /* flex gestisce la larghezza */
+}
+
+.le-athlete-btn {
+  flex-shrink: 0;
+}
+
+/* action buttons (eye / enable / send) */
+.le-action-btn {
+  max-width: 10px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 16px;
+  background: #e0e0e0;
+  white-space: nowrap;
+  min-width: 36px;
+}
+
+
+/* ======= INPUT ======= */
+
+input[type="text"],
+input[type="number"],
+input[type="numeric"],
+input[type="password"]
+ {
+  font-family: 'Nunito';
+  width: 100%;
+  max-width: 240px;
+  padding: 0px;
+  margin: 2px 0;
+  border-radius: 0;
+  border: 1px solid #ccc;
+  font-size: 20px;
+  box-sizing: border-box;
+  min-height: 30px;
+  text-align: center;
+  
+}
+
+#timekeepers-field {
+  font-family: 'Nunito';
+  width: 100%;
+  padding: 6px 8px;
+  margin: 2px 0;
+  border-radius: 0;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+input[type="email"]{
+  font-family: 'Nunito';
+  width: 80%;
+  padding: 0px;
+  margin: 2px 0;
+  border-radius: 0;
+  border: 1px solid #ccc;
+  font-size: 20px;
+  box-sizing: border-box;
+  min-height: 30px;
+  text-align: center;
+}
+
+input#station-name-input{
+  max-width: 160px;
+}
+
+/* Inputs manual time in linea */
+.manual-inputs {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  max-width: 80px;
+}
+
+.manual-inputs input {
+  flex: 1;
+}
+
+/* ======= FORM ======= */
+
+.form-row {
+  display: grid;
+  grid-template-columns: 80px 80px 50px 80px 10px;
+  align-items: center;
+  column-gap: 8px;
+  margin-bottom: 10px;
+}
+
+.form-row label {
+  font-weight: bold;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.form-row input[type="text"],
+.form-row input[type="number"] {
+  padding: 5px;
+  border-radius: 0;
+  border: 1px solid #ccc;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-row .full-width {
+  grid-column: 2 / span 4;
+}
+
+/* ======= BUTTONS ======= */
+
+button {
+  text-align: center;
+  padding: 5px 10px;
+  font-family: 'Nunito';
+  border-radius: 0;
+  background: var(--primary-color);
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+.toggle-btn, .line-enable-btn {
+  border: none;
+  padding: 5px 10px;  /* regola a piacere */
+  border-radius: 0;
+  cursor: pointer;
+  width: auto;        /* annulla il width:100% ereditato da button */
+  background-color: var(--primary-color);
+  transition: background-color 0.3s;
+}
+
+/* Stato inattivo solo stile */
+.line-enable-btn.inactive {
+  color: #666;
+}
+
+/* Stato inattivo solo stile */
+.toggle-btn.inactive {
+  color: #666;
+}
+
+
+
+.status {
+  margin-top: 10px;
+  padding: 5px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.status.synced { color: #4CAF50; }
+.status.waiting { color: #FFC107; }a
+.status.nosync { color: #F44336; }
+
+/* ======= SELECT ======= */
+
+select {
+    border-radius: 0;
+    border: 1px solid #ccc;
+    font-family: 'Nunito';
+    font-weight: bold;
+    font-size: 20px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    flex-shrink: 0;
+    min-width: 125px;
+    max-width: 256px;
+}
+
+/* ======= PRE ======= */
+
+pre {
+  text-align: left;
+  overflow: auto;
+  max-height: 150px;
+  color: #666;
+  background: none;
+  border: none;
+}
+
+/* ======= NAVBAR ======= */
+
+.navbar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 60px;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.navbar img {
+  height: 40px;
+}
+
+/* ── Navbar right group ───────────────────────────────────────────────────── */
+.navbar-right {
+  margin-left: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Discipline navbar button ─────────────────────────────────────────────── */
+.navbar-icon-btn {
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 0;
+  padding: 3px;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+}
+
+#discipline-nav-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.navbar-icon-btn:hover  { opacity: 1; border-color: rgba(255,255,255,0.4); }
+.navbar-icon-btn.active { opacity: 1; border-color: #fff; }
+
+/* ── Discipline selection overlay — fullscreen ─────────────────────────────── */
+#disciplineOverlay {
+  background: #1c1c1e;   /* solido: niente backdrop semi-trasparente */
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.discipline-popup {
+  background: #1c1c1e;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  position: relative;
+  padding: 70px 16px 16px;  /* top padding lascia spazio al logo */
+  box-sizing: border-box;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease;
+}
+
+/* logo in top-left: stessa posizione e dimensione della navbar */
+.discipline-logo {
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  height: 40px;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.discipline-popup h2 {
+  color: #f0f0f0;
+  font-family: 'Nunito';
+  text-align: center;
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.discipline-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 10px;
+  flex: 1;               /* occupa tutto lo spazio verticale disponibile */
+  margin-bottom: 12px;
+}
+
+.discipline-card {
+  position: relative;   /* ancora per il badge .disc-package-lock */
+  background: #2c2c2e;
+  border: 2px solid transparent;
+  border-radius: 0;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: background 0.15s, border-color 0.15s;
+  width: auto;
+  height: 100%;         /* riempie la cella della grid */
+  box-sizing: border-box;
+}
+
+/* Disciplina presente ma non sbloccata per questo device (vendita a
+   pacchetti): resta visibile per l'upsell ma non selezionabile. */
+.discipline-card.package-locked {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.discipline-card.package-locked:hover { background: #2c2c2e; }
+.disc-package-lock {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.disc-emoji {
+  font-size: 200px;
+  line-height: 1;
+}
+
+.disc-label {
+  color: #bbb;
+  font-family: 'Nunito';
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.discipline-card:hover { background: #3a3a3c; }
+.discipline-card.active { border-color: #4a9eff; background: #1a2d44; }
+.discipline-card.active .disc-label { color: #fff; }
+
+/* ── Start menu overlay — fullscreen (Utilità / Cronometraggio) ────────────── */
+#startMenuOverlay {
+  background: #1c1c1e;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.start-menu-popup {
+  background: #1c1c1e;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease;
+}
+
+.start-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.start-menu-grid .discipline-card {
+  min-height: 240px;
+}
+
+.start-menu-grid .disc-emoji {
+  font-size: 120px;
+}
+
+/* ── Language switcher ────────────────────────────────────────────────────── */
+#lang-switcher {
+  margin-right: 30px;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+.lang-flag {
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 0;
+  padding: 2px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lang-flag img {
+  height: 24px;
+  width: auto;
+  display: block;
+  border-radius: 0;
+}
+
+.lang-flag:hover  { opacity: 0.8; }
+.lang-flag.active { opacity: 1; border-color: #fff; }
+
+/* ======= TOGGLE SWITCH ======= */
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 0;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 0;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* ======= TABLE ======= */
+
+.sponsor2{
+  width: 100%;
+  padding: 15px;
+  max-height: 300px;
+}
+
+.sponsor2-img{
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.card.table-card {
+  min-height: min(622px, var(--content-h, 622px));
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 350px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 400px;
+  max-width: 800px;
+  padding: 15px;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 10px;
+}
+
+.arrivals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Nunito';
+  font-size: 20px;
+  table-layout: auto;
+}
+
+.arrivals-table td {
+  height: 36px;
+  vertical-align: middle;
+  text-align: center;
+  position: relative;
+}
+
+.arrivals-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.arrivals-table tr:hover {
+  background-color: #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+/* ======= LINE FILTERS ======= */
+
+.line-filters {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* --- Pulsante nella tabella event-table --- */
+.arrivals-table td:last-child {
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Allineamento perfetto nelle impostazioni (card Settings) --- */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+  gap: 8px;
+}
+
+#tableSettingsOverlay .toggle-row {
+  margin: 5px 0;
+}
+
+.toggle-row span {
+  text-align: left;
+  font-weight: bold;
+}
+
+/* Header collassabili: touch-action evita che il browser
+   interpreti il tap come inizio di uno scroll nel popup */
+.toggle-row[onclick] {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+}
+
+.input-row label {
+  flex: 1;
+  text-align: left;
+  font-weight: bold;
+}
+
+.input-row input,
+.input-row select {
+  width: 300;
+}
+
+
+/* --- WiFi overlay: password row con toggle inline --- */
+#wifiOverlay .input-row label {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+#wifiOverlay .toggle-row span {
+  font-size: 20px;
+}
+
+#wifiOverlay .input-row input[type="text"],
+#wifiOverlay .input-row input[type="password"] {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+#wifiOverlay .fullscreen-popup {
+  width: 92%;
+  max-width: 580px;
+}
+
+
+.popup {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #F44336;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 0;
+  font-size: 24px;
+  opacity: 0;
+  transition: opacity 0.4s, bottom 0.4s;
+  z-index: 1000;
+}
+
+
+.popup.show {
+  display: block;
+  opacity: 1;
+  bottom: 40px;
+}
+
+
+/* Sfondo oscurato */
+.fullscreen-overlay {
+  font-family: 'Nunito';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Il prompt di richiesta fullscreen deve restare sempre sopra allo start
+   menu / selezione disciplina, che condividono lo stesso z-index 9999. */
+#fullscreenOverlay {
+  z-index: 10000;
+}
+
+/* Contenitore popup */
+.fullscreen-popup {
+  min-width: 265px;
+  font-family: 'Nunito';
+  background: #fff;
+  border-radius: 0;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.fullscreen-popup h2 {
+  font-family: 'Nunito';
+  color: #222;
+}
+
+.fullscreen-popup p {
+  color: #555;
+  margin: 12px 0 20px;
+}
+
+.fullscreen-buttons {
+  display: flex;
+  justify-content: space-around;
+}
+
+.fullscreen-buttons button:hover {
+  background: #666;
+}
+
+.fullscreen-buttons .cancel {
+  background: #aaa;
+}
+
+.fullscreen-buttons .cancel:hover {
+  background: #888;
+}
+
+/* Splash a schermo intero */
+#splash {
+  position: fixed;
+  inset: 0; /* equivalente a top:0; left:0; right:0; bottom:0 */
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 1s ease; /* durata dissolvenza */
+}
+
+/* Logo */
+#splash img {
+  max-width: 500px;   /* limite su schermi grandi */
+}
+
+/* Quando aggiungiamo la classe "finished", parte la dissolvenza */
+#splash.finished {
+  opacity: 0;
+  pointer-events: none;
+}
+
+   /* Popup centrato come fullscreen */
+#settingsOverlay { 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  z-index: 9999;
+}
+
+#settingsOverlay .fullscreen-popup {
+  background: #ffffff;
+  border-radius: 0;
+  padding: 20px;
+  width: 85%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+#settingsOverlay .fullscreen-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.hidden {
+  display: none;
+}
+
+.icon-text-row {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.icon-button {
+  display: inline-flex;        /* ← QUESTO È IL FIX */
+  flex-direction: column;      /* icona sopra, testo sotto */
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.icon-button.disabled {
+  opacity: 0.4;              /* sbiadito */
+  pointer-events: none;      /* disabilita click */
+  cursor: default;
+}
+
+.icon {
+  font-size: 42px;
+  line-height: 1;
+}
+
+.label {
+  margin-top: 6px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.divider {
+  border: 0;
+  height: 1px;
+  background: #3b3737; /* colore linea */
+  margin: 1px 0px;    /* spazio verticale */
+}
+
+/* Personalizzazione colore di default */
+#generalPopup {
+  background-color: #ffeb3b; /* giallo di default */
+  color: #000; 
+}
+
+.arrivals-table tr.row-enter td {
+  opacity: 0;
+}
+
+.arrivals-table tr.row-enter td > * {
+  transform: translateY(-10px);
+}
+
+.arrivals-table tr.row-enter.row-enter-active td {
+  opacity: 1;
+  transition: opacity 1000ms ease;
+}
+
+.arrivals-table tr.row-enter.row-enter-active td > * {
+  transform: translateY(0);
+  transition: transform 1000ms ease;
+}
+
+.arrivals-table tbody tr.negative-row td {
+  background-color: #888;
+}
+
+.arrivals-table tbody tr.row-disabled td {
+  background-color: #b0b0b0;
+  color: #555;
+  font-style: italic;
+}
+
+.arrivals-table tbody tr.row-cancelled td {
+  text-decoration: line-through;
+  color: #a33;
+}
+
+.cancel-btn {
+  color: white;
+  opacity: 0.4;
+}
+
+.cancel-btn.active {
+  opacity: 1;
+  background-color: #c0392b;
+}
+
+/* ── Race time / Name / Surname columns (hidden by default) ── */
+.race-time-col, td.race-time   { display: none; }
+.col-name-col,  td.col-name    { display: none; }
+.col-surname-col, td.col-surname { display: none; }
+
+/* ── Competitor splits diff rows ── */
+.arrivals-table tbody tr.diff-row td {
+  font-style: italic;
+}
+.arrivals-table tbody tr.diff-row .diff-time {
+  font-weight: 700;
+}
+
+/* ── Competitor quick-list card ── */
+/* ── Quick-actions card (top-row, affiancata alla time-card) ── */
+.quick-actions-card {
+  min-height: 85px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 8px;
+  flex: 0 0 auto;
+  min-width: 0 !important;   /* override .card min-width: 400px */
+  width: auto;
+  box-sizing: border-box;
+}
+
+.qa-btn {
+  background: none !important;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  width: auto;
+  padding: 2px 4px;
+  line-height: 1;
+  opacity: 0.75;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.qa-btn:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+/* ── Top row: quick-actions + time-card affiancate ── */
+.top-row {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  align-items: stretch;
+}
+
+.top-row .card.time-card {
+  flex: 1;   /* occupa lo spazio rimasto dopo la quick-actions-card */
+  min-width: 0;   /* override .card min-width: 400px, altrimenti blocca il restringimento orizzontale */
+}
+
+/* ── Comp-list card: stretch all'altezza totale della sidebar-stack ── */
+.comp-list-card {
+  max-height: calc(var(--content-h) - 12px);   /* -12px: padding verticale della card stessa, content-box */
+  flex: 0 0 90px;
+  min-width: 70px;
+  max-width: 110px;
+  height: auto;              /* lascia che il flex-stretch controlli l'altezza */
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.comp-quick-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.comp-list-item {
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: 0;
+  text-align: center;
+  background: #f5f5f5;
+  user-select: none;
+  transition: background 0.12s;
+}
+
+.comp-list-item:hover,
+.comp-list-item:active {
+  background: #d0e8ff;
+}
+
+.comp-list-num {
+  font-size: 30px;
+  font-weight: bold;
+  display: block;
+  line-height: 1.2;
+}
+
+.comp-list-name {
+  font-size: 10px;
+  display: block;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comp-list-empty {
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+/* ── Athlete Registry overlay ── */
+#athleteOverlay {
+  z-index: 10001;   /* sopra lineEditOverlay (9999) */
+}
+
+#athleteOverlay .fullscreen-popup.athlete-popup {
+  width: 94%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #222;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #ddd;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-btn.active {
+  color: #3b55ff;
+  border-bottom-color: #3b55ff;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#athlete-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 0;
+}
+
+.athlete-layout {
+  display: flex;
+  gap: 10px;
+  min-height: 220px;
+}
+
+.athlete-list {
+  flex: 1;
+  min-width: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 0;
+}
+
+.athlete-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background 0.15s;
+}
+
+.athlete-item:last-child           { border-bottom: none; }
+.athlete-item:hover                { background: #f0f4ff; }
+.athlete-item.selected             { background: #dce4ff; }
+.athlete-item.athlete-assigned       { opacity: 0.45; }
+.athlete-item.athlete-assigned:hover { background: #f5f5f5; }
+
+.athlete-bib {
+  font-weight: bold;
+  font-size: 16px;
+  min-width: 36px;
+  color: #3b55ff;
+}
+
+.athlete-name {
+  font-size: 14px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.athlete-empty,
+.athlete-detail-empty {
+  color: #aaa;
+  font-size: 14px;
+  text-align: center;
+  padding: 16px;
+}
+
+.athlete-detail {
+  flex: 1;
+  min-width: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 0;
+  padding: 8px;
+}
+
+.athlete-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.athlete-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+
+.athlete-field-key {
+  font-weight: bold;
+  color: #555;
+  text-transform: capitalize;
+}
+
+.athlete-field-val {
+  color: #222;
+  text-align: right;
+}
+
+#athlete-json-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 140px;
+  padding: 8px;
+  font-size: 13px;
+  font-family: monospace;
+  border: 1px solid #ccc;
+  border-radius: 0;
+  resize: vertical;
+}
+
+#athlete-load-status {
+  font-size: 14px;
+  min-height: 20px;
+  text-align: center;
+}
+
+/* Assicurati che anche tr non abbia altezza fissa */
+.arrivals-table tr {
+  vertical-align: middle;
+}
+
+.card-navbar {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+}
+
+.card-status-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-icon {
+  font-weight: bold;
+  font-size: 40px;
+  cursor: pointer;
+}
+
+#splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.splash-logos {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.splash-logos img:first-child {
+  height: 60px;
+}
+
+.splash-logos img:last-child {
+  height: 120px;
+}
+
+.splash-divider {
+  width: 1px;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.3); /* o adatta al tuo tema */
+}
+
+.splash-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+
+/* ── Sidebar layout ── */
+.sidebar {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  min-height: 0;
+  align-items: stretch;
+  flex: 0 0 auto;
+}
+
+.sidebar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 0;
+  flex: 0 0 auto;
+  max-height: var(--content-h);   /* pari al fondo reale di .comp-list-card, v. .arrivals-area */
+}
+
+/* ── Checkpoint settings card — si adatta al contenuto, niente scroll ──
+   Nessuna larghezza propria qui apposta: deve restare identica a
+   .card.notifications-card, sua "vicina" nello stesso .sidebar-stack —
+   entrambe si affidano allo stesso stretch/min-width di base (.card).
+   La larghezza della tabella .checkpoint-settings al suo interno (colonne
+   Linea/Tipo/Conc./✓) è quindi "presa in prestito" da qui — v. il blocco
+   "CHECKPOINT SETTINGS TABLE — layout colonne" più sopra nel file. */
+.container .card.left {
+  overflow: visible;
+  height: fit-content;
+}
+
+/* ── Time card ── */
+.container .card.time-card {
+  max-height: 55px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.card.time-card #time {
+  margin: 0;
+  font-size: 5em;
+  font-weight: bold;
+}
+
+/* ── Card titles ── */
+.card-title {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  margin: 0 0 6px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  letter-spacing: 0.3px;
+}
+
+/* ── Notifications card ──
+   flex:1 (invece di 0 0 auto) + overflow-y:auto: si adatta allo spazio
+   rimasto dentro .sidebar-stack dopo la card Checkpoints, invece di
+   eccedere l'altezza disponibile (il che spingerebbe il suo fondo oltre
+   quello di .container, disallineandolo dalla colonna arrivi a destra). */
+.card.notifications-card {
+  flex: 1 1 auto;
+  padding: 6px 10px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.card.notifications-card #status {
+  margin-top: 25px;
+  font-size: 20px;
+}
+.card.notifications-card #sync-msg,
+.card.notifications-card #settings-field {
+  margin: 0;
+  font-size: 0.8em;
+  color: #555;
+}
+
+/* ── Global settings overlay ── */
+.global-settings-popup {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+.global-settings-popup .gs-tab {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── Max-height caps for list and arrivals cards ── */
+
+.container .table-card {
+  max-height: 500px;
+}
+
+/* ── Print overlay ── */
+#printOverlay .fullscreen-popup.print-popup {
+  width: 94%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  text-align: left;
+  padding: 20px 22px;
+}
+
+.print-section {
+  margin-bottom: 14px;
+}
+
+.print-inline-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.print-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #888;
+  margin-bottom: 5px;
+}
+
+.print-range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.print-range-row input {
+  width: 72px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.print-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  min-width: 427px;
+}
+
+.print-text-short {
+  min-width: 388px;
+  width: 90px;
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.print-fields-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  cursor: pointer;
+  user-select: none;
+  color: #3949ab;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.print-fields-toggle:hover {
+  color: #1a237e;
+}
+
+#print-fields-arrow {
+  font-size: 10px;
+  transition: transform .2s;
+}
+
+.print-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.print-tag {
+  background: #eef0f7;
+  border: 1px solid #c5cae9;
+  border-radius: 6px;
+  padding: 5px 4px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  color: #3949ab;
+  cursor: pointer;
+  line-height: 1.4;
+  text-align: center;
+  transition: background .15s;
+  width: 100%;
+}
+
+.print-tag:hover {
+  background: #c5cae9;
+}
+
+.print-preview {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  min-height: 56px;
+  max-height: 130px;
+  overflow-y: auto;
+  color: #333;
+  line-height: 1.5;
+}
+
+.print-row-count {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.print-progress {
+  margin: 8px 0 4px;
+}
+
+.print-progress-track {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.print-progress-fill {
+  height: 100%;
+  background: #3949ab;
+  border-radius: 4px;
+  width: 0%;
+  transition: width .2s ease;
+}
+
+.print-progress span {
+  font-size: 12px;
+  color: #555;
+}
+
+/* ── Long-press row edit indicator ── */
+.arrivals-table tbody tr {
+  cursor: pointer;
+  user-select: none;
+}
+.arrivals-table tbody tr.row-editing {
+  outline: 2px solid #3b55ff;
+  outline-offset: -2px;
+  cursor: default;
+}
+.arrivals-table tbody tr.row-editing input {
+  cursor: text;
+  font: inherit;
+  text-align: center;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 0;
+  padding: 2px 4px;
+  background: #fff;
+}
+/* ── Fotocellule wireless (cell) viste dal base ─────────────────────────────── */
+/* Badge sotto il numero di linea: placca chiara con l'icona a barre (colore e
+   barre piene = qualità del segnale; barra rossa = persa; triangolo = conflitto). */
+.cell-badge {
+  display: block;
+  width: fit-content;
+  margin: 3px auto 0;
+  padding: 3px 5px;
+  border-radius: 7px;
+  line-height: 0;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.cell-badge:empty { display: none; }
+.cell-badge.lost { background: rgba(255, 255, 255, 0.6); }
+.cell-badge.conflict { box-shadow: 0 0 0 2px #c62828; }
+
+.sig-icon { display: block; }
+.cell-badge .sig-icon { width: 28px; height: auto; }
+.cells-icon { display: inline-flex; align-items: center; }
+.cells-icon .sig-icon { width: 42px; height: auto; }
+.cell-signal-cell .sig-icon { display: inline-block; vertical-align: middle; }
+
+.cells-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.cells-table th, .cells-table td { padding: 6px 8px; text-align: left; white-space: nowrap; }
+.cells-table th { color: #888; font-size: 13px; }
+.cells-table tbody tr { border-top: 1px solid #eee; }
+.cells-table tr.cell-row-lost td { color: #c62828; }
+.cells-table tr.cell-row-conflict td { color: #c62828; font-weight: bold; }

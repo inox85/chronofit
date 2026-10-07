@@ -31,6 +31,7 @@ Connessione WebSocket bidirezionale per il push real-time degli eventi.
 | `5` | `TYPE_GENERIC_MESSAGE` | Messaggio generico |
 | `6` | `TYPE_EMAIL_SENT` | Conferma email inviata |
 | `11` | `TYPE_LINE_UPDATED` | Configurazione linea aggiornata |
+| `12` | `TYPE_CELLS_UPDATED` | Cambiata la lista delle fotocellule wireless (stesso JSON di `GET /cells`); inviato solo quando cambia qualcosa di visibile |
 
 ---
 
@@ -104,9 +105,51 @@ Registra manualmente un passaggio (normalmente generato dall'hardware IR).
 
 | Parametro | Tipo | Default | Descrizione |
 |---|---|---|---|
-| `lineNumber` | int | 0 | Numero di linea che ha rilevato il passaggio |
+| `lineNumber` | int | 0 | Indice **0-based** della linea (0 = linea 1) che ha rilevato il passaggio |
 
-**Risposta:** testo di conferma con timestamp.
+**Risposta:** testo di conferma con timestamp. Il base timbra l'istante di *arrivo* della richiesta: latenza e jitter di rete finiscono nel tempo (per le fotocellule wireless usare `/remoteCheckpoint`).
+
+---
+
+### `GET /clockSync`
+Restituisce l'orologio `esp_timer` del base in microsecondi (stringa decimale), campionato come prima istruzione dell'handler. Usato dalle fotocellule wireless per stimare l'offset di clock (round-trip, stile NTP).
+
+**Risposta:** `text/plain`, es. `123456789012`.
+
+**Parametri opzionali (battito di presenza della fotocellula):** `cell` (id), `line` (1–4), `rssi` (dBm), `rtt` (µs, miglior RTT misurato), `fw` (versione). Se `cell` e `line` sono presenti il base registra/aggiorna la cella in elenco (vedi `GET /cells`); senza parametri la route resta un semplice clock. La route non richiede autenticazione, quindi la presenza è solo informativa (falsificabile) e non influisce sui tempi.
+
+---
+
+### `GET /cells`
+Elenco delle fotocellule wireless viste dal base. Una cella è `connected` se ha mandato un battito (`/clockSync`) negli ultimi 10 s; altrimenti resta in elenco come persa (fino a 8 celle, la più vecchia persa viene sostituita da una nuova). Lo stesso JSON viene inviato sul WebSocket (`t = 12`) a ogni cambiamento.
+
+**Risposta JSON:**
+```json
+{
+  "t": 12, "n": 1, "total": 2,
+  "cells": [
+    { "id": "a4cf12345678", "line": 2, "rssi": -58, "rtt": 3100, "fw": "C1.0.0",
+      "ip": "192.168.10.2", "connected": true, "conflict": false,
+      "ageMs": 1800, "lastEventAgeMs": 42000, "events": 7 }
+  ]
+}
+```
+`conflict` è `true` se due celle connesse dichiarano la stessa linea. `lastEventAgeMs` è `-1` se la cella non ha ancora inviato passaggi; `rssi` è `0` se sconosciuto.
+
+---
+
+### 🔒 `GET /remoteCheckpoint`
+Registra un passaggio proveniente da una fotocellula wireless (`Chronofit_Cell`) con timestamp già espresso nel clock `esp_timer` del base. Il passaggio entra nella stessa pipeline di un sensore cablato (sync su linea, avvio elapsed, buzzer, stampa, MQTT, WebSocket).
+
+**Parametri:**
+
+| Parametro | Tipo | Descrizione |
+|---|---|---|
+| `lineNumber` | int | Linea **1-based** (1–4), diversamente da `/checkPoint` |
+| `t` | uint64 | Istante del fronte in µs, dominio `esp_timer` del base |
+| `seq` | uint32 | (opz.) Numero progressivo: uno stesso `seq` ripetuto sulla stessa linea risponde `DUP` senza duplicare il passaggio |
+
+**Risposta:** `OK`, `DUP`, oppure `400` (`Missed params`, `Bad lineNumber`, `Bad timestamp` se `t` è oltre 50 ms nel futuro o più vecchio di 5 minuti).
 
 ---
 
@@ -322,6 +365,18 @@ Restituisce lo stato della connessione WiFi STA.
 **Risposta JSON:**
 ```json
 { "ssid": "MyNetwork", "staConnected": true, "staIp": "192.168.1.42" }
+```
+
+---
+
+### `GET /wifiScan`
+Scansione asincrona delle reti WiFi vicine. Richiamarla finché `scanning` è `true`: la prima chiamata avvia la scansione, quelle successive restituiscono `{"scanning":true}` finché è in corso, poi l'elenco.
+
+Se la STA non è connessa, la scansione sospende i tentativi di riconnessione (che altrimenti la farebbero fallire) e li riprende a fine scansione. Durante la scansione l'AP può sparire per qualche istante: il client deve ritentare.
+
+**Risposta JSON (a scansione conclusa):**
+```json
+{ "scanning": false, "networks": [ { "ssid": "MyNetwork", "rssi": -55, "channel": 6, "secure": true } ] }
 ```
 
 ---

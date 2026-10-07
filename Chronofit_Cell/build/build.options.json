@@ -1,0 +1,9 @@
+{
+  "additionalFiles": "..\\..,..\\..,..\\..,..\\..,..\\..,..\\..,..\\..,..\\..,..\\..,..\\..,..\\..,..\\..",
+  "compiler.optimization_flags": "-Os",
+  "customBuildProperties": "",
+  "fqbn": "esp32:esp32:esp32:FlashSize=16M,FlashMode=dio,FlashFreq=80",
+  "hardwareFolders": "C:\\Users\\inox8\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\3.2.1,C:\\Users\\inox8\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\3.2.1",
+  "otherLibrariesFolders": "C:\\Users\\inox8\\OneDrive\\Documenti\\Arduino\\libraries",
+  "sketchLocation": "C:\\src\\chronofit\\Chronofit_Cell"
+}

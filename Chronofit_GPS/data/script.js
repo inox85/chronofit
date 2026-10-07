@@ -1655,6 +1655,7 @@ function connectWebSocket() {
     hidePopup();
     lastMessageTime = Date.now();
     startWatchdog();
+    loadCells();   // stato iniziale delle fotocellule (anche dopo una riconnessione)
   };
 
   ws.onmessage = (event) => {
@@ -1706,6 +1707,206 @@ const TYPE_WIFI_ERROR      = 8;
 const TYPE_MQTT_NOTIFICATION = 9;
 const TYPE_MQTT_PENDING      = 10;
 const TYPE_LINE_UPDATED      = 11;
+const TYPE_CELLS_UPDATED     = 12;
+
+// ── Fotocellule wireless (cell) viste dal base ────────────────────────────────
+// Lo stato arriva da GET /cells (all'aggancio del WebSocket, in silenzio) e poi
+// dai push TYPE_CELLS_UPDATED, che il firmware invia solo quando cambia
+// qualcosa (cella nuova, persa, linea o segnale diversi, conflitto di linea).
+let cellsSnapshot = [];
+
+function loadCells() {
+  fetch('/cells')
+    .then(res => res.json())
+    .then(data => applyCellsUpdate(data, true))
+    .catch(() => {});
+}
+
+function cellShortId(id) { return String(id).slice(-6); }
+
+// Livello segnale 0..4 (0 = RSSI sconosciuto). Le soglie sono le stesse di
+// bucketOf() in cells.cpp: il firmware invia un push solo quando il livello cambia.
+function cellSignalLevel(rssi) {
+  if (!rssi) return 0;
+  if (rssi >= -55) return 4;
+  if (rssi >= -65) return 3;
+  if (rssi >= -75) return 2;
+  return 1;
+}
+
+function cellSignalColor(level) {
+  if (level >= 3) return '#2e7d32';
+  if (level === 2) return '#ef6c00';
+  if (level === 1) return '#c62828';
+  return '#9aa0a6';
+}
+
+// Icona a 4 barre crescenti: le barre sotto il livello sono piene e colorate
+// (verde / arancione / rosso), le altre grigie. `slash` = barra rossa diagonale
+// (cella persa). Contiene solo numeri e colori fissi, nessun testo esterno.
+function cellSignalSvg(level, slash = false) {
+  const color = cellSignalColor(level);
+  const heights = [5, 8, 11, 14];
+  let bars = '';
+  for (let i = 0; i < 4; i++) {
+    const h = heights[i];
+    bars += `<rect x="${i * 5.5}" y="${14 - h}" width="4" height="${h}" rx="1" fill="${i < level ? color : '#cfd4da'}"/>`;
+  }
+  const line = slash
+    ? '<line x1="0" y1="14.5" x2="20.5" y2="-0.5" stroke="#c62828" stroke-width="2" stroke-linecap="round"/>'
+    : '';
+  return `<svg class="sig-icon" viewBox="-1 -1 22.5 16" width="22" height="16" aria-hidden="true">${bars}${line}</svg>`;
+}
+
+function cellWarnSvg() {
+  return '<svg class="sig-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">'
+    + '<path d="M12 2.5 1.5 21h21z" fill="#c62828"/>'
+    + '<rect x="11" y="9" width="2" height="6.5" rx="1" fill="#fff"/>'
+    + '<rect x="11" y="17" width="2" height="2" rx="1" fill="#fff"/></svg>';
+}
+
+function cellStateText(c) {
+  if (!c.connected) return t('cells.state_lost');
+  if (c.conflict) return t('cells.state_conflict');
+  return t('cells.state_ok');
+}
+
+function applyCellsUpdate(data, silent = false) {
+  const prev = new Map(cellsSnapshot.map(c => [c.id, c]));
+  cellsSnapshot = Array.isArray(data.cells) ? data.cells : [];
+
+  if (!silent) {
+    cellsSnapshot.forEach(c => {
+      const p = prev.get(c.id);
+      if (c.connected && (!p || !p.connected)) {
+        showGeneralPopup(t('cells.popup_connected', cellShortId(c.id), c.line), '#2e7d32', 3000);
+      } else if (!c.connected && p && p.connected) {
+        showGeneralPopup(t('cells.popup_lost', cellShortId(c.id), c.line), '#c62828', 5000);
+      }
+    });
+  }
+
+  updateCellBadges();
+  updateCellsSummary();
+  if (document.getElementById('cellsOverlay')?.style.display === 'flex') renderCellsList();
+}
+
+// Badge accanto al numero di ogni linea (card Checkpoints).
+function updateCellBadges() {
+  for (let n = 1; n <= 4; n++) {
+    const badge = document.getElementById(`cell-badge-${n}`);
+    if (!badge) continue;
+    const cells = cellsSnapshot.filter(c => Number(c.line) === n);
+    const live = cells.filter(c => c.connected);
+    badge.className = 'cell-badge';
+    badge.title = '';
+    if (cells.length === 0) { badge.innerHTML = ''; continue; }
+
+    if (live.length > 1) {
+      badge.innerHTML = cellWarnSvg();
+      badge.classList.add('conflict');
+      badge.title = t('cells.state_conflict') + ': ' + live.map(c => cellShortId(c.id)).join(', ');
+    } else if (live.length === 1) {
+      const c = live[0];
+      badge.innerHTML = cellSignalSvg(cellSignalLevel(c.rssi));
+      badge.title = cellShortId(c.id) + ' · ' + (c.rssi ? c.rssi + ' dBm' : '—');
+    } else {
+      const c = cells[0];
+      badge.innerHTML = cellSignalSvg(0, true);
+      badge.classList.add('lost');
+      badge.title = cellShortId(c.id) + ' · ' + t('cells.state_lost');
+    }
+  }
+}
+
+// Voce "📶: connesse/note" nella card Status.
+function updateCellsSummary() {
+  const el = document.getElementById('cellsStatus');
+  if (!el) return;
+  const total = cellsSnapshot.length;
+  const live = cellsSnapshot.filter(c => c.connected).length;
+  const lost = cellsSnapshot.some(c => !c.connected);
+  const conflict = cellsSnapshot.some(c => c.connected && c.conflict);
+  const bad = lost || conflict;
+  el.textContent = total ? `${live}/${total}` : '—';
+  el.style.color = total === 0 ? '' : (bad ? '#c62828' : '#2e7d32');
+
+  // Icona: livello del collegamento PEGGIORE tra le celle connesse; barra rossa
+  // se almeno una è persa, triangolo se due celle sono sulla stessa linea.
+  const icon = document.getElementById('cellsIcon');
+  if (icon) {
+    if (conflict) {
+      icon.innerHTML = cellWarnSvg();
+    } else {
+      const levels = cellsSnapshot.filter(c => c.connected).map(c => cellSignalLevel(c.rssi)).filter(l => l > 0);
+      icon.innerHTML = cellSignalSvg(levels.length ? Math.min(...levels) : 0, lost);
+    }
+  }
+}
+
+function fmtCellAge(ms) {
+  if (ms === undefined || ms === null || ms < 0) return '—';
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return s + ' s';
+  return Math.floor(s / 60) + ' min';
+}
+
+function renderCellsList() {
+  const box = document.getElementById('cellsList');
+  if (!box) return;
+  box.textContent = '';
+  if (cellsSnapshot.length === 0) {
+    const p = document.createElement('p');
+    p.textContent = t('cells.none');
+    p.style.textAlign = 'center';
+    box.appendChild(p);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'cells-table';
+  const head = table.createTHead().insertRow();
+  ['cells.col_line', 'cells.col_cell', 'cells.col_state', 'cells.col_signal',
+   'cells.col_rtt', 'cells.col_fw', 'cells.col_ip', 'cells.col_last'].forEach(k => {
+    const th = document.createElement('th');
+    th.textContent = t(k);
+    head.appendChild(th);
+  });
+
+  const body = table.createTBody();
+  [...cellsSnapshot].sort((a, b) => a.line - b.line).forEach(c => {
+    const row = body.insertRow();
+    const state = !c.connected ? 'lost' : (c.conflict ? 'conflict' : 'ok');
+    row.className = 'cell-row-' + state;
+    const cols = [
+      c.line,
+      cellShortId(c.id),
+      cellStateText(c) + (c.connected ? '' : ' (' + fmtCellAge(c.ageMs) + ')'),
+      null,   // segnale: icona a barre + dBm, costruita sotto
+      c.rtt ? (c.rtt / 1000).toFixed(1) + ' ms' : '—',
+      c.fw || '—',
+      c.ip || '—',
+      fmtCellAge(c.lastEventAgeMs) + (c.events ? ' (' + c.events + ')' : '')
+    ];
+    cols.forEach(v => {
+      const td = row.insertCell();
+      if (v !== null) { td.textContent = v; return; }
+      td.className = 'cell-signal-cell';
+      td.innerHTML = cellSignalSvg(c.connected ? cellSignalLevel(c.rssi) : 0, !c.connected);
+      td.appendChild(document.createTextNode(c.rssi ? ' ' + c.rssi + ' dBm' : ' —'));
+    });
+  });
+  box.appendChild(table);
+}
+
+function openCellsOverlay() {
+  renderCellsList();
+  document.getElementById('cellsOverlay').style.display = 'flex';
+}
+
+function closeCellsOverlay() {
+  document.getElementById('cellsOverlay').style.display = 'none';
+}
 
 // Tiene sempre visibile l'ultimo concorrente transitato (centrato: mostra
 // fino a ~3 righe prima/dopo, se esistono — meno agli estremi della tabella).
@@ -1778,6 +1979,10 @@ function handleMessage(data) {
 
     case TYPE_LINE_UPDATED:
       applyLineUpdate(data);
+      break;
+
+    case TYPE_CELLS_UPDATED:
+      applyCellsUpdate(data);
       break;
 
     case TYPE_WIFI_ERROR:
@@ -4056,6 +4261,125 @@ function connectWiFi() {
   closeGlobalSettings();
 }
 
+// Copia negli appunti. navigator.clipboard richiede un contesto sicuro (https): sul
+// device si accede in http://192.168.x.x, quindi serve il ripiego con execCommand.
+async function copyTextToClipboard(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* ripiego sotto */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed; top:-1000px; opacity:0; user-select:text; -webkit-user-select:text;";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Link http://<ip>/ del device sulla rete WiFi station (si apre solo dai dispositivi
+// collegati a quella stessa rete, non da chi è sull'AP del device).
+function staLinkUrl() {
+  const ip = document.getElementById("sta-ip-value").dataset.ip || "";
+  return ip ? "http://" + ip + "/" : "";
+}
+
+let _staLinkCopyTimer = null;
+async function copyStaLink() {
+  const url = staLinkUrl();
+  if (!url) return;
+  const btn = document.getElementById("staLinkCopyBtn");
+  const ok = await copyTextToClipboard(url);
+  btn.textContent = ok ? "✔ " + t('wifi.link_copied') : t('wifi.copy_failed');
+  clearTimeout(_staLinkCopyTimer);
+  _staLinkCopyTimer = setTimeout(() => { btn.textContent = t('wifi.copy_link'); }, 1500);
+}
+
+function openStaLink() {
+  const url = staLinkUrl();
+  if (url) window.open(url, "_blank", "noopener");
+}
+
+let _staIpCopyTimer = null;
+async function copyStaIp() {
+  const el = document.getElementById("sta-ip-value");
+  const ip = el.dataset.ip || "";
+  if (!ip) return;
+  const ok = await copyTextToClipboard(ip);
+  el.textContent = ok ? "✔ " + t('wifi.ip_copied') : t('wifi.copy_failed');
+  clearTimeout(_staIpCopyTimer);
+  _staIpCopyTimer = setTimeout(() => { el.textContent = ip; }, 1500);
+}
+
+// Scansione delle reti WiFi vicine (il device risponde a /wifiScan finché scanning=true)
+async function scanWifiNetworks() {
+  const btn    = document.getElementById("wifiScanBtn");
+  const list   = document.getElementById("wifi-scan-list");
+  const row    = document.getElementById("wifi-scan-row");
+  const status = document.getElementById("wifi-status-field");
+  btn.disabled = true;
+  btn.textContent = t('wifi.scanning');
+  status.innerText = "";
+  try {
+    let result = null;
+    for (let i = 0; i < 20 && !result; i++) {
+      try {
+        const res = await fetch('/wifiScan', { cache: 'no-store' });
+        const d = await res.json();
+        if (!d.scanning) result = d;
+      } catch (e) {
+        // durante la scansione l'AP può sparire un istante: si riprova
+      }
+      if (!result) await new Promise(r => setTimeout(r, 800));
+    }
+    if (!result) {
+      status.innerText = t('wifi.scan_failed');
+      status.style.color = "#c0392b";
+      return;
+    }
+    // una riga per SSID (il più forte), senza reti nascoste
+    const best = new Map();
+    (result.networks || []).forEach(n => {
+      if (n.ssid && (!best.has(n.ssid) || n.rssi > best.get(n.ssid).rssi)) best.set(n.ssid, n);
+    });
+    const nets = [...best.values()].sort((a, b) => b.rssi - a.rssi);
+    list.innerHTML = "";
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = nets.length ? t('wifi.scan_pick') : t('wifi.scan_none');
+    list.appendChild(first);
+    nets.forEach(n => {
+      const o = document.createElement("option");
+      o.value = n.ssid;
+      o.textContent = (n.secure ? "🔒 " : "") + n.ssid + " (" + n.rssi + " dBm, ch " + n.channel + ")";
+      list.appendChild(o);
+    });
+    row.style.display = "";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = t('wifi.scan');
+  }
+}
+
+function pickWifiNetwork(ssid) {
+  if (!ssid) return;
+  const ssidInput = document.getElementById("wifi-ssid");
+  if (ssidInput.value !== ssid) {
+    ssidInput.value = ssid;
+    document.getElementById("wifi-password").value = "";
+  }
+  document.getElementById("wifi-password").focus();
+}
+
 // Aggiorna il tab WiFi con SSID, password e IP corrente (se connesso come STA)
 function refreshWifiTab() {
   fetch('/wifiCredential')
@@ -4070,6 +4394,7 @@ function refreshWifiTab() {
       const ipVal = document.getElementById("sta-ip-value");
       if (data.staConnected && data.staIp && data.staIp !== "0.0.0.0") {
         ipVal.textContent = data.staIp;
+        ipVal.dataset.ip = data.staIp;
         ipRow.style.display = "block";
       } else {
         ipRow.style.display = "none";

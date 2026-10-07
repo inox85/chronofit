@@ -26,6 +26,7 @@
 #include <ESP_Mail_Client.h>
 #include "gps_custom.h"
 #include "LedStrip.h"
+#include "cells.h"
 
 
 SMTPSession smtp;
@@ -643,6 +644,114 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
     request->send(200, "text/plain", "CheckPoint received!");
+    wifiRxActivity();
+  });
+
+  // ── Fotocellule wireless (Chronofit_Cell) ─────────────────────────────────
+  // /clockSync: orologio esp_timer del base (µs), campionato come prima
+  // istruzione, per la stima dell'offset di clock lato fotocellula.
+  server.on("/clockSync", HTTP_GET, [](AsyncWebServerRequest *request) {
+    uint64_t nowUs = esp_timer_get_time();
+    char buf[24];
+    snprintf(buf, sizeof(buf), "%llu", (unsigned long long)nowUs);
+    request->send(200, "text/plain", buf);
+
+    // Battito di presenza della cella (parametri opzionali): registrato DOPO
+    // la risposta, così non allunga la misura di RTT che la cella sta facendo.
+    if (request->hasParam("cell") && request->hasParam("line")) {
+      int line = request->getParam("line")->value().toInt();
+      int rssi = request->hasParam("rssi") ? (int)request->getParam("rssi")->value().toInt() : 0;
+      uint32_t rtt = request->hasParam("rtt") ? (uint32_t)request->getParam("rtt")->value().toInt() : 0;
+      String fw = request->hasParam("fw") ? request->getParam("fw")->value() : String("");
+      cellsTouch(request->getParam("cell")->value().c_str(), line, rssi, rtt, fw.c_str(),
+                 (uint32_t)request->client()->remoteIP());
+    }
+  });
+
+  // Elenco fotocellule wireless viste dal base (stesso JSON del push WS tipo 12).
+  server.on("/cells", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "application/json", cellsToJson());
+  });
+
+  // /remoteCheckpoint: passaggio con timestamp già nel dominio esp_timer del
+  // base (t, µs). lineNumber è 1-BASED (1..4), a differenza di /checkPoint che
+  // usa l'indice 0-based. `seq` evita duplicati se la cella ritenta dopo un
+  // ACK perso.
+  server.on("/remoteCheckpoint", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
+    static uint32_t lastRemoteSeq[4] = {0, 0, 0, 0};
+
+    if (!request->hasParam("lineNumber") || !request->hasParam("t")) {
+      request->send(400, "text/plain", "Missed params");
+      return;
+    }
+    int line = request->getParam("lineNumber")->value().toInt();
+    if (line < 1 || line > 4) {
+      request->send(400, "text/plain", "Bad lineNumber");
+      return;
+    }
+    int idx = line - 1;
+    uint64_t t = strtoull(request->getParam("t")->value().c_str(), nullptr, 10);
+    uint64_t nowUs = esp_timer_get_time();
+    // Rifiuta istanti nel futuro (> 50 ms) o più vecchi di 5 minuti.
+    if (t > nowUs + 50000ULL || (nowUs > t && (nowUs - t) > 300000000ULL)) {
+      request->send(400, "text/plain", "Bad timestamp");
+      return;
+    }
+
+    if (request->hasParam("seq")) {
+      uint32_t seq = (uint32_t)strtoul(request->getParam("seq")->value().c_str(), nullptr, 10);
+      if (seq != 0 && seq == lastRemoteSeq[idx]) {
+        request->send(200, "text/plain", "DUP");
+        return;
+      }
+      lastRemoteSeq[idx] = seq;
+    }
+
+    portENTER_CRITICAL(&isrMux);
+    sensorTime[idx] = t;
+    sensorTriggered[idx] = true;
+    portEXIT_CRITICAL(&isrMux);
+
+    request->send(200, "text/plain", "OK");
+    if (request->hasParam("cell")) {
+      cellsEvent(request->getParam("cell")->value().c_str(), line, (uint32_t)request->client()->remoteIP());
+    }
+    wifiRxActivity();
+  });
+
+  // ── Scansione reti WiFi (asincrona: richiamare finché scanning=false) ──────
+  server.on("/wifiScan", HTTP_GET, [](AsyncWebServerRequest *request) {
+    int n = WiFi.scanComplete();
+    JsonDocument doc;
+    if (n == WIFI_SCAN_FAILED) {
+      // Un tentativo di connessione in corso (o il retry con backoff) fa fallire la
+      // scansione: se la STA non è connessa la fermiamo e rimandiamo il retry a fine scansione.
+      if (WiFi.status() != WL_CONNECTED) {
+        if (wifiReconnecting) scheduleWifiRetry(15000);
+        WiFi.disconnect(false, false);
+      }
+      // 120 ms per canale: disturba meno i client dell'AP rispetto al default (300 ms)
+      WiFi.scanNetworks(true, false, false, 120);
+      doc["scanning"] = true;
+    } else if (n == WIFI_SCAN_RUNNING) {
+      doc["scanning"] = true;
+    } else {
+      doc["scanning"] = false;
+      JsonArray arr = doc["networks"].to<JsonArray>();
+      for (int i = 0; i < n; i++) {
+        JsonObject o = arr.add<JsonObject>();
+        o["ssid"]    = WiFi.SSID(i);
+        o["rssi"]    = WiFi.RSSI(i);
+        o["channel"] = WiFi.channel(i);
+        o["secure"]  = (WiFi.encryptionType(i) != WIFI_AUTH_OPEN);
+      }
+      WiFi.scanDelete();
+      if (wifiReconnecting && WiFi.status() != WL_CONNECTED) scheduleWifiRetry(500);
+    }
+    String json;
+    serializeJson(doc, json);
+    request->send(200, "application/json", json);
     wifiRxActivity();
   });
 
@@ -1589,6 +1698,11 @@ String serializeMessage(String msg){
 void broadCastSettings(){
   String message = serializeSettings();
   ws.textAll(message);
+  wifiTxActivity();
+}
+
+void broadcastCells() {
+  ws.textAll(cellsToJson());
   wifiTxActivity();
 }
 

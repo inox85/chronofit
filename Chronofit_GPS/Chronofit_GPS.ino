@@ -26,6 +26,7 @@
 #include "gps_custom.h"
 #include <SoftwareSerial.h>
 #include "mqtt.h"
+#include "cells.h"
 #include "esp_task_wdt.h"
 
 SoftwareSerial gpsCmd(-1, 13);
@@ -342,6 +343,7 @@ void loop() {
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
     ws.cleanupClients();
+    if (cellsPoll()) broadcastCells();   // fotocellule wireless: connessa/persa/linea/segnale
 
     #ifdef VER2
       if(checkConnectedClient()){

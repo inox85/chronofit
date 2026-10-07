@@ -745,7 +745,12 @@
         <div id="sta-ip-row" style="display:none; background:#f0f8f0; border:1px solid #c3e6cb;
              padding:10px 14px; margin-bottom:14px; text-align:center;">
           <div data-i18n="wifi.connected_ip" style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Already connected with IP address</div>
-          <div id="sta-ip-value" style="font-size:22px; font-weight:bold; color:#2e7d32; letter-spacing:2px;">—</div>
+          <div id="sta-ip-value" onclick="copyStaIp()" style="font-size:22px; font-weight:bold; color:#2e7d32; letter-spacing:2px; cursor:pointer; user-select:all;">—</div>
+          <div data-i18n="wifi.copy_ip_hint" style="font-size:11px; color:#777; margin-top:2px;">Tap the address to copy it</div>
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="big-button" id="staLinkCopyBtn" data-i18n="wifi.copy_link" onclick="copyStaLink()" style="flex:1;">📋 Copy link</button>
+            <button class="big-button" id="staLinkOpenBtn" data-i18n="wifi.open_link" onclick="openStaLink()" style="flex:1;">↗ Open</button>
+          </div>
           <button class="big-button" data-i18n="btn.disconnect" onclick="disconnectWifi()"
             style="margin-top:10px; background:#c0392b; width:100%;">⛔ Disconnect</button>
         </div>
@@ -753,6 +758,13 @@
         <div class="input-row">
           <label for="wifi-ssid">SSID</label>
           <input type="text" id="wifi-ssid" data-i18n-ph="wifi.ssid_ph" placeholder="Enter Wi-Fi SSID">
+        </div>
+
+        <div class="button-row" style="margin-bottom:8px;">
+          <button class="big-button" id="wifiScanBtn" data-i18n="wifi.scan" onclick="scanWifiNetworks()">🔍 Scan networks</button>
+        </div>
+        <div class="input-row" id="wifi-scan-row" style="display:none;">
+          <select id="wifi-scan-list" onchange="pickWifiNetwork(this.value)" style="width:100% !important; max-width:none;"></select>
         </div>
 
         <div class="input-row">
@@ -954,6 +966,17 @@
     </div>
   </div>
 
+  <!-- Overlay fotocellule wireless (cell) viste dal base -->
+  <div id="cellsOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeCellsOverlay()">
+    <div class="fullscreen-popup" style="width:min(96vw, 820px); max-width:none; overflow-x:auto;">
+      <h2 data-i18n="cells.title">Wireless photocells</h2>
+      <div id="cellsList"></div>
+      <div class="button-row">
+        <button class="big-button" onclick="closeCellsOverlay()" data-i18n="btn.close">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Overlay About Chronofit -->
   <div id="aboutOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
@@ -984,8 +1007,8 @@
 
       <div class="toggle-row">
         <span data-i18n="about.manual">📄 Manual</span>
-        <a href="/manual.pdf" target="_blank">
-          <button class="big-button" data-i18n="btn.download" style="width:auto; padding:5px 15px;">⬇ Download</button>
+        <a href="/manuale.html" target="_blank" rel="noopener">
+          <button class="big-button" data-i18n="btn.open_manual" style="width:auto; padding:5px 15px;">📖 Open</button>
         </a>
       </div>
 
@@ -1250,7 +1273,7 @@
           <tbody>
 
             <tr>
-              <td class="cp-line-send" data-line="1" style="background-color:#ffcccc" onclick="sendCheckPointGuarded(1)">1</td>
+              <td class="cp-line-send" data-line="1" style="background-color:#ffcccc" onclick="sendCheckPointGuarded(1)">1<span class="cell-badge" id="cell-badge-1"></span></td>
               <td class="cp-tipo-cell" onclick="openLineEdit(1,'tipo1')">
                 <span id="tipo1-display-1">FPC 102</span>
                 <hr class="cp-tipo-sep">
@@ -1261,7 +1284,7 @@
             </tr>
 
             <tr>
-              <td class="cp-line-send" data-line="2" style="background-color:#ccffcc" onclick="sendCheckPointGuarded(2)">2</td>
+              <td class="cp-line-send" data-line="2" style="background-color:#ccffcc" onclick="sendCheckPointGuarded(2)">2<span class="cell-badge" id="cell-badge-2"></span></td>
               <td class="cp-tipo-cell" onclick="openLineEdit(2,'tipo1')">
                 <span id="tipo1-display-2">FPC 102</span>
                 <hr class="cp-tipo-sep">
@@ -1272,7 +1295,7 @@
             </tr>
 
             <tr>
-              <td class="cp-line-send" data-line="3" style="background-color:#ccccff" onclick="sendCheckPointGuarded(3)">3</td>
+              <td class="cp-line-send" data-line="3" style="background-color:#ccccff" onclick="sendCheckPointGuarded(3)">3<span class="cell-badge" id="cell-badge-3"></span></td>
               <td class="cp-tipo-cell" onclick="openLineEdit(3,'tipo1')">
                 <span id="tipo1-display-3">FPC 102</span>
                 <hr class="cp-tipo-sep">
@@ -1283,7 +1306,7 @@
             </tr>
 
             <tr>
-              <td class="cp-line-send" data-line="4" style="background-color:#fff5cc" onclick="sendCheckPointGuarded(4)">4</td>
+              <td class="cp-line-send" data-line="4" style="background-color:#fff5cc" onclick="sendCheckPointGuarded(4)">4<span class="cell-badge" id="cell-badge-4"></span></td>
               <td class="cp-tipo-cell" onclick="openLineEdit(4,'tipo1')">
                 <span id="tipo1-display-4">FPC 102</span>
                 <hr class="cp-tipo-sep">
@@ -1326,6 +1349,10 @@
           <div class="card-status-item" id="gps-notify" style="cursor:pointer;">
             <span class="status-icon">🛰️:</span>
             <span id="gpsStatus" class="status-icon">❌</span>
+          </div>
+          <div class="card-status-item" id="cells-notify" style="cursor:pointer;" onclick="openCellsOverlay()">
+            <span id="cellsIcon" class="status-icon cells-icon"></span>
+            <span id="cellsStatus" class="status-icon">—</span>
           </div>
         </div>
         <p id="status" class="status nosync" data-i18n="status.not_sync">Device not synchronized</p>

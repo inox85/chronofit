@@ -2257,3 +2257,32 @@ input#mqtt-broker-pass {
   padding: 2px 4px;
   background: #fff;
 }
+/* ── Fotocellule wireless (cell) viste dal base ─────────────────────────────── */
+/* Badge sotto il numero di linea: placca chiara con l'icona a barre (colore e
+   barre piene = qualità del segnale; barra rossa = persa; triangolo = conflitto). */
+.cell-badge {
+  display: block;
+  width: fit-content;
+  margin: 3px auto 0;
+  padding: 3px 5px;
+  border-radius: 7px;
+  line-height: 0;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.cell-badge:empty { display: none; }
+.cell-badge.lost { background: rgba(255, 255, 255, 0.6); }
+.cell-badge.conflict { box-shadow: 0 0 0 2px #c62828; }
+
+.sig-icon { display: block; }
+.cell-badge .sig-icon { width: 28px; height: auto; }
+.cells-icon { display: inline-flex; align-items: center; }
+.cells-icon .sig-icon { width: 42px; height: auto; }
+.cell-signal-cell .sig-icon { display: inline-block; vertical-align: middle; }
+
+.cells-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.cells-table th, .cells-table td { padding: 6px 8px; text-align: left; white-space: nowrap; }
+.cells-table th { color: #888; font-size: 13px; }
+.cells-table tbody tr { border-top: 1px solid #eee; }
+.cells-table tr.cell-row-lost td { color: #c62828; }
+.cells-table tr.cell-row-conflict td { color: #c62828; font-weight: bold; }
