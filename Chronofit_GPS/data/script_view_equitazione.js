@@ -1,62 +1,93 @@
-// ── Chronofit — Vista Equitazione: sola visualizzazione classifica ─────────
-// Pagina pensata per un secondo schermo (proiettore/monitor): riceve i
-// checkpoint via WebSocket, li accumula in una tabella nascosta (mai
-// mostrata) e visualizza l'orologio corrente + la classifica, calcolando
-// per ogni concorrente il tempo di gara (Finish - Start) sulla coppia di
-// linee configurata. Il piazzamento (🏅) riflette sempre il miglior tempo
-// di gara, indipendentemente dalla colonna scelta per l'ordinamento
-// visualizzato della tabella.
+// ── Chronofit — Vista Equitazione: sola visualizzazione ─────────────────────
+// Pagina pensata per un secondo schermo (proiettore/monitor). Mostra la STESSA
+// griglia della tabella Arrivi della console (index.html / script.js) per la
+// disciplina Equitazione: una riga per passaggio, con le stesse colonne,
+// lo stesso ordinamento, gli stessi Δ (dal passaggio precedente) e trascorso
+// (dal primo passaggio), lo stesso filtro linee.
+//
+// Impostazioni, in ordine di priorità:
+//   1. quelle salvate dal popup di questa vista (VIEW_SETTINGS_KEY);
+//   2. quelle della console, se il browser è lo stesso e la disciplina attiva
+//      è Equitazione (chiavi chronofit_view_prefs / chronofit_discipline);
+//   3. il preset "equestrian" di disciplines.js.
 
-// ── Classifica: stato e default ─────────────────────────────────────────────
-const RESULTS_LINES_KEY = 'chronofit_equestrian_results_lines';
-let resLineStart   = 1;
-let resLineFinish  = 2;
-let resSortCol     = 'race-time'; // 'race-time' | 'delta' | 'competitor' | 'start' | 'finish'
-let resPrecision   = 2;
+const VIEW_SETTINGS_KEY  = 'chronofit_equestrian_view_settings';
+const CONSOLE_PREFS_KEY  = 'chronofit_view_prefs';     // = VIEW_PREFS_KEY di script.js
+const CONSOLE_DISC_KEY   = 'chronofit_discipline';     // = DISCIPLINE_KEY di script.js
+const DISCIPLINE_ID      = 'equestrian';
 
-function restoreResultsSettings() {
+// Stessi colori di linea della console (lineColors in script.js)
+const lineColors = {
+  1: "#ffcccc",
+  2: "#ccffcc",
+  3: "#ccccff",
+  4: "#fff5cc",
+  5: "#808080ff",
+  6: "#808080ff"
+};
+
+// Default di fabbrica della console per la visibilità linee (DEFAULT_LINE_VISIBILITY)
+const DEFAULT_LINE_VISIBILITY = { "1": true, "2": true, "3": true, "4": true, "5": false, "6": true };
+
+const VIEW_FIELDS = ['showRank', 'showIndex', 'showLine', 'showTest', 'showName', 'showSurname',
+                     'timestamp', 'deltaTime', 'elapsedTime', 'penality', 'showDisabled', 'reverseOrder'];
+
+let viewPrefs = null;
+
+function _presetPrefs() {
+  const disc = (typeof DISCIPLINES !== 'undefined') ? DISCIPLINES.find(d => d.id === DISCIPLINE_ID) : null;
+  return disc ? { ...disc.prefs } : {};
+}
+
+function _consolePrefs() {
   try {
-    const raw = localStorage.getItem(RESULTS_LINES_KEY);
-    if (!raw) return;
-    const saved = JSON.parse(raw);
-    if (saved.start)     { resLineStart  = saved.start;  const el = document.getElementById('res-line-start');  if (el) el.value = saved.start; }
-    if (saved.finish)    { resLineFinish = saved.finish; const el = document.getElementById('res-line-finish'); if (el) el.value = saved.finish; }
-    if (saved.sortCol)   { resSortCol    = saved.sortCol; const el = document.getElementById('res-sort-col');    if (el) el.value = saved.sortCol; }
-    if (saved.precision) { resPrecision  = saved.precision; const el = document.getElementById('res-time-precision'); if (el) el.value = saved.precision; }
-  } catch (e) {
-    console.warn('Errore lettura impostazioni classifica:', e);
-  }
+    if (localStorage.getItem(CONSOLE_DISC_KEY) !== DISCIPLINE_ID) return null;
+    const raw = localStorage.getItem(CONSOLE_PREFS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
 }
 
-function _saveResultsPrefs() {
-  localStorage.setItem(RESULTS_LINES_KEY, JSON.stringify({
-    start: resLineStart, finish: resLineFinish,
-    sortCol: resSortCol, precision: resPrecision
-  }));
+function _ownPrefs() {
+  try {
+    const raw = localStorage.getItem(VIEW_SETTINGS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
 }
 
-function onResultsPrecisionChange(val) {
-  val = Math.max(1, Math.min(3, parseInt(val) || 2));
-  resPrecision = val;
-  document.getElementById('res-time-precision').value = val;
-  _saveResultsPrefs();
-  rebuildResultsTable();
+// Normalizza con gli stessi default che usa la console (applyDisciplinePreset).
+function _normalize(p) {
+  return {
+    showRank:     p.showRank     ?? false,
+    showIndex:    p.showIndex    ?? true,
+    showLine:     p.showLine     ?? true,
+    showTest:     p.showTest     ?? false,
+    showName:     p.showName     ?? false,
+    showSurname:  p.showSurname  ?? false,
+    timestamp:    p.timestamp    ?? true,
+    deltaTime:    p.deltaTime    ?? true,
+    elapsedTime:  p.elapsedTime  ?? false,
+    penality:     p.penality     ?? true,
+    showDisabled: p.showDisabled ?? false,
+    reverseOrder: p.reverseOrder ?? false,
+    sortCol:      p.sortCol      || 'arrival',
+    timePrecision: Math.max(1, Math.min(3, parseInt(p.timePrecision) || 3)),
+    lines:        p.lines        || DEFAULT_LINE_VISIBILITY,
+  };
 }
 
-function onResultsLinesChange() {
-  resLineStart  = Number(document.getElementById('res-line-start')?.value  ?? 1);
-  resLineFinish = Number(document.getElementById('res-line-finish')?.value ?? 2);
-  _saveResultsPrefs();
-  rebuildResultsTable();
+function loadViewPrefs() {
+  viewPrefs = _normalize(_ownPrefs() ?? _consolePrefs() ?? _presetPrefs());
+  // Il tempo di gara della console esiste solo in modalità split, che questa
+  // vista non gestisce: ordinare per "race-time" equivale all'ordine di arrivo
+  // (nella console, senza split, la colonna è vuota per tutte le righe).
+  if (viewPrefs.sortCol === 'race-time') viewPrefs.sortCol = 'arrival';
 }
 
-function onResultsSortChange() {
-  resSortCol = document.getElementById('res-sort-col')?.value ?? 'race-time';
-  _saveResultsPrefs();
-  rebuildResultsTable();
+function saveOwnPrefs() {
+  try { localStorage.setItem(VIEW_SETTINGS_KEY, JSON.stringify(viewPrefs)); } catch (e) {}
 }
 
-// ── Athlete registry (sola lettura, stessa chiave della GUI principale) ────
+// ── Athlete registry (sola lettura, stessa chiave della console) ───────────
 const ATHLETES_KEY = "chronofit_athletes";
 
 function findAthlete(competitorNum) {
@@ -78,15 +109,14 @@ function getAthleteSurname(competitorNum) {
   return a.surname || a.lastname || a.cognome || "";
 }
 
-// ── Calcolo tempi ────────────────────────────────────────────────────────────
-
-function truncateMs(ms, precision = resPrecision) {
+// ── Tempi (stesse funzioni della console) ──────────────────────────────────
+function truncateMs(ms, precision) {
   if (precision === 1) return Math.floor(ms / 100) * 100;
   if (precision === 2) return Math.floor(ms / 10)  * 10;
   return ms;
 }
 
-function formatTime(h, m, s, ms, precision = resPrecision) {
+function formatTime(h, m, s, ms, precision) {
   const msT = truncateMs(ms, precision);
   const msStr = precision === 1
     ? String(Math.floor(msT / 100))
@@ -101,17 +131,15 @@ function formatTime(h, m, s, ms, precision = resPrecision) {
   );
 }
 
-function msToTimeText(totalMs, precision = resPrecision) {
-  const h  = Math.floor(totalMs / 3600000);
-  const m  = Math.floor((totalMs % 3600000) / 60000);
-  const s  = Math.floor((totalMs % 60000) / 1000);
-  const ms = totalMs % 1000;
-  return formatTime(h, m, s, ms, precision);
+function formatDuration(ms, precision) {
+  ms = truncateMs(Math.abs(ms), precision);
+  const h  = Math.floor(ms / 3600000);
+  const m  = Math.floor((ms % 3600000) / 60000);
+  const s  = Math.floor((ms % 60000) / 1000);
+  return formatTime(h, m, s, ms % 1000, precision);
 }
 
-// Tronca i ms alla precisione scelta PRIMA di comporre il totale, così il
-// tempo di gara (Finish - Start) resta coerente con la precisione mostrata.
-function rowToMs(row, precision = resPrecision) {
+function rowToMs(row, precision) {
   const h  = parseInt(row.dataset.hour    ?? 0);
   const m  = parseInt(row.dataset.minute  ?? 0);
   const s  = parseInt(row.dataset.seconds ?? 0);
@@ -119,146 +147,234 @@ function rowToMs(row, precision = resPrecision) {
   return ((h * 3600 + m * 60 + s) * 1000) + truncateMs(ms, precision);
 }
 
-function rowToMsExact(row) {
-  const h  = parseInt(row.dataset.hour    ?? 0);
-  const m  = parseInt(row.dataset.minute  ?? 0);
-  const s  = parseInt(row.dataset.seconds ?? 0);
-  const ms = parseInt(row.dataset.msRaw   ?? 0);
-  return ((h * 3600 + m * 60 + s) * 1000) + ms;
+// Colonna "Prova": nome del dispositivo della linea come nella console
+// (testColumnLabel di script.js); vuoto = "Non gestita".
+function testColumnLabel(lineNumber, test) {
+  if (Number(lineNumber) === 5) return 'Sync-Test';
+  if (Number(lineNumber) === 6) return 'F.P.';
+  return test ? String(test) : t('cp.tipo1_none');
 }
 
-// Prima riga (cronologicamente) per ogni concorrente su una data linea.
-function _firstRowPerCompetitor(lineNumber) {
-  const rows = Array.from(document.querySelectorAll('#event-table tbody tr'))
-    .filter(r => String(r.dataset.line) === String(lineNumber))
-    .filter(r => { const c = (r.dataset.competitor ?? '').trim(); return c && c !== '0'; })
-    .sort((a, b) => rowToMsExact(a) - rowToMsExact(b));
-
-  const byCompetitor = {};
-  rows.forEach(r => {
-    const c = r.dataset.competitor;
-    if (!(c in byCompetitor)) byCompetitor[c] = r;
-  });
-  return byCompetitor;
-}
-
-// Un elemento per concorrente: tempo di partenza/arrivo, tempo di gara
-// (Finish - Start, solo se entrambi presenti e Finish >= Start), penalità
-// (presa dalla riga di arrivo se presente, altrimenti da quella di partenza).
-function _computeResults() {
-  const startByComp  = _firstRowPerCompetitor(resLineStart);
-  const finishByComp = _firstRowPerCompetitor(resLineFinish);
-  const comps = new Set([...Object.keys(startByComp), ...Object.keys(finishByComp)]);
-
-  const list = Array.from(comps).map(comp => {
-    const sRow = startByComp[comp];
-    const fRow = finishByComp[comp];
-    const startMs  = sRow ? rowToMs(sRow, resPrecision) : null;
-    const finishMs = fRow ? rowToMs(fRow, resPrecision) : null;
-
-    let netMs = null;
-    if (startMs !== null && finishMs !== null) {
-      const diff = finishMs - startMs;
-      if (diff >= 0) netMs = diff;
-    }
-    const penalty = Number((fRow ?? sRow)?.dataset.penality ?? 0) || 0;
-
-    return { comp, startMs, finishMs, netMs, penalty };
-  });
-
-  // Piazzamento: sempre per tempo di gara crescente, a prescindere
-  // dall'ordinamento scelto per la tabella. I concorrenti senza tempo di
-  // gara completo non hanno piazzamento.
-  const ranked = [...list].sort((a, b) => (a.netMs ?? Infinity) - (b.netMs ?? Infinity));
-  const bestMs = ranked.length && ranked[0].netMs !== null ? ranked[0].netMs : null;
-  let rank = 1;
-  ranked.forEach(item => {
-    item.rank = item.netMs !== null ? rank++ : null;
-    item.deltaMs = (item.netMs !== null && bestMs !== null) ? item.netMs - bestMs : null;
-  });
-
-  return list;
-}
-
-function _sortKeyFor(item) {
-  switch (resSortCol) {
-    case 'delta':      return item.deltaMs      ?? Infinity;
-    case 'competitor': return Number(item.comp);
-    case 'start':      return item.startMs      ?? Infinity;
-    case 'finish':     return item.finishMs     ?? Infinity;
-    case 'race-time':
-    default:           return item.netMs        ?? Infinity;
-  }
-}
-
-function rebuildResultsTable() {
-  const tbody = document.querySelector('#results-table tbody');
-  if (!tbody) return;
-
-  const list = _computeResults();
-  list.sort((a, b) => (_sortKeyFor(a) - _sortKeyFor(b)) || (Number(a.comp) - Number(b.comp)));
-
-  tbody.innerHTML = '';
-  list.forEach(item => {
-    const raceTimeText = item.netMs !== null ? msToTimeText(item.netMs) : '—';
-    const deltaText = (item.rank === 1 || item.deltaMs === null) ? '—' : '+' + msToTimeText(item.deltaMs);
-    const tr = document.createElement('tr');
-    tr.innerHTML =
-      `<td>${item.rank ?? '—'}</td>` +
-      `<td>${item.comp}</td>` +
-      `<td>${getAthleteName(item.comp)}</td>` +
-      `<td>${getAthleteSurname(item.comp)}</td>` +
-      `<td>${raceTimeText}</td>` +
-      `<td>${deltaText}</td>` +
-      `<td>${item.penalty || '—'}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-// ── Tabella dati grezzi (nascosta) ──────────────────────────────────────────
-// Upsert per data-row-id: usata sia per i nuovi checkpoint sia per gli edit
-// (TYPE_ROW_UPDATED, es. assegnazione penalità), che arrivano con lo stesso id.
-function addRawEventRow(rowIndex, lineNumber, competitor, hour, minute, seconds, millis, penality) {
+// ── Griglia ─────────────────────────────────────────────────────────────────
+// Upsert per data-row-id: nuovi checkpoint (TYPE_CHECKPOINT) e modifiche
+// (TYPE_ROW_UPDATED, es. penalità o annullamento) arrivano con lo stesso id.
+function upsertRow(cp) {
   const tbody = document.querySelector('#event-table tbody');
-  let row = tbody.querySelector(`tr[data-row-id="${rowIndex}"]`);
+  let row = tbody.querySelector(`tr[data-row-id="${cp.id}"]`);
   if (!row) {
     row = document.createElement('tr');
+    row.innerHTML =
+      '<td class="col-rank"></td>' +
+      '<td class="col-index"></td>' +
+      '<td class="col-line"></td>' +
+      '<td class="col-competitor"></td>' +
+      '<td class="col-test"></td>' +
+      '<td class="col-name"></td>' +
+      '<td class="col-surname"></td>' +
+      '<td class="timestamp"></td>' +
+      '<td class="delta-time"></td>' +
+      '<td class="elapsed-time"></td>' +
+      '<td class="penality-cell"></td>';
     tbody.appendChild(row);
   }
-  row.dataset.rowId      = rowIndex;
-  row.dataset.line       = lineNumber;
-  row.dataset.competitor = competitor;
-  row.dataset.hour       = hour;
-  row.dataset.minute     = minute;
-  row.dataset.seconds    = seconds;
-  row.dataset.msRaw      = millis;
-  if (penality !== undefined) row.dataset.penality = penality;
+  row.dataset.rowId      = cp.id;
+  row.dataset.line       = cp.ln;
+  row.dataset.competitor = cp.c;
+  row.dataset.hour       = cp.h;
+  row.dataset.minute     = cp.m;
+  row.dataset.seconds    = cp.s;
+  row.dataset.msRaw      = cp.ms;
+  if (cp.p  !== undefined) row.dataset.test      = cp.p;
+  if (cp.x  !== undefined) row.dataset.penality  = cp.x;
+  if (cp.e  !== undefined) row.dataset.enabled   = Number(cp.e) ? '1' : '0';
+  if (cp.an !== undefined) row.dataset.cancelled = Number(cp.an) ? '1' : '0';
+  return row;
 }
 
-function clearEventTableRows() {
+function clearRows() {
   document.querySelector('#event-table tbody').innerHTML = '';
+}
+
+function getRowSortVal(row, sc) {
+  switch (sc) {
+    case 'arrival':      return Number(row.dataset.rowId || 0);
+    case 'line':         return Number(row.dataset.line) || 0;
+    case 'competitor':   return Number(row.dataset.competitor) || 0;
+    case 'name':         return (row.querySelector('.col-name')?.textContent  || '').toLowerCase();
+    case 'surname':      return (row.querySelector('.col-surname')?.textContent || '').toLowerCase();
+    case 'event-time':   return rowToMs(row, 3);
+    case 'delta-time':   return row._deltaMs   ?? Infinity;
+    case 'elapsed-time': return row._elapsedMs ?? Infinity;
+    default:             return Number(row.dataset.rowId || 0);
+  }
+}
+
+// Ridisegna tutta la griglia: testo delle celle, filtro linee/righe
+// disabilitate, Δ ed elapsed in ordine cronologico, ordinamento, 🏅, colonne.
+function renderTable() {
+  const p = viewPrefs;
+  const prec = p.timePrecision;
+  const tbody = document.querySelector('#event-table tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+
+  rows.forEach(row => {
+    const ln = row.dataset.line;
+    const comp = Number(row.dataset.competitor) || 0;
+    row.querySelector('.col-index').textContent = row.dataset.rowId;
+    const lineTd = row.querySelector('.col-line');
+    lineTd.textContent = ln;
+    lineTd.style.backgroundColor = lineColors[ln] || '#f5f5f5';
+    row.querySelector('.col-competitor').textContent = comp > 0 ? comp : '';
+    row.querySelector('.col-test').textContent = testColumnLabel(ln, row.dataset.test);
+    row.querySelector('.col-name').textContent = getAthleteName(comp);
+    row.querySelector('.col-surname').textContent = getAthleteSurname(comp);
+    row.querySelector('.timestamp').textContent = formatTime(
+      Number(row.dataset.hour), Number(row.dataset.minute), Number(row.dataset.seconds), Number(row.dataset.msRaw), prec);
+    row.querySelector('.penality-cell').textContent = row.dataset.penality ?? 0;
+
+    const enabled = row.dataset.enabled !== '0';
+    row.classList.toggle('row-disabled', !enabled);
+    row.classList.toggle('row-cancelled', row.dataset.cancelled === '1');
+    const lineOk = !!p.lines[String(ln)];
+    row.style.display = (lineOk && (enabled || p.showDisabled)) ? '' : 'none';
+  });
+
+  // Δ ed elapsed: come recalcDeltaTimes/recalcElapsedTimes della console,
+  // sulle sole righe visibili in ordine cronologico (id del passaggio).
+  const visible = rows.filter(r => r.style.display !== 'none')
+    .sort((a, b) => (Number(a.dataset.rowId) || 0) - (Number(b.dataset.rowId) || 0));
+  const firstMs = visible.length ? rowToMs(visible[0], prec) : null;
+  let prevMs = null;
+  visible.forEach(row => {
+    const cur = rowToMs(row, prec);
+    row.classList.remove('negative-row');
+    const deltaTd = row.querySelector('.delta-time');
+    if (prevMs === null) {
+      deltaTd.textContent = '—';
+      row._deltaMs = null;
+    } else if (cur - prevMs < 0) {
+      deltaTd.textContent = '—';
+      row._deltaMs = null;
+      row.classList.add('negative-row');
+    } else {
+      deltaTd.textContent = formatDuration(cur - prevMs, prec);
+      row._deltaMs = cur - prevMs;
+    }
+    prevMs = cur;
+
+    const elapsedTd = row.querySelector('.elapsed-time');
+    const el = cur - firstMs;
+    elapsedTd.textContent = el < 0 ? '—' : formatDuration(el, prec);
+    row._elapsedMs = el < 0 ? null : el;
+  });
+
+  // Ordinamento: come applyTableSort della console (verso naturale crescente
+  // per le colonne di tempo, reverseOrder in XOR).
+  const sc = p.sortCol;
+  const naturalAsc = ['delta-time', 'elapsed-time', 'event-time'].includes(sc);
+  rows.sort((a, b) => {
+    const av = getRowSortVal(a, sc);
+    const bv = getRowSortVal(b, sc);
+    let cmp = typeof av === 'string' ? av.localeCompare(bv) : (av - bv);
+    if (Number.isNaN(cmp)) cmp = 0;
+    return (!p.reverseOrder !== naturalAsc) ? cmp : -cmp;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+
+  // 🏅 = posizione nella griglia visualizzata (updateRankColumn della console)
+  let rank = 0;
+  rows.forEach(r => {
+    r.querySelector('.col-rank').textContent = r.style.display === 'none' ? '' : ++rank;
+  });
+
+  applyColumnVisibility();
+}
+
+function applyColumnVisibility() {
+  const p = viewPrefs;
+  const cols = [
+    ['col-rank-col',     'col-rank',      p.showRank],
+    ['col-index-col',    'col-index',     p.showIndex],
+    ['col-line-col',     'col-line',      p.showLine],
+    ['col-test-col',     'col-test',      p.showTest],
+    ['col-name-col',     'col-name',      p.showName],
+    ['col-surname-col',  'col-surname',   p.showSurname],
+    ['timestamp-col',    'timestamp',     p.timestamp],
+    ['delta-time-col',   'delta-time',    p.deltaTime],
+    ['elapsed-time-col', 'elapsed-time',  p.elapsedTime],
+    ['penality-col',     'penality-cell', p.penality],
+  ];
+  cols.forEach(([th, td, show]) => {
+    const d = show ? 'table-cell' : 'none';
+    document.querySelectorAll(`#event-table th.${th}, #event-table td.${td}`).forEach(el => el.style.display = d);
+  });
 }
 
 async function populateTableFromSaved() {
   try {
     const response = await fetch('/getCheckpoints');
     const text = await response.text();
-    const lines = text.trim().split('\n');
-    lines.forEach(line => {
-      if (line.trim().length > 0) {
-        try {
-          const cp = JSON.parse(line);
-          addRawEventRow(cp.id, cp.ln, cp.c, cp.h, cp.m, cp.s, cp.ms, cp.x);
-        } catch (err) {
-          console.warn('Errore parsing JSON:', err, line);
-        }
+    text.trim().split('\n').forEach(line => {
+      if (!line.trim()) return;
+      try {
+        const cp = JSON.parse(line);
+        if (cp.id !== undefined) upsertRow(cp);
+      } catch (err) {
+        console.warn('Errore parsing JSON:', err, line);
       }
     });
-    rebuildResultsTable();
+    renderTable();
   } catch (err) {
     console.error('Errore caricamento checkpoint:', err);
   }
 }
+
+// ── Popup impostazioni ──────────────────────────────────────────────────────
+function fillSettingsForm() {
+  VIEW_FIELDS.forEach(f => {
+    const el = document.getElementById('vs-' + f);
+    if (el) el.checked = !!viewPrefs[f];
+  });
+  document.getElementById('vs-sort-col').value = viewPrefs.sortCol;
+  document.getElementById('vs-precision').value = viewPrefs.timePrecision;
+}
+
+function onSettingsChange() {
+  VIEW_FIELDS.forEach(f => {
+    const el = document.getElementById('vs-' + f);
+    if (el) viewPrefs[f] = el.checked;
+  });
+  viewPrefs.sortCol = document.getElementById('vs-sort-col').value;
+  viewPrefs.timePrecision = Number(document.getElementById('vs-precision').value) || 2;
+  saveOwnPrefs();
+  renderTable();
+}
+
+function initSettingsPopup() {
+  const overlay = document.getElementById('viewSettingsOverlay');
+  const header = document.querySelector('#event-table thead tr');
+  if (header) {
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => { fillSettingsForm(); overlay.style.display = 'flex'; });
+  }
+  document.getElementById('closeViewSettings')?.addEventListener('click', () => { overlay.style.display = 'none'; });
+  document.getElementById('resetViewSettings')?.addEventListener('click', () => {
+    try { localStorage.removeItem(VIEW_SETTINGS_KEY); } catch (e) {}
+    loadViewPrefs();
+    fillSettingsForm();
+    renderTable();
+  });
+  overlay.querySelectorAll('input, select').forEach(el => el.addEventListener('change', onSettingsChange));
+}
+
+// Le preferenze della console cambiano in un'altra scheda dello stesso browser:
+// se non ci sono impostazioni proprie della vista, le si segue dal vivo.
+window.addEventListener('storage', (e) => {
+  if ([CONSOLE_PREFS_KEY, CONSOLE_DISC_KEY, ATHLETES_KEY, VIEW_SETTINGS_KEY].includes(e.key)) {
+    loadViewPrefs();
+    renderTable();
+  }
+});
 
 // ── Orologio ─────────────────────────────────────────────────────────────────
 function updateClockFromData(data) {
@@ -354,19 +470,16 @@ const TYPE_ROW_UPDATED     = 4;
 function handleMessage(data) {
   switch (data.t) {
     case TYPE_CHECKPOINT:
-      addRawEventRow(data.id, data.ln, data.c, data.h, data.m, data.s, data.ms, data.x ?? 0);
-      rebuildResultsTable();
+    case TYPE_ROW_UPDATED:
+      upsertRow(data);
+      renderTable();
       break;
     case TYPE_TIME_UPDATE:
       updateClockFromData(data);
       break;
     case TYPE_SESSION_CLEARED:
-      clearEventTableRows();
-      rebuildResultsTable();
-      break;
-    case TYPE_ROW_UPDATED:
-      addRawEventRow(data.id, data.ln, data.c, data.h, data.m, data.s, data.ms, data.x);
-      rebuildResultsTable();
+      clearRows();
+      renderTable();
       break;
   }
 }
@@ -386,20 +499,6 @@ async function keepScreenOn() {
     }
   } catch (err) { console.error('❌ Errore wake lock:', err); }
 }
-
-// ── Header click → apre il popup impostazioni (stesso pattern della vista
-// Enduro: click sull'intera riga di header della tabella). ──────────────────
-const resultsHeaderRow = document.querySelector('#results-table thead tr');
-if (resultsHeaderRow) {
-  resultsHeaderRow.style.cursor = 'pointer';
-  resultsHeaderRow.addEventListener('click', () => {
-    document.getElementById('resultsSettingsOverlay').style.display = 'flex';
-  });
-}
-
-document.getElementById('closeResultsSettings')?.addEventListener('click', () => {
-  document.getElementById('resultsSettingsOverlay').style.display = 'none';
-});
 
 // ── Branding dealer (logo opzionale accanto a quello Chronofit) ────────────
 // BRANDING_CACHE_KEY è letta in modo sincrono da un piccolo script inline
@@ -423,7 +522,8 @@ async function applyBrandingSettings() {
 // ── Avvio ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
-  restoreResultsSettings();
+  loadViewPrefs();
+  initSettingsPopup();
   connectWebSocket();
   populateTableFromSaved();
   keepScreenOn();

@@ -22,6 +22,7 @@ constexpr int CELL_BUZZER_PIN = 15;
 #define CELL_AP_SUBNET    255, 255, 255, 0
 constexpr int CELL_AP_CHANNEL = 6;            // = canale AP del base
 constexpr const char* CELL_DEFAULT_BASE_HOST = "192.168.10.1";
+constexpr uint16_t CELL_BEEP_PORT = 4210;     // UDP: il base chiede il beep (passaggio simulato dalla GUI)
 
 // ── Coda eventi / sync clock ────────────────────────────────────────────────
 constexpr int      CELL_QUEUE_SIZE        = 32;

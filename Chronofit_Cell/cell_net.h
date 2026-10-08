@@ -32,6 +32,10 @@ void cellEnqueueEvent(uint64_t localUs);
 
 CellNetStatus cellNetStatus();
 
+// Da loop(): true se il base ha chiesto un beep (passaggio simulato dalla GUI sulla
+// linea di questa cella). Va chiamata spesso: svuota i pacchetti UDP ricevuti.
+bool cellNetBeepRequested();
+
 // Sospende per `ms` i tentativi di riconnessione alla STA (0 = riprendi subito).
 // Serve alla scansione delle reti: un WiFi.begin() in corso la fa fallire.
 void cellNetPauseReconnect(uint32_t ms);

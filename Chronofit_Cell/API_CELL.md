@@ -42,6 +42,14 @@ sono autorizzate; altrimenti le route 🔒 richiedono l'header `X-Token: <valore
 Precisione attesa: circa ±1–2 ms (asimmetria WiFi), contro ±5–30 ms di un
 semplice `GET /checkPoint`. Vedi `rttUs`/`offsetUs` in `/cellStatus`.
 
+## Beep da passaggio simulato
+
+Quando dalla console del base si simula un passaggio su una linea (tocco sul numero di linea,
+Start/Stop), il base manda un pacchetto UDP `CFBEEP` (porta 4210, senza risposta né
+ritentativi) a ogni cella connessa su quella linea. La cella accetta il pacchetto solo se
+arriva dall'indirizzo del base e fa lo stesso feedback di un passaggio vero: lampo del LED 3
+e beep (se il beep al passaggio è attivo nelle sue impostazioni).
+
 ## LED di stato
 
 I 4 LED WS2812 della scheda (numerati da 1 nell'ordine della striscia) danno

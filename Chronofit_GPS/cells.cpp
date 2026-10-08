@@ -2,6 +2,7 @@
 #include "params.h"
 #include <ArduinoJson.h>
 #include <IPAddress.h>
+#include <WiFiUdp.h>
 
 struct CellSlot {
   bool     used;
@@ -78,6 +79,24 @@ void cellsTouch(const char *id, int line, int rssi, uint32_t rttUs, const char *
     c->connected = true;
   }
   portEXIT_CRITICAL(&s_mux);
+}
+
+void cellsBeepLine(int line) {
+  if (line < 1 || line > 4) return;
+  uint32_t ips[CELLS_MAX];
+  int n = 0;
+  portENTER_CRITICAL(&s_mux);
+  for (int i = 0; i < CELLS_MAX; i++)
+    if (s_cells[i].used && s_cells[i].connected && s_cells[i].line == line && s_cells[i].ip) ips[n++] = s_cells[i].ip;
+  portEXIT_CRITICAL(&s_mux);
+
+  Serial.printf("[beep] linea %d: %d celle connesse\n", line, n);
+  static WiFiUDP udp;
+  for (int i = 0; i < n; i++) {
+    udp.beginPacket(IPAddress(ips[i]), CELL_BEEP_PORT);
+    udp.write((const uint8_t *)"CFBEEP", 6);
+    udp.endPacket();
+  }
 }
 
 void cellsEvent(const char *id, int line, uint32_t ip) {

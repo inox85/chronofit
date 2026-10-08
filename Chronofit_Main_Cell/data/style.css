@@ -504,6 +504,7 @@ hr {
 
 /* ── Colonna Linea (fissa) ─────────────────────────────────────────────── */
 .cp-line-send {
+  position: relative;
   cursor: pointer !important;
   font-weight: bold;
   user-select: none;
@@ -571,6 +572,21 @@ hr {
   min-width: 0;
   text-align: center;
   font-size: 24px;
+}
+
+/* Riempimento completo della colonna. Il tetto di 131px qui sopra serve perché la
+   larghezza "naturale" di un input (circa 20 caratteri a 24px) entra nel calcolo
+   della larghezza della card e la farebbe crescere. Con `contain: inline-size` la
+   cella dichiara larghezza intrinseca zero: la card non dipende più dall'input, che
+   può quindi occupare tutta la colonna (1fr). Nei browser senza supporto resta il tetto. */
+@supports (contain: inline-size) {
+  .cp-comp-cell {
+    contain: inline-size;
+  }
+  .comp-input {
+    max-width: none !important;
+    box-sizing: border-box;
+  }
 }
 
 .comp-input.comp-active {
@@ -1072,6 +1088,16 @@ pre {
   display: block;
   border-radius: 0;
 }
+
+/* ── Pulsante schermo intero (accanto alle bandiere) ──────────────────────── */
+#fullscreen-nav-btn,
+#view-btn {
+  color: #fff;
+  opacity: 0.85;
+}
+#view-btn svg { display: block; }
+#fullscreen-nav-btn.is-fullscreen { opacity: 0.55; }
+#fullscreen-nav-btn svg { display: block; }
 
 .lang-flag:hover  { opacity: 0.8; }
 .lang-flag.active { opacity: 1; border-color: #fff; }
@@ -2116,12 +2142,18 @@ input:checked + .slider:before {
 /* ── Fotocellule wireless (cell) viste dal base ─────────────────────────────── */
 /* Badge sotto il numero di linea: placca chiara con l'icona a barre (colore e
    barre piene = qualità del segnale; barra rossa = persa; triangolo = conflitto). */
+/* Nell'angolo in basso a destra del riquadro della linea e fuori dal flusso: se
+   stesse sotto il numero allungherebbe la riga (66 → 78 px) e darebbe più spazio
+   intorno agli input del concorrente solo sulle linee con una cella collegata. */
 .cell-badge {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
   display: block;
   width: fit-content;
-  margin: 3px auto 0;
-  padding: 3px 5px;
-  border-radius: 7px;
+  margin: 0;
+  padding: 2px 3px;
+  border-radius: 6px;
   line-height: 0;
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
@@ -2131,7 +2163,7 @@ input:checked + .slider:before {
 .cell-badge.conflict { box-shadow: 0 0 0 2px #c62828; }
 
 .sig-icon { display: block; }
-.cell-badge .sig-icon { width: 28px; height: auto; }
+.cell-badge .sig-icon { width: 22px; height: auto; }
 .cells-icon { display: inline-flex; align-items: center; }
 .cells-icon .sig-icon { width: 42px; height: auto; }
 .cell-signal-cell .sig-icon { display: inline-block; vertical-align: middle; }

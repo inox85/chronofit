@@ -6,6 +6,9 @@
 //   1. Add an entry to DISCIPLINES below — no files needed, just an emoji
 //   No other changes needed.
 //
+// Ogni entry ha anche `view`: la pagina di sola lettura associata alla disciplina (secondo
+// schermo), aperta dal pulsante accanto all'icona della disciplina nella barra in alto.
+//
 // Preference keys (all optional — undefined = leave current value unchanged):
 //   sortCol        "arrival" | "race-time" | ...
 //   reverseOrder   bool — reverse table sort order
@@ -62,6 +65,7 @@ const DISCIPLINES = [
   {
     id: "generic",
     emoji: "⏱️",
+    view: "view.html",
     label: { en: "Generic", it: "Generico" },
     prefs: {
       sortCol: "arrival",   reverseOrder: false,
@@ -82,6 +86,7 @@ const DISCIPLINES = [
   {
     id: "regularity",
     emoji: "🚗",
+    view: "view.html",
     label: { en: "Regularity", it: "Regolarita" },
     prefs: {
       sortCol: "arrival",   reverseOrder: true,
@@ -102,6 +107,7 @@ const DISCIPLINES = [
   {
     id: "enduro",
     emoji: "🏍️",
+    view: "view_enduro.html",
     label: { en: "Enduro", it: "Enduro" },
     prefs: {
       sortCol: "race-time", reverseOrder: false,
@@ -127,6 +133,7 @@ const DISCIPLINES = [
   {
     id: "ski",
     emoji: "⛷️",
+    view: "view.html",
     label: { en: "Ski", it: "Sci" },
     prefs: {
       sortCol: "race-time", reverseOrder: false,
@@ -147,6 +154,7 @@ const DISCIPLINES = [
   {
     id: "equestrian",
     emoji: "🐎",
+    view: "view_equitazione.html",
     label: { en: "Equestrian", it: "Equitazione" },
     prefs: {
       // Prova individuale a cronometro (salto ostacoli): tempo di gara relativo
@@ -154,14 +162,15 @@ const DISCIPLINES = [
       // e distacco dal leader visibili, nessuna riga Arrivi/Partenze doppia.
       // showLine: true — più ostacoli/prove possono essere seguiti su linee
       // diverse, quindi sapere da quale linea arriva ogni passaggio è utile.
-      sortCol: "race-time", reverseOrder: false,
-      showRank: true,       showIndex: false,  showLine: true,
+      // Colonne: linea, concorrente, prova, nome, cognome, Δ, trascorso.
+      sortCol: "arrival",   reverseOrder: false,
+      showRank: false,      showIndex: false,  showLine: true,
       showName: true,       showSurname: true,
-      timestamp: false,     deltaTime: true,   elapsedTime: false,
-      penality: true,       showCancelBtn: false,  showSendBtn: false,
-      showTest: false,    showTrigger: false,
+      timestamp: false,     deltaTime: true,   elapsedTime: true,
+      penality: false,      showCancelBtn: false,  showSendBtn: false,
+      showTest: true,       showTrigger: false,
       splitsMode: false,    timePrecision: 2,  showDisabled: false,
-      showCompList: true,   syncMode: 3,
+      showCompList: true,
       bgColor: "#e6d2b5",
       propagateCompetitor: false,
       tableAcquireCompetitor: false,

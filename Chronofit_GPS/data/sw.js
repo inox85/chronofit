@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chronofit-v6';
+const CACHE_NAME = 'chronofit-v7';
 
 const STATIC_ASSETS = [
   '/index.html',
@@ -52,16 +52,20 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Asset statici: cache-first, poi rete (e aggiorna la cache)
+  // Asset statici: RETE per prima, cache solo se il device non risponde.
+  // (Prima era cache-first: dopo un aggiornamento dell'interfaccia il browser
+  // continuava a mostrare index.html/script.js vecchi finché non cambiava CACHE_NAME.)
+  // `cache: 'no-cache'` fa rivalidare anche la cache HTTP del browser (il server
+  // statico la dichiara valida per 30 giorni).
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        if (response && response.ok) {
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, response.clone()));
-        }
-        return response;
-      });
-    })
+    fetch(e.request, { cache: 'no-cache' }).then(response => {
+      if (response && response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, copy));
+      }
+      return response;
+    }).catch(() =>
+      caches.match(e.request).then(cached => cached || new Response('', { status: 503, statusText: 'Offline' }))
+    )
   );
 });

@@ -18,6 +18,14 @@ void cellsTouch(const char *id, int line, int rssi, uint32_t rttUs, const char *
 // Da /remoteCheckpoint, dopo la scrittura del passaggio.
 void cellsEvent(const char *id, int line, uint32_t ip);
 
+// Porta UDP su cui le celle ascoltano il comando di beep.
+constexpr uint16_t CELL_BEEP_PORT = 4210;
+
+// Da /checkPoint (passaggio simulato dalla GUI): manda un pacchetto UDP a ogni cella
+// connessa sulla linea `line` (1..4) perché faccia anche lei il beep. Senza risposta
+// né ritentativi: se si perde, la cella semplicemente non suona.
+void cellsBeepLine(int line);
+
 // Da loop() (~1 Hz): marca le celle perse e ricalcola i conflitti di linea.
 // Ritorna true se è cambiato qualcosa di visibile e va fatto un broadcast.
 bool cellsPoll();

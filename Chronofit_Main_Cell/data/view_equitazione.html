@@ -69,19 +69,26 @@
         <img src="/sponsor.png" alt="Sponsor" class="sponsor-img sponsor-visibility-toggle">
       </div>
 
-      <div class="card-title" data-i18n="card.results">Results</div>
+      <div class="card-title" data-i18n="card.arrivals">Arrivals</div>
 
+      <!-- Stessa griglia (stesse colonne e stesse classi) della tabella Arrivi
+           della console (index.html), in sola lettura. Click sull'intestazione
+           = impostazioni della vista. -->
       <div class="table-wrapper">
-        <table id="results-table" class="arrivals-table">
+        <table id="event-table" class="arrivals-table">
           <thead>
             <tr>
-              <th>🏅</th>
-              <th data-i18n="th.competitor">Comp.</th>
-              <th data-i18n="th.name">Name</th>
-              <th data-i18n="th.surname">Surname</th>
-              <th data-i18n="th.race_time">Race time</th>
-              <th>Δ ⏱️</th>
-              <th>❌</th>
+              <th class="col-rank-col">🏅</th>
+              <th class="col-index-col">#</th>
+              <th class="col-line-col"      data-i18n="th.line">Line</th>
+              <th                           data-i18n="th.competitor">Comp.</th>
+              <th class="col-test-col"      data-i18n="th.test">Test</th>
+              <th class="col-name-col"      data-i18n="th.name">Name</th>
+              <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
+              <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>
+              <th class="delta-time-col">Δ ⏱️</th>
+              <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
+              <th class="penality-col">❌</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -92,69 +99,74 @@
 
   </div>
 
-  <!-- Tabella dati grezzi, mai mostrata: memorizza i checkpoint ricevuti via
-       WebSocket/sessione salvata, usata solo per calcolare i tempi di gara. -->
-  <table id="event-table" style="display:none"><tbody></tbody></table>
-
-  <!-- Settings popup della classifica: linea di partenza/arrivo usate per il
-       calcolo del tempo di gara + ordinamento + precisione. A differenza di
-       Enduro qui c'è una sola coppia partenza/arrivo (disciplina a singola
-       prova cronometrata), quindi niente tab: tutto in un unico popup. -->
-  <div id="resultsSettingsOverlay" class="fullscreen-overlay" style="display:none;">
+  <!-- Impostazioni della vista. Di default seguono la console (stesso browser,
+       disciplina Equitazione attiva) o il preset Equitazione di disciplines.js;
+       una modifica qui vale solo per questa vista. -->
+  <div id="viewSettingsOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
 
       <div class="input-row">
-        <label for="res-line-start" data-i18n="net.start_line" style="font-size:20px;">Start line</label>
-        <select id="res-line-start" onchange="onResultsLinesChange()">
-          <option value="1" selected>L1</option>
-          <option value="2">L2</option>
-          <option value="3">L3</option>
-          <option value="4">L4</option>
-          <option value="5">L5</option>
-          <option value="6">L6</option>
+        <label for="vs-sort-col" data-i18n="table.order_by" style="font-size:20px;">Order by</label>
+        <select id="vs-sort-col">
+          <option value="arrival"      data-i18n="table.arrival">Arrival (default)</option>
+          <option value="line"         data-i18n="table.line">Line</option>
+          <option value="competitor"   data-i18n="table.competitor">Competitor</option>
+          <option value="name"         data-i18n="table.name">Name</option>
+          <option value="surname"      data-i18n="table.surname">Surname</option>
+          <option value="event-time"   data-i18n="table.event_time">Event time</option>
+          <option value="delta-time"   data-i18n="table.delta">Δ time</option>
+          <option value="elapsed-time" data-i18n="table.elapsed">Elapsed</option>
         </select>
       </div>
       <div class="input-row">
-        <label for="res-line-finish" data-i18n="net.finish_line" style="font-size:20px;">Finish line</label>
-        <select id="res-line-finish" onchange="onResultsLinesChange()">
-          <option value="1">L1</option>
-          <option value="2" selected>L2</option>
-          <option value="3">L3</option>
-          <option value="4">L4</option>
-          <option value="5">L5</option>
-          <option value="6">L6</option>
+        <label for="vs-precision" data-i18n="table.time_precision" style="font-size:20px;">Time precision decimals</label>
+        <select id="vs-precision">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
         </select>
+      </div>
+      <div class="toggle-row">
+        <span data-i18n="table.reverse_order">Reverse row order</span>
+        <label class="switch"><input type="checkbox" id="vs-reverseOrder"><span class="slider"></span></label>
       </div>
 
       <hr class="divider">
 
-      <div class="input-row">
-        <label for="res-sort-col" data-i18n="table.order_by" style="font-size:20px;">Order by</label>
-        <select id="res-sort-col" onchange="onResultsSortChange()">
-          <option value="race-time" data-i18n="th.race_time" selected>Race time</option>
-          <option value="delta">Δ</option>
-          <option value="competitor" data-i18n="th.competitor">Comp.</option>
-          <option value="start" data-i18n="net.start_col">Start</option>
-          <option value="finish" data-i18n="net.finish_col">Finish</option>
-        </select>
-      </div>
-      <div class="input-row">
-        <label for="res-time-precision" data-i18n="table.time_precision" style="font-size:20px;">Time precision decimals</label>
-        <select id="res-time-precision" onchange="onResultsPrecisionChange(this.value)">
-          <option value="1">1</option>
-          <option value="2" selected>2</option>
-          <option value="3">3</option>
-        </select>
-      </div>
+      <div class="toggle-row"><span data-i18n="table.show_rank">Show rank column</span>
+        <label class="switch"><input type="checkbox" id="vs-showRank"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_index">Show index column</span>
+        <label class="switch"><input type="checkbox" id="vs-showIndex"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_line">Show line column</span>
+        <label class="switch"><input type="checkbox" id="vs-showLine"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_test">Show test column</span>
+        <label class="switch"><input type="checkbox" id="vs-showTest"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_name">Show name column</span>
+        <label class="switch"><input type="checkbox" id="vs-showName"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_surname">Show surname column</span>
+        <label class="switch"><input type="checkbox" id="vs-showSurname"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_event_time">Show event time column</span>
+        <label class="switch"><input type="checkbox" id="vs-timestamp"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_delta">Show incremental Δ column</span>
+        <label class="switch"><input type="checkbox" id="vs-deltaTime"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_elapsed">Show elapsed time column</span>
+        <label class="switch"><input type="checkbox" id="vs-elapsedTime"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_penalty">Show penality column</span>
+        <label class="switch"><input type="checkbox" id="vs-penality"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_disabled">Show disabled line rows</span>
+        <label class="switch"><input type="checkbox" id="vs-showDisabled"><span class="slider"></span></label></div>
 
       <div class="button-row">
-        <button class="big-button" data-i18n="btn.close" id="closeResultsSettings">Close</button>
+        <button class="big-button" data-i18n="view.use_console" id="resetViewSettings">Use console settings</button>
+        <button class="big-button" data-i18n="btn.close" id="closeViewSettings">Close</button>
       </div>
 
     </div>
   </div>
 
+  <script src="/disciplines.js"></script>
   <script src="/script_view_equitazione.js"></script>
 
+  <script src="/view_fullscreen.js"></script>
 </body>
 </html>

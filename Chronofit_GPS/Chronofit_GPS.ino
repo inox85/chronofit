@@ -149,6 +149,7 @@ void initGPS(){
 }
 
 void setup() {
+  delay(1000);
   // setup()
   esp_task_wdt_config_t wdt_config = {
       .timeout_ms = 30000,  // 30 secondi

@@ -466,3 +466,8 @@ Chronofit_GPS/data/style.css.gz
 Chronofit_GPS/data/sw.js.gz
 *.gz
 Chronofit_3_0/secrets.h
+
+/Software/ChronofitViewer/bin
+/Software/ChronofitViewer/obj
+/Software/ChronofitViewer/publish
+Chronofit_Main_Cell/secrets.h

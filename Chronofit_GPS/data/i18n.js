@@ -42,6 +42,7 @@ const TRANSLATIONS = {
     'btn.save_broker':      'Save broker',
     'btn.reset_assigned':   'Reset assigned',
     'btn.open_file':        '📂 Open file',
+    'btn.csv_template':     '⬇ CSV template',
     'btn.back':             '← Back',
     'btn.save_print':       '🖨 Save & print',
     'btn.save_close':       'Save & close',
@@ -227,6 +228,7 @@ const TRANSLATIONS = {
     'table.show_sync_test':  'Show sync test rows',
     'table.show_out_of_sensor': 'Show out-of-sensor rows',
     'table.show_disabled':   'Show disabled line rows',
+    'view.use_console':      'Use console settings',
     'table.splits_mode':     'Competitor splits mode',
 
     // ── WiFi overlay ──────────────────────────────────────────────────────────
@@ -298,6 +300,7 @@ const TRANSLATIONS = {
     'main.print':            'Print on paper',
     'main.buzzer':           'Buzzer enable',
     'main.fullscreen':       'Fullscreen',
+    'main.open_view':      'Open the view in a new window',
     'main.auto_cancel':      'Auto-cancel close triggers',
     'main.auto_cancel_threshold': 'Threshold (ms)',
     'main.error_send':       'Error sending data',
@@ -381,6 +384,7 @@ const TRANSLATIONS = {
     'btn.save_broker':      'Salva broker',
     'btn.reset_assigned':   'Reset assegnati',
     'btn.open_file':        '📂 Apri file',
+    'btn.csv_template':     '⬇ Template CSV',
     'btn.back':             '← Indietro',
     'btn.save_print':       '🖨 Salva e stampa',
     'btn.save_close':       'Salva e chiudi',
@@ -566,6 +570,7 @@ const TRANSLATIONS = {
     'table.show_sync_test':  'Mostra righe test sync',
     'table.show_out_of_sensor': 'Mostra righe fuori pressostato',
     'table.show_disabled':   'Mostra righe linee disabilitate',
+    'view.use_console':      'Usa impostazioni della console',
     'table.splits_mode':     'Modalità split competitore',
 
     // ── WiFi overlay ──────────────────────────────────────────────────────────
@@ -637,6 +642,7 @@ const TRANSLATIONS = {
     'main.print':            'Stampa su carta',
     'main.buzzer':           'Abilita buzzer',
     'main.fullscreen':       'Schermo intero',
+    'main.open_view':      'Apri la vista in una nuova finestra',
     'main.auto_cancel':      'Auto-annulla battute ravvicinate',
     'main.auto_cancel_threshold': 'Soglia (ms)',
     'main.error_send':       'Errore invio dati',
@@ -717,6 +723,11 @@ function applyTranslations() {
   });
   document.querySelectorAll('[data-i18n-html]').forEach(el => {
     el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const txt = t(el.dataset.i18nTitle);
+    el.title = txt;
+    el.setAttribute('aria-label', txt);
   });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPh);

@@ -505,13 +505,35 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serveGzipped(request, "/broadcast.js", "application/javascript");
   });
 
-  server.onNotFound([](AsyncWebServerRequest *req){
-    String url = req->url();
-    if (url == "/index.html" || url == "/") {
-      req->send(404, "text/plain", "Not found");
-    } else {
-      req->redirect("http://192.168.1.1/index.html");
+  // Altri file serviti dal .gz (se c'è): senza queste route il server statico apre prima il
+  // file NON compresso e manda 4-5 volte più byte (i18n.js 41 KB → ~10 KB, ecc.).
+  {
+    static const struct { const char *path; const char *mime; } GZ_FILES[] = {
+      {"/i18n.js",                       "application/javascript"},
+      {"/script_view.js",                "application/javascript"},
+      {"/script_view_enduro.js",         "application/javascript"},
+      {"/script_view_equitazione.js",    "application/javascript"},
+      {"/script_enduro_competitor.js",   "application/javascript"},
+      {"/view.html",                     "text/html"},
+      {"/view_enduro.html",              "text/html"},
+      {"/view_equitazione.html",         "text/html"},
+      {"/enduro_competitor_start.html",  "text/html"},
+      {"/enduro_competitor_finish.html", "text/html"},
+      {"/manuale.html",                  "text/html"},
+    };
+    for (const auto &f : GZ_FILES) {
+      const char *path = f.path, *mime = f.mime;
+      server.on(path, HTTP_GET, [path, mime](AsyncWebServerRequest *request) {
+        serveGzipped(request, path, mime);
+      });
     }
+  }
+
+  // 404 semplice. Prima ogni file mancante veniva rediretto a http://192.168.1.1/index.html
+  // (un vecchio indirizzo del dispositivo, oggi 192.168.10.1): il browser restava ad aspettare un
+  // host che non esiste e la pagina (splash compreso) non finiva mai di caricare.
+  server.onNotFound([](AsyncWebServerRequest *req){
+    req->send(404, "text/plain", "Not found");
   });
 
   server.on("/setNmeaDeltaDebug", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -644,6 +666,9 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
     request->send(200, "text/plain", "CheckPoint received!");
+
+    // Passaggio simulato dalla GUI: le fotocellule wireless su questa linea fanno il beep
+    cellsBeepLine(lineNumber + 1);
     wifiRxActivity();
   });
 

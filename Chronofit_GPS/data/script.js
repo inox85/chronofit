@@ -864,6 +864,13 @@ function applySponsorVisibility(show) {
   document.querySelectorAll('.sponsor-visibility-toggle, .splash-divider').forEach(el => {
     el.style.display = show ? '' : 'none';
   });
+  // L'immagine dello sponsor pesa ~190 KB: si scarica solo quando va mostrata (data-src → src),
+  // così a cache vuota non compete con gli script e con le chiamate al dispositivo.
+  if (show) {
+    document.querySelectorAll('img[data-src]').forEach(img => {
+      if (!img.getAttribute('src')) img.src = img.getAttribute('data-src');
+    });
+  }
 }
 
 async function applyBrandingSettings() {
@@ -932,6 +939,29 @@ function goToTiming() {
 // ── Uscita dalla disciplina (icona navbar) ─────────────────────────────────────
 // Una volta scelta la disciplina non è possibile cambiarla se non uscendo
 // esplicitamente da questa schermata di conferma, che cancella anche la sessione.
+
+// ── Vista associata alla disciplina (secondo schermo) ────────────────────────
+// Ogni disciplina ha la sua vista di sola lettura (campo `view` in disciplines.js).
+// Si apre in una finestra a parte: nell'app Chronofit Viewer è una nuova finestra
+// dell'applicazione, nel browser un popup che si può portare sul secondo schermo.
+let disciplineViewWin = null;
+function openDisciplineView() {
+  const disc = DISCIPLINES.find(d => d.id === activeDisciplineId) ?? DISCIPLINES[0];
+  const page = disc?.view || 'view.html';
+  const url = '/' + page;
+  // Un clic in più richiama la finestra già aperta invece di aprirne un'altra. Il nome fisso
+  // fa riusare la stessa finestra anche nell'app Chronofit Viewer (dove window.open non
+  // restituisce il riferimento): lì se ne occupa l'app.
+  try {
+    if (disciplineViewWin && !disciplineViewWin.closed) {
+      if (disciplineViewWin.location.pathname !== url) disciplineViewWin.location.href = url;   // disciplina cambiata
+      disciplineViewWin.focus();
+      return;
+    }
+  } catch (e) { /* finestra non più accessibile: se ne apre una nuova */ }
+  disciplineViewWin = window.open(url, 'chronofit_view', 'popup=yes,width=1280,height=720');
+  if (disciplineViewWin) disciplineViewWin.focus();
+}
 
 function onDisciplineIconClick() {
   if (isDisciplineLocked()) {
@@ -3043,6 +3073,45 @@ function syncFullscreenToggleUI() {
 document.addEventListener('fullscreenchange', syncFullscreenToggleUI);
 document.addEventListener('webkitfullscreenchange', syncFullscreenToggleUI);
 
+// ── Pulsante schermo intero nella navbar ─────────────────────────────────────
+// Serve quando si esce dal fullscreen (Esc, gesto del telefono, ecc.): un tocco lo richiede di
+// nuovo. Dentro il fullscreen lo stesso pulsante lo chiude. La scelta aggiorna la stessa
+// preferenza dell'interruttore nelle impostazioni.
+const FS_ICON_ENTER = '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+const FS_ICON_EXIT  = '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>';
+
+function updateFullscreenNavBtn() {
+  const btn = document.getElementById('fullscreen-nav-btn');
+  const icon = document.getElementById('fullscreen-nav-icon');
+  if (!btn || !icon) return;
+  const el = document.documentElement;
+  if (!(el.requestFullscreen || el.webkitRequestFullscreen)) {   // es. iPhone: nessuna API fullscreen
+    btn.style.display = 'none';
+    return;
+  }
+  const on = isFullscreenActive();
+  icon.innerHTML = on ? FS_ICON_EXIT : FS_ICON_ENTER;
+  btn.classList.toggle('is-fullscreen', on);
+  const label = t('main.fullscreen');
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+}
+
+function toggleFullscreenFromNavbar() {
+  if (isFullscreenActive()) {
+    localStorage.setItem(FULLSCREEN_PREF_KEY, '0');
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  } else {
+    localStorage.setItem(FULLSCREEN_PREF_KEY, '1');
+    requestAppFullscreen();
+  }
+}
+
+document.addEventListener('fullscreenchange', updateFullscreenNavBtn);
+document.addEventListener('webkitfullscreenchange', updateFullscreenNavBtn);
+updateFullscreenNavBtn();
+
 function toggleFullscreen(checkbox) {
   localStorage.setItem(FULLSCREEN_PREF_KEY, checkbox.checked ? '1' : '0');
   if (checkbox.checked) {
@@ -3167,8 +3236,16 @@ document.addEventListener('keydown', (e) => {
   el.blur();
 });
 
-window.addEventListener("load", () => {
+// Avvio dell'interfaccia (dissolvenza dello splash e menu iniziale). Prima partiva solo
+// all'evento "load", che scatta quando TUTTE le risorse (immagini comprese) sono finite:
+// se il dispositivo ne lascia una in sospeso (succede a cache vuota, con molte richieste
+// insieme) restava lo splash "Loading session…" per sempre. Ora parte comunque entro 4 s.
+let appReadyDone = false;
+function onAppReady() {
+  if (appReadyDone) return;
+  appReadyDone = true;
   const splash = document.getElementById("splash");
+  if (!splash) return;
 
   // Inizia la dissolvenza dopo 1 secondo (o subito)
   setTimeout(() => {
@@ -3195,7 +3272,10 @@ window.addEventListener("load", () => {
     document.addEventListener('click', onFirstInteract, { once: true });
     document.addEventListener('touchstart', onFirstInteract, { once: true });
   }, 1000 + 1000 + 500); // 1s attesa + 3s dissolvenza
-});
+}
+
+window.addEventListener("load", onAppReady);
+setTimeout(onAppReady, 4000);
 
 // Apri popup premendo sull'orario
 document.getElementById("time").addEventListener("click", () => {
@@ -5305,6 +5385,25 @@ function loadAthleteRegistry() {
     status.style.color = "red";
     status.textContent = `❌ ${e.message}`;
   }
+}
+
+// ── Template CSV d'esempio per il caricamento dei competitors ──
+// Colonne: competitor (obbligatoria) + name, surname e quante altre si vuole (team, category…).
+function downloadAthleteTemplate() {
+  const rows = [
+    "competitor;name;surname;team;category",
+    "1;Mario;Rossi;ASD Firenze;Senior",
+    "2;Giulia;Bianchi;ASD Firenze;Junior",
+    "3;Luca;Verdi;Polisportiva Prato;Senior"
+  ];
+  const blob = new Blob(["\uFEFF" + rows.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "competitors_template.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 // ── CSV parser ──

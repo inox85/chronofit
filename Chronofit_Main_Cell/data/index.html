@@ -19,7 +19,7 @@
     <div class="splash-logos">
       <img src="/logo.webp" alt="Logo">
       <div class="splash-divider"></div>
-      <img src="/sponsor.png" alt="Sponsor" class="sponsor-visibility-toggle">
+      <img data-src="/sponsor.png" alt="" class="sponsor-visibility-toggle">
     </div>
     <p class="splash-label" data-i18n="splash.loading">Loading session...</p>
   </div>
@@ -31,10 +31,15 @@
     (function() {
       try {
         var c = JSON.parse(localStorage.getItem('chronofit_branding_cache') || 'null');
-        if (c && !(c.showSponsorLogo && c.sponsorLogoExists)) {
+        if (!c || !(c.showSponsorLogo && c.sponsorLogoExists)) {
+          // nascosto, oppure stato ancora sconosciuto (prima apertura / cache svuotata):
+          // resta nascosto finché /brandingSettings non dice di mostrarlo
           document.querySelectorAll('.sponsor-visibility-toggle, .splash-divider').forEach(function(el) {
             el.style.display = 'none';
           });
+        } else {
+          // sponsor visibile: l'immagine (193 KB) parte ora; se è nascosto non si scarica affatto
+          document.querySelectorAll('img[data-src]').forEach(function(img) { img.src = img.getAttribute('data-src'); });
         }
       } catch (e) {}
     })();
@@ -109,10 +114,11 @@
         <p data-i18n-html="athlete.paste_info" style="color:#555; margin:4px 0 8px;">Paste JSON or load a file.<br>
           Expected format: <code>[{"competitor":1,"name":"Mario","surname":"Rossi", ...}]</code></p>
         <div class="button-row" style="margin-bottom:8px;">
-          <label class="big-button" style="cursor:pointer;">
+          <label class="big-button" style="cursor:pointer; background:var(--primary-color); width:100%; padding:5px 10px; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:bold;">
             <span data-i18n="btn.open_file">📂 Open file</span>
             <input type="file" id="athlete-file-input" accept=".json,.csv" style="display:none;">
           </label>
+          <button class="big-button" data-i18n="btn.csv_template" onclick="downloadAthleteTemplate()">⬇ CSV template</button>
         </div>
         <textarea id="athlete-json-input" data-i18n-ph="athlete.load_ph" placeholder='[{"competitor":1,"name":"Mario","surname":"Rossi"}]'></textarea>
         <div class="button-row">
@@ -948,10 +954,21 @@
 
   <div class="navbar">
     <img src="/logo.png" alt="Logo" style="cursor:pointer;" onclick="openAboutOverlay()">
-    <img src="/sponsor.png" alt="Sponsor" class="navbar-sponsor-logo sponsor-visibility-toggle" style="display:none;">
+    <img data-src="/sponsor.png" alt="" class="navbar-sponsor-logo sponsor-visibility-toggle" style="display:none;">
     <div class="navbar-right">
       <button id="discipline-btn" class="navbar-icon-btn" onclick="onDisciplineIconClick()" title="Select discipline">
         <span id="discipline-nav-emoji">⏱️</span>
+      </button>
+      <button id="view-btn" class="navbar-icon-btn" onclick="openDisciplineView()" title="Open the view in a new window"
+              data-i18n-title="main.open_view" aria-label="Open the view in a new window">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>
+        </svg>
+      </button>
+      <button id="fullscreen-nav-btn" class="navbar-icon-btn" onclick="toggleFullscreenFromNavbar()" title="Fullscreen" data-i18n-title="main.fullscreen" aria-label="Fullscreen">
+        <svg id="fullscreen-nav-icon" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"
+             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
       </button>
       <div id="lang-switcher">
         <button class="lang-flag" data-lang="en" onclick="setLanguage('en')" title="English">

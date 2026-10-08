@@ -3,6 +3,7 @@
 #include "settings.h"
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiUdp.h>
 #include "esp_wifi.h"
 #include "esp_timer.h"
 
@@ -389,6 +390,32 @@ void cellNetBegin() {
   if (s_baseSsid.length()) WiFi.begin(s_baseSsid.c_str(), s_basePass.c_str());
 
   xTaskCreatePinnedToCore(netTask, "cellNet", 8192, nullptr, 2, &s_task, 1);
+}
+
+bool cellNetBeepRequested() {
+  static WiFiUDP udp;
+  static bool started = false;
+  static uint32_t lastTryMs = 0;
+  if (!started) {
+    if ((uint32_t)(millis() - lastTryMs) < 2000) return false;
+    lastTryMs = millis();
+    started = udp.begin(CELL_BEEP_PORT);
+    return false;
+  }
+  // accetta solo pacchetti dal base (se l'indirizzo configurato è un IP)
+  IPAddress baseIp;
+  bool checkSource = baseIp.fromString(s_baseHost);
+  bool requested = false;
+  while (udp.parsePacket() > 0) {
+    char buf[8];
+    int r = udp.read(buf, sizeof(buf) - 1);
+    if (r <= 0) continue;
+    buf[r] = 0;
+    bool fromBase = !checkSource || udp.remoteIP() == baseIp;
+    Serial.printf("[beep] pacchetto \"%s\" da %s%s\n", buf, udp.remoteIP().toString().c_str(), fromBase ? "" : " (scartato: non è il base)");
+    if (strcmp(buf, "CFBEEP") == 0 && fromBase) requested = true;
+  }
+  return requested;
 }
 
 CellNetStatus cellNetStatus() {

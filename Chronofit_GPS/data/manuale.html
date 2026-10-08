@@ -204,7 +204,7 @@
       <p>La card <b>Gestione transiti</b> ha una riga per ogni linea (1–4):</p>
       <table>
         <tr><th>Elemento</th><th>Cosa fa</th></tr>
-        <tr><td><b>Numero di linea</b> (riquadro colorato)</td><td><b>Tocco</b>: registra un passaggio manuale su quella linea, con l'ora del tocco.<br><b>Pressione lunga (1 s)</b>: registra un passaggio "fuori pressostato" (linea F.P.) per il concorrente della linea.</td></tr>
+        <tr><td><b>Numero di linea</b> (riquadro colorato)</td><td><b>Tocco</b>: registra un passaggio manuale su quella linea, con l'ora del tocco. Le fotocellule wireless collegate a quella linea fanno anche loro il <b>beep</b>.<br><b>Pressione lunga (1 s)</b>: registra un passaggio "fuori pressostato" (linea F.P.) per il concorrente della linea.</td></tr>
         <tr><td><b>Tipo</b></td><td>Tocca per aprire le impostazioni della linea: nome (campo <b>Prova</b>, per esempio "Barriera 1"), rilevamento <b>Auto/Man.</b>, <b>Ritardo (ms)</b>. Da qui puoi anche <b>Salva e stampa</b> uno scontrino con le impostazioni della linea.</td></tr>
         <tr><td><b>Concorrente</b></td><td>Il numero del concorrente atteso su quella linea, assegnato al prossimo passaggio. <b>Pressione lunga</b>: apre il registro atleti.</td></tr>
         <tr><td><b>✓</b></td><td>Abilita o disabilita la linea. Una linea disabilitata registra comunque i passaggi, ma li segna come disabilitati.</td></tr>
@@ -311,6 +311,7 @@
         <span class="bars g3"><i></i><i></i><i></i><i></i></span>buono ·
         <span class="bars g2"><i></i><i></i><i></i><i></i></span>medio ·
         <span class="bars g1"><i></i><i></i><i></i><i></i></span>debole. Il segnale dipende dalla distanza e dagli ostacoli: tieni la cella sollevata da terra e in vista del dispositivo.</p>
+      <div class="note">Un passaggio <b>simulato dalla console</b> (tocco sul numero di linea, <b>Start</b>/<b>Stop</b>) fa suonare anche le celle di quella linea, con lo stesso lampo del LED 3 di un passaggio vero. Il beep si sente se è attivo nelle impostazioni della cella; la richiesta viaggia senza conferma, quindi se la rete la perde la cella non suona.</div>
       <div class="tip">Le celle sono sincronizzate al microsecondo con il Chronofit GPS: l'errore tipico è di 1–2 ms. Un passaggio non consegnato resta in coda nella cella (fino a 5 minuti) e viene reinviato.</div>
     </section>
 

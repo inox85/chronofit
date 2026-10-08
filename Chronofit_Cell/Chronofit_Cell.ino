@@ -37,6 +37,9 @@ void loop() {
     cellFeedbackTrigger();
   }
 
+  // passaggio simulato dalla GUI del base su questa linea: stesso feedback di un passaggio vero
+  if (cellNetBeepRequested()) cellFeedbackTrigger();
+
   static uint32_t lastUiMs = 0;
   if ((uint32_t)(millis() - lastUiMs) >= 100) {
     lastUiMs = millis();
