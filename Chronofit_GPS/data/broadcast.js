@@ -16,6 +16,32 @@ const lineColors = {
 // ── Overlay alpha ─────────────────────────────────────────────
 let overlayAlpha = 0.82;
 
+// Formato dei tempi scelto nelle impostazioni, comune a console e viste dello
+// stesso browser: 'clock' = hh:mm:ss.mmm, 'seconds' = secondi totali con la
+// virgola (71,450). I decimali restano quelli scelti a parte.
+const TIME_FORMAT_KEY = 'chronofit_time_format';
+let timeFormat = 'clock';
+try { if (localStorage.getItem(TIME_FORMAT_KEY) === 'seconds') timeFormat = 'seconds'; } catch (e) { /* default */ }
+
+function secondsText(h, m, s, msStr) {
+  return String(h * 3600 + m * 60 + s) + ',' + msStr;
+}
+
+// Cambio dal menu "Formato tempi": salva, allinea gli altri menu della pagina e ridisegna.
+function setTimeFormat(value) {
+  timeFormat = value === 'seconds' ? 'seconds' : 'clock';
+  try { localStorage.setItem(TIME_FORMAT_KEY, timeFormat); } catch (e) { /* solo per questa pagina */ }
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+}
+
+function syncTimeFormatSelects() {
+  document.querySelectorAll('.time-format-select').forEach(sel => { sel.value = timeFormat; });
+}
+document.addEventListener('DOMContentLoaded', syncTimeFormatSelects);
+
+function onTimeFormatChanged() { location.reload(); }
+
 function applyOverlayAlpha(val) {
   overlayAlpha = Math.max(0.2, Math.min(1.0, parseFloat(val) || 0.82));
   document.documentElement.style.setProperty("--bc-alpha", overlayAlpha);
@@ -98,6 +124,7 @@ function formatTime(h, m, s, ms) {
     : timePrecision === 2
       ? String(Math.floor(msT / 10)).padStart(2, "0")
       : String(msT).padStart(3, "0");
+  if (timeFormat === 'seconds') return secondsText(h, m, s, msStr);
   return (
     String(h).padStart(2, "0") + ":" +
     String(m).padStart(2, "0") + ":" +
@@ -118,6 +145,7 @@ function formatDelta(ms, signed) {
     : timePrecision === 2
       ? String(Math.floor(millis / 10)).padStart(2, "0")
       : String(millis).padStart(3, "0");
+  if (timeFormat === 'seconds') return sign + secondsText(hours, minutes, seconds, msStr);
   return sign +
     String(hours).padStart(2, "0") + ":" +
     String(minutes).padStart(2, "0") + ":" +
@@ -284,8 +312,8 @@ function addEventToTable(rowIndex, lineNumber, competitor, h, m, s, ms) {
     `<td class="col-surname">${getAthleteSurname(comp)}</td>` +
     `<td class="timestamp">${formatTime(fh, fm, fs, fms)}</td>` +
     `<td class="race-time">—</td>` +
-    `<td class="delta-time"></td>` +
-    `<td class="elapsed-time"></td>`;
+    `<td class="elapsed-time"></td>` +
+    `<td class="delta-time"></td>`;
 
   tbody.insertBefore(row, tbody.firstChild);
   setTimeout(() => row.classList.remove("row-new"), 600);
@@ -415,8 +443,8 @@ function applyCompetitorSplits() {
           `<td class="col-surname">${getAthleteSurname(r1.dataset.competitor)}</td>` +
           `<td class="timestamp">—</td>` +
           `<td class="race-time diff-time">${formatTime(dH, dM, dS, dMs)}</td>` +
-          `<td class="delta-time">—</td>` +
-          `<td class="elapsed-time">—</td>`;
+          `<td class="elapsed-time">—</td>` +
+          `<td class="delta-time">—</td>`;
         tbody.insertBefore(diffRow, r2);
       }
     }

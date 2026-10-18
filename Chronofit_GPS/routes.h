@@ -31,6 +31,8 @@ String serializeSettings();
 
 void broadCastSettings();
 
+void broadcastCells();   // push della lista fotocellule wireless (TYPE_CELLS_UPDATED)
+
 void broadCastRowEdited(const JsonDocument& entry);
 
 extern AsyncWebServer server;

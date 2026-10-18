@@ -150,6 +150,17 @@ Aggiorna la configurazione di una linea via query string. Solo `l` è obbligator
 
 ---
 
+### `GET /elapsedStartLine`
+Linea il cui primo passaggio fa partire il tempo trascorso (modalità elapsed). Senza parametri restituisce il valore attuale. Salvata in NVS (`el_start`), default `0`.
+
+| Parametro | Tipo | Obbligatorio | Descrizione |
+|---|---|---|---|
+| `l` | int | — | `0` = qualsiasi linea, `1`–`4` = solo quella linea |
+
+**Risposta:** `{ "l": 0 }`
+
+---
+
 ### `POST /checkPointFields`
 Aggiorna la configurazione di una linea con body JSON.
 

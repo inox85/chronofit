@@ -198,6 +198,13 @@
             <option value="3" selected>3</option>
           </select>
         </div>
+        <div class="input-row">
+          <label data-i18n="table.time_format" style="font-size:20px;">Time format</label>
+          <select class="time-format-select" onchange="setTimeFormat(this.value)">
+            <option value="clock">hh:mm:ss.mmm</option>
+            <option value="seconds">sss,mmm</option>
+          </select>
+        </div>
       </div>
 
       <div class="button-row">
@@ -208,6 +215,12 @@
   </div>
 
   <script src="/script_view_enduro.js"></script>
+  <script src="/column_order.js"></script>
+  <script>
+    // ordine delle colonne scelto dall'utente (column_order.js)
+    ColumnOrder.register({ table: 'net-times-table', keys: ['competitor', 'start', 'finish', 'net'], positional: true, editor: '#nettab-sort', fallbackKeys: ['index:net-times-table'] });
+  </script>
 
+  <script src="/view_fullscreen.js"></script>
 </body>
 </html>

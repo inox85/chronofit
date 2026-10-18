@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chronofit Main Cell — API Reference (Public)</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<!-- Generata da api_docs.py a partire da API_public.md: non modificare a mano -->
+<style>
+  :root { --primary:#8b0a1a; --text:#222; --muted:#666; --line:#e3e3e3; --bg:#f6f6f4; --card:#fff; --code:#f1f1f1; --pre:#1e1e1e; --pre-fg:#e8e8e8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --primary:#ff8a95; --text:#e6e6e6; --muted:#a0a0a0; --line:#333; --bg:#151515; --card:#1f1f1f; --code:#2b2b2b; --pre:#0d0d0d; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif; color:var(--text); background:var(--bg); line-height:1.55; font-size:16px; }
+  header { background:#111; color:#fff; padding:16px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  header img { height:36px; }
+  header h1 { font-size:20px; margin:0; font-weight:600; }
+  header .sub { color:#bbb; font-size:14px; }
+  header .tag { background:var(--primary); color:#fff; border-radius:6px; padding:2px 8px; font-size:12px; font-weight:bold; }
+  .print-btn { margin-left:auto; background:#8b0a1a; color:#fff; border:0; border-radius:8px; padding:8px 14px; font-size:14px; cursor:pointer; }
+  .layout { display:grid; grid-template-columns:270px 1fr; max-width:1200px; margin:0 auto; gap:24px; padding:24px 16px; }
+  nav.toc { position:sticky; top:16px; align-self:start; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; max-height:calc(100vh - 32px); overflow:auto; }
+  nav.toc input { width:100%; padding:7px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px; margin-bottom:10px; background:var(--bg); color:var(--text); }
+  nav.toc ol { margin:0; padding-left:18px; }
+  nav.toc > ol > li { margin:6px 0; font-size:14px; font-weight:600; }
+  nav.toc ul { margin:2px 0 4px; padding-left:12px; list-style:none; font-weight:normal; }
+  nav.toc ul li { margin:1px 0; font-size:13px; }
+  nav.toc a { color:var(--text); text-decoration:none; }
+  nav.toc a:hover { color:var(--primary); }
+  nav.toc code { background:none; padding:0; font-size:12.5px; }
+  main { min-width:0; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 22px; margin-bottom:18px; }
+  section.intro { border-left:4px solid var(--primary); }
+  section h2 { margin:0 0 12px; font-size:21px; color:var(--primary); border-bottom:2px solid var(--line); padding-bottom:6px; }
+  h3.route { font-size:17px; margin:22px 0 6px; padding-top:12px; border-top:1px dashed var(--line); }
+  section h2 + h3.route, section h2 + p + h3.route { border-top:0; padding-top:0; }
+  h3.route code { font-size:16px; background:none; padding:0; color:var(--text); font-weight:700; }
+  .lock { font-size:14px; }
+  h4 { font-size:15px; margin:14px 0 4px; }
+  p { margin:8px 0; }
+  ul, ol { margin:6px 0 10px; padding-left:22px; }
+  li { margin:3px 0; }
+  code { background:var(--code); border-radius:4px; padding:1px 5px; font-family:Consolas,monospace; font-size:14px; }
+  pre { background:var(--pre); color:var(--pre-fg); border-radius:8px; padding:12px 14px; overflow:auto; font-size:13.5px; line-height:1.45; }
+  pre code { background:none; padding:0; color:inherit; font-size:inherit; }
+  .tw { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; margin:8px 0 12px; font-size:14.5px; }
+  th, td { text-align:left; padding:6px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.03em; }
+  a { color:var(--primary); }
+  .hidden { display:none !important; }
+  footer { text-align:center; color:var(--muted); font-size:13px; padding:10px 0 30px; }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns:1fr; padding:16px; }
+    nav.toc { position:static; max-height:none; }
+    section { padding:14px 16px; }
+  }
+  @media print {
+    header { background:#fff; color:#000; border-bottom:2px solid #000; }
+    .print-btn, nav.toc { display:none; }
+    .layout { display:block; padding:0; }
+    section { break-inside:auto; border:0; padding:0; }
+    pre { background:#f4f4f4; color:#000; }
+    body { background:#fff; color:#000; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <img src="/logo.webp" alt="Chronofit" onerror="this.style.display='none'">
+  <div><h1>Chronofit Main Cell — API Reference (Public)</h1><div class="sub">Comandi HTTP e WebSocket per integrare il dispositivo con altri programmi.</div></div>
+  <span class="tag">Utente</span>
+  <button class="print-btn" onclick="window.print()">🖨 Stampa</button>
+</header>
+<div class="layout">
+<nav class="toc"><input id="api-search" type="search" placeholder="Cerca una route…" aria-label="Cerca una route"><ol>
+<li><a href="#autenticazione">Autenticazione</a>
+</li>
+<li><a href="#websocket">WebSocket</a>
+<ul><li><a href="#ws-ws"><code>WS /ws</code></a></li></ul>
+</li>
+<li><a href="#tempo">Tempo</a>
+<ul><li><a href="#get-time"><code>GET /time</code></a></li><li><a href="#get-settime"><code>GET /setTime</code> 🔒</a></li><li><a href="#get-setoffset"><code>GET /setOffset</code> 🔒</a></li></ul>
+</li>
+<li><a href="#checkpoint-e-sessione">Checkpoint e sessione</a>
+<ul><li><a href="#get-checkpoint"><code>GET /checkPoint</code></a></li><li><a href="#get-getcheckpoints"><code>GET /getCheckpoints</code></a></li><li><a href="#get-downloadsession"><code>GET /downloadSession</code></a></li><li><a href="#get-clearsession"><code>GET /clearSession</code> 🔒</a></li><li><a href="#get-checkpointfields"><code>GET /checkPointFields</code></a></li><li><a href="#get-elapsedstartline"><code>GET /elapsedStartLine</code></a></li><li><a href="#post-checkpointfields"><code>POST /checkPointFields</code></a></li><li><a href="#post-updatecheckpointrow"><code>POST /updateCheckPointRow</code></a></li></ul>
+</li>
+<li><a href="#impostazioni-di-sistema">Impostazioni di sistema</a>
+<ul><li><a href="#get-allsettings"><code>GET /allSettings</code></a></li><li><a href="#get-setattribute"><code>GET /setAttribute</code> 🔒</a></li></ul>
+</li>
+<li><a href="#wifi">WiFi</a>
+<ul><li><a href="#get-wificredential"><code>GET /wifiCredential</code></a></li><li><a href="#get-wificonnect"><code>GET /wifiConnect</code> 🔒</a></li><li><a href="#get-wifistop"><code>GET /wifiStop</code></a></li><li><a href="#get-setappassword"><code>GET /setApPassword</code> 🔒</a></li></ul>
+</li>
+<li><a href="#email">Email</a>
+<ul><li><a href="#get-email"><code>GET /email</code></a></li></ul>
+</li>
+<li><a href="#note-generali">Note generali</a>
+</li>
+</ol></nav>
+<main>
+<section class="intro"><p>Tutte le route sono esposte dal server HTTP integrato nel dispositivo Chronofit Main Cell, raggiungibile:</p>
+<ul><li>In modalità <b>Access Point</b> (rete <code>ChronofitMainCell_&lt;id&gt;</code>): <code>http://192.168.10.1</code></li><li>In modalità <b>STA</b> (collegato a un router): all'IP assegnato dal router</li></ul>
+<p>Il dispositivo è l'unità centrale del sistema a fotocellule wireless: registra i passaggi delle linee e li rende disponibili qui e nella console web. L'orario è il tempo trascorso (non c'è un orologio GPS).</p></section>
+<section id="autenticazione"><h2>Autenticazione</h2>
+<p>Se è configurato un token di accesso, ogni richiesta deve includere l'header:</p>
+<pre><code>X-Token: &lt;valore&gt;</code></pre>
+<p>Le route che richiedono autorizzazione sono marcate con 🔒.<br>Se non è configurato nessun token, tutte le richieste sono autorizzate.</p></section>
+<section id="websocket"><h2>WebSocket</h2>
+<h3 id="ws-ws" class="route"><code>WS /ws</code></h3>
+<p>Connessione WebSocket bidirezionale per il push real-time degli eventi.</p>
+<p><b>Messaggi inviati dal server (JSON):</b></p>
+<div class="tw"><table><thead><tr><th>Campo <code>t</code></th><th>Tipo evento</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>0</code></td><td><code>TYPE_CHECKPOINT</code></td><td>Nuovo passaggio registrato</td></tr><tr><td><code>1</code></td><td><code>TYPE_TIME_UPDATE</code></td><td>Aggiornamento orologio (ogni secondo)</td></tr><tr><td><code>2</code></td><td><code>TYPE_SESSION_CLEARED</code></td><td>Sessione cancellata</td></tr><tr><td><code>3</code></td><td><code>TYPE_PARAMS_UPDATED</code></td><td>Parametri di sistema aggiornati</td></tr><tr><td><code>4</code></td><td><code>TYPE_ROW_UPDATED</code></td><td>Riga sessione modificata</td></tr><tr><td><code>5</code></td><td><code>TYPE_GENERIC_MESSAGE</code></td><td>Messaggio generico</td></tr><tr><td><code>6</code></td><td><code>TYPE_EMAIL_SENT</code></td><td>Conferma email inviata</td></tr><tr><td><code>11</code></td><td><code>TYPE_LINE_UPDATED</code></td><td>Configurazione linea aggiornata</td></tr></tbody></table></div></section>
+<section id="tempo"><h2>Tempo</h2>
+<h3 id="get-time" class="route"><code>GET /time</code></h3>
+<p>Restituisce l'orario corrente preciso.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{ &quot;hh&quot;: 10, &quot;mm&quot;: 23, &quot;ss&quot;: 45, &quot;ms&quot;: 678 }</code></pre>
+<h3 id="get-settime" class="route"><code>GET /setTime</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Riarma il cronometro in modalità <b>elapsed</b>: il tempo trascorso riparte da zero al prossimo segnale di start (sensore o cella wireless). ChronofitMainCell non ha sincronizzazione dell'orario: è l'unica modalità (all'avvio il dispositivo è già in attesa dello start).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>mode</code></td><td>int</td><td>Facoltativo; se presente deve essere <code>3</code> (elapsed), altrimenti risponde <code>400</code></td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>Wait start signal</code>.</p>
+<h3 id="get-setoffset" class="route"><code>GET /setOffset</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Imposta solo l'offset UTC senza cambiare modalità.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>offset</code></td><td>int</td><td>Offset UTC (-12 … +14)</td></tr></tbody></table></div></section>
+<section id="checkpoint-e-sessione"><h2>Checkpoint e sessione</h2>
+<h3 id="get-checkpoint" class="route"><code>GET /checkPoint</code></h3>
+<p>Registra manualmente un passaggio (normalmente generato dall'hardware IR).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Default</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>lineNumber</code></td><td>int</td><td>0</td><td>Indice <b>0-based</b> della linea (0 = linea 1) che ha rilevato il passaggio</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma con timestamp. Il base timbra l'istante di <i>arrivo</i> della richiesta: latenza e jitter di rete finiscono nel tempo (per le fotocellule wireless usare <code>/remoteCheckpoint</code>).</p>
+<h3 id="get-getcheckpoints" class="route"><code>GET /getCheckpoints</code></h3>
+<p>Scarica il file di sessione corrente (<code>session.json</code>) in streaming chunked.</p>
+<p><b>Risposta:</b> file NDJSON (newline-delimited JSON), una riga per ogni checkpoint.</p>
+<p><b>Formato riga:</b></p>
+<pre><code>{&quot;id&quot;:1,&quot;ln&quot;:1,&quot;lId&quot;:&quot;A1&quot;,&quot;c&quot;:42,&quot;h&quot;:10,&quot;m&quot;:23,&quot;s&quot;:45,&quot;ms&quot;:678,&quot;x&quot;:0,&quot;e&quot;:1,&quot;p&quot;:0,&quot;r&quot;:0}</code></pre>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>id</code></td><td>Indice progressivo del passaggio</td></tr><tr><td><code>ln</code></td><td>Numero linea</td></tr><tr><td><code>lId</code></td><td>ID linea (stringa)</td></tr><tr><td><code>c</code></td><td>Numero competitor</td></tr><tr><td><code>h</code>,<code>m</code>,<code>s</code>,<code>ms</code></td><td>Orario evento</td></tr><tr><td><code>x</code></td><td>Penalità (secondi)</td></tr><tr><td><code>e</code></td><td>Abilitato (1) / disabilitato (0)</td></tr><tr><td><code>p</code></td><td>Tipo prova/sensore (testo libero impostato dall'utente, es. "FPC 102")</td></tr><tr><td><code>r</code></td><td>Modalità trigger (<code>0</code> = automatico, <code>1</code> = manuale)</td></tr></tbody></table></div>
+<h3 id="get-downloadsession" class="route"><code>GET /downloadSession</code></h3>
+<p>Scarica il file di sessione come allegato (Content-Disposition: attachment).</p>
+<p><b>Risposta:</b> stesso formato di <code>/getCheckpoints</code>, con header per il download diretto.</p>
+<h3 id="get-clearsession" class="route"><code>GET /clearSession</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Cancella l'intera sessione corrente. Notifica tutti i client WebSocket.</p>
+<p><b>Risposta:</b> testo di conferma.</p>
+<h3 id="get-checkpointfields" class="route"><code>GET /checkPointFields</code></h3>
+<p>Aggiorna la configurazione di una linea tramite query string. Solo <code>l</code> è obbligatorio; gli altri parametri sono facoltativi — vengono modificati solo i campi presenti.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>✅</td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>string</td><td>—</td><td>ID linea</td></tr><tr><td><code>c</code></td><td>int</td><td>—</td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>int</td><td>—</td><td>Delay linea in millisecondi</td></tr><tr><td><code>e</code></td><td>int</td><td>—</td><td>Abilitato: <code>1</code> / <code>0</code></td></tr></tbody></table></div>
+<p><b>Esempio:</b> <code>GET /checkPointFields?l=2&amp;c=7&amp;e=1</code></p>
+<h3 id="get-elapsedstartline" class="route"><code>GET /elapsedStartLine</code></h3>
+<p>Linea il cui primo passaggio fa partire il tempo trascorso (modalità elapsed). Senza parametri restituisce il valore attuale. Salvata in NVS (<code>el_start</code>), default <code>0</code>.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>—</td><td><code>0</code> = qualsiasi linea, <code>1</code>–<code>4</code> = solo quella linea</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>{ &quot;l&quot;: 0 }</code></p>
+<h3 id="post-checkpointfields" class="route"><code>POST /checkPointFields</code></h3>
+<p>Aggiorna la configurazione di una linea (competitor, ID linea, delay, stato). Tutti i campi sono inviati nel body.</p>
+<p><b>Body JSON:</b></p>
+<pre><code>{ &quot;l&quot;: 1, &quot;ld&quot;: &quot;A1&quot;, &quot;c&quot;: 42, &quot;d&quot;: 500, &quot;e&quot;: 1 }</code></pre>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>ID linea (stringa)</td></tr><tr><td><code>c</code></td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>Delay linea in millisecondi</td></tr><tr><td><code>e</code></td><td>Abilitato: <code>1</code> / <code>0</code></td></tr></tbody></table></div>
+<h3 id="post-updatecheckpointrow" class="route"><code>POST /updateCheckPointRow</code></h3>
+<p>Modifica un passaggio esistente nella sessione (aggiorna <code>session.json</code>).</p>
+<p><b>Body JSON:</b></p>
+<pre><code>{ &quot;index&quot;: 5, &quot;lineNumber&quot;: 1, &quot;lineId&quot;: &quot;A1&quot;, &quot;competitor&quot;: 42, &quot;hour&quot;: 10, &quot;minute&quot;: 23, &quot;second&quot;: 45, &quot;millis&quot;: 678, &quot;penality&quot;: 0 }</code></pre>
+<p>Il campo <code>index</code> identifica il record da modificare. Se non esiste viene creato.</p></section>
+<section id="impostazioni-di-sistema"><h2>Impostazioni di sistema</h2>
+<h3 id="get-allsettings" class="route"><code>GET /allSettings</code></h3>
+<p>Restituisce tutte le impostazioni del dispositivo serializzate in JSON.</p>
+<p><b>Risposta JSON (campi principali):</b></p>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>c1</code>–<code>c4</code></td><td>Competitor assegnati alle linee 1–4</td></tr><tr><td><code>l1</code>–<code>l4</code></td><td>ID linea 1–4</td></tr><tr><td><code>d1</code>–<code>d4</code></td><td>Delay linee 1–4 (ms)</td></tr><tr><td><code>e1</code>–<code>e4</code></td><td>Stato abilitazione linee</td></tr><tr><td><code>sm</code></td><td>Modalità di sync (sempre <code>3</code> = elapsed)</td></tr><tr><td><code>utc</code></td><td>Offset UTC</td></tr><tr><td><code>sn</code></td><td>Nome stazione</td></tr><tr><td><code>bz</code></td><td>Buzzer abilitato (0/1)</td></tr></tbody></table></div>
+<h3 id="get-setattribute" class="route"><code>GET /setAttribute</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Aggiorna attributi del dispositivo.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>buzzerEnable</code></td><td>int</td><td><code>1</code> = buzzer abilitato</td></tr><tr><td><code>stationName</code></td><td>string</td><td>Nome della stazione</td></tr></tbody></table></div></section>
+<section id="wifi"><h2>WiFi</h2>
+<h3 id="get-wificredential" class="route"><code>GET /wifiCredential</code></h3>
+<p>Restituisce lo stato della connessione WiFi STA.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{ &quot;ssid&quot;: &quot;MyNetwork&quot;, &quot;staConnected&quot;: true, &quot;staIp&quot;: &quot;192.168.1.42&quot; }</code></pre>
+<h3 id="get-wificonnect" class="route"><code>GET /wifiConnect</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Avvia la connessione WiFi STA.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>ssid</code></td><td>string</td><td>SSID della rete</td></tr><tr><td><code>pw</code></td><td>string</td><td>Password della rete</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma (la connessione avviene in background).</p>
+<h3 id="get-wifistop" class="route"><code>GET /wifiStop</code></h3>
+<p>Interrompe i tentativi di riconnessione WiFi STA.</p>
+<p><b>Risposta:</b> testo di conferma.</p>
+<h3 id="get-setappassword" class="route"><code>GET /setApPassword</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Cambia la password dell'Access Point WiFi.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>current</code></td><td>string</td><td>Password attuale dell'AP</td></tr><tr><td><code>newpwd</code></td><td>string</td><td>Nuova password (minimo 8 caratteri)</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma o messaggio di errore.</p></section>
+<section id="email"><h2>Email</h2>
+<h3 id="get-email" class="route"><code>GET /email</code></h3>
+<p>Invia un'email (richiede connessione internet via STA).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>address</code></td><td>string</td><td>Indirizzo email destinatario</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma (l'invio avviene in modo asincrono).</p></section>
+<section id="note-generali"><h2>Note generali</h2>
+<ul><li>Tutte le risposte sono in <code>text/plain</code> o <code>application/json</code> a seconda della route.</li><li>Il server non implementa CORS — le richieste cross-origin vanno gestite lato client.</li><li>Le route GET usano parametri query string (<code>?param=value&amp;...</code>).</li><li>Le route POST usano body JSON (<code>Content-Type: application/json</code>) salvo dove indicato diversamente (multipart).</li><li>Il WebSocket è l'unico canale bidirezionale; tutte le altre route sono unidirezionali (request/response).</li></ul></section>
+<footer>Le route marcate con 🔒 richiedono l'header <code>X-Token</code> se sul dispositivo è configurato un token.</footer>
+</main>
+</div>
+<script>
+document.getElementById('api-search').addEventListener('input', function () {
+  var q = this.value.trim().toLowerCase();
+  document.querySelectorAll('nav.toc ul li').forEach(function (li) {
+    li.classList.toggle('hidden', !!q && li.textContent.toLowerCase().indexOf(q) < 0);
+  });
+  document.querySelectorAll('nav.toc > ol > li').forEach(function (li) {
+    var subs = li.querySelectorAll('ul li'), any = false;
+    subs.forEach(function (s) { if (!s.classList.contains('hidden')) any = true; });
+    li.classList.toggle('hidden', !!q && !any && li.firstElementChild.textContent.toLowerCase().indexOf(q) < 0);
+  });
+});
+</script>
+</body>
+</html>

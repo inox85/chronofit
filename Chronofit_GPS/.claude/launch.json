@@ -6,6 +6,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8433", "--directory", "data"],
       "port": 8433
+    },
+    {
+      "name": "cell-data-server",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8434", "--directory", "../Chronofit_Cell/data"],
+      "port": 8434
+    },
+    {
+      "name": "maincell-data-server",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8435", "--directory", "../Chronofit_Main_Cell/data"],
+      "port": 8435
     }
   ]
 }

@@ -1,0 +1,330 @@
+#include "time_utils.h"
+#include <TimeLib.h>  // se usi TimeLib
+#include "globals.h"
+#include "constants.h"
+#include <Arduino.h>
+#include <ArduinoJson.h>
+#include <LittleFS.h>
+#include "debug.h"
+#include "routes.h"
+#include "params.h"
+#include "diagnostic.h"
+#include "settings.h"
+#include <WiFi.h>
+
+PreciseTime getPreciseTime() {
+  PreciseTime t;
+
+  uint64_t rawUs = esp_timer_get_time() - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
+
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs = elapsedUs % 1000000ULL;
+  
+  // Printf corretta
+  //Serial.printf("us_drift=%lld  ms=%u\n", t.us_drift, ms);
+
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
+
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec += 1;
+  }
+
+  t.ms = ms;
+
+  // ⏱️ tempo assoluto
+  uint64_t absSec = ppsEpochSec + elapsedSec;
+
+  t.ss = absSec % 60;
+  t.mm = (absSec / 60) % 60;
+  t.hh = (absSec / 3600) % 24;
+
+  return t;
+}
+
+uint32_t getPreciseMillis(uint64_t lpps){
+  uint64_t rawUs = lpps - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
+
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs = elapsedUs % 1000000ULL;
+  uint32_t ms = (remUs) / 1000;
+  return ms;
+}
+
+PreciseTime getPreciseSensorTime(int i) {
+  PreciseTime t;
+
+  uint64_t rawUs    = sensorTime[i] - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
+
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs      = elapsedUs % 1000000ULL;
+
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
+
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec += 1;
+  }
+
+  if (remUs > 500000ULL) {
+    t.us_drift = (int64_t)(remUs - 1000000ULL);
+  } else {
+    t.us_drift = (int64_t)remUs;
+  }
+
+  t.ms = ms;
+
+  // ⏱️ tempo assoluto
+  uint64_t absSec = ppsEpochSec + elapsedSec;
+
+  t.ss = absSec % 60;
+  t.mm = (absSec / 60) % 60;
+  t.hh = (absSec / 3600) % 24;
+
+  return t;
+}
+
+PreciseTime getPreciseTimeFromSync(uint64_t referenceUs) {
+  PreciseTime t;
+
+  uint64_t rawUs    = referenceUs - syncReference;
+  uint64_t elapsedUs = correctedElapsedUs(rawUs) + MILLIS_OFFSET_ADJ;
+
+  uint64_t elapsedSec = elapsedUs / 1000000ULL;
+  uint64_t remUs      = elapsedUs % 1000000ULL;
+
+  uint32_t ms = (remUs + 500) / 1000;  // arrotondamento
+
+  // ── ROLLOVER: se ms arrotonda a 1000 propagalo al secondo ──
+  if (ms >= 1000) {
+    ms = 0;
+    elapsedSec += 1;
+  }
+
+  if (remUs > 500000ULL) {
+    t.us_drift = (int64_t)(remUs - 1000000ULL);
+  } else {
+    t.us_drift = (int64_t)remUs;
+  }
+
+  t.ms = ms;
+
+  // ⏱️ tempo assoluto
+  uint64_t absSec = ppsEpochSec + elapsedSec;
+
+  t.ss = absSec % 60;
+  t.mm = (absSec / 60) % 60;
+  t.hh = (absSec / 3600) % 24;
+
+  return t;
+}
+
+void checkPointRoutine(int i) {
+
+  PreciseTime t = getPreciseSensorTime(i);
+  uint16_t ms = t.ms;
+  uint8_t hh = t.hh;
+  uint8_t mm = t.mm;
+  uint8_t ss = t.ss;
+
+  // 🔹 Crea il JSON base
+  StaticJsonDocument<384> checkpoint;
+  checkpoint[LINE_NUMBER_FIELD] = i + 1;
+  checkpoint[COMPETITOR_FIELD]  = competitors[i];
+  checkpoint[HOUR_FIELD]        = hh;
+  checkpoint[MINUTE_FIELD]      = mm;
+  checkpoint[SECOND_FIELD]      = ss;
+  checkpoint[MILLIS_FIELD]      = ms;
+  checkpoint[PENALITY_FIELD]    = 0;
+  checkpoint[ENABLED_FIELD]     = lineEnabled[i];
+  checkpoint[LINE_DEVICE_FIELD] = lineDevice[i];
+  checkpoint[LINE_MODE_FIELD]   = lineMode[i];
+  checkpoint[CANCELLED_FIELD]   = 0;
+  checkpoint[EDITED_FIELD]      = 0;
+
+  // 🔹 Calcola nuovo index
+  sessionRowIndex = sessionRowIndex + 1;
+  checkpoint[INDEX_FIELD] = sessionRowIndex;
+
+  // 🔹 Crea una copia ordinata del JSON (index per primo)
+  StaticJsonDocument<384> ordered;
+  ordered[INDEX_FIELD] = sessionRowIndex;
+
+  // Copia i campi principali in ordine desiderato
+  if (checkpoint.containsKey(LINE_NUMBER_FIELD)) ordered[LINE_NUMBER_FIELD] = checkpoint[LINE_NUMBER_FIELD];
+  if (checkpoint.containsKey(COMPETITOR_FIELD))  ordered[COMPETITOR_FIELD]  = checkpoint[COMPETITOR_FIELD];
+  if (checkpoint.containsKey(HOUR_FIELD))        ordered[HOUR_FIELD]        = checkpoint[HOUR_FIELD];
+  if (checkpoint.containsKey(MINUTE_FIELD))      ordered[MINUTE_FIELD]      = checkpoint[MINUTE_FIELD];
+  if (checkpoint.containsKey(SECOND_FIELD))      ordered[SECOND_FIELD]      = checkpoint[SECOND_FIELD];
+  if (checkpoint.containsKey(MILLIS_FIELD))      ordered[MILLIS_FIELD]      = checkpoint[MILLIS_FIELD];
+  if (checkpoint.containsKey(PENALITY_FIELD))    ordered[PENALITY_FIELD]    = checkpoint[PENALITY_FIELD];
+  if (checkpoint.containsKey(ENABLED_FIELD))     ordered[ENABLED_FIELD]     = checkpoint[ENABLED_FIELD];
+  if (checkpoint.containsKey(LINE_DEVICE_FIELD)) ordered[LINE_DEVICE_FIELD] = checkpoint[LINE_DEVICE_FIELD];
+  if (checkpoint.containsKey(LINE_MODE_FIELD))   ordered[LINE_MODE_FIELD]   = checkpoint[LINE_MODE_FIELD];
+  ordered[CANCELLED_FIELD] = checkpoint[CANCELLED_FIELD];
+  ordered[EDITED_FIELD]    = checkpoint[EDITED_FIELD];
+
+  // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
+  File file = LittleFS.open("/session.json", "a");
+  if (!file) {
+    debug("Errore apertura file per scrittura!");
+    return;
+  }
+  serializeJson(ordered, file);  // no indentazione
+  file.println();                // nuova riga
+  file.close();
+
+  // 🔹 Invia sul WebSocket
+  StaticJsonDocument<384> wsDoc = ordered;
+  wsDoc["t"] = TYPE_CHECKPOINT;
+
+  char jsonMessage[450];
+  serializeJson(wsDoc, jsonMessage, sizeof(jsonMessage));
+  ws.textAll(jsonMessage);
+
+}
+
+// Funzione di supporto: gestione sincronizzazione Line
+void handleLineSync() {
+
+  uint32_t hh = temp_hh;
+  uint32_t mm = temp_mm;
+  uint32_t ss = temp_ss;
+
+  // rollover
+  if (ss >= 60) {
+    ss = 0;
+    mm++;
+  }
+  if (mm >= 60) {
+    mm = 0;
+    hh = (hh + 1) % 24;
+  }
+
+  // 🔒 ancora assoluta (epoch-like, giornaliera)
+  ppsEpochSec = (uint64_t)hh * 3600ULL + (uint64_t)mm * 60ULL + (uint64_t)ss;
+
+  // riferimento temporale
+  syncReference = lastSyncTrigger;
+
+  lastBroadcast = millis();
+
+  // 🔹 Aggiorna stato
+  syncStatus = ELAPSED_TIME_STARTED;
+}
+
+void broadcastAsync(const String& message) {
+  ws.cleanupClients();  // rimuove client chiusi
+
+  for (auto& client : ws.getClients()) {
+    client.text(message);  // invio asincrono, non blocca
+  }
+}
+
+
+int getLastSessionRowIndex() {
+  int lastIdx = 0;
+  File file = LittleFS.open("/session.json", "r");
+  if (file) {
+    char lineBuf[256];
+    while (file.available()) {
+      int n = file.readBytesUntil('\n', lineBuf, sizeof(lineBuf) - 1);
+      if (n == 0) continue;
+      lineBuf[n] = '\0';
+      StaticJsonDocument<128> tmp;
+      if (!deserializeJson(tmp, lineBuf, n)) {
+        int idx = tmp[INDEX_FIELD] | 0;
+        if (idx > lastIdx) lastIdx = idx;
+      }
+    }
+    file.close();
+  }
+  return lastIdx;
+}
+
+
+void broadcastTime() {
+  PreciseTime t = getPreciseTime();
+  StaticJsonDocument<256> doc;
+  doc["t"] = TYPE_TIME_UPDATE;
+  doc["h"] = t.hh;
+  doc["m"] = t.mm;
+  doc["s"] = t.ss;
+  doc["ms"] = t.ms;
+
+  doc["sy"] = syncStatus;
+  doc["pw"] = powerSource;
+  doc["cl"] = ws.count();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    doc["w"] = internetOK ? 3 : 2;
+  } else if (wifiReconnecting) {
+    doc["w"] = 4;  // caduta post-connessione, retry in corso
+  } else if (millis() - startAttemptTime < wifiTimeout) {
+    doc["w"] = 1;  // primo tentativo di connessione in corso
+  } else {
+    doc["w"] = 0;
+  }
+
+  if (doc["w"] == 3){
+    #ifdef VER2
+      
+    #else
+      digitalWrite(LED_2, HIGH);
+    #endif
+  }
+  else{
+    #ifdef VER2
+      
+    #else
+      digitalWrite(LED_2, LOW);
+    #endif
+  }
+
+  char buf[256];
+  serializeJson(doc, buf, sizeof(buf));
+  ws.cleanupClients();
+  ws.textAll(buf);
+  //wifiTxActivity();
+}
+
+double readInternalTemp() {
+  double t = (double)(temprature_sens_read() - 32) / 1.8;
+  return round(t * 10.0) / 10.0;  // 1 decimale
+}
+
+uint64_t correctedElapsedUs(uint64_t rawUs) {
+  //double T =  readInternalTemp();
+  return (uint64_t)((double)rawUs * (double)calibrationFactor);
+  //return (uint64_t)(rawUs * calibrationFactor * termFactor(T));
+}
+
+
+double setTimeBaseCalibration(double deltaUs, double minutes) {
+  if (minutes <= 0.0) {
+    Serial.println("Invalid minutes for calibration");
+    return -1.0;  // valore di errore
+  }
+
+  // Tempo atteso in microsecondi
+  double T_us = minutes * 60.0 * 1e6;
+
+  // Calcolo fattore di calibrazione
+  calibrationFactor = 1.0 + (deltaUs / T_us);
+
+  // Scrittura nel settings
+  double calFactorSaved = writeDoubleToSettings("timeCal", calibrationFactor);
+
+  // Log seriale
+  Serial.println("Calibrazione aggiornata:");
+  Serial.println(String("delta_us=") + deltaUs);
+  Serial.println(String("minutes=") + minutes);
+  Serial.println(String("factor=") + String(calFactorSaved, 10));
+
+  return calFactorSaved;
+}

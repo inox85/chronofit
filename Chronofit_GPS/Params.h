@@ -1,7 +1,7 @@
 // Stati sincronizzazione orologio
 //#define VER2
 
-#define FW_VERSION "2.11.0a"
+#define FW_VERSION "2.11.1a"
 #define DEV_NAME    "Chronofit"
 #define HW_NAME      "HW VER. 2.0"
 
@@ -41,6 +41,7 @@
 #define TYPE_MQTT_NOTIFICATION        9
 #define TYPE_MQTT_PENDING             10
 #define TYPE_LINE_UPDATED             11
+#define TYPE_CELLS_UPDATED            12
 
 #define AGING_REG                     0x10
 #define DS3231_ADDR                   0x68

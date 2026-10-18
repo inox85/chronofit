@@ -57,6 +57,43 @@ const lineColors = {
 let timePrecision = 3;
 let timePrecision2 = 3;
 
+// Formato dei tempi scelto nelle impostazioni, comune a console e viste dello
+// stesso browser: 'clock' = hh:mm:ss.mmm, 'seconds' = secondi totali con la
+// virgola (71,450). I decimali restano quelli scelti a parte.
+const TIME_FORMAT_KEY = 'chronofit_time_format';
+let timeFormat = 'clock';
+try { if (localStorage.getItem(TIME_FORMAT_KEY) === 'seconds') timeFormat = 'seconds'; } catch (e) { /* default */ }
+
+function secondsText(h, m, s, msStr) {
+  return String(h * 3600 + m * 60 + s) + ',' + msStr;
+}
+
+// Cambio dal menu "Formato tempi": salva, allinea gli altri menu della pagina e ridisegna.
+function setTimeFormat(value) {
+  timeFormat = value === 'seconds' ? 'seconds' : 'clock';
+  try { localStorage.setItem(TIME_FORMAT_KEY, timeFormat); } catch (e) { /* solo per questa pagina */ }
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+}
+
+function syncTimeFormatSelects() {
+  document.querySelectorAll('.time-format-select').forEach(sel => { sel.value = timeFormat; });
+}
+document.addEventListener('DOMContentLoaded', syncTimeFormatSelects);
+
+function onTimeFormatChanged() {
+  onTimePrecisionChange(timePrecision);
+  if (document.getElementById('time-precision-2')) onTimePrecisionChange2(timePrecision2);
+  if (typeof rebuildNetTimesTable === 'function') rebuildNetTimesTable();
+}
+// Formato cambiato in un'altra scheda (per esempio in una vista)
+window.addEventListener('storage', e => {
+  if (e.key !== TIME_FORMAT_KEY) return;
+  timeFormat = e.newValue === 'seconds' ? 'seconds' : 'clock';
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+});
+
 function onTimePrecisionChange(val) {
   val = Math.max(1, Math.min(3, parseInt(val) || 3));
   timePrecision = val;
@@ -340,6 +377,23 @@ function getAthleteName(competitorNum) {
   return a.name || a.firstname || a.nome || "";
 }
 
+// Nome e cognome si scrivono nella riga all'arrivo del passaggio: se l'elenco
+// competitor cambia dopo (CSV caricato a gara iniziata, atleta aggiunto o
+// modificato, anche da un'altra scheda) si aggiornano le righe già in tabella.
+function refreshAthleteNamesInTables() {
+  document.querySelectorAll('#event-table tbody tr, #event-table-2 tbody tr').forEach(row => {
+    const nc = row.querySelector('td.col-name');
+    const sc = row.querySelector('td.col-surname');
+    if (nc) nc.textContent = getAthleteName(row.dataset.competitor);
+    if (sc) sc.textContent = getAthleteSurname(row.dataset.competitor);
+  });
+}
+window.addEventListener('storage', e => {
+  if (e.key !== ATHLETES_KEY) return;
+  try { athleteRegistry = JSON.parse(e.newValue || '[]'); } catch (err) { /* resta quello di prima */ }
+  renderCompQuickList();
+});
+
 function getAthleteSurname(competitorNum) {
   const a = findAthlete(competitorNum);
   if (!a) return "";
@@ -471,6 +525,8 @@ function saveViewPrefs() {
     showSecondArrivalsCard: document.getElementById('secondArrivalsCard')?.style.display !== 'none',
     syncMode:        Number(document.getElementById('sync-method-select')?.value ?? 0),
     keepCompFocus:   document.getElementById('toggle-keep-comp-focus')?.checked ?? false,
+    elapsedRearmTyped: document.getElementById('toggle-elapsed-rearm-typed')?.checked ?? false,
+    elapsedRearmList:  document.getElementById('toggle-elapsed-rearm-list')?.checked ?? false,
     propagateCompetitor: document.getElementById('toggle-propagate-competitor')?.checked ?? false,
     lines: _readLinesPrefs('stab-lines'),
     secondary: {
@@ -578,6 +634,9 @@ function restoreViewPrefs() {
     }
     const kcf = document.getElementById('toggle-keep-comp-focus');
     if (kcf && prefs.keepCompFocus !== undefined) kcf.checked = prefs.keepCompFocus;
+    // elapsedRearm = toggle unico delle versioni precedenti, vale per entrambi i casi
+    setChkPref('toggle-elapsed-rearm-typed', prefs.elapsedRearmTyped ?? prefs.elapsedRearm);
+    setChkPref('toggle-elapsed-rearm-list',  prefs.elapsedRearmList  ?? prefs.elapsedRearm);
     const pc = document.getElementById('toggle-propagate-competitor');
     if (pc && prefs.propagateCompetitor !== undefined) pc.checked = prefs.propagateCompetitor;
 
@@ -864,6 +923,13 @@ function applySponsorVisibility(show) {
   document.querySelectorAll('.sponsor-visibility-toggle, .splash-divider').forEach(el => {
     el.style.display = show ? '' : 'none';
   });
+  // L'immagine dello sponsor pesa ~190 KB: si scarica solo quando va mostrata (data-src → src),
+  // così a cache vuota non compete con gli script e con le chiamate al dispositivo.
+  if (show) {
+    document.querySelectorAll('img[data-src]').forEach(img => {
+      if (!img.getAttribute('src')) img.src = img.getAttribute('data-src');
+    });
+  }
 }
 
 async function applyBrandingSettings() {
@@ -931,7 +997,30 @@ function goToTiming() {
 
 // ── Uscita dalla disciplina (icona navbar) ─────────────────────────────────────
 // Una volta scelta la disciplina non è possibile cambiarla se non uscendo
-// esplicitamente da questa schermata di conferma, che cancella anche la sessione.
+// esplicitamente da questa schermata di conferma. Sessione e competitor restano.
+
+// ── Vista associata alla disciplina (secondo schermo) ────────────────────────
+// Ogni disciplina ha la sua vista di sola lettura (campo `view` in disciplines.js).
+// Si apre in una finestra a parte: nell'app Chronofit Viewer è una nuova finestra
+// dell'applicazione, nel browser un popup che si può portare sul secondo schermo.
+let disciplineViewWin = null;
+function openDisciplineView() {
+  const disc = DISCIPLINES.find(d => d.id === activeDisciplineId) ?? DISCIPLINES[0];
+  const page = disc?.view || 'view.html';
+  const url = '/' + page;
+  // Un clic in più richiama la finestra già aperta invece di aprirne un'altra. Il nome fisso
+  // fa riusare la stessa finestra anche nell'app Chronofit Viewer (dove window.open non
+  // restituisce il riferimento): lì se ne occupa l'app.
+  try {
+    if (disciplineViewWin && !disciplineViewWin.closed) {
+      if (disciplineViewWin.location.pathname !== url) disciplineViewWin.location.href = url;   // disciplina cambiata
+      disciplineViewWin.focus();
+      return;
+    }
+  } catch (e) { /* finestra non più accessibile: se ne apre una nuova */ }
+  disciplineViewWin = window.open(url, 'chronofit_view', 'popup=yes,width=1280,height=720');
+  if (disciplineViewWin) disciplineViewWin.focus();
+}
 
 function onDisciplineIconClick() {
   if (isDisciplineLocked()) {
@@ -951,7 +1040,6 @@ function openExitDisciplineConfirm() {
 
   document.getElementById('exitDisciplineConfirm').onclick = () => {
     overlay.style.display = 'none';
-    fetch('/clearSession').catch(err => console.error('Errore clearSession:', err));
     localStorage.removeItem(DISC_LOCK_KEY);
     localStorage.removeItem(DISCIPLINE_KEY);
     activeDisciplineId = 'generic';
@@ -1033,6 +1121,18 @@ function onCompInputBlur(n) {
   }, 200);
 }
 
+// Da dove arriva il competitor che si sta assegnando: 'typed' = scritto nel
+// campo, 'list' = scelto dall'elenco Attesi o dal registro. Lo leggono i
+// toggle di azzeramento del tempo e di riarmo delle linee, che si possono
+// attivare separatamente per i due casi.
+let _competitorSource = 'typed';
+
+function withCompetitorSource(source, fn) {
+  const prev = _competitorSource;
+  _competitorSource = source;
+  try { fn(); } finally { _competitorSource = prev; }
+}
+
 function fillCompFromList(num) {
   // Se nessun input è attivo, non fare niente
   if (!activeCompLine) return;
@@ -1040,7 +1140,7 @@ function fillCompFromList(num) {
   const cEl = document.getElementById(`c${n}`);
   if (!cEl) return;
   cEl.value = num;
-  cEl.dispatchEvent(new Event('change'));   // salva sul server
+  withCompetitorSource('list', () => cEl.dispatchEvent(new Event('change')));   // salva sul server
   cEl.focus();                              // mantiene l'attivazione
 }
 
@@ -1050,6 +1150,19 @@ let _compListLongPressed = false;
 function fillCompFromListGuarded(competitor) {
   if (_compListLongPressed) { _compListLongPressed = false; return; }
   fillCompFromList(competitor);
+}
+
+// Icona ✏️ accanto al titolo "Attesi": apre il registro atleti sul tab
+// manuale, per aggiungere o modificare un competitor dal suo numero (prima lo
+// faceva la pressione lunga su un competitor della lista).
+function openCompetitorEditor() {
+  document.getElementById('manual-num').value     = '';
+  document.getElementById('manual-name').value    = '-';
+  document.getElementById('manual-surname').value = '-';
+  document.getElementById('manual-team').value    = '-';
+  document.getElementById('athlete-manual-status').textContent = '';
+  switchAthleteTab('manual');
+  document.getElementById('athleteOverlay').style.display = 'flex';
 }
 
 function openAthleteFromList(competitor) {
@@ -1068,6 +1181,7 @@ function openAthleteFromList(competitor) {
 }
 
 function renderCompQuickList(scrollToCompetitor = null) {
+  refreshAthleteNamesInTables();   // l'elenco è appena cambiato
   const container = document.getElementById('comp-quick-list');
   if (!container) return;
   // Chi è già "uscito" (arrived=true) resta nel registro — serve ancora per
@@ -1085,10 +1199,6 @@ function renderCompQuickList(scrollToCompetitor = null) {
       <span class="comp-list-num">${a.competitor}</span>${nameParts ? `<span class="comp-list-name">${nameParts}</span>` : ''}
     </div>`;
   }).join('');
-  container.querySelectorAll('.comp-list-item').forEach(item => {
-    const competitor = Number(item.dataset.competitor);
-    addLongPress(item, () => openAthleteFromList(competitor));
-  });
   if (scrollToCompetitor !== null) {
     const target = container.querySelector(`[data-competitor="${scrollToCompetitor}"]`);
     if (target) target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -1197,6 +1307,7 @@ function openLineEdit(line, focusField) {
   if (tkField) tkField.value = localStorage.getItem(TIMEKEEPERS_KEY) || '';
   _lineEditSnapshot.timekeepers = tkField?.value ?? '';
 
+  loadElapsedStartLine();
   document.getElementById('lineEditOverlay').style.display = 'flex';
 
   // Focus the field in the row that was clicked
@@ -1459,6 +1570,53 @@ function fillSettingsFields(data){
   //handlePowerUpdate(data);
 }
 
+// ── Tempo trascorso: linea di start e azzeramento al cambio di competitor ──
+// La linea di start (0 = qualsiasi) sta nella Main (NVS el_start): il tempo
+// parte solo dal primo passaggio di quella linea. Il pulsante Start della card
+// Checkpoints invia il passaggio su quella linea (sulla 1 se è "qualsiasi").
+let elapsedStartLine = 0;
+let lastSyncStatus = null;   // ultimo stato ricevuto con l'ora (data.sy)
+
+setTimeout(loadElapsedStartLine, 1500);   // all'avvio, per il pulsante Start
+
+function loadElapsedStartLine() {
+  fetch('/elapsedStartLine')
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+      if (!data) return;
+      elapsedStartLine = Number(data.l) || 0;
+      const sel = document.getElementById('elapsed-start-line');
+      if (sel) sel.value = String(elapsedStartLine);
+    })
+    .catch(() => {});
+}
+
+function saveElapsedStartLine(value) {
+  fetch(`/elapsedStartLine?l=${Number(value) || 0}`)
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(data => { elapsedStartLine = Number(data.l) || 0; })
+    .catch(() => loadElapsedStartLine());
+}
+
+function sendElapsedStart() {
+  sendCheckPoint(elapsedStartLine || 1);
+}
+
+// Toggle "Azzera il tempo trascorso con un competitor digitato / scelto
+// dall'elenco": con il tempo già partito lo riporta in attesa dello start,
+// come il pulsante Reset.
+function setChkPref(id, value) {
+  const el = document.getElementById(id);
+  if (el && value !== undefined) el.checked = !!value;
+}
+
+function rearmElapsedIfNeeded() {
+  const id = _competitorSource === 'list' ? 'toggle-elapsed-rearm-list' : 'toggle-elapsed-rearm-typed';
+  if (!document.getElementById(id)?.checked) return;
+  if (lastSyncStatus !== ELAPSED_TIME_STARTED) return;
+  setElapsedTimemode();
+}
+
 function setElapsedTimemode(){
   let url = `/setTime?mode=${encodeURIComponent(3)}`;
   console.log(url);
@@ -1655,6 +1813,7 @@ function connectWebSocket() {
     hidePopup();
     lastMessageTime = Date.now();
     startWatchdog();
+    loadCells();   // stato iniziale delle fotocellule (anche dopo una riconnessione)
   };
 
   ws.onmessage = (event) => {
@@ -1706,6 +1865,206 @@ const TYPE_WIFI_ERROR      = 8;
 const TYPE_MQTT_NOTIFICATION = 9;
 const TYPE_MQTT_PENDING      = 10;
 const TYPE_LINE_UPDATED      = 11;
+const TYPE_CELLS_UPDATED     = 12;
+
+// ── Fotocellule wireless (cell) viste dal base ────────────────────────────────
+// Lo stato arriva da GET /cells (all'aggancio del WebSocket, in silenzio) e poi
+// dai push TYPE_CELLS_UPDATED, che il firmware invia solo quando cambia
+// qualcosa (cella nuova, persa, linea o segnale diversi, conflitto di linea).
+let cellsSnapshot = [];
+
+function loadCells() {
+  fetch('/cells')
+    .then(res => res.json())
+    .then(data => applyCellsUpdate(data, true))
+    .catch(() => {});
+}
+
+function cellShortId(id) { return String(id).slice(-6); }
+
+// Livello segnale 0..4 (0 = RSSI sconosciuto). Le soglie sono le stesse di
+// bucketOf() in cells.cpp: il firmware invia un push solo quando il livello cambia.
+function cellSignalLevel(rssi) {
+  if (!rssi) return 0;
+  if (rssi >= -55) return 4;
+  if (rssi >= -65) return 3;
+  if (rssi >= -75) return 2;
+  return 1;
+}
+
+function cellSignalColor(level) {
+  if (level >= 3) return '#2e7d32';
+  if (level === 2) return '#ef6c00';
+  if (level === 1) return '#c62828';
+  return '#9aa0a6';
+}
+
+// Icona a 4 barre crescenti: le barre sotto il livello sono piene e colorate
+// (verde / arancione / rosso), le altre grigie. `slash` = barra rossa diagonale
+// (cella persa). Contiene solo numeri e colori fissi, nessun testo esterno.
+function cellSignalSvg(level, slash = false) {
+  const color = cellSignalColor(level);
+  const heights = [5, 8, 11, 14];
+  let bars = '';
+  for (let i = 0; i < 4; i++) {
+    const h = heights[i];
+    bars += `<rect x="${i * 5.5}" y="${14 - h}" width="4" height="${h}" rx="1" fill="${i < level ? color : '#cfd4da'}"/>`;
+  }
+  const line = slash
+    ? '<line x1="0" y1="14.5" x2="20.5" y2="-0.5" stroke="#c62828" stroke-width="2" stroke-linecap="round"/>'
+    : '';
+  return `<svg class="sig-icon" viewBox="-1 -1 22.5 16" width="22" height="16" aria-hidden="true">${bars}${line}</svg>`;
+}
+
+function cellWarnSvg() {
+  return '<svg class="sig-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">'
+    + '<path d="M12 2.5 1.5 21h21z" fill="#c62828"/>'
+    + '<rect x="11" y="9" width="2" height="6.5" rx="1" fill="#fff"/>'
+    + '<rect x="11" y="17" width="2" height="2" rx="1" fill="#fff"/></svg>';
+}
+
+function cellStateText(c) {
+  if (!c.connected) return t('cells.state_lost');
+  if (c.conflict) return t('cells.state_conflict');
+  return t('cells.state_ok');
+}
+
+function applyCellsUpdate(data, silent = false) {
+  const prev = new Map(cellsSnapshot.map(c => [c.id, c]));
+  cellsSnapshot = Array.isArray(data.cells) ? data.cells : [];
+
+  if (!silent) {
+    cellsSnapshot.forEach(c => {
+      const p = prev.get(c.id);
+      if (c.connected && (!p || !p.connected)) {
+        showGeneralPopup(t('cells.popup_connected', cellShortId(c.id), c.line), '#2e7d32', 3000);
+      } else if (!c.connected && p && p.connected) {
+        showGeneralPopup(t('cells.popup_lost', cellShortId(c.id), c.line), '#c62828', 5000);
+      }
+    });
+  }
+
+  updateCellBadges();
+  updateCellsSummary();
+  if (document.getElementById('cellsOverlay')?.style.display === 'flex') renderCellsList();
+}
+
+// Badge accanto al numero di ogni linea (card Checkpoints).
+function updateCellBadges() {
+  for (let n = 1; n <= 4; n++) {
+    const badge = document.getElementById(`cell-badge-${n}`);
+    if (!badge) continue;
+    const cells = cellsSnapshot.filter(c => Number(c.line) === n);
+    const live = cells.filter(c => c.connected);
+    badge.className = 'cell-badge';
+    badge.title = '';
+    if (cells.length === 0) { badge.innerHTML = ''; continue; }
+
+    if (live.length > 1) {
+      badge.innerHTML = cellWarnSvg();
+      badge.classList.add('conflict');
+      badge.title = t('cells.state_conflict') + ': ' + live.map(c => cellShortId(c.id)).join(', ');
+    } else if (live.length === 1) {
+      const c = live[0];
+      badge.innerHTML = cellSignalSvg(cellSignalLevel(c.rssi));
+      badge.title = cellShortId(c.id) + ' · ' + (c.rssi ? c.rssi + ' dBm' : '—');
+    } else {
+      const c = cells[0];
+      badge.innerHTML = cellSignalSvg(0, true);
+      badge.classList.add('lost');
+      badge.title = cellShortId(c.id) + ' · ' + t('cells.state_lost');
+    }
+  }
+}
+
+// Voce "📶: connesse/note" nella card Status.
+function updateCellsSummary() {
+  const el = document.getElementById('cellsStatus');
+  if (!el) return;
+  const total = cellsSnapshot.length;
+  const live = cellsSnapshot.filter(c => c.connected).length;
+  const lost = cellsSnapshot.some(c => !c.connected);
+  const conflict = cellsSnapshot.some(c => c.connected && c.conflict);
+  const bad = lost || conflict;
+  el.textContent = total ? `${live}/${total}` : '—';
+  el.style.color = total === 0 ? '' : (bad ? '#c62828' : '#2e7d32');
+
+  // Icona: livello del collegamento PEGGIORE tra le celle connesse; barra rossa
+  // se almeno una è persa, triangolo se due celle sono sulla stessa linea.
+  const icon = document.getElementById('cellsIcon');
+  if (icon) {
+    if (conflict) {
+      icon.innerHTML = cellWarnSvg();
+    } else {
+      const levels = cellsSnapshot.filter(c => c.connected).map(c => cellSignalLevel(c.rssi)).filter(l => l > 0);
+      icon.innerHTML = cellSignalSvg(levels.length ? Math.min(...levels) : 0, lost);
+    }
+  }
+}
+
+function fmtCellAge(ms) {
+  if (ms === undefined || ms === null || ms < 0) return '—';
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return s + ' s';
+  return Math.floor(s / 60) + ' min';
+}
+
+function renderCellsList() {
+  const box = document.getElementById('cellsList');
+  if (!box) return;
+  box.textContent = '';
+  if (cellsSnapshot.length === 0) {
+    const p = document.createElement('p');
+    p.textContent = t('cells.none');
+    p.style.textAlign = 'center';
+    box.appendChild(p);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'cells-table';
+  const head = table.createTHead().insertRow();
+  ['cells.col_line', 'cells.col_cell', 'cells.col_state', 'cells.col_signal',
+   'cells.col_rtt', 'cells.col_fw', 'cells.col_ip', 'cells.col_last'].forEach(k => {
+    const th = document.createElement('th');
+    th.textContent = t(k);
+    head.appendChild(th);
+  });
+
+  const body = table.createTBody();
+  [...cellsSnapshot].sort((a, b) => a.line - b.line).forEach(c => {
+    const row = body.insertRow();
+    const state = !c.connected ? 'lost' : (c.conflict ? 'conflict' : 'ok');
+    row.className = 'cell-row-' + state;
+    const cols = [
+      c.line,
+      cellShortId(c.id),
+      cellStateText(c) + (c.connected ? '' : ' (' + fmtCellAge(c.ageMs) + ')'),
+      null,   // segnale: icona a barre + dBm, costruita sotto
+      c.rtt ? (c.rtt / 1000).toFixed(1) + ' ms' : '—',
+      c.fw || '—',
+      c.ip || '—',
+      fmtCellAge(c.lastEventAgeMs) + (c.events ? ' (' + c.events + ')' : '')
+    ];
+    cols.forEach(v => {
+      const td = row.insertCell();
+      if (v !== null) { td.textContent = v; return; }
+      td.className = 'cell-signal-cell';
+      td.innerHTML = cellSignalSvg(c.connected ? cellSignalLevel(c.rssi) : 0, !c.connected);
+      td.appendChild(document.createTextNode(c.rssi ? ' ' + c.rssi + ' dBm' : ' —'));
+    });
+  });
+  box.appendChild(table);
+}
+
+function openCellsOverlay() {
+  renderCellsList();
+  document.getElementById('cellsOverlay').style.display = 'flex';
+}
+
+function closeCellsOverlay() {
+  document.getElementById('cellsOverlay').style.display = 'none';
+}
 
 // Tiene sempre visibile l'ultimo concorrente transitato (centrato: mostra
 // fino a ~3 righe prima/dopo, se esistono — meno agli estremi della tabella).
@@ -1778,6 +2137,10 @@ function handleMessage(data) {
 
     case TYPE_LINE_UPDATED:
       applyLineUpdate(data);
+      break;
+
+    case TYPE_CELLS_UPDATED:
+      applyCellsUpdate(data);
       break;
 
     case TYPE_WIFI_ERROR:
@@ -1893,6 +2256,7 @@ function updateClockFromData(data) {
 
 
     const syncStatus = data.sy; 
+    lastSyncStatus = syncStatus;
     const wifiStatus = data.w; // 0=disconnected, 1=connecting, 2=connected
 
     //handlePowerUpdate(data);
@@ -2026,12 +2390,11 @@ function clearEventTableRows() {
   const netTbody = document.querySelector("#net-times-table tbody");
   if (netTbody) netTbody.innerHTML = "";
 
-  // Reset sessione = reset anche della lista concorrenti attesi: il roster
-  // (nomi/numeri) e lo stato "arrivato" sono legati alla sessione appena
-  // cancellata, quindi vanno ricaricati da capo per la prossima.
-  athleteRegistry = [];
+  // L'elenco dei competitor resta: si azzera solo lo stato "arrivato", legato
+  // ai passaggi della sessione appena cancellata, così tornano tutti tra gli Attesi.
+  athleteRegistry.forEach(a => { delete a.arrived; });
+  localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
   assignedCompetitorSet.clear();
-  localStorage.removeItem(ATHLETES_KEY);
   localStorage.removeItem("chronofit_assigned");
   renderCompQuickList();
 }
@@ -2206,8 +2569,8 @@ function addEventToTable(rowIndex, lineNumber, competitor, hour, minute, seconds
     <td class="col-surname">${getAthleteSurname(competitor)}</td>
     <td class="timestamp">${timestamp}</td>
     <td class="race-time">—</td>
-    <td class="delta-time"></td>
     <td class="elapsed-time"></td>
+    <td class="delta-time"></td>
     <td><button class="penality penality-btn">${penality}</button></td>
     <td><button class="cancel-btn${Number(cancelled) ? ' active' : ''}" title="Annulla">🚫</button></td>
     <td><button class="send-btn">➡</button></td>
@@ -2265,6 +2628,7 @@ function formatDelta(ms, signed) {
       ? String(Math.floor(millis / 10)).padStart(2, "0")
       : String(millis).padStart(3, "0");
 
+  if (timeFormat === 'seconds') return sign + secondsText(hours, minutes, seconds, msStr);
   return (
     sign +
     String(hours).padStart(2, "0") + ":" +
@@ -2682,6 +3046,10 @@ function handleInputUpdate(e) {
   const lineNumber = e.target.dataset.line;
   if (!lineNumber) return;
 
+  if (e.target.classList.contains('comp-input') && Number(e.target.value)) {
+    rearmElapsedIfNeeded();
+  }
+
   const enableBtn = document.querySelector(`.line-enable-btn[data-line="${lineNumber}"]`);
   const data = {
     l:  Number(lineNumber),
@@ -2838,6 +3206,45 @@ function syncFullscreenToggleUI() {
 document.addEventListener('fullscreenchange', syncFullscreenToggleUI);
 document.addEventListener('webkitfullscreenchange', syncFullscreenToggleUI);
 
+// ── Pulsante schermo intero nella navbar ─────────────────────────────────────
+// Serve quando si esce dal fullscreen (Esc, gesto del telefono, ecc.): un tocco lo richiede di
+// nuovo. Dentro il fullscreen lo stesso pulsante lo chiude. La scelta aggiorna la stessa
+// preferenza dell'interruttore nelle impostazioni.
+const FS_ICON_ENTER = '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+const FS_ICON_EXIT  = '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>';
+
+function updateFullscreenNavBtn() {
+  const btn = document.getElementById('fullscreen-nav-btn');
+  const icon = document.getElementById('fullscreen-nav-icon');
+  if (!btn || !icon) return;
+  const el = document.documentElement;
+  if (!(el.requestFullscreen || el.webkitRequestFullscreen)) {   // es. iPhone: nessuna API fullscreen
+    btn.style.display = 'none';
+    return;
+  }
+  const on = isFullscreenActive();
+  icon.innerHTML = on ? FS_ICON_EXIT : FS_ICON_ENTER;
+  btn.classList.toggle('is-fullscreen', on);
+  const label = t('main.fullscreen');
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+}
+
+function toggleFullscreenFromNavbar() {
+  if (isFullscreenActive()) {
+    localStorage.setItem(FULLSCREEN_PREF_KEY, '0');
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  } else {
+    localStorage.setItem(FULLSCREEN_PREF_KEY, '1');
+    requestAppFullscreen();
+  }
+}
+
+document.addEventListener('fullscreenchange', updateFullscreenNavBtn);
+document.addEventListener('webkitfullscreenchange', updateFullscreenNavBtn);
+updateFullscreenNavBtn();
+
 function toggleFullscreen(checkbox) {
   localStorage.setItem(FULLSCREEN_PREF_KEY, checkbox.checked ? '1' : '0');
   if (checkbox.checked) {
@@ -2962,8 +3369,16 @@ document.addEventListener('keydown', (e) => {
   el.blur();
 });
 
-window.addEventListener("load", () => {
+// Avvio dell'interfaccia (dissolvenza dello splash e menu iniziale). Prima partiva solo
+// all'evento "load", che scatta quando TUTTE le risorse (immagini comprese) sono finite:
+// se il dispositivo ne lascia una in sospeso (succede a cache vuota, con molte richieste
+// insieme) restava lo splash "Loading session…" per sempre. Ora parte comunque entro 4 s.
+let appReadyDone = false;
+function onAppReady() {
+  if (appReadyDone) return;
+  appReadyDone = true;
   const splash = document.getElementById("splash");
+  if (!splash) return;
 
   // Inizia la dissolvenza dopo 1 secondo (o subito)
   setTimeout(() => {
@@ -2990,7 +3405,10 @@ window.addEventListener("load", () => {
     document.addEventListener('click', onFirstInteract, { once: true });
     document.addEventListener('touchstart', onFirstInteract, { once: true });
   }, 1000 + 1000 + 500); // 1s attesa + 3s dissolvenza
-});
+}
+
+window.addEventListener("load", onAppReady);
+setTimeout(onAppReady, 4000);
 
 // Apri popup premendo sull'orario
 document.getElementById("time").addEventListener("click", () => {
@@ -3552,12 +3970,14 @@ function applyCompetitorSplits(tableId = 'event-table') {
           <td class="col-index">—</td>
           <td class="col-line">L${line1}→L${line2}</td>
           <td class="col-competitor">${Number(comp) > 0 ? comp : ''}</td>
+          <td class="col-test"></td>
+          <td class="col-trigger"></td>
           <td class="col-name">${getAthleteName(comp)}</td>
           <td class="col-surname">${getAthleteSurname(comp)}</td>
           <td class="timestamp">—</td>
           <td class="race-time diff-time">${formatTime(dH, dM, dS, dMs, splitsPrecision)}</td>
-          <td class="delta-time">—</td>
           <td class="elapsed-time">—</td>
+          <td class="delta-time">—</td>
           <td></td><td></td><td></td>
         `;
 
@@ -3667,6 +4087,12 @@ document.getElementById("toggle-splits")
 
 document.getElementById("toggle-keep-comp-focus")
 .addEventListener("change", () => saveViewPrefs());
+document.getElementById("toggle-elapsed-rearm-typed")
+.addEventListener("change", () => saveViewPrefs());
+document.getElementById("toggle-elapsed-rearm-list")
+.addEventListener("change", () => saveViewPrefs());
+document.getElementById("elapsed-start-line")
+.addEventListener("change", e => saveElapsedStartLine(e.target.value));
 
 document.getElementById("toggle-name")
 .addEventListener("change", e => { toggleNameColumn(e.target.checked); saveViewPrefs(); });
@@ -3881,6 +4307,7 @@ function formatTime(h, m, s, ms, precision = timePrecision) {
     : precision === 2
       ? String(Math.floor(msT / 10)).padStart(2, "0")
       : String(msT).padStart(3, "0");
+  if (timeFormat === 'seconds') return secondsText(h, m, s, msStr);
   return (
     String(h).padStart(2, "0") + ":" +
     String(m).padStart(2, "0") + ":" +
@@ -4056,6 +4483,125 @@ function connectWiFi() {
   closeGlobalSettings();
 }
 
+// Copia negli appunti. navigator.clipboard richiede un contesto sicuro (https): sul
+// device si accede in http://192.168.x.x, quindi serve il ripiego con execCommand.
+async function copyTextToClipboard(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* ripiego sotto */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed; top:-1000px; opacity:0; user-select:text; -webkit-user-select:text;";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Link http://<ip>/ del device sulla rete WiFi station (si apre solo dai dispositivi
+// collegati a quella stessa rete, non da chi è sull'AP del device).
+function staLinkUrl() {
+  const ip = document.getElementById("sta-ip-value").dataset.ip || "";
+  return ip ? "http://" + ip + "/" : "";
+}
+
+let _staLinkCopyTimer = null;
+async function copyStaLink() {
+  const url = staLinkUrl();
+  if (!url) return;
+  const btn = document.getElementById("staLinkCopyBtn");
+  const ok = await copyTextToClipboard(url);
+  btn.textContent = ok ? "✔ " + t('wifi.link_copied') : t('wifi.copy_failed');
+  clearTimeout(_staLinkCopyTimer);
+  _staLinkCopyTimer = setTimeout(() => { btn.textContent = t('wifi.copy_link'); }, 1500);
+}
+
+function openStaLink() {
+  const url = staLinkUrl();
+  if (url) window.open(url, "_blank", "noopener");
+}
+
+let _staIpCopyTimer = null;
+async function copyStaIp() {
+  const el = document.getElementById("sta-ip-value");
+  const ip = el.dataset.ip || "";
+  if (!ip) return;
+  const ok = await copyTextToClipboard(ip);
+  el.textContent = ok ? "✔ " + t('wifi.ip_copied') : t('wifi.copy_failed');
+  clearTimeout(_staIpCopyTimer);
+  _staIpCopyTimer = setTimeout(() => { el.textContent = ip; }, 1500);
+}
+
+// Scansione delle reti WiFi vicine (il device risponde a /wifiScan finché scanning=true)
+async function scanWifiNetworks() {
+  const btn    = document.getElementById("wifiScanBtn");
+  const list   = document.getElementById("wifi-scan-list");
+  const row    = document.getElementById("wifi-scan-row");
+  const status = document.getElementById("wifi-status-field");
+  btn.disabled = true;
+  btn.textContent = t('wifi.scanning');
+  status.innerText = "";
+  try {
+    let result = null;
+    for (let i = 0; i < 20 && !result; i++) {
+      try {
+        const res = await fetch('/wifiScan', { cache: 'no-store' });
+        const d = await res.json();
+        if (!d.scanning) result = d;
+      } catch (e) {
+        // durante la scansione l'AP può sparire un istante: si riprova
+      }
+      if (!result) await new Promise(r => setTimeout(r, 800));
+    }
+    if (!result) {
+      status.innerText = t('wifi.scan_failed');
+      status.style.color = "#c0392b";
+      return;
+    }
+    // una riga per SSID (il più forte), senza reti nascoste
+    const best = new Map();
+    (result.networks || []).forEach(n => {
+      if (n.ssid && (!best.has(n.ssid) || n.rssi > best.get(n.ssid).rssi)) best.set(n.ssid, n);
+    });
+    const nets = [...best.values()].sort((a, b) => b.rssi - a.rssi);
+    list.innerHTML = "";
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = nets.length ? t('wifi.scan_pick') : t('wifi.scan_none');
+    list.appendChild(first);
+    nets.forEach(n => {
+      const o = document.createElement("option");
+      o.value = n.ssid;
+      o.textContent = (n.secure ? "🔒 " : "") + n.ssid + " (" + n.rssi + " dBm, ch " + n.channel + ")";
+      list.appendChild(o);
+    });
+    row.style.display = "";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = t('wifi.scan');
+  }
+}
+
+function pickWifiNetwork(ssid) {
+  if (!ssid) return;
+  const ssidInput = document.getElementById("wifi-ssid");
+  if (ssidInput.value !== ssid) {
+    ssidInput.value = ssid;
+    document.getElementById("wifi-password").value = "";
+  }
+  document.getElementById("wifi-password").focus();
+}
+
 // Aggiorna il tab WiFi con SSID, password e IP corrente (se connesso come STA)
 function refreshWifiTab() {
   fetch('/wifiCredential')
@@ -4070,6 +4616,7 @@ function refreshWifiTab() {
       const ipVal = document.getElementById("sta-ip-value");
       if (data.staConnected && data.staIp && data.staIp !== "0.0.0.0") {
         ipVal.textContent = data.staIp;
+        ipVal.dataset.ip = data.staIp;
         ipRow.style.display = "block";
       } else {
         ipRow.style.display = "none";
@@ -4889,7 +5436,7 @@ function assignAthlete() {
   const cEl = document.getElementById(`c${n}`);
   if (cEl) {
     cEl.value = val;
-    cEl.dispatchEvent(new Event("change")); // triggers handleInputUpdate → server save
+    withCompetitorSource('list', () => cEl.dispatchEvent(new Event("change"))); // triggers handleInputUpdate → server save
   }
 
   assignedCompetitorSet.add(Number(val));
@@ -4980,6 +5527,25 @@ function loadAthleteRegistry() {
     status.style.color = "red";
     status.textContent = `❌ ${e.message}`;
   }
+}
+
+// ── Template CSV d'esempio per il caricamento dei competitors ──
+// Colonne: competitor (obbligatoria) + name, surname e quante altre si vuole (team, category…).
+function downloadAthleteTemplate() {
+  const rows = [
+    "competitor;name;surname;team;category",
+    "1;Mario;Rossi;ASD Firenze;Senior",
+    "2;Giulia;Bianchi;ASD Firenze;Junior",
+    "3;Luca;Verdi;Polisportiva Prato;Senior"
+  ];
+  const blob = new Blob(["\uFEFF" + rows.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "competitors_template.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 // ── CSV parser ──

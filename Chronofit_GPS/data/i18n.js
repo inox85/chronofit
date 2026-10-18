@@ -27,6 +27,7 @@ const TRANSLATIONS = {
     'btn.load':             'Load',
     'btn.clear':            'Clear',
     'btn.download':         '⬇ Download',
+    'btn.open_manual':      '📖 Open',
     'btn.start':            'Start',
     'btn.stop':             'Stop',
     'btn.reset':            'Reset',
@@ -41,6 +42,7 @@ const TRANSLATIONS = {
     'btn.save_broker':      'Save broker',
     'btn.reset_assigned':   'Reset assigned',
     'btn.open_file':        '📂 Open file',
+    'btn.csv_template':     '⬇ CSV template',
     'btn.back':             '← Back',
     'btn.save_print':       '🖨 Save & print',
     'btn.save_close':       'Save & close',
@@ -54,7 +56,7 @@ const TRANSLATIONS = {
 
     // ── Exit discipline confirm ───────────────────────────────────────────────
     'exit_discipline.title':   'Exit discipline?',
-    'exit_discipline.message': 'This will permanently clear all recorded times for this session. Continue?',
+    'exit_discipline.message': 'Choose another discipline? Recorded times and competitors are kept.',
 
     // ── Clear session ─────────────────────────────────────────────────────────
     'clear.title':   'Confirm',
@@ -143,6 +145,10 @@ const TRANSLATIONS = {
     'table.show_cancel':     'Show cancel button',
     'table.show_send':       'Show send button',
     'settings.keep_comp_focus': 'Keep competitor input active after detection',
+    'settings.elapsed_start_line': 'Start line (elapsed time)',
+    'settings.elapsed_start_any':  'Any line',
+    'settings.elapsed_rearm_typed': 'Reset the elapsed time with a typed competitor',
+    'settings.elapsed_rearm_list':  'Reset the elapsed time with a competitor chosen from the list',
     'settings.propagate_competitor': 'Propagate competitor number to managed, unassigned lines',
     'settings.timekeepers_label': 'Timekeepers (name & phone) — printed on the receipt',
     'settings.timekeepers_ph': 'One per line, e.g. Mario Rossi 333-1234567',
@@ -166,6 +172,7 @@ const TRANSLATIONS = {
 
     // ── Card titles ───────────────────────────────────────────────────────────
     'card.competitors': 'Comp.',
+    'athlete.edit_competitors': 'Add or edit competitors',
     'card.time':        'Time',
     'card.checkpoints': 'Checkpoints',
     'card.status':      'Status',
@@ -174,6 +181,23 @@ const TRANSLATIONS = {
     'card.finish':      'Finish',
     'card.net_times':   'Net times',
     'card.results':     'Results',
+
+    // ── Wireless photocells (cells) ────────────────────────────────────────────
+    'cells.title':           'Wireless photocells',
+    'cells.none':            'No cell has connected yet',
+    'cells.col_line':        'Line',
+    'cells.col_cell':        'Cell',
+    'cells.col_state':       'State',
+    'cells.col_signal':      'Signal',
+    'cells.col_rtt':         'RTT',
+    'cells.col_fw':          'FW',
+    'cells.col_ip':          'IP',
+    'cells.col_last':        'Last pass',
+    'cells.state_ok':        'Connected',
+    'cells.state_lost':      'Lost',
+    'cells.state_conflict':  'Line conflict',
+    'cells.popup_connected': 'Cell {0} connected (line {1})',
+    'cells.popup_lost':      'Cell {0} lost (line {1})',
 
     // ── Net times card ─────────────────────────────────────────────────────────
     'net.start_line':  'Start line',
@@ -202,6 +226,7 @@ const TRANSLATIONS = {
     'table.show_test':     'Show test column',
     'table.show_trigger':       'Show detection column',
     'table.time_precision':  'Time precision decimals',
+    'table.time_format': 'Time format',
     'table.show_line_1':     'Show line 1',
     'table.show_line_2':     'Show line 2',
     'table.show_line_3':     'Show line 3',
@@ -209,6 +234,7 @@ const TRANSLATIONS = {
     'table.show_sync_test':  'Show sync test rows',
     'table.show_out_of_sensor': 'Show out-of-sensor rows',
     'table.show_disabled':   'Show disabled line rows',
+    'view.use_console':      'Use console settings',
     'table.splits_mode':     'Competitor splits mode',
 
     // ── WiFi overlay ──────────────────────────────────────────────────────────
@@ -218,6 +244,17 @@ const TRANSLATIONS = {
     'wifi.ssid_ph':        'Enter Wi-Fi SSID',
     'wifi.pass_ph':        'Enter Wi-Fi password',
     'wifi.conn_error':     '❌ Connection error',
+    'wifi.scan':           '🔍 Scan networks',
+    'wifi.scanning':       'Scanning…',
+    'wifi.scan_pick':      'Select a network…',
+    'wifi.scan_none':      'No networks found',
+    'wifi.scan_failed':    '❌ Scan failed, try again',
+    'wifi.ip_copied':      'Copied!',
+    'wifi.copy_failed':    'Copy failed',
+    'wifi.copy_link':      '📋 Copy link',
+    'wifi.open_link':      '↗ Open',
+    'wifi.link_copied':    'Link copied!',
+    'wifi.copy_ip_hint':   'Tap the address to copy it',
 
     // ── MQTT overlay ──────────────────────────────────────────────────────────
     'mqtt.title':           'Messages settings',
@@ -258,6 +295,7 @@ const TRANSLATIONS = {
     // ── About overlay ─────────────────────────────────────────────────────────
     'about.firmware': '🔧 Firmware',
     'about.manual':   '📄 Manual',
+    'about.api':      '🔌 API manual',
     'about.wifi_fix': '🖥️ WiFi fix tool',
 
     // ── Main UI ───────────────────────────────────────────────────────────────
@@ -269,6 +307,7 @@ const TRANSLATIONS = {
     'main.print':            'Print on paper',
     'main.buzzer':           'Buzzer enable',
     'main.fullscreen':       'Fullscreen',
+    'main.open_view':      'Open the view in a new window',
     'main.auto_cancel':      'Auto-cancel close triggers',
     'main.auto_cancel_threshold': 'Threshold (ms)',
     'main.error_send':       'Error sending data',
@@ -337,6 +376,7 @@ const TRANSLATIONS = {
     'btn.load':             'Carica',
     'btn.clear':            'Cancella',
     'btn.download':         '⬇ Scarica',
+    'btn.open_manual':      '📖 Apri',
     'btn.start':            'Start',
     'btn.stop':             'Stop',
     'btn.reset':            'Reset',
@@ -351,6 +391,7 @@ const TRANSLATIONS = {
     'btn.save_broker':      'Salva broker',
     'btn.reset_assigned':   'Reset assegnati',
     'btn.open_file':        '📂 Apri file',
+    'btn.csv_template':     '⬇ Template CSV',
     'btn.back':             '← Indietro',
     'btn.save_print':       '🖨 Salva e stampa',
     'btn.save_close':       'Salva e chiudi',
@@ -364,7 +405,7 @@ const TRANSLATIONS = {
 
     // ── Exit discipline confirm ───────────────────────────────────────────────
     'exit_discipline.title':   'Uscire dalla disciplina?',
-    'exit_discipline.message': 'Questa operazione cancellerà definitivamente tutti i tempi registrati in questa sessione. Continuare?',
+    'exit_discipline.message': 'Scegliere un\'altra disciplina? I tempi registrati e i competitor restano.',
 
     // ── Clear session ─────────────────────────────────────────────────────────
     'clear.title':   'Conferma',
@@ -453,6 +494,10 @@ const TRANSLATIONS = {
     'table.show_cancel':     'Mostra pulsante annulla',
     'table.show_send':       'Mostra pulsante invia',
     'settings.keep_comp_focus': 'Mantieni input competitor attivo dopo rilevazione',
+    'settings.elapsed_start_line': 'Linea di start (tempo trascorso)',
+    'settings.elapsed_start_any':  'Qualsiasi linea',
+    'settings.elapsed_rearm_typed': 'Azzera il tempo trascorso con un competitor digitato',
+    'settings.elapsed_rearm_list':  'Azzera il tempo trascorso con un competitor scelto dall\'elenco',
     'settings.propagate_competitor': 'Propaga il numero competitor alle linee gestite non assegnate',
     'settings.timekeepers_label': 'Cronometristi (nome e telefono) — stampati sullo scontrino',
     'settings.timekeepers_ph': 'Uno per riga, es. Mario Rossi 333-1234567',
@@ -476,6 +521,7 @@ const TRANSLATIONS = {
 
     // ── Card titles ───────────────────────────────────────────────────────────
     'card.competitors': 'Attesi',
+    'athlete.edit_competitors': 'Aggiungi o modifica competitor',
     'card.time':        'Orario',
     'card.checkpoints': 'Gestione transiti',
     'card.status':      'Utilità',
@@ -484,6 +530,23 @@ const TRANSLATIONS = {
     'card.finish':      'Arrivi',
     'card.net_times':   'Tempi netti',
     'card.results':     'Classifica',
+
+    // ── Fotocellule wireless (cell) ────────────────────────────────────────────
+    'cells.title':           'Fotocellule wireless',
+    'cells.none':            'Nessuna cella si è ancora collegata',
+    'cells.col_line':        'Linea',
+    'cells.col_cell':        'Cella',
+    'cells.col_state':       'Stato',
+    'cells.col_signal':      'Segnale',
+    'cells.col_rtt':         'RTT',
+    'cells.col_fw':          'FW',
+    'cells.col_ip':          'IP',
+    'cells.col_last':        'Ultimo passaggio',
+    'cells.state_ok':        'Connessa',
+    'cells.state_lost':      'Persa',
+    'cells.state_conflict':  'Conflitto di linea',
+    'cells.popup_connected': 'Cella {0} connessa (linea {1})',
+    'cells.popup_lost':      'Cella {0} persa (linea {1})',
 
     // ── Net times card ─────────────────────────────────────────────────────────
     'net.start_line':  'Linea partenza',
@@ -512,6 +575,7 @@ const TRANSLATIONS = {
     'table.show_test':     'Mostra colonna prova',
     'table.show_trigger':       'Mostra colonna rilevamento',
     'table.time_precision':  'Decimali precisione tempo',
+    'table.time_format': 'Formato tempi',
     'table.show_line_1':     'Mostra linea 1',
     'table.show_line_2':     'Mostra linea 2',
     'table.show_line_3':     'Mostra linea 3',
@@ -519,6 +583,7 @@ const TRANSLATIONS = {
     'table.show_sync_test':  'Mostra righe test sync',
     'table.show_out_of_sensor': 'Mostra righe fuori pressostato',
     'table.show_disabled':   'Mostra righe linee disabilitate',
+    'view.use_console':      'Usa impostazioni della console',
     'table.splits_mode':     'Modalità split competitore',
 
     // ── WiFi overlay ──────────────────────────────────────────────────────────
@@ -528,6 +593,17 @@ const TRANSLATIONS = {
     'wifi.ssid_ph':        'Inserisci SSID Wi-Fi',
     'wifi.pass_ph':        'Inserisci password Wi-Fi',
     'wifi.conn_error':     '❌ Errore di connessione',
+    'wifi.scan':           '🔍 Cerca reti',
+    'wifi.scanning':       'Ricerca in corso…',
+    'wifi.scan_pick':      'Seleziona una rete…',
+    'wifi.scan_none':      'Nessuna rete trovata',
+    'wifi.scan_failed':    '❌ Scansione non riuscita, riprova',
+    'wifi.ip_copied':      'Copiato!',
+    'wifi.copy_failed':    'Copia non riuscita',
+    'wifi.copy_link':      '📋 Copia link',
+    'wifi.open_link':      '↗ Apri',
+    'wifi.link_copied':    'Link copiato!',
+    'wifi.copy_ip_hint':   'Tocca l\'indirizzo per copiarlo',
 
     // ── MQTT overlay ──────────────────────────────────────────────────────────
     'mqtt.title':           'Impostazioni messaggi',
@@ -568,6 +644,7 @@ const TRANSLATIONS = {
     // ── About overlay ─────────────────────────────────────────────────────────
     'about.firmware': '🔧 Firmware',
     'about.manual':   '📄 Manuale',
+    'about.api':      '🔌 Manuale API',
     'about.wifi_fix': '🖥️ Strumento fix WiFi',
 
     // ── Main UI ───────────────────────────────────────────────────────────────
@@ -579,6 +656,7 @@ const TRANSLATIONS = {
     'main.print':            'Stampa su carta',
     'main.buzzer':           'Abilita buzzer',
     'main.fullscreen':       'Schermo intero',
+    'main.open_view':      'Apri la vista in una nuova finestra',
     'main.auto_cancel':      'Auto-annulla battute ravvicinate',
     'main.auto_cancel_threshold': 'Soglia (ms)',
     'main.error_send':       'Errore invio dati',
@@ -659,6 +737,11 @@ function applyTranslations() {
   });
   document.querySelectorAll('[data-i18n-html]').forEach(el => {
     el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const txt = t(el.dataset.i18nTitle);
+    el.title = txt;
+    el.setAttribute('aria-label', txt);
   });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPh);

@@ -26,6 +26,7 @@
 #include "gps_custom.h"
 #include <SoftwareSerial.h>
 #include "mqtt.h"
+#include "cells.h"
 #include "esp_task_wdt.h"
 
 SoftwareSerial gpsCmd(-1, 13);
@@ -148,6 +149,7 @@ void initGPS(){
 }
 
 void setup() {
+  delay(1000);
   // setup()
   esp_task_wdt_config_t wdt_config = {
       .timeout_ms = 30000,  // 30 secondi
@@ -214,6 +216,8 @@ void setup() {
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
+  elapsedStartLine = readIntFromSettings("el_start", 0);
+  if (elapsedStartLine < 0 || elapsedStartLine > 4) elapsedStartLine = 0;
   int rtcAging = readIntFromSettings("rtcAging", 0);
   buzzerActive = readIntFromSettings("buzzActive", 0);
 
@@ -342,6 +346,7 @@ void loop() {
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
     ws.cleanupClients();
+    if (cellsPoll()) broadcastCells();   // fotocellule wireless: connessa/persa/linea/segnale
 
     #ifdef VER2
       if(checkConnectedClient()){
@@ -487,7 +492,8 @@ void handleSensorTrigger(){
           PreciseTime pt = getPreciseTime();
           printSyncStart(MODE_SYNC_LINE, pt.hh, pt.mm, pt.ss, pt.ms);
         }
-      }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START)
+      }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START &&
+               lineEnabled[i] && (elapsedStartLine == 0 || elapsedStartLine == i + 1))   // solo la linea di start, se abilitata
       {
         lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;
