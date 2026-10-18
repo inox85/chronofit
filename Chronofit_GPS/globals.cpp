@@ -68,11 +68,13 @@ unsigned long delays[6] = {0, 0, 0, 0, 0, 0};
 int lineEnabled[6] = {1, 1, 1, 1, 1, 1};
 // Linea (1-4) il cui primo passaggio fa partire il tempo trascorso; 0 = qualsiasi (NVS el_start)
 int elapsedStartLine = 0;
+int lineDisableAfterPass = 0;
 volatile unsigned long lastSensorsSignal[6] = {0, 0, 0, 0, 0, 0};
 int sensorsPins[6] = { SENSOR_IN1, SENSOR_IN2, SENSOR_IN3, SENSOR_IN4, -1, -1 };
 volatile bool lastSensorState[6] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
 volatile bool sensorTriggered[6] = {false, false, false, false, false, false};
 volatile uint64_t sensorTime[6] = {0, 0, 0, 0, 0, 0};
+volatile bool sensorManual[6] = {false, false, false, false, false, false};
 
 volatile int syncTestRequested = 0;
 

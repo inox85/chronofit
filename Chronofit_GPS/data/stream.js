@@ -985,10 +985,11 @@ function handleMessage(data) {
 
 // ── Clock ─────────────────────────────────────────────────────
 function updateClock(data) {
-  const h = String(data.h ?? 0).padStart(2, "0");
-  const m = String(data.m ?? 0).padStart(2, "0");
-  const s = String(data.s ?? 0).padStart(2, "0");
-  document.getElementById("stream-clock").textContent = `${h}:${m}:${s}.000`;
+  const h = data.h ?? 0, m = data.m ?? 0, s = data.s ?? 0;
+  // arriva una volta al secondo (millisecondi sempre 000); segue il "Formato tempi"
+  document.getElementById("stream-clock").textContent = timeFormat === 'seconds'
+    ? secondsText(h, m, s, '000')
+    : `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.000`;
 }
 
 // ── General popup ─────────────────────────────────────────────

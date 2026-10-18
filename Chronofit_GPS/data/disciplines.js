@@ -32,18 +32,20 @@
 //   syncMode       0=manual | 1=line-closure | 2=GPS | 3=elapsed(no sync)
 //   bgColor        hex — GUI background color for this discipline (light tint,
 //                  in armonia con --primary-color/--card-border-color di style.css)
-//   propagateCompetitor  bool — default del toggle "propaga competitor" nel popup
-//                  impostazioni linee: quando true, assegnare un competitor a una
-//                  linea lo riporta automaticamente su altre linee (vedi
-//                  propagationPairs sotto per la disciplina attiva)
+//   propagateCompetitor  "none" | "all" | "unassigned" | "always" — default della tendina
+//                  "Assegnazione numero competitor" nel popup impostazioni linee:
+//                  "none" assegna il competitor solo alla linea su cui è inserito,
+//                  "all" lo riporta sulle altre linee gestite (device non vuoto)
+//                  sovrascrivendo il valore precedente, "unassigned" solo su
+//                  quelle ancora prive di competitor (0), "always" come "all" ma
+//                  un tocco sulla lista competitor assegna il numero a tutte le
+//                  linee gestite anche senza un campo selezionato. I vecchi valori bool
+//                  salvati valgono true = "unassigned", false = "none".
 //   propagationPairs    { sourceLine: targetLine } — se definito, la propagazione
-//                  (quando attiva) riporta il competitor SOLO sulla linea indicata
-//                  per quella linea sorgente, sovrascrivendo sempre il valore
-//                  precedente (es. Enduro: { "1": 2, "3": 4 }, la linea di
-//                  ingresso di ogni coppia comanda sempre la sua di uscita).
-//                  Se omesso: comportamento storico, propaga su TUTTE le altre
-//                  linee gestite (device non vuoto) ma ancora prive di
-//                  competitor (0), senza sovrascrivere (es. Regolarità).
+//                  riporta il competitor SOLO sulla linea indicata per quella
+//                  linea sorgente (es. Enduro: { "1": 2, "3": 4 }, la linea di
+//                  ingresso di ogni coppia comanda la sua di uscita). Se omesso,
+//                  le linee di destinazione sono tutte le altre.
 //   tableAcquireCompetitor  bool — default del toggle "Acquire from arrivals table"
 //                  nel registro competitori (tab Auto)
 //   showSecondArrivalsCard  bool — mostra la seconda card Arrivi (linee, ordinamento
@@ -77,7 +79,7 @@ const DISCIPLINES = [
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: true,   syncMode: 0,
       bgColor: "#f5f5f5",
-      propagateCompetitor: false,
+      propagateCompetitor: "none",
       tableAcquireCompetitor: false,
       showSecondArrivalsCard: false
     }
@@ -98,7 +100,7 @@ const DISCIPLINES = [
       splitsMode: false,    timePrecision: 3,  showDisabled: false,
       showCompList: true,   syncMode: 1,
       bgColor: "#f2e3c4",
-      propagateCompetitor: false,
+      propagateCompetitor: "none",
       tableAcquireCompetitor: false,
       showSecondArrivalsCard: false
     }
@@ -119,7 +121,7 @@ const DISCIPLINES = [
       splitsMode: false,   timePrecision: 3,  showDisabled: false,
       showCompList: true,  syncMode: 2,
       bgColor: "#d9f0d9",
-      propagateCompetitor: true,
+      propagateCompetitor: "all",
       propagationPairs: { "1": 2, "3": 4 },
       tableAcquireCompetitor: true,
       showSecondArrivalsCard: true,
@@ -145,7 +147,7 @@ const DISCIPLINES = [
       splitsMode: true,     timePrecision: 2,  showDisabled: false,
       showCompList: false,  syncMode: 2,
       bgColor: "#d7ebf8",
-      propagateCompetitor: true,
+      propagateCompetitor: "unassigned",
       tableAcquireCompetitor: false,
       showSecondArrivalsCard: false
     }
@@ -170,9 +172,9 @@ const DISCIPLINES = [
       penality: false,      showCancelBtn: false,  showSendBtn: false,
       showTest: true,       showTrigger: false,
       splitsMode: false,    timePrecision: 2,  showDisabled: false,
-      showCompList: true,
+      showCompList: true,   syncMode: 3,
       bgColor: "#e6d2b5",
-      propagateCompetitor: false,
+      propagateCompetitor: "none",
       tableAcquireCompetitor: false,
       showSecondArrivalsCard: false
     }

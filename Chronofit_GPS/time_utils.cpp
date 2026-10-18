@@ -151,7 +151,7 @@ void setExtimatedDriftParams(int us){
     }
 }
 
-void checkPointRoutine(int i) {
+void checkPointRoutine(int i, bool manual) {
 
   PreciseTime t = getPreciseSensorTime(i);
   int us_drift = t.us_drift;
@@ -172,7 +172,7 @@ void checkPointRoutine(int i) {
   checkpoint[SECOND_FIELD]      = ss;
   checkpoint[MILLIS_FIELD]      = ms;
   checkpoint[PENALITY_FIELD]    = 0;
-  checkpoint[ENABLED_FIELD]     = lineEnabled[i];
+  checkpoint[ENABLED_FIELD]     = (lineEnabled[i] || manual) ? 1 : 0;
   checkpoint[LINE_DEVICE_FIELD] = lineDevice[i];
   checkpoint[LINE_MODE_FIELD]   = lineMode[i];
   checkpoint[CANCELLED_FIELD]   = 0;
@@ -204,6 +204,17 @@ void checkPointRoutine(int i) {
   if (checkpoint.containsKey(LINE_MODE_FIELD))   ordered[LINE_MODE_FIELD]   = checkpoint[LINE_MODE_FIELD];
   ordered[CANCELLED_FIELD] = checkpoint[CANCELLED_FIELD];
   ordered[EDITED_FIELD]    = checkpoint[EDITED_FIELD];
+
+  // Disattivazione dopo il primo passaggio: la linea resta disattivata finché
+  // l'operatore non la riabilita dalla console: i passaggi successivi restano in
+  // sessione come righe disabilitate, senza beep né start del tempo. Lo stato della linea va
+  // inviato prima del passaggio: la console, quando riceve il passaggio,
+  // azzera il competitor e rimanda anche lo stato del pulsante di abilitazione,
+  // che deve essere già spento, altrimenti riabiliterebbe la linea.
+  if (lineDisableAfterPass && lineEnabled[i] && i < 4) {
+    lineEnabled[i] = 0;
+    broadcastLineUpdate(i);
+  }
 
   // 🔹 Aggiungi in coda (append) il nuovo JSON come riga separata
   File file = LittleFS.open("/session.json", "a");

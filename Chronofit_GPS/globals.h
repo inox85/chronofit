@@ -74,11 +74,13 @@ extern int competitors[6];
 extern unsigned long delays[6];
 extern int lineEnabled[6];
 extern int elapsedStartLine;
+extern int lineDisableAfterPass;   // 1 = la linea si disattiva dopo il primo passaggio (NVS line_once)
 extern volatile unsigned long lastSensorsSignal[6];
 extern int sensorsPins[6];
 extern volatile  bool lastSensorState[6];
 extern volatile bool sensorTriggered[6];
 extern volatile uint64_t sensorTime[6];
+extern volatile bool sensorManual[6];   // passaggio manuale dalla console: conta anche su linea disabilitata
 
 extern volatile int syncTestRequested;
 

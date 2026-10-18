@@ -1180,10 +1180,34 @@
           <span class="slider"></span>
         </label>
       </div>
+      <div class="toggle-row" style="margin-top:12px; flex-wrap:wrap;">
+        <span data-i18n="settings.propagate_competitor">Competitor number assignment</span>
+        <select id="propagate-competitor-mode" style="width:100% !important; max-width:none;">
+          <option value="none" data-i18n="settings.propagate_none">Assign to the selected line only</option>
+          <option value="all" data-i18n="settings.propagate_all">Copy to all managed lines</option>
+          <option value="unassigned" data-i18n="settings.propagate_unassigned">Copy to free managed lines</option>
+          <option value="always" data-i18n="settings.propagate_always">Always assign to all lines</option>
+        </select>
+        <p id="propagate-competitor-hint" style="flex-basis:100%; margin:4px 0 0; font-size:15px; color:#666; text-align:left;"></p>
+      </div>
       <div class="toggle-row" style="margin-top:12px;">
-        <span data-i18n="settings.propagate_competitor">Propagate competitor number to managed, unassigned lines</span>
+        <span data-i18n="settings.disable_after_pass">Disable the line after the first passage (enable it again to re-arm)</span>
         <label class="switch">
-          <input type="checkbox" id="toggle-propagate-competitor">
+          <input type="checkbox" id="toggle-disable-after-pass">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row" style="margin-top:12px;">
+        <span data-i18n="settings.rearm_typed">Re-arm the line with a typed competitor</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-rearm-typed">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row" style="margin-top:12px;">
+        <span data-i18n="settings.rearm_list">Re-arm the line with a competitor chosen from the list</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-rearm-list">
           <span class="slider"></span>
         </label>
       </div>

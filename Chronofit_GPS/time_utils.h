@@ -15,7 +15,7 @@ struct PreciseTime {
 // Dichiarazioni delle funzioni di gestione del tempo
 void updateTime(int hh, int mm, int ss);
 
-void checkPointRoutine(int i);
+void checkPointRoutine(int i, bool manual = false);
 
 PreciseTime getPreciseTime();           // legge l'orario corrente
 

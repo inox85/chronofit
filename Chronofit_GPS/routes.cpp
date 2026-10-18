@@ -659,10 +659,15 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     if (request->hasParam("lineNumber")) {
         lineNumber = request->getParam("lineNumber")->value().toInt();
     }
+    if (lineNumber < 0 || lineNumber > 5) {
+      request->send(400, "text/plain", "Bad lineNumber");
+      return;
+    }
     if (request->hasParam("competitor")) {
         competitors[lineNumber] = request->getParam("competitor")->value().toInt();
     }
 
+    sensorManual[lineNumber] = true;
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
     request->send(200, "text/plain", "CheckPoint received!");
@@ -1255,6 +1260,17 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
       writeIntToSettings("el_start", l);
     }
     request->send(200, "application/json", String("{\"l\":") + elapsedStartLine + "}");
+    wifiRxActivity();
+  });
+
+  // Disattivazione automatica delle linee dopo il primo passaggio (NVS line_once).
+  // Senza parametri restituisce lo stato, con v=0|1 lo imposta.
+  server.on("/lineDisableAfterPass", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("v")) {
+      lineDisableAfterPass = request->getParam("v")->value().toInt() ? 1 : 0;
+      writeIntToSettings("line_once", lineDisableAfterPass);
+    }
+    request->send(200, "application/json", String("{\"v\":") + lineDisableAfterPass + "}");
     wifiRxActivity();
   });
 

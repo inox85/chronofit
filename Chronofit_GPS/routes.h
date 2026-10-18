@@ -31,6 +31,9 @@ String serializeSettings();
 
 void broadCastSettings();
 
+// Invia a tutti i client lo stato della linea idx (competitor, ritardo, abilitazione...)
+void broadcastLineUpdate(int idx);
+
 void broadcastCells();   // push della lista fotocellule wireless (TYPE_CELLS_UPDATED)
 
 void broadCastRowEdited(const JsonDocument& entry);

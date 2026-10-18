@@ -217,6 +217,7 @@ void setup() {
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
   elapsedStartLine = readIntFromSettings("el_start", 0);
+  lineDisableAfterPass = readIntFromSettings("line_once", 0);
   if (elapsedStartLine < 0 || elapsedStartLine > 4) elapsedStartLine = 0;
   int rtcAging = readIntFromSettings("rtcAging", 0);
   buzzerActive = readIntFromSettings("buzzActive", 0);
@@ -474,17 +475,25 @@ void handleSensorTrigger(){
   for (int i = 0; i < 6; i++) {
     bool triggered = false;
     uint64_t tUs = 0;
+    bool manual = false;
     portENTER_CRITICAL(&isrMux);
       if (sensorTriggered[i]) {
         triggered = true;
+        manual = sensorManual[i];
         tUs = sensorTime[i];
         sensorTriggered[i] = false;
+        sensorManual[i] = false;
       }
     portEXIT_CRITICAL(&isrMux);
 
     if (triggered) {
-      playBinary(i+1);
-      if (syncMode == MODE_SYNC_LINE && syncStatus == SYNC_WAIT_LINE_SIGNAL){
+      // Linea disabilitata: il passaggio della barriera va in sessione come riga
+      // disabilitata, ma non suona e non fa partire il tempo. Il passaggio
+      // manuale dalla console (tocco sul numero di linea, Start) conta invece
+      // come su una linea abilitata.
+      bool enabled = i >= 4 || lineEnabled[i] || manual;
+      if (enabled) playBinary(i+1);
+      if (syncMode == MODE_SYNC_LINE && syncStatus == SYNC_WAIT_LINE_SIGNAL && enabled){
         lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;
         handleLineSync();
@@ -493,13 +502,13 @@ void handleSensorTrigger(){
           printSyncStart(MODE_SYNC_LINE, pt.hh, pt.mm, pt.ss, pt.ms);
         }
       }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START &&
-               lineEnabled[i] && (elapsedStartLine == 0 || elapsedStartLine == i + 1))   // solo la linea di start, se abilitata
+               enabled && (elapsedStartLine == 0 || elapsedStartLine == i + 1))   // solo la linea di start, se abilitata
       {
         lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;
         RTCTtriggerCount = 0;
         handleLineSync();
-        checkPointRoutine(i);
+        checkPointRoutine(i, manual);
       }else{
         if (i == 4 && printEnabled) {
           // Conferma/test di sincronizzazione: sostituisce la riga di
@@ -507,10 +516,10 @@ void handleSensorTrigger(){
           PreciseTime pt = getPreciseSensorTime(i);
           printSyncConfirm(syncMode, pt.hh, pt.mm, pt.ss, pt.ms);
           printEnabled = 0;
-          checkPointRoutine(i);
+          checkPointRoutine(i, manual);
           printEnabled = 1;
         } else {
-          checkPointRoutine(i);
+          checkPointRoutine(i, manual);
         }
       }
     }

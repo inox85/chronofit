@@ -83,7 +83,7 @@ Imposta solo l'offset UTC senza cambiare modalità.
 ## Checkpoint e sessione
 
 ### `GET /checkPoint`
-Registra manualmente un passaggio su una linea.
+Registra manualmente un passaggio su una linea. Conta come passaggio di una linea abilitata anche se la linea è disattivata.
 
 **Parametri:**
 
@@ -144,9 +144,20 @@ Aggiorna la configurazione di una linea via query string. Solo `l` è obbligator
 | `ld` | string | — | ID linea |
 | `c` | int | — | Numero competitor assegnato |
 | `d` | int | — | Delay di rilevamento in millisecondi |
-| `e` | int | — | Abilitato: `1` / disabilitato: `0` |
+| `e` | int | — | Abilitato: `1` / disabilitato: `0` (con `0` i passaggi restano in sessione come righe disabilitate, senza beep né start del tempo) |
 
 **Esempio:** `GET /checkPointFields?l=2&c=7&e=1`
+
+---
+
+### `GET /lineDisableAfterPass`
+Disattivazione automatica delle linee dopo il primo passaggio. Con il valore `1`, al primo passaggio una linea abilitata viene disattivata (`e = 0`, notificato con `TYPE_LINE_UPDATED`) e resta così finché non viene riabilitata con `/checkPointFields` (`e=1`). I passaggi successivi restano in sessione come righe disabilitate, senza beep e senza far partire il tempo. Salvato in NVS (`line_once`), default `0`.
+
+| Parametro | Tipo | Obbligatorio | Descrizione |
+|---|---|---|---|
+| `v` | int | — | `1` attiva, `0` disattiva. Senza parametro restituisce solo lo stato |
+
+**Risposta:** `{ "v": 0 }`
 
 ---
 

@@ -527,7 +527,9 @@ function saveViewPrefs() {
     keepCompFocus:   document.getElementById('toggle-keep-comp-focus')?.checked ?? false,
     elapsedRearmTyped: document.getElementById('toggle-elapsed-rearm-typed')?.checked ?? false,
     elapsedRearmList:  document.getElementById('toggle-elapsed-rearm-list')?.checked ?? false,
-    propagateCompetitor: document.getElementById('toggle-propagate-competitor')?.checked ?? false,
+    rearmTyped:      document.getElementById('toggle-rearm-typed')?.checked ?? false,
+    rearmList:       document.getElementById('toggle-rearm-list')?.checked ?? false,
+    propagateCompetitor: getPropagateCompetitorMode(),
     lines: _readLinesPrefs('stab-lines'),
     secondary: {
       timestamp:     document.getElementById("toggle-timestamp-2")?.checked ?? true,
@@ -637,8 +639,10 @@ function restoreViewPrefs() {
     // elapsedRearm = toggle unico delle versioni precedenti, vale per entrambi i casi
     setChkPref('toggle-elapsed-rearm-typed', prefs.elapsedRearmTyped ?? prefs.elapsedRearm);
     setChkPref('toggle-elapsed-rearm-list',  prefs.elapsedRearmList  ?? prefs.elapsedRearm);
-    const pc = document.getElementById('toggle-propagate-competitor');
-    if (pc && prefs.propagateCompetitor !== undefined) pc.checked = prefs.propagateCompetitor;
+    // rearmOnCompetitor = toggle unico delle versioni precedenti, vale per entrambi i casi
+    setChkPref('toggle-rearm-typed', prefs.rearmTyped ?? prefs.rearmOnCompetitor);
+    setChkPref('toggle-rearm-list',  prefs.rearmList  ?? prefs.rearmOnCompetitor);
+    if (prefs.propagateCompetitor !== undefined) setPropagateCompetitorMode(prefs.propagateCompetitor);
 
     updateVisibleColumns();
     if (prefs.splitsMode) applyCompetitorSplits();
@@ -755,7 +759,7 @@ function applyDisciplinePreset(prefs) {
   setChk("toggle-test",        prefs.showTest  ?? false);
   setChk("toggle-trigger",          prefs.showTrigger    ?? false);
   setChk("toggle-splits",        prefs.splitsMode  ?? false);
-  setChk("toggle-propagate-competitor", prefs.propagateCompetitor ?? false);
+  setPropagateCompetitorMode(prefs.propagateCompetitor);
   if (prefs.reverseOrder !== undefined) reverseOrder = prefs.reverseOrder;
   if (prefs.timePrecision !== undefined) {
     const val = Math.max(1, Math.min(3, parseInt(prefs.timePrecision) || 3));
@@ -1134,8 +1138,13 @@ function withCompetitorSource(source, fn) {
 }
 
 function fillCompFromList(num) {
-  // Se nessun input è attivo, non fare niente
-  if (!activeCompLine) return;
+  // Se nessun input è attivo, non fare niente, salvo la modalità "always"
+  // della tendina "Assegnazione numero competitor": allora il numero va su
+  // tutte le linee gestite.
+  if (!activeCompLine) {
+    if (getPropagateCompetitorMode() === 'always') assignCompetitorToManagedLines(num);
+    return;
+  }
   const n = activeCompLine;
   const cEl = document.getElementById(`c${n}`);
   if (!cEl) return;
@@ -1307,6 +1316,8 @@ function openLineEdit(line, focusField) {
   if (tkField) tkField.value = localStorage.getItem(TIMEKEEPERS_KEY) || '';
   _lineEditSnapshot.timekeepers = tkField?.value ?? '';
 
+  loadDisableAfterPass();
+  updatePropagateCompetitorHint();
   loadElapsedStartLine();
   document.getElementById('lineEditOverlay').style.display = 'flex';
 
@@ -1324,6 +1335,25 @@ function openLineEdit(line, focusField) {
     if (el.tagName === 'INPUT' && typeof el.select === 'function') el.select();
   }, 80);
 }
+
+// Toggle "Disattiva la linea dopo il primo passaggio": l'impostazione sta nel
+// dispositivo (NVS), che disattiva la linea anche se la console non è aperta.
+function loadDisableAfterPass() {
+  const el = document.getElementById('toggle-disable-after-pass');
+  if (!el) return;
+  fetch('/lineDisableAfterPass')
+    .then(res => res.ok ? res.json() : null)
+    .then(data => { if (data) el.checked = !!data.v; })
+    .catch(() => {});
+}
+
+document.getElementById('toggle-disable-after-pass')?.addEventListener('change', e => {
+  const el = e.target;
+  fetch(`/lineDisableAfterPass?v=${el.checked ? 1 : 0}`)
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(data => { el.checked = !!data.v; })
+    .catch(() => { el.checked = !el.checked; });
+});
 
 function closeLineEdit() {
   document.getElementById('lineEditOverlay').style.display = 'none';
@@ -2230,14 +2260,18 @@ function hideGeneralPopup() {
 }
 
 
+// Orologio in tempo reale (arriva una volta al secondo, quindi i millisecondi sono sempre 000):
+// segue il "Formato tempi" scelto nelle impostazioni, come le colonne della tabella.
+function clockText(h, m, s) {
+  if (timeFormat === 'seconds') return secondsText(h, m, s, '000');
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.000';
+}
+
 function updateClockFromData(data) {
 
     let hourAdj = (data.h + timeOffset + 24) % 24;
 
-    document.getElementById("time").innerText =
-        String(hourAdj).padStart(2,'0') + ":" 
-        + String(data.m).padStart(2,'0') + ":" 
-        + String(data.s).padStart(2,'0') + ".000" //+ data.millis; 
+    document.getElementById("time").innerText = clockText(hourAdj, data.m, data.s);
 
 
     let statusElem = document.getElementById("status");
@@ -2304,14 +2338,14 @@ function updateClockFromData(data) {
     }
 
     if(syncStatus === SYNC_NONE){
-      document.getElementById("time").innerText = "00:00:00.000";
+      document.getElementById("time").innerText = clockText(0, 0, 0);
       statusElem.innerText = t('status.manual_not_set');
     }
     if(syncStatus === SYNC_MANUAL_SET){
       statusElem.innerText = t('status.manual_ok');
     }
     if(syncStatus === SYNC_WAIT_LINE_SIGNAL){
-      document.getElementById("time").innerText = "00:00:00.000";
+      document.getElementById("time").innerText = clockText(0, 0, 0);
       statusElem.innerText = t('status.line_waiting');
     }
     if(syncStatus === SYNC_SET_BY_LINE_SIGNAL){
@@ -2345,7 +2379,7 @@ function updateClockFromData(data) {
       elapsedTimeControls.classList.remove("hidden");
       const startButton = document.getElementById("startButton");
       startButton.innerText = t('btn.start');
-      document.getElementById("time").innerText = "00:00:00.000";
+      document.getElementById("time").innerText = clockText(0, 0, 0);
       statusElem.innerText = t('status.elapsed_waiting');
     }if(syncStatus == ELAPSED_TIME_STARTED){
       elapsedTimeControls.classList.remove("hidden");
@@ -3050,6 +3084,10 @@ function handleInputUpdate(e) {
     rearmElapsedIfNeeded();
   }
 
+  if (e.target.classList.contains('comp-input') && Number(e.target.value)) {
+    rearmLineIfNeeded(lineNumber);
+  }
+
   const enableBtn = document.querySelector(`.line-enable-btn[data-line="${lineNumber}"]`);
   const data = {
     l:  Number(lineNumber),
@@ -3065,20 +3103,70 @@ function handleInputUpdate(e) {
   }
 }
 
-// Se attivo, riporta il numero competitor appena assegnato su altre linee.
-// Il comportamento è parametrico per disciplina — vedi "propagationPairs" in
-// disciplines.js:
-// - Se la disciplina attiva definisce propagationPairs (es. Enduro:
-//   { "1": 2, "3": 4 }): propaga SOLO sulla linea indicata per quella linea
-//   sorgente, sovrascrivendo sempre il valore precedente.
-// - Se non lo definisce (es. Regolarità): comportamento storico, propaga su
-//   tutte le altre linee gestite (device non vuoto) ma ancora prive di
-//   competitor (0), senza sovrascrivere.
+// Modalità della tendina "Assegnazione numero competitor":
+// - "none": il competitor resta solo sulla linea su cui è stato inserito;
+// - "all": viene riportato sulle altre linee gestite (device non vuoto),
+//   sovrascrivendo il valore precedente;
+// - "unassigned": viene riportato solo sulle linee gestite ancora prive di
+//   competitor (0);
+// - "always": come "all", e in più un tocco sulla lista competitor senza un
+//   campo selezionato assegna il numero a tutte le linee gestite
+//   (fillCompFromList).
+// Se la disciplina attiva definisce propagationPairs (es. Enduro:
+// { "1": 2, "3": 4 }, vedi disciplines.js) l'unica linea di destinazione è
+// quella indicata per la linea sorgente, altrimenti sono tutte le altre.
+// I vecchi valori bool di preferenze e preset valgono true = "unassigned",
+// false = "none".
+const PROPAGATE_MODES = ['none', 'all', 'unassigned', 'always'];
+
+function normalizePropagateMode(value) {
+  if (value === true) return 'unassigned';
+  return PROPAGATE_MODES.includes(value) ? value : 'none';
+}
+
+function getPropagateCompetitorMode() {
+  return normalizePropagateMode(document.getElementById('propagate-competitor-mode')?.value);
+}
+
+function setPropagateCompetitorMode(value) {
+  const el = document.getElementById('propagate-competitor-mode');
+  if (el) el.value = normalizePropagateMode(value);
+  updatePropagateCompetitorHint();
+}
+
+// Spiegazione sotto la tendina, per la modalità scelta
+function updatePropagateCompetitorHint() {
+  const el = document.getElementById('propagate-competitor-hint');
+  if (el) el.textContent = t('settings.propagate_hint_' + getPropagateCompetitorMode());
+}
+
+function assignCompetitorToManagedLines(competitor) {
+  // Competitor scelto dall'elenco senza un campo selezionato
+  withCompetitorSource('list', () => {
+    if (competitor) rearmElapsedIfNeeded();
+    for (let n = 1; n <= 4; n++) {
+      if (!getLineTipo(n).tipo1?.trim()) continue; // linea non gestita
+      _propagateCompetitorToLine(n, competitor);
+    }
+  });
+}
+
+// Toggle "Riarma la linea con un competitor digitato / scelto dall'elenco":
+// riabilita la linea prima di mandarne lo stato al dispositivo, sia per la linea
+// selezionata sia per quelle su cui il competitor viene propagato.
+function rearmLineIfNeeded(lineNumber) {
+  const id = _competitorSource === 'list' ? 'toggle-rearm-list' : 'toggle-rearm-typed';
+  if (!document.getElementById(id)?.checked) return;
+  const btn = document.querySelector(`.line-enable-btn[data-line="${lineNumber}"]`);
+  if (btn) applyLineEnableState(btn, true);
+}
+
 function _propagateCompetitorToLine(targetLine, competitor) {
   const cEl = document.getElementById(`c${targetLine}`);
   if (!cEl) return;
   cEl.value = competitor;
   updateCompDisplay(targetLine);
+  if (competitor) rearmLineIfNeeded(targetLine);
   const enableBtn = document.querySelector(`.line-enable-btn[data-line="${targetLine}"]`);
   sendSettingsRowData({
     l: targetLine,
@@ -3089,22 +3177,19 @@ function _propagateCompetitorToLine(targetLine, competitor) {
 }
 
 function propagateCompetitorIfNeeded(sourceLine, competitor) {
-  if (!document.getElementById('toggle-propagate-competitor')?.checked) return;
+  const mode = getPropagateCompetitorMode();
+  if (mode === 'none') return;
 
   const pairs = _currentDisciplinePrefs()?.propagationPairs;
-  if (pairs) {
-    const targetLine = pairs[sourceLine];
-    if (!targetLine) return;
-    if (!getLineTipo(targetLine).tipo1?.trim()) return; // linea non gestita
-    _propagateCompetitorToLine(targetLine, competitor);
-    return;
-  }
+  const targets = pairs
+    ? [Number(pairs[sourceLine])].filter(n => n)
+    : [1, 2, 3, 4].filter(n => n !== Number(sourceLine));
 
-  for (let n = 1; n <= 4; n++) {
-    if (n === Number(sourceLine)) continue;
+  for (const n of targets) {
     if (!getLineTipo(n).tipo1?.trim()) continue; // linea non gestita
     const cEl = document.getElementById(`c${n}`);
-    if (!cEl || Number(cEl.value) !== 0) continue; // già assegnata
+    if (!cEl) continue;
+    if (mode === 'unassigned' && Number(cEl.value) !== 0) continue; // già assegnata
     _propagateCompetitorToLine(n, competitor);
   }
 }
@@ -4093,6 +4178,12 @@ document.getElementById("toggle-elapsed-rearm-list")
 .addEventListener("change", () => saveViewPrefs());
 document.getElementById("elapsed-start-line")
 .addEventListener("change", e => saveElapsedStartLine(e.target.value));
+document.getElementById("toggle-rearm-typed")
+.addEventListener("change", () => saveViewPrefs());
+document.getElementById("toggle-rearm-list")
+.addEventListener("change", () => saveViewPrefs());
+document.getElementById("propagate-competitor-mode")
+.addEventListener("change", () => { updatePropagateCompetitorHint(); saveViewPrefs(); });
 
 document.getElementById("toggle-name")
 .addEventListener("change", e => { toggleNameColumn(e.target.checked); saveViewPrefs(); });

@@ -85,7 +85,7 @@
 <ul><li><a href="#get-time"><code>GET /time</code></a></li><li><a href="#get-settime"><code>GET /setTime</code> 🔒</a></li><li><a href="#get-setoffset"><code>GET /setOffset</code> 🔒</a></li></ul>
 </li>
 <li><a href="#checkpoint-e-sessione">Checkpoint e sessione</a>
-<ul><li><a href="#get-checkpoint"><code>GET /checkPoint</code></a></li><li><a href="#get-getcheckpoints"><code>GET /getCheckpoints</code></a></li><li><a href="#get-downloadsession"><code>GET /downloadSession</code></a></li><li><a href="#get-clearsession"><code>GET /clearSession</code> 🔒</a></li><li><a href="#get-checkpointfields"><code>GET /checkPointFields</code></a></li><li><a href="#get-elapsedstartline"><code>GET /elapsedStartLine</code></a></li><li><a href="#post-checkpointfields"><code>POST /checkPointFields</code></a></li><li><a href="#post-sendcheckpointrow"><code>POST /sendCheckPointRow</code></a></li><li><a href="#post-updatecheckpointrow"><code>POST /updateCheckPointRow</code></a></li></ul>
+<ul><li><a href="#get-checkpoint"><code>GET /checkPoint</code></a></li><li><a href="#get-getcheckpoints"><code>GET /getCheckpoints</code></a></li><li><a href="#get-downloadsession"><code>GET /downloadSession</code></a></li><li><a href="#get-clearsession"><code>GET /clearSession</code> 🔒</a></li><li><a href="#get-checkpointfields"><code>GET /checkPointFields</code></a></li><li><a href="#get-linedisableafterpass"><code>GET /lineDisableAfterPass</code></a></li><li><a href="#get-elapsedstartline"><code>GET /elapsedStartLine</code></a></li><li><a href="#post-checkpointfields"><code>POST /checkPointFields</code></a></li><li><a href="#post-sendcheckpointrow"><code>POST /sendCheckPointRow</code></a></li><li><a href="#post-updatecheckpointrow"><code>POST /updateCheckPointRow</code></a></li></ul>
 </li>
 <li><a href="#impostazioni-di-sistema">Impostazioni di sistema</a>
 <ul><li><a href="#get-allsettings"><code>GET /allSettings</code></a></li><li><a href="#get-setattribute"><code>GET /setAttribute</code> 🔒</a></li></ul>
@@ -133,7 +133,7 @@
 <div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>offset</code></td><td>int</td><td>Offset UTC (-12 … +14)</td></tr></tbody></table></div></section>
 <section id="checkpoint-e-sessione"><h2>Checkpoint e sessione</h2>
 <h3 id="get-checkpoint" class="route"><code>GET /checkPoint</code></h3>
-<p>Registra manualmente un passaggio su una linea.</p>
+<p>Registra manualmente un passaggio su una linea. Conta come passaggio di una linea abilitata anche se la linea è disattivata.</p>
 <p><b>Parametri:</b></p>
 <div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Default</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>lineNumber</code></td><td>int</td><td>0</td><td>Numero della linea che ha rilevato il passaggio</td></tr></tbody></table></div>
 <p><b>Risposta:</b> testo di conferma con timestamp.</p>
@@ -152,8 +152,12 @@
 <h3 id="get-checkpointfields" class="route"><code>GET /checkPointFields</code></h3>
 <p>Aggiorna la configurazione di una linea via query string. Solo <code>l</code> è obbligatorio.</p>
 <p><b>Parametri:</b></p>
-<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>✅</td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>string</td><td>—</td><td>ID linea</td></tr><tr><td><code>c</code></td><td>int</td><td>—</td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>int</td><td>—</td><td>Delay di rilevamento in millisecondi</td></tr><tr><td><code>e</code></td><td>int</td><td>—</td><td>Abilitato: <code>1</code> / disabilitato: <code>0</code></td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>✅</td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>string</td><td>—</td><td>ID linea</td></tr><tr><td><code>c</code></td><td>int</td><td>—</td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>int</td><td>—</td><td>Delay di rilevamento in millisecondi</td></tr><tr><td><code>e</code></td><td>int</td><td>—</td><td>Abilitato: <code>1</code> / disabilitato: <code>0</code> (con <code>0</code> i passaggi restano in sessione come righe disabilitate, senza beep né start del tempo)</td></tr></tbody></table></div>
 <p><b>Esempio:</b> <code>GET /checkPointFields?l=2&amp;c=7&amp;e=1</code></p>
+<h3 id="get-linedisableafterpass" class="route"><code>GET /lineDisableAfterPass</code></h3>
+<p>Disattivazione automatica delle linee dopo il primo passaggio. Con il valore <code>1</code>, al primo passaggio una linea abilitata viene disattivata (<code>e = 0</code>, notificato con <code>TYPE_LINE_UPDATED</code>) e resta così finché non viene riabilitata con <code>/checkPointFields</code> (<code>e=1</code>). I passaggi successivi restano in sessione come righe disabilitate, senza beep e senza far partire il tempo. Salvato in NVS (<code>line_once</code>), default <code>0</code>.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>v</code></td><td>int</td><td>—</td><td><code>1</code> attiva, <code>0</code> disattiva. Senza parametro restituisce solo lo stato</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>{ &quot;v&quot;: 0 }</code></p>
 <h3 id="get-elapsedstartline" class="route"><code>GET /elapsedStartLine</code></h3>
 <p>Linea il cui primo passaggio fa partire il tempo trascorso (modalità elapsed). Senza parametri restituisce il valore attuale. Salvata in NVS (<code>el_start</code>), default <code>0</code>.</p>
 <div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>—</td><td><code>0</code> = qualsiasi linea, <code>1</code>–<code>4</code> = solo quella linea</td></tr></tbody></table></div>

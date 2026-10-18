@@ -410,13 +410,17 @@ window.addEventListener('storage', (e) => {
 });
 
 // ── Orologio ─────────────────────────────────────────────────────────────────
+// Orologio in tempo reale (arriva una volta al secondo, quindi i millisecondi sono sempre 000):
+// segue il "Formato tempi" scelto nelle impostazioni, come le colonne della tabella.
+function clockText(h, m, s) {
+  if (timeFormat === 'seconds') return secondsText(h, m, s, '000');
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.000';
+}
+
 function updateClockFromData(data) {
   const timeEl = document.getElementById('time');
   if (!timeEl) return;
-  timeEl.innerText =
-    String(data.h).padStart(2, '0') + ':' +
-    String(data.m).padStart(2, '0') + ':' +
-    String(data.s).padStart(2, '0') + '.000';
+  timeEl.innerText = clockText(data.h, data.m, data.s);
 }
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
