@@ -216,6 +216,8 @@ void setup() {
   syncMode = readIntFromSettings("syncMode", MODE_SYNC_MANUAL);
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
+  elapsedStartLine = readIntFromSettings("el_start", 0);
+  if (elapsedStartLine < 0 || elapsedStartLine > 4) elapsedStartLine = 0;
   int rtcAging = readIntFromSettings("rtcAging", 0);
   buzzerActive = readIntFromSettings("buzzActive", 0);
 
@@ -490,7 +492,8 @@ void handleSensorTrigger(){
           PreciseTime pt = getPreciseTime();
           printSyncStart(MODE_SYNC_LINE, pt.hh, pt.mm, pt.ss, pt.ms);
         }
-      }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START)
+      }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START &&
+               lineEnabled[i] && (elapsedStartLine == 0 || elapsedStartLine == i + 1))   // solo la linea di start, se abilitata
       {
         lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;

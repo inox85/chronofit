@@ -16,6 +16,38 @@ let netTimesPair1Enabled = true;
 let netTimesPair2Enabled = true;
 let netTimesPrecision = 3;
 
+// Formato dei tempi scelto nelle impostazioni, comune a console e viste dello
+// stesso browser: 'clock' = hh:mm:ss.mmm, 'seconds' = secondi totali con la
+// virgola (71,450). I decimali restano quelli scelti a parte.
+const TIME_FORMAT_KEY = 'chronofit_time_format';
+let timeFormat = 'clock';
+try { if (localStorage.getItem(TIME_FORMAT_KEY) === 'seconds') timeFormat = 'seconds'; } catch (e) { /* default */ }
+
+function secondsText(h, m, s, msStr) {
+  return String(h * 3600 + m * 60 + s) + ',' + msStr;
+}
+
+// Cambio dal menu "Formato tempi": salva, allinea gli altri menu della pagina e ridisegna.
+function setTimeFormat(value) {
+  timeFormat = value === 'seconds' ? 'seconds' : 'clock';
+  try { localStorage.setItem(TIME_FORMAT_KEY, timeFormat); } catch (e) { /* solo per questa pagina */ }
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+}
+
+function syncTimeFormatSelects() {
+  document.querySelectorAll('.time-format-select').forEach(sel => { sel.value = timeFormat; });
+}
+document.addEventListener('DOMContentLoaded', syncTimeFormatSelects);
+
+function onTimeFormatChanged() { onNetTimesPrecisionChange(netTimesPrecision); }
+window.addEventListener('storage', e => {
+  if (e.key !== TIME_FORMAT_KEY) return;
+  timeFormat = e.newValue === 'seconds' ? 'seconds' : 'clock';
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+});
+
 function restoreNetTimesSettings() {
   try {
     const raw = localStorage.getItem(NET_TIMES_KEY);
@@ -114,6 +146,7 @@ function formatTime(h, m, s, ms, precision = netTimesPrecision) {
     : precision === 2
       ? String(Math.floor(msT / 10)).padStart(2, "0")
       : String(msT).padStart(3, "0");
+  if (timeFormat === 'seconds') return secondsText(h, m, s, msStr);
   return (
     String(h).padStart(2, "0") + ":" +
     String(m).padStart(2, "0") + ":" +

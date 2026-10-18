@@ -56,6 +56,7 @@ extern int lineMode[6];     // 0=auto   | 1=manuale
 extern int competitors[6];
 extern unsigned long delays[6];
 extern int lineEnabled[6];
+extern int elapsedStartLine;
 extern volatile unsigned long lastSensorsSignal[6];
 extern int sensorsPins[6];
 extern volatile  bool lastSensorState[6];

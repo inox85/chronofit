@@ -180,7 +180,7 @@
         <tr><td>Equitazione</td><td>prova a tempo con penalità e classifica</td></tr>
       </table>
       <p>Alcune discipline possono essere <b>bloccate</b> sul tuo dispositivo (pacchetti a licenza): compaiono ma non si aprono. Contatta il rivenditore per sbloccarle.</p>
-      <p>Per cambiare disciplina tocca l'icona della disciplina in alto a destra. <b>Uscendo dalla disciplina la sessione viene cancellata</b>: prima scarica i tempi. Le bandierine in alto cambiano la lingua (italiano o inglese).</p>
+      <p>Per cambiare disciplina tocca l'icona della disciplina in alto a destra. Tempi registrati e competitor restano anche cambiando disciplina. Le bandierine in alto cambiano la lingua (italiano o inglese).</p>
     </section>
 
     <section id="console">
@@ -188,7 +188,7 @@
       <p>A sinistra i comandi, a destra la lista dei passaggi.</p>
       <table>
         <tr><th>Card</th><th>Contenuto</th></tr>
-        <tr><td><b>Attesi</b></td><td>Gli atleti del registro non ancora transitati.</td></tr>
+        <tr><td><b>Attesi</b></td><td>Gli atleti del registro non ancora transitati. Tocca un nome per metterlo sulla linea attiva; l'icona ✏️ accanto al titolo apre il registro per aggiungere o modificare un competitor.</td></tr>
         <tr><td><b>Orario</b></td><td>Il tempo trascorso, che parte dal primo passaggio.</td></tr>
         <tr><td><b>Gestione transiti</b></td><td>I pulsanti <b>Start</b> / <b>Stop</b> e <b>Reset</b> del cronometro e una riga per linea: numero, tipo, concorrente, abilitazione. Vedi <a href="#transiti">Gestione transiti</a>.</td></tr>
         <tr><td><b>Utilità</b> (stato)</td><td>🔗 client collegati · 🌍 stato di internet · icona del segnale = fotocellule wireless. Toccando 🔗 o 🌍 si aprono le impostazioni WiFi, toccando la cella si apre il dettaglio delle fotocellule.</td></tr>
@@ -212,9 +212,9 @@
 
     <section id="tempo">
       <h2>7. Il cronometro</h2>
-      <p>La Main Cell lavora a <b>tempo trascorso</b>: all'accensione o dopo un <b>Reset</b> l'orologio resta a <code>00:00:00.000</code> (lo stato lo indica come "in attesa dello start") e <b>parte con il primo passaggio</b>, su qualsiasi linea.</p>
+      <p>La Main Cell lavora a <b>tempo trascorso</b>: all'accensione o dopo un <b>Reset</b> l'orologio resta a <code>00:00:00.000</code> (lo stato lo indica come "in attesa dello start") e <b>parte con il primo passaggio</b> della linea di start. La linea che fa partire il tempo si sceglie nel popup delle linee (<b>Linea di start (tempo trascorso)</b>); con <b>Qualsiasi linea</b> vale il primo passaggio di una linea abilitata, e una linea disabilitata non fa mai partire il tempo. Con <b>Azzera il tempo trascorso con un competitor digitato</b> e/o <b>… scelto dall'elenco</b> l'orologio torna in attesa dello start quando assegni un competitor in quel modo (scritto nel campo o toccato nell'elenco Attesi/registro).</p>
       <ul>
-        <li><b>Start</b>: registra un passaggio sulla linea 1; se il cronometro è in attesa lo avvia. A tempo avviato il pulsante diventa <b>Stop</b> e registra un altro passaggio sulla linea 1, senza fermare il conteggio.</li>
+        <li><b>Start</b>: registra un passaggio sulla linea di start (la 1 con «Qualsiasi linea»); se il cronometro è in attesa lo avvia. A tempo avviato il pulsante diventa <b>Stop</b> e registra un altro passaggio sulla stessa linea, senza fermare il conteggio.</li>
         <li><b>Reset</b>: riporta il cronometro in attesa del prossimo passaggio. I tempi già registrati restano.</li>
       </ul>
       <div class="warn">Dopo un riavvio della Main Cell il cronometro riparte da zero. Se riavvii a metà gara, i nuovi tempi non sono confrontabili con quelli registrati prima.</div>
@@ -236,7 +236,7 @@
       <div class="note">Le colonne opzionali non sono salvate: sono <b>calcolate</b> in base alla vista. Se nascondi alcune righe, i Δ si ricalcolano di conseguenza.</div>
       <table>
         <tr><th>Azione</th><th>Come</th></tr>
-        <tr><td>Impostazioni della tabella</td><td>Tocca l'<b>intestazione</b>: schede <i>Ordina</i>, <i>Colonne</i>, <i>Righe</i>, <i>Linee</i> (quali linee mostrare), decimali dei tempi.</td></tr>
+        <tr><td>Impostazioni della tabella</td><td>Tocca l'<b>intestazione</b>: schede <i>Ordina</i>, <i>Colonne</i>, <i>Righe</i>, <i>Linee</i> (quali linee mostrare), decimali e formato dei tempi (<code>hh:mm:ss.mmm</code> o secondi, <code>71,450</code>; il formato vale per tutte le tabelle e viste del browser).</td></tr>
         <tr><td>Annullare un passaggio</td><td>Tocca 🚫: la riga resta, barrata, ed è esclusa dai calcoli. Tocca di nuovo per ripristinarla.</td></tr>
         <tr><td>Modificare una riga</td><td><b>Pressione lunga</b> sulla riga: concorrente e altri campi.</td></tr>
         <tr><td>Azioni ⋮</td><td><b>Scarica sessione</b> · <b>Scarica vista</b> · <b>Invia via email</b> · <b>Cancella sessione</b>.</td></tr>

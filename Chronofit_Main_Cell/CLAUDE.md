@@ -25,7 +25,7 @@ Frontend iteration: `python -m http.server 8435 --directory data` (the `maincell
 
 ## API
 
-`API.md` in this folder is the pruned copy of the base API (routes that exist here only). Update it when routes change.
+`API.md` in this folder is the pruned copy of the base API (routes that exist here only). Update it when routes change. `API_public.md` is the user-facing subset (same public routes as the base's `API_public.md`). `api_docs.py` turns `API_public.md` into `data/api.html` (user API manual, linked from the console's About panel) and `API.md` into `data/api_dev.html` (full developer manual, deliberately not linked from the UI): rerun it, then `compress_assets.py`, whenever either .md changes. `api_docs.py` is identical in every Chronofit project with a UI.
 
 ## Secrets
 

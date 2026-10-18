@@ -104,6 +104,8 @@ void setup() {
   syncMode = MODE_ELAPSED_TIME;
   syncStatus = ELAPSED_WAITING_START;
   utcOffset = readIntFromSettings("utcOffset", 0);
+  elapsedStartLine = readIntFromSettings("el_start", 0);
+  if (elapsedStartLine < 0 || elapsedStartLine > 4) elapsedStartLine = 0;
   buzzerActive = readIntFromSettings("buzzActive", 0);
 
   Serial.println();
@@ -232,7 +234,8 @@ void handleSensorTrigger(){
 
     if (triggered) {
       playBinary(i+1);
-      if (syncStatus == ELAPSED_WAITING_START) {
+      if (syncStatus == ELAPSED_WAITING_START &&
+          lineEnabled[i] && (elapsedStartLine == 0 || elapsedStartLine == i + 1)) {   // solo la linea di start, se abilitata
         // primo segnale dopo l'avvio/reset: parte il tempo trascorso
         lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;

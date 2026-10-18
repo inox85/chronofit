@@ -66,6 +66,8 @@ int lineMode[6]   = {0, 0, 0, 0, 0, 1};   // 0=auto   | 1=manuale
 int competitors[6] = {0, 0, 0, 0, 0, 0};
 unsigned long delays[6] = {0, 0, 0, 0, 0, 0};
 int lineEnabled[6] = {1, 1, 1, 1, 1, 1};
+// Linea (1-4) il cui primo passaggio fa partire il tempo trascorso; 0 = qualsiasi (NVS el_start)
+int elapsedStartLine = 0;
 volatile unsigned long lastSensorsSignal[6] = {0, 0, 0, 0, 0, 0};
 int sensorsPins[6] = { SENSOR_IN1, SENSOR_IN2, SENSOR_IN3, SENSOR_IN4, -1, -1 };
 volatile bool lastSensorState[6] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};

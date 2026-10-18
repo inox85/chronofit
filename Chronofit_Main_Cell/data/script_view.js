@@ -32,6 +32,38 @@ const audioCache = {};
 // 1 = decimi, 2 = centesimi, 3 = millisecondi
 let timePrecision = 3;
 
+// Formato dei tempi scelto nelle impostazioni, comune a console e viste dello
+// stesso browser: 'clock' = hh:mm:ss.mmm, 'seconds' = secondi totali con la
+// virgola (71,450). I decimali restano quelli scelti a parte.
+const TIME_FORMAT_KEY = 'chronofit_time_format';
+let timeFormat = 'clock';
+try { if (localStorage.getItem(TIME_FORMAT_KEY) === 'seconds') timeFormat = 'seconds'; } catch (e) { /* default */ }
+
+function secondsText(h, m, s, msStr) {
+  return String(h * 3600 + m * 60 + s) + ',' + msStr;
+}
+
+// Cambio dal menu "Formato tempi": salva, allinea gli altri menu della pagina e ridisegna.
+function setTimeFormat(value) {
+  timeFormat = value === 'seconds' ? 'seconds' : 'clock';
+  try { localStorage.setItem(TIME_FORMAT_KEY, timeFormat); } catch (e) { /* solo per questa pagina */ }
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+}
+
+function syncTimeFormatSelects() {
+  document.querySelectorAll('.time-format-select').forEach(sel => { sel.value = timeFormat; });
+}
+document.addEventListener('DOMContentLoaded', syncTimeFormatSelects);
+
+function onTimeFormatChanged() { onTimePrecisionChange(timePrecision); }
+window.addEventListener('storage', e => {
+  if (e.key !== TIME_FORMAT_KEY) return;
+  timeFormat = e.newValue === 'seconds' ? 'seconds' : 'clock';
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+});
+
 function truncateMs(ms) {
   if (timePrecision === 1) return Math.floor(ms / 100) * 100;
   if (timePrecision === 2) return Math.floor(ms / 10)  * 10;
@@ -589,8 +621,8 @@ function addEventToTable(rowIndex, lineNumber, lineId, competitor, hour, minute,
     <td class="col-surname">${getAthleteSurname(competitor)}</td>
     <td class="timestamp">${timestamp}</td>
     <td class="race-time">—</td>
-    <td class="delta-time"></td>
     <td class="elapsed-time"></td>
+    <td class="delta-time"></td>
     <td><button class="penality penality-btn">${penality}</button></td>
   `;
 
@@ -615,6 +647,7 @@ function formatTime(h, m, s, ms) {
     : timePrecision === 2
       ? String(Math.floor(msT / 10)).padStart(2, "0")
       : String(msT).padStart(3, "0");
+  if (timeFormat === 'seconds') return secondsText(h, m, s, msStr);
   return (
     String(h).padStart(2, "0") + ":" +
     String(m).padStart(2, "0") + ":" +
@@ -636,6 +669,7 @@ function formatDelta(ms, signed) {
     : timePrecision === 2
       ? String(Math.floor(millis / 10)).padStart(2, "0")
       : String(millis).padStart(3, "0");
+  if (timeFormat === 'seconds') return sign + secondsText(hours, minutes, seconds, msStr);
   return sign +
     String(hours).padStart(2, "0") + ":" +
     String(minutes).padStart(2, "0") + ":" +
@@ -708,12 +742,13 @@ function maskTimeInput(input) {
 }
 
 function sendUpdatedCheckPointRow(row) {
-  const index = parseInt(row.cells[0].textContent.trim());
-  const cells = row.querySelectorAll("td");
-  const lineNumber = cells[1].textContent.trim();
-  const lineId     = cells[2].textContent.trim();
-  const competitor = cells[3].textContent.trim();
-  const timestamp  = cells[4].textContent.trim();
+  // celle lette per classe: l'ordine delle colonne è personalizzabile
+  const cellText = cls => (row.querySelector("td." + cls)?.textContent || "").trim();
+  const index = parseInt(cellText("col-index"));
+  const lineNumber = cellText("col-line");
+  const lineId     = cellText("col-id");
+  const competitor = cellText("col-competitor");
+  const timestamp  = cellText("timestamp");
   const [timePart, millisPart] = timestamp.split(".");
   const [hour, minute, second] = timePart.split(":");
   const penality = Number(row.dataset.penality) || 0;
@@ -901,8 +936,8 @@ function applyCompetitorSplits() {
           <td class="col-surname">${getAthleteSurname(r1.dataset.competitor)}</td>
           <td class="timestamp">—</td>
           <td class="race-time diff-time">${formatTime(dH, dM, dS, dMs)}</td>
-          <td class="delta-time">—</td>
           <td class="elapsed-time">—</td>
+          <td class="delta-time">—</td>
           <td></td>
         `;
         tbody.insertBefore(diffRow, r2);
@@ -1058,7 +1093,7 @@ function updateRowFromBroadcas(data) {
   const tbody = document.getElementById("event-table").querySelector("tbody");
   const index = Number(data.id);
   if (isNaN(index)) return;
-  const row = [...tbody.rows].find(r => Number(r.querySelector("td")?.textContent) === index);
+  const row = [...tbody.rows].find(r => Number(r.querySelector("td.col-index")?.textContent) === index);
   if (!row) { console.warn("Row not found:", index); return; }
   if (row.querySelector("input")) { console.warn("Row in edit, skipped:", index); return; }
   const idCell = row.querySelector(".col-id");

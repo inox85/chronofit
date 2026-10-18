@@ -96,6 +96,6 @@ No framework, no build tool beyond the minify/gzip pass described above. Pages a
 
 ### API contract
 
-`API.md` (Italian) is the authoritative, actively maintained reference for every HTTP route, its parameters, and the WebSocket event schema — read it before adding or changing a route, and update it when routes change. `API_public.md`/`API_public.html` is a derived public-facing copy; `md_converter.py` renders `API.md`/`API_public.md` to PDF via `pypandoc`.
+`API.md` (Italian) is the authoritative, actively maintained reference for every HTTP route, its parameters, and the WebSocket event schema — read it before adding or changing a route, and update it when routes change. `API_public.md`/`API_public.html` is a derived public-facing copy; `md_converter.py` renders `API.md`/`API_public.md` to PDF via `pypandoc`. `api_docs.py` turns `API_public.md` into `data/api.html` (user API manual, linked from the console's About panel) and `API.md` into `data/api_dev.html` (full developer manual, deliberately not linked from the UI): rerun it, then `compress_assets.py`, whenever either .md changes. `api_docs.py` is identical in every Chronofit project with a UI.
 
 Auth model: routes marked 🔒 in `API.md` require an `X-Token` header matching an NVS-stored token; if no token is configured, all requests are authorized (default for a fresh device).

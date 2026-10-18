@@ -261,8 +261,8 @@
             <option value="surname"      data-i18n="table.surname">Surname</option>
             <option value="event-time"   data-i18n="table.event_time">Event time</option>
             <option value="race-time"    data-i18n="table.race_time">Race time</option>
-            <option value="delta-time"   data-i18n="table.delta">Δ time</option>
             <option value="elapsed-time" data-i18n="table.elapsed">Elapsed</option>
+            <option value="delta-time"   data-i18n="table.delta">Δ time</option>
           </select>
         </div>
         <div class="toggle-row">
@@ -312,16 +312,16 @@
           </label>
         </div>
         <div class="toggle-row">
-          <span data-i18n="table.show_delta">Show incremental Δ column</span>
+          <span data-i18n="table.show_elapsed">Show elapsed time column</span>
           <label class="switch">
-            <input type="checkbox" id="toggle-delta-time" checked>
+            <input type="checkbox" id="toggle-elapsed-time">
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span data-i18n="table.show_elapsed">Show elapsed time column</span>
+          <span data-i18n="table.show_delta">Show incremental Δ column</span>
           <label class="switch">
-            <input type="checkbox" id="toggle-elapsed-time">
+            <input type="checkbox" id="toggle-delta-time" checked>
             <span class="slider"></span>
           </label>
         </div>
@@ -366,6 +366,13 @@
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3" selected>3</option>
+          </select>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.time_format">Time format</span>
+          <select class="time-format-select" onchange="setTimeFormat(this.value)">
+            <option value="clock">hh:mm:ss.mmm</option>
+            <option value="seconds">sss,mmm</option>
           </select>
         </div>
       </div>
@@ -471,8 +478,8 @@
             <option value="surname"      data-i18n="table.surname">Surname</option>
             <option value="event-time"   data-i18n="table.event_time">Event time</option>
             <option value="race-time"    data-i18n="table.race_time">Race time</option>
-            <option value="delta-time"   data-i18n="table.delta">Δ time</option>
             <option value="elapsed-time" data-i18n="table.elapsed">Elapsed</option>
+            <option value="delta-time"   data-i18n="table.delta">Δ time</option>
           </select>
         </div>
         <div class="toggle-row">
@@ -522,16 +529,16 @@
           </label>
         </div>
         <div class="toggle-row">
-          <span data-i18n="table.show_delta">Show incremental Δ column</span>
+          <span data-i18n="table.show_elapsed">Show elapsed time column</span>
           <label class="switch">
-            <input type="checkbox" id="toggle-delta-time-2" checked>
+            <input type="checkbox" id="toggle-elapsed-time-2">
             <span class="slider"></span>
           </label>
         </div>
         <div class="toggle-row">
-          <span data-i18n="table.show_elapsed">Show elapsed time column</span>
+          <span data-i18n="table.show_delta">Show incremental Δ column</span>
           <label class="switch">
-            <input type="checkbox" id="toggle-elapsed-time-2">
+            <input type="checkbox" id="toggle-delta-time-2" checked>
             <span class="slider"></span>
           </label>
         </div>
@@ -576,6 +583,13 @@
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3" selected>3</option>
+          </select>
+        </div>
+        <div class="toggle-row">
+          <span data-i18n="table.time_format">Time format</span>
+          <select class="time-format-select" onchange="setTimeFormat(this.value)">
+            <option value="clock">hh:mm:ss.mmm</option>
+            <option value="seconds">sss,mmm</option>
           </select>
         </div>
       </div>
@@ -1019,6 +1033,13 @@
       </div>
 
       <div class="toggle-row">
+        <span data-i18n="about.api">🔌 API manual</span>
+        <a href="/api.html" target="_blank" rel="noopener">
+          <button class="big-button" data-i18n="btn.open_manual" style="width:auto; padding:5px 15px;">📖 Open</button>
+        </a>
+      </div>
+
+      <div class="toggle-row">
         <span data-i18n="about.wifi_fix">🖥️ WiFi fix tool</span>
         <button class="big-button" data-i18n="btn.download" style="width:auto; padding:5px 15px;" onclick="downloadWifiFix()">⬇ Download</button>
       </div>
@@ -1129,6 +1150,30 @@
         </table>
       </div>
       <div class="toggle-row" style="margin-top:12px;">
+        <span data-i18n="settings.elapsed_start_line">Start line (elapsed time)</span>
+        <select id="elapsed-start-line">
+          <option value="0" data-i18n="settings.elapsed_start_any">Any line</option>
+          <option value="1">L1</option>
+          <option value="2">L2</option>
+          <option value="3">L3</option>
+          <option value="4">L4</option>
+        </select>
+      </div>
+      <div class="toggle-row" style="margin-top:12px;">
+        <span data-i18n="settings.elapsed_rearm_typed">Reset the elapsed time with a typed competitor</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-elapsed-rearm-typed">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row" style="margin-top:12px;">
+        <span data-i18n="settings.elapsed_rearm_list">Reset the elapsed time with a competitor chosen from the list</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-elapsed-rearm-list">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row" style="margin-top:12px;">
         <span data-i18n="settings.keep_comp_focus">Keep competitor input active after detection</span>
         <label class="switch">
           <input type="checkbox" id="toggle-keep-comp-focus">
@@ -1204,7 +1249,7 @@
   <div id="exitDisciplineOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
       <h2 data-i18n="exit_discipline.title">Exit discipline?</h2>
-      <p data-i18n="exit_discipline.message">This will clear all recorded times for this session. Continue?</p>
+      <p data-i18n="exit_discipline.message">Choose another discipline? Recorded times and competitors are kept.</p>
       <div class="button-row">
         <button class="big-button" id="exitDisciplineCancel"  data-i18n="btn.cancel">Cancel</button>
         <button class="big-button" id="exitDisciplineConfirm" data-i18n="btn.confirm">Confirm</button>
@@ -1256,7 +1301,7 @@
 
   <div class="sidebar">
     <div class="card comp-list-card" id="comp-list-card">
-      <div class="card-title" data-i18n="card.competitors">Comp.</div>
+      <div class="card-title comp-list-title"><span data-i18n="card.competitors">Comp.</span><button class="comp-list-edit-btn" onclick="openCompetitorEditor()" data-i18n-title="athlete.edit_competitors">✏️</button></div>
       <div id="comp-quick-list" class="comp-quick-list"></div>
     </div>
     <div class="sidebar-stack">
@@ -1273,7 +1318,7 @@
         <div class="card-title" data-i18n="card.checkpoints">Checkpoints</div>
 
         <div class="button-row hidden" id="elapsedTimeControls">
-          <button class="small-button" data-i18n="btn.start" id="startButton" onclick="sendCheckPoint(1)">Start</button>
+          <button class="small-button" data-i18n="btn.start" id="startButton" onclick="sendElapsedStart()">Start</button>
           <button class="small-button" data-i18n="btn.reset" id="resetButton" onclick="setElapsedTimemode()">Reset</button>
         </div>
 
@@ -1400,8 +1445,8 @@
                 <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
                 <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>
                 <th class="race-time-col"     data-i18n="th.race_time">Race time</th>
-                <th class="delta-time-col">Δ ⏱️</th>
                 <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
+                <th class="delta-time-col">Δ ⏱️</th>
                 <th class="penality-col">❌</th>
                 <th class="cancel-col">🚫</th>
                 <th class="col-send-col"      data-i18n="th.send">Send</th>
@@ -1431,8 +1476,8 @@
                 <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
                 <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>
                 <th class="race-time-col"     data-i18n="th.race_time">Race time</th>
-                <th class="delta-time-col">Δ ⏱️</th>
                 <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
+                <th class="delta-time-col">Δ ⏱️</th>
                 <th class="penality-col">❌</th>
                 <th class="cancel-col">🚫</th>
                 <th class="col-send-col"      data-i18n="th.send">Send</th>
@@ -1561,6 +1606,13 @@
             <option value="3" selected>3</option>
           </select>
         </div>
+        <div class="input-row">
+          <label data-i18n="table.time_format" style="font-size:20px;">Time format</label>
+          <select class="time-format-select" onchange="setTimeFormat(this.value)">
+            <option value="clock">hh:mm:ss.mmm</option>
+            <option value="seconds">sss,mmm</option>
+          </select>
+        </div>
       </div>
 
       <div class="button-row">
@@ -1663,6 +1715,13 @@
   </div>
 
   <script src="/script.js"></script>
+  <script src="/column_order.js"></script>
+  <script>
+    // ordine delle colonne scelto dall'utente (column_order.js)
+    ColumnOrder.register({ table: 'event-table', keys: ['rank', 'index', 'line', 'competitor', 'test', 'trigger', 'name', 'surname', 'timestamp', 'race', 'elapsed', 'delta', 'penalty', 'cancel', 'send'], editor: '#stab-columns' });
+    ColumnOrder.register({ table: 'event-table-2', keys: ['rank', 'index', 'line', 'competitor', 'test', 'trigger', 'name', 'surname', 'timestamp', 'race', 'elapsed', 'delta', 'penalty', 'cancel', 'send'], editor: '#stab-columns-2' });
+    ColumnOrder.register({ table: 'net-times-table', keys: ['competitor', 'start', 'finish', 'net'], positional: true, editor: '#nettab-sort' });
+  </script>
 
 </body>
 </html>

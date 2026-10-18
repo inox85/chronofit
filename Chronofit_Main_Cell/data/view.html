@@ -141,17 +141,17 @@
       </div>
 
       <div class="toggle-row">
-        <span>Show incremental Δ column</span>
+        <span>Show elapsed time column</span>
         <label class="switch">
-          <input type="checkbox" id="toggle-delta-time" checked>
+          <input type="checkbox" id="toggle-elapsed-time">
           <span class="slider"></span>
         </label>
       </div>
 
       <div class="toggle-row">
-        <span>Show elapsed time column</span>
+        <span>Show incremental Δ column</span>
         <label class="switch">
-          <input type="checkbox" id="toggle-elapsed-time">
+          <input type="checkbox" id="toggle-delta-time" checked>
           <span class="slider"></span>
         </label>
       </div>
@@ -212,6 +212,13 @@
           <option value="3" selected>Milliseconds (0.000)</option>
         </select>
       </div>
+      <div class="toggle-row">
+        <span>Time format</span>
+        <select class="time-format-select" onchange="setTimeFormat(this.value)">
+          <option value="clock">hh:mm:ss.mmm</option>
+          <option value="seconds">sss,mmm</option>
+        </select>
+      </div>
 
       <hr style="border-color:#eee; margin:10px 0;">
       <div class="toggle-row" style="cursor:pointer;" onclick="toggleSortPanel()">
@@ -229,8 +236,8 @@
             <option value="surname">Cognome</option>
             <option value="event-time">Orario evento</option>
             <option value="race-time">Race time</option>
-            <option value="delta-time">Δ tempo</option>
             <option value="elapsed-time">Elapsed</option>
+            <option value="delta-time">Δ tempo</option>
           </select>
         </div>
       </div>
@@ -368,8 +375,8 @@
             <th class="col-surname-col">Surname</th>
             <th class="timestamp-col">Event ⏱️</th>
             <th class="race-time-col">Race ⏱️</th>
-            <th class="delta-time-col">Δ ⏱️</th>
             <th class="elapsed-time-col">Elapsed ⏱️</th>
+            <th class="delta-time-col">Δ ⏱️</th>
             <th class="penality-col">❌</th>
           </tr>
         </thead>
@@ -385,6 +392,11 @@
   </div>
 
   <script src="/script_view.js"></script>
+  <script src="/column_order.js"></script>
+  <script>
+    // ordine delle colonne scelto dall'utente (column_order.js)
+    ColumnOrder.register({ table: 'event-table', keys: ['index', 'line', 'id', 'competitor', 'name', 'surname', 'timestamp', 'race', 'elapsed', 'delta', 'penalty'], editor: '#col-panel', fallbackKeys: ['index:event-table'] });
+  </script>
 
   <script src="/view_fullscreen.js"></script>
 </body>

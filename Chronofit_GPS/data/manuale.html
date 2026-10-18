@@ -181,7 +181,7 @@
         <tr><td>Equitazione</td><td>prova a tempo con penalità e classifica</td><td>Elapsed</td></tr>
       </table>
       <p>Alcune discipline possono essere <b>bloccate</b> sul tuo dispositivo (pacchetti a licenza): compaiono ma non si aprono. Contatta il rivenditore per sbloccarle.</p>
-      <p>Per cambiare disciplina tocca l'icona della disciplina in alto a destra. <b>Uscendo dalla disciplina la sessione viene cancellata</b>: prima scarica i tempi.</p>
+      <p>Per cambiare disciplina tocca l'icona della disciplina in alto a destra. Tempi registrati e competitor restano anche cambiando disciplina.</p>
       <p>Le bandierine in alto cambiano la lingua (italiano o inglese).</p>
     </section>
 
@@ -190,7 +190,7 @@
       <p>La console è divisa in due zone: a sinistra i comandi, a destra la lista dei passaggi.</p>
       <table>
         <tr><th>Card</th><th>Contenuto</th></tr>
-        <tr><td><b>Attesi</b></td><td>Elenco degli atleti del registro non ancora transitati.</td></tr>
+        <tr><td><b>Attesi</b></td><td>Elenco degli atleti del registro non ancora transitati. Tocca un nome per metterlo sulla linea attiva; l'icona ✏️ accanto al titolo apre il registro per aggiungere o modificare un competitor.</td></tr>
         <tr><td><b>Orario</b></td><td>L'orologio del dispositivo. Toccalo per aprire le impostazioni di sincronizzazione.</td></tr>
         <tr><td><b>Gestione transiti</b></td><td>Una riga per linea: numero, tipo, concorrente, abilitazione. Vedi <a href="#transiti">Gestione transiti</a>.</td></tr>
         <tr><td><b>Utilità</b> (stato)</td><td>🔗 client collegati · 🌍 stato di internet · 🛰️ stato del GPS · 📡 stato MQTT · icona del segnale = fotocellule wireless. Toccando le icone si aprono le impostazioni corrispondenti.</td></tr>
@@ -220,7 +220,7 @@
         <tr><td><b>Sync manuale</b></td><td>Inserisci l'ora e premi <b>Applica</b>: viene impostata subito. Adatta a regolazioni rapide o senza GPS.</td></tr>
         <tr><td><b>Sync chiusura linea</b></td><td>Inserisci l'ora e premi <b>Applica</b>: il dispositivo aspetta la chiusura di una linea e <b>in quell'istante</b> imposta l'ora scelta. Allinea l'orologio a un evento esterno preciso.</td></tr>
         <tr><td><b>Sync GPS</b></td><td>L'orologio si sincronizza da solo con il segnale <b>PPS</b> del GPS (un impulso allo scoccare di ogni secondo UTC). Scegli l'<b>intervallo di risincronizzazione</b> e il <b>fuso orario</b>; con <b>Sync una tantum</b> la sincronizzazione avviene una volta sola.</td></tr>
-        <tr><td><b>Elapsed (no sync)</b></td><td>Tempo trascorso: <b>Start</b> avvia il cronometro da zero, ogni <b>Stop</b> registra un passaggio senza fermare il conteggio, <b>Reset</b> riporta tutto in attesa. Per prove senza orario assoluto.</td></tr>
+        <tr><td><b>Elapsed (no sync)</b></td><td>Tempo trascorso: <b>Start</b> avvia il cronometro da zero, ogni <b>Stop</b> registra un passaggio senza fermare il conteggio, <b>Reset</b> riporta tutto in attesa. Per prove senza orario assoluto. La linea che fa partire il tempo si sceglie nel popup delle linee (<b>Linea di start (tempo trascorso)</b>); con <b>Qualsiasi linea</b> vale il primo passaggio di una linea abilitata, e una linea disabilitata non fa mai partire il tempo. Con <b>Azzera il tempo trascorso con un competitor digitato</b> e/o <b>… scelto dall'elenco</b> l'orologio torna in attesa dello start quando assegni un competitor in quel modo (scritto nel campo o toccato nell'elenco Attesi/registro). <b>Start</b> registra il passaggio sulla linea di start (la 1 con «Qualsiasi linea»).</td></tr>
       </table>
       <p>Lo <b>stato</b> sotto l'orologio dice cosa sta succedendo, per esempio "Sync mode: GPS — 🟢 synced" oppure "Waiting for timing start…".</p>
       <h3>Test della sincronizzazione GPS</h3>
@@ -244,7 +244,7 @@
       <div class="note">Le colonne opzionali non sono salvate: sono <b>calcolate</b> in base alla vista. Se nascondi alcune righe, i Δ si ricalcolano di conseguenza.</div>
       <table>
         <tr><th>Azione</th><th>Come</th></tr>
-        <tr><td>Impostazioni della tabella</td><td>Tocca l'<b>intestazione</b>: schede <i>Ordina</i>, <i>Colonne</i>, <i>Righe</i>, <i>Linee</i> (quali linee mostrare), decimali dei tempi.</td></tr>
+        <tr><td>Impostazioni della tabella</td><td>Tocca l'<b>intestazione</b>: schede <i>Ordina</i>, <i>Colonne</i>, <i>Righe</i>, <i>Linee</i> (quali linee mostrare), decimali e formato dei tempi (<code>hh:mm:ss.mmm</code> o secondi, <code>71,450</code>; il formato vale per tutte le tabelle e viste del browser).</td></tr>
         <tr><td>Annullare un passaggio</td><td>Tocca 🚫: la riga resta, barrata, ed è esclusa dai calcoli. Tocca di nuovo per ripristinarla.</td></tr>
         <tr><td>Modificare una riga</td><td><b>Pressione lunga</b> sulla riga: concorrente e altri campi.</td></tr>
         <tr><td>➡ Invia</td><td>Ripubblica la riga su MQTT.</td></tr>

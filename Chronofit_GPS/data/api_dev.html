@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Chronofit GPS — API Reference</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<!-- Generata da api_docs.py a partire da API.md: non modificare a mano -->
+<style>
+  :root { --primary:#8b0a1a; --text:#222; --muted:#666; --line:#e3e3e3; --bg:#f6f6f4; --card:#fff; --code:#f1f1f1; --pre:#1e1e1e; --pre-fg:#e8e8e8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --primary:#ff8a95; --text:#e6e6e6; --muted:#a0a0a0; --line:#333; --bg:#151515; --card:#1f1f1f; --code:#2b2b2b; --pre:#0d0d0d; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif; color:var(--text); background:var(--bg); line-height:1.55; font-size:16px; }
+  header { background:#111; color:#fff; padding:16px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  header img { height:36px; }
+  header h1 { font-size:20px; margin:0; font-weight:600; }
+  header .sub { color:#bbb; font-size:14px; }
+  header .tag { background:var(--primary); color:#fff; border-radius:6px; padding:2px 8px; font-size:12px; font-weight:bold; }
+  .print-btn { margin-left:auto; background:#8b0a1a; color:#fff; border:0; border-radius:8px; padding:8px 14px; font-size:14px; cursor:pointer; }
+  .layout { display:grid; grid-template-columns:270px 1fr; max-width:1200px; margin:0 auto; gap:24px; padding:24px 16px; }
+  nav.toc { position:sticky; top:16px; align-self:start; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; max-height:calc(100vh - 32px); overflow:auto; }
+  nav.toc input { width:100%; padding:7px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px; margin-bottom:10px; background:var(--bg); color:var(--text); }
+  nav.toc ol { margin:0; padding-left:18px; }
+  nav.toc > ol > li { margin:6px 0; font-size:14px; font-weight:600; }
+  nav.toc ul { margin:2px 0 4px; padding-left:12px; list-style:none; font-weight:normal; }
+  nav.toc ul li { margin:1px 0; font-size:13px; }
+  nav.toc a { color:var(--text); text-decoration:none; }
+  nav.toc a:hover { color:var(--primary); }
+  nav.toc code { background:none; padding:0; font-size:12.5px; }
+  main { min-width:0; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 22px; margin-bottom:18px; }
+  section.intro { border-left:4px solid var(--primary); }
+  section h2 { margin:0 0 12px; font-size:21px; color:var(--primary); border-bottom:2px solid var(--line); padding-bottom:6px; }
+  h3.route { font-size:17px; margin:22px 0 6px; padding-top:12px; border-top:1px dashed var(--line); }
+  section h2 + h3.route, section h2 + p + h3.route { border-top:0; padding-top:0; }
+  h3.route code { font-size:16px; background:none; padding:0; color:var(--text); font-weight:700; }
+  .lock { font-size:14px; }
+  h4 { font-size:15px; margin:14px 0 4px; }
+  p { margin:8px 0; }
+  ul, ol { margin:6px 0 10px; padding-left:22px; }
+  li { margin:3px 0; }
+  code { background:var(--code); border-radius:4px; padding:1px 5px; font-family:Consolas,monospace; font-size:14px; }
+  pre { background:var(--pre); color:var(--pre-fg); border-radius:8px; padding:12px 14px; overflow:auto; font-size:13.5px; line-height:1.45; }
+  pre code { background:none; padding:0; color:inherit; font-size:inherit; }
+  .tw { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; margin:8px 0 12px; font-size:14.5px; }
+  th, td { text-align:left; padding:6px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.03em; }
+  a { color:var(--primary); }
+  .hidden { display:none !important; }
+  footer { text-align:center; color:var(--muted); font-size:13px; padding:10px 0 30px; }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns:1fr; padding:16px; }
+    nav.toc { position:static; max-height:none; }
+    section { padding:14px 16px; }
+  }
+  @media print {
+    header { background:#fff; color:#000; border-bottom:2px solid #000; }
+    .print-btn, nav.toc { display:none; }
+    .layout { display:block; padding:0; }
+    section { break-inside:auto; border:0; padding:0; }
+    pre { background:#f4f4f4; color:#000; }
+    body { background:#fff; color:#000; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <img src="/logo.webp" alt="Chronofit" onerror="this.style.display='none'">
+  <div><h1>Chronofit GPS — API Reference</h1><div class="sub">Riferimento completo, comprese le route interne e di assistenza. Pagina non collegata dalla console.</div></div>
+  <span class="tag">Sviluppatori</span>
+  <button class="print-btn" onclick="window.print()">🖨 Stampa</button>
+</header>
+<div class="layout">
+<nav class="toc"><input id="api-search" type="search" placeholder="Cerca una route…" aria-label="Cerca una route"><ol>
+<li><a href="#autenticazione">Autenticazione</a>
+</li>
+<li><a href="#websocket">WebSocket</a>
+<ul><li><a href="#ws-ws"><code>WS /ws</code></a></li></ul>
+</li>
+<li><a href="#tempo-e-sincronizzazione">Tempo e sincronizzazione</a>
+<ul><li><a href="#get-time"><code>GET /time</code></a></li><li><a href="#get-settime"><code>GET /setTime</code> 🔒</a></li><li><a href="#get-setoffset"><code>GET /setOffset</code> 🔒</a></li><li><a href="#get-synctest"><code>GET /syncTest</code></a></li><li><a href="#get-timebasecal"><code>GET /timeBaseCal</code></a></li></ul>
+</li>
+<li><a href="#checkpoint-e-sessione">Checkpoint e sessione</a>
+<ul><li><a href="#get-checkpoint"><code>GET /checkPoint</code></a></li><li><a href="#get-clocksync"><code>GET /clockSync</code></a></li><li><a href="#get-cells"><code>GET /cells</code></a></li><li><a href="#get-remotecheckpoint"><code>GET /remoteCheckpoint</code> 🔒</a></li><li><a href="#get-getcheckpoints"><code>GET /getCheckpoints</code></a></li><li><a href="#get-downloadsession"><code>GET /downloadSession</code></a></li><li><a href="#get-clearsession"><code>GET /clearSession</code> 🔒</a></li><li><a href="#get-checkpointfields"><code>GET /checkPointFields</code></a></li><li><a href="#get-elapsedstartline"><code>GET /elapsedStartLine</code></a></li><li><a href="#post-checkpointfields"><code>POST /checkPointFields</code></a></li><li><a href="#post-sendcheckpointrow"><code>POST /sendCheckPointRow</code></a></li><li><a href="#post-updatecheckpointrow"><code>POST /updateCheckPointRow</code></a></li></ul>
+</li>
+<li><a href="#impostazioni-di-sistema">Impostazioni di sistema</a>
+<ul><li><a href="#get-allsettings"><code>GET /allSettings</code></a></li><li><a href="#get-setattribute"><code>GET /setAttribute</code> 🔒</a></li><li><a href="#get-systemsettings"><code>GET /systemSettings</code></a></li><li><a href="#get-reset"><code>GET /reset</code> 🔒</a></li></ul>
+</li>
+<li><a href="#branding-e-discipline">Branding e discipline</a>
+<ul><li><a href="#get-brandingsettings"><code>GET /brandingSettings</code></a></li><li><a href="#get-brandingsave"><code>GET /brandingSave</code> 🔒</a></li></ul>
+</li>
+<li><a href="#wifi">WiFi</a>
+<ul><li><a href="#get-wificredential"><code>GET /wifiCredential</code></a></li><li><a href="#get-wifiscan"><code>GET /wifiScan</code></a></li><li><a href="#get-wificonnect"><code>GET /wifiConnect</code> 🔒</a></li><li><a href="#get-wifistop"><code>GET /wifiStop</code></a></li><li><a href="#get-setappassword"><code>GET /setApPassword</code> 🔒</a></li><li><a href="#get-resetappassword"><code>GET /resetApPassword</code></a></li></ul>
+</li>
+<li><a href="#mqtt">MQTT</a>
+<ul><li><a href="#get-mqttsettings"><code>GET /mqttSettings</code></a></li><li><a href="#get-mqttsave"><code>GET /mqttSave</code></a></li><li><a href="#get-mqttbrokersave"><code>GET /mqttBrokerSave</code></a></li><li><a href="#get-mqttconfirmpending"><code>GET /mqttConfirmPending</code></a></li><li><a href="#get-mqttdiscardpending"><code>GET /mqttDiscardPending</code></a></li></ul>
+</li>
+<li><a href="#email">Email</a>
+<ul><li><a href="#get-email"><code>GET /email</code></a></li></ul>
+</li>
+<li><a href="#stampa">Stampa</a>
+<ul><li><a href="#get-print"><code>GET /print</code></a></li></ul>
+</li>
+<li><a href="#gestione-file">Gestione file</a>
+<ul><li><a href="#get-download"><code>GET /download</code></a></li><li><a href="#delete-delete"><code>DELETE /delete</code> 🔒</a></li><li><a href="#post-upload"><code>POST /upload</code></a></li><li><a href="#post-uploadfs"><code>POST /uploadFS</code></a></li></ul>
+</li>
+<li><a href="#firmware-ota">Firmware OTA</a>
+<ul><li><a href="#post-update"><code>POST /update</code></a></li><li><a href="#post-updatefs"><code>POST /updatefs</code></a></li></ul>
+</li>
+<li><a href="#debug">Debug</a>
+<ul><li><a href="#get-setserialdebug"><code>GET /setSerialDebug</code> 🔒</a></li><li><a href="#get-setnmeadeltadebug"><code>GET /setNmeaDeltaDebug</code> 🔒</a></li></ul>
+</li>
+<li><a href="#note-generali">Note generali</a>
+</li>
+</ol></nav>
+<main>
+<section class="intro"><p>Tutte le route sono esposte dal server HTTP AsyncWebServer sull'ESP32, raggiungibili sia via rete AP (<code>192.168.10.1</code>) che via STA (IP assegnato dal router).</p></section>
+<section id="autenticazione"><h2>Autenticazione</h2>
+<p>Alcune route richiedono autorizzazione. Il controllo avviene tramite la funzione <code>isAuthorized()</code>:</p>
+<ul><li>Se non è configurato nessun token NVS, tutte le richieste sono autorizzate.</li><li>Se è configurato un token, la richiesta deve includere l'header <code>X-Token: &lt;valore&gt;</code>.</li></ul>
+<p>Le route che richiedono autorizzazione sono marcate con 🔒.</p></section>
+<section id="websocket"><h2>WebSocket</h2>
+<h3 id="ws-ws" class="route"><code>WS /ws</code></h3>
+<p>Connessione WebSocket bidirezionale per il push real-time degli eventi.</p>
+<p><b>Messaggi inviati dal server (JSON):</b></p>
+<div class="tw"><table><thead><tr><th>Campo <code>t</code></th><th>Tipo evento</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>0</code></td><td><code>TYPE_CHECKPOINT</code></td><td>Nuovo passaggio registrato</td></tr><tr><td><code>1</code></td><td><code>TYPE_TIME_UPDATE</code></td><td>Aggiornamento orologio (ogni secondo)</td></tr><tr><td><code>2</code></td><td><code>TYPE_SESSION_CLEARED</code></td><td>Sessione cancellata</td></tr><tr><td><code>3</code></td><td><code>TYPE_PARAMS_UPDATED</code></td><td>Parametri di sistema aggiornati</td></tr><tr><td><code>4</code></td><td><code>TYPE_ROW_UPDATED</code></td><td>Riga sessione modificata</td></tr><tr><td><code>5</code></td><td><code>TYPE_GENERIC_MESSAGE</code></td><td>Messaggio generico</td></tr><tr><td><code>6</code></td><td><code>TYPE_EMAIL_SENT</code></td><td>Conferma email inviata</td></tr><tr><td><code>11</code></td><td><code>TYPE_LINE_UPDATED</code></td><td>Configurazione linea aggiornata</td></tr><tr><td><code>12</code></td><td><code>TYPE_CELLS_UPDATED</code></td><td>Cambiata la lista delle fotocellule wireless (stesso JSON di <code>GET /cells</code>); inviato solo quando cambia qualcosa di visibile</td></tr></tbody></table></div></section>
+<section id="tempo-e-sincronizzazione"><h2>Tempo e sincronizzazione</h2>
+<h3 id="get-time" class="route"><code>GET /time</code></h3>
+<p>Restituisce l'orario corrente preciso.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{ &quot;hh&quot;: 10, &quot;mm&quot;: 23, &quot;ss&quot;: 45, &quot;ms&quot;: 678 }</code></pre>
+<h3 id="get-settime" class="route"><code>GET /setTime</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Imposta l'orario e la modalità di sincronizzazione.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>mode</code></td><td>int</td><td><code>0</code> = manuale, <code>1</code> = sincronizzazione su chiusura linea, <code>2</code> = GPS, <code>3</code> = elapsed (nessun sync)</td></tr><tr><td><code>hour</code></td><td>int</td><td>Ore (0–23) — usato in modalità 0 e 1</td></tr><tr><td><code>minute</code></td><td>int</td><td>Minuti (0–59)</td></tr><tr><td><code>second</code></td><td>int</td><td>Secondi (0–59)</td></tr><tr><td><code>gpsInterval</code></td><td>int</td><td>Intervallo sync GPS in minuti (solo modalità 2)</td></tr><tr><td><code>utcOffset</code></td><td>int</td><td>Offset UTC (-12 … +14)</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo descrittivo dell'operazione eseguita.</p>
+<h3 id="get-setoffset" class="route"><code>GET /setOffset</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Imposta solo l'offset UTC senza cambiare modalità.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>offset</code></td><td>int</td><td>Offset UTC (-12 … +14)</td></tr></tbody></table></div>
+<h3 id="get-synctest" class="route"><code>GET /syncTest</code></h3>
+<p>Avvia un test di sincronizzazione (emette segnale su linea di sync).</p>
+<p><b>Risposta:</b> testo di conferma.</p>
+<h3 id="get-timebasecal" class="route"><code>GET /timeBaseCal</code></h3>
+<p>Calibrazione della base tempi del RTC.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>delta_us</code></td><td>int</td><td>Deviazione in microsecondi misurata</td></tr><tr><td><code>minutes</code></td><td>int</td><td>Finestra di misurazione in minuti</td></tr><tr><td><code>agingFactor</code></td><td>int</td><td>(alternativa) fattore di aging diretto del RTC</td></tr></tbody></table></div></section>
+<section id="checkpoint-e-sessione"><h2>Checkpoint e sessione</h2>
+<h3 id="get-checkpoint" class="route"><code>GET /checkPoint</code></h3>
+<p>Registra manualmente un passaggio (normalmente generato dall'hardware IR).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Default</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>lineNumber</code></td><td>int</td><td>0</td><td>Indice <b>0-based</b> della linea (0 = linea 1) che ha rilevato il passaggio</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma con timestamp. Il base timbra l'istante di <i>arrivo</i> della richiesta: latenza e jitter di rete finiscono nel tempo (per le fotocellule wireless usare <code>/remoteCheckpoint</code>).</p>
+<h3 id="get-clocksync" class="route"><code>GET /clockSync</code></h3>
+<p>Restituisce l'orologio <code>esp_timer</code> del base in microsecondi (stringa decimale), campionato come prima istruzione dell'handler. Usato dalle fotocellule wireless per stimare l'offset di clock (round-trip, stile NTP).</p>
+<p><b>Risposta:</b> <code>text/plain</code>, es. <code>123456789012</code>.</p>
+<p><b>Parametri opzionali (battito di presenza della fotocellula):</b> <code>cell</code> (id), <code>line</code> (1–4), <code>rssi</code> (dBm), <code>rtt</code> (µs, miglior RTT misurato), <code>fw</code> (versione). Se <code>cell</code> e <code>line</code> sono presenti il base registra/aggiorna la cella in elenco (vedi <code>GET /cells</code>); senza parametri la route resta un semplice clock. La route non richiede autenticazione, quindi la presenza è solo informativa (falsificabile) e non influisce sui tempi.</p>
+<h3 id="get-cells" class="route"><code>GET /cells</code></h3>
+<p>Elenco delle fotocellule wireless viste dal base. Una cella è <code>connected</code> se ha mandato un battito (<code>/clockSync</code>) negli ultimi 10 s; altrimenti resta in elenco come persa (fino a 8 celle, la più vecchia persa viene sostituita da una nuova). Lo stesso JSON viene inviato sul WebSocket (<code>t = 12</code>) a ogni cambiamento.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{
+  &quot;t&quot;: 12, &quot;n&quot;: 1, &quot;total&quot;: 2,
+  &quot;cells&quot;: [
+    { &quot;id&quot;: &quot;a4cf12345678&quot;, &quot;line&quot;: 2, &quot;rssi&quot;: -58, &quot;rtt&quot;: 3100, &quot;fw&quot;: &quot;C1.0.0&quot;,
+      &quot;ip&quot;: &quot;192.168.10.2&quot;, &quot;connected&quot;: true, &quot;conflict&quot;: false,
+      &quot;ageMs&quot;: 1800, &quot;lastEventAgeMs&quot;: 42000, &quot;events&quot;: 7 }
+  ]
+}</code></pre>
+<p><code>conflict</code> è <code>true</code> se due celle connesse dichiarano la stessa linea. <code>lastEventAgeMs</code> è <code>-1</code> se la cella non ha ancora inviato passaggi; <code>rssi</code> è <code>0</code> se sconosciuto.</p>
+<h3 id="get-remotecheckpoint" class="route"><code>GET /remoteCheckpoint</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Registra un passaggio proveniente da una fotocellula wireless (<code>Chronofit_Cell</code>) con timestamp già espresso nel clock <code>esp_timer</code> del base. Il passaggio entra nella stessa pipeline di un sensore cablato (sync su linea, avvio elapsed, buzzer, stampa, MQTT, WebSocket).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>lineNumber</code></td><td>int</td><td>Linea <b>1-based</b> (1–4), diversamente da <code>/checkPoint</code></td></tr><tr><td><code>t</code></td><td>uint64</td><td>Istante del fronte in µs, dominio <code>esp_timer</code> del base</td></tr><tr><td><code>seq</code></td><td>uint32</td><td>(opz.) Numero progressivo: uno stesso <code>seq</code> ripetuto sulla stessa linea risponde <code>DUP</code> senza duplicare il passaggio</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>OK</code>, <code>DUP</code>, oppure <code>400</code> (<code>Missed params</code>, <code>Bad lineNumber</code>, <code>Bad timestamp</code> se <code>t</code> è oltre 50 ms nel futuro o più vecchio di 5 minuti).</p>
+<h3 id="get-getcheckpoints" class="route"><code>GET /getCheckpoints</code></h3>
+<p>Scarica il file di sessione corrente (<code>session.json</code>) in streaming chunked.</p>
+<p><b>Risposta:</b> file NDJSON (newline-delimited JSON), una riga per ogni checkpoint.</p>
+<p><b>Formato riga:</b></p>
+<pre><code>{&quot;id&quot;:1,&quot;ln&quot;:1,&quot;lId&quot;:&quot;A1&quot;,&quot;c&quot;:42,&quot;h&quot;:10,&quot;m&quot;:23,&quot;s&quot;:45,&quot;ms&quot;:678,&quot;x&quot;:0,&quot;e&quot;:1,&quot;p&quot;:0,&quot;r&quot;:0}</code></pre>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>id</code></td><td>Indice progressivo del passaggio</td></tr><tr><td><code>ln</code></td><td>Numero linea</td></tr><tr><td><code>lId</code></td><td>ID linea (stringa)</td></tr><tr><td><code>c</code></td><td>Numero competitor</td></tr><tr><td><code>h</code>,<code>m</code>,<code>s</code>,<code>ms</code></td><td>Orario evento</td></tr><tr><td><code>x</code></td><td>Penalità (secondi)</td></tr><tr><td><code>e</code></td><td>Abilitato (1) / disabilitato (0)</td></tr><tr><td><code>p</code></td><td>Tipo prova/sensore (testo libero impostato dall'utente, es. "FPC 102")</td></tr><tr><td><code>r</code></td><td>Modalità trigger (<code>0</code> = automatico, <code>1</code> = manuale)</td></tr></tbody></table></div>
+<h3 id="get-downloadsession" class="route"><code>GET /downloadSession</code></h3>
+<p>Scarica il file di sessione come allegato (Content-Disposition: attachment).</p>
+<p><b>Risposta:</b> stesso formato di <code>/getCheckpoints</code>, con header per il download diretto.</p>
+<h3 id="get-clearsession" class="route"><code>GET /clearSession</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Cancella l'intera sessione corrente (elimina <code>session.json</code>). Notifica tutti i client WebSocket.</p>
+<p><b>Risposta:</b> testo di conferma.</p>
+<h3 id="get-checkpointfields" class="route"><code>GET /checkPointFields</code></h3>
+<p>Aggiorna la configurazione di una linea tramite query string. Solo <code>l</code> è obbligatorio; gli altri parametri sono facoltativi — vengono modificati solo i campi presenti.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>✅</td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>string</td><td>—</td><td>ID linea</td></tr><tr><td><code>c</code></td><td>int</td><td>—</td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>int</td><td>—</td><td>Delay linea in millisecondi</td></tr><tr><td><code>e</code></td><td>int</td><td>—</td><td>Abilitato: <code>1</code> / <code>0</code></td></tr></tbody></table></div>
+<p><b>Esempio:</b> <code>GET /checkPointFields?l=2&amp;c=7&amp;e=1</code></p>
+<h3 id="get-elapsedstartline" class="route"><code>GET /elapsedStartLine</code></h3>
+<p>Linea il cui primo passaggio fa partire il tempo trascorso (modalità elapsed). Senza parametri restituisce il valore attuale. Salvata in NVS (<code>el_start</code>), default <code>0</code>.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>—</td><td><code>0</code> = qualsiasi linea, <code>1</code>–<code>4</code> = solo quella linea</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>{ &quot;l&quot;: 0 }</code></p>
+<h3 id="post-checkpointfields" class="route"><code>POST /checkPointFields</code></h3>
+<p>Aggiorna la configurazione di una linea (competitor, ID linea, delay, stato). Tutti i campi sono inviati nel body.</p>
+<p><b>Body JSON:</b></p>
+<pre><code>{ &quot;l&quot;: 1, &quot;ld&quot;: &quot;A1&quot;, &quot;c&quot;: 42, &quot;d&quot;: 500, &quot;e&quot;: 1 }</code></pre>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>ID linea (stringa)</td></tr><tr><td><code>c</code></td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>Delay linea in millisecondi</td></tr><tr><td><code>e</code></td><td>Abilitato: <code>1</code> / <code>0</code></td></tr></tbody></table></div>
+<h3 id="post-sendcheckpointrow" class="route"><code>POST /sendCheckPointRow</code></h3>
+<p>Invia (o re-invia) manualmente un passaggio: stampa sulla stampante termica e pubblica su MQTT.</p>
+<p><b>Body JSON:</b></p>
+<pre><code>{ &quot;lineNumber&quot;: 1, &quot;index&quot;: 5, &quot;lineId&quot;: &quot;A1&quot;, &quot;competitor&quot;: 42, &quot;hour&quot;: 10, &quot;minute&quot;: 23, &quot;second&quot;: 45, &quot;millis&quot;: 678 }</code></pre>
+<h3 id="post-updatecheckpointrow" class="route"><code>POST /updateCheckPointRow</code></h3>
+<p>Modifica un passaggio esistente nella sessione (aggiorna <code>session.json</code>).</p>
+<p><b>Body JSON:</b></p>
+<pre><code>{ &quot;index&quot;: 5, &quot;lineNumber&quot;: 1, &quot;lineId&quot;: &quot;A1&quot;, &quot;competitor&quot;: 42, &quot;hour&quot;: 10, &quot;minute&quot;: 23, &quot;second&quot;: 45, &quot;millis&quot;: 678, &quot;penality&quot;: 0 }</code></pre>
+<p>Il campo <code>index</code> identifica il record da modificare. Se non esiste viene creato.</p></section>
+<section id="impostazioni-di-sistema"><h2>Impostazioni di sistema</h2>
+<h3 id="get-allsettings" class="route"><code>GET /allSettings</code></h3>
+<p>Restituisce tutte le impostazioni del dispositivo serializzate in JSON.</p>
+<p><b>Risposta JSON (campi principali):</b></p>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>c1</code>–<code>c4</code></td><td>Competitor assegnati alle linee 1–4</td></tr><tr><td><code>l1</code>–<code>l4</code></td><td>ID linea 1–4</td></tr><tr><td><code>d1</code>–<code>d4</code></td><td>Delay linee 1–4 (ms)</td></tr><tr><td><code>e1</code>–<code>e4</code></td><td>Stato abilitazione linee</td></tr><tr><td><code>sm</code></td><td>Sync method corrente</td></tr><tr><td><code>si</code></td><td>GPS sync interval</td></tr><tr><td><code>utc</code></td><td>Offset UTC</td></tr><tr><td><code>sn</code></td><td>Nome stazione</td></tr><tr><td><code>print</code></td><td>Stampa abilitata (0/1)</td></tr><tr><td><code>bz</code></td><td>Buzzer abilitato (0/1)</td></tr><tr><td><code>mqttAcquireRow</code></td><td>MQTT acquire row mode</td></tr><tr><td><code>mqttImmediateMode</code></td><td>MQTT immediate mode</td></tr><tr><td><code>mqttShowPopup</code></td><td>Mostra popup UI all'arrivo di messaggi MQTT (0/1)</td></tr></tbody></table></div>
+<h3 id="get-setattribute" class="route"><code>GET /setAttribute</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Aggiorna attributi del dispositivo.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>printEnabled</code></td><td>int</td><td><code>1</code> = stampa abilitata, <code>0</code> = disabilitata</td></tr><tr><td><code>buzzerEnable</code></td><td>int</td><td><code>1</code> = buzzer abilitato</td></tr><tr><td><code>stationName</code></td><td>string</td><td>Nome della stazione</td></tr></tbody></table></div>
+<h3 id="get-systemsettings" class="route"><code>GET /systemSettings</code></h3>
+<p>Restituisce informazioni complete sull'hardware e sul sistema.</p>
+<p><b>Risposta JSON (campi principali):</b></p>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>cpuTemp</code></td><td>Temperatura CPU</td></tr><tr><td><code>freeRam</code></td><td>RAM libera (byte)</td></tr><tr><td><code>minFreeRam</code></td><td>Minimo RAM libera raggiunto</td></tr><tr><td><code>fwVersion</code></td><td>Versione firmware</td></tr><tr><td><code>hwName</code></td><td>Nome hardware</td></tr><tr><td><code>fsTotal</code> / <code>fsUsed</code></td><td>Dimensione filesystem totale/usata</td></tr><tr><td><code>gpsFix</code></td><td>Stato fix GPS</td></tr><tr><td><code>gpsLat</code> / <code>gpsLng</code></td><td>Coordinate GPS</td></tr><tr><td><code>gpsAlt</code></td><td>Altitudine GPS</td></tr><tr><td><code>gpsSat</code></td><td>Numero satelliti</td></tr><tr><td><code>files</code></td><td>Lista file nel filesystem</td></tr></tbody></table></div>
+<h3 id="get-reset" class="route"><code>GET /reset</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Riavvia il dispositivo (reboot).</p>
+<p><b>Risposta:</b> testo di conferma (il dispositivo si riavvia dopo l'invio).</p></section>
+<section id="branding-e-discipline"><h2>Branding e discipline</h2>
+<p>Impostazioni di branding/licensing a livello dealer: quali discipline sono<br>sbloccate nella schermata di selezione e se mostrare il logo sponsor<br>(<code>sponsor.png</code>, caricato da <code>sponsor.html</code>) sulle pagine. Pensate per essere<br>gestite da un tool esterno al dealer (o dalla pagina <code>branding.html</code>), non<br>dal cliente finale.</p>
+<h3 id="get-brandingsettings" class="route"><code>GET /brandingSettings</code></h3>
+<p>Restituisce lo stato corrente di branding/licensing.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{
+  &quot;disciplines&quot;: { &quot;regularity&quot;: 1, &quot;ski&quot;: 1, &quot;enduro&quot;: 1, &quot;equestrian&quot;: 0 },
+  &quot;showSponsorLogo&quot;: 1,
+  &quot;sponsorLogoExists&quot;: true
+}</code></pre>
+<p><code>disciplines</code> è una mappa <code>id disciplina → 0|1</code> (1 = abilitata, 0 = visibile<br>ma bloccata nella schermata di selezione). Un id assente equivale a <code>1</code><br>(abilitata). <code>showSponsorLogo</code> di default è <code>1</code> (per non cambiare il<br>comportamento sui device esistenti, dove <code>sponsor.png</code> è sempre mostrato<br>oggi). <code>sponsorLogoExists</code> indica se <code>/sponsor.png</code> è già stato caricato<br>(vedi <code>POST /upload</code>, o la pagina <code>sponsor.html</code>).</p>
+<h3 id="get-brandingsave" class="route"><code>GET /brandingSave</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Aggiorna lo stato di branding/licensing. Ogni parametro è opzionale: se<br>omesso, il relativo valore resta invariato.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>disciplines</code></td><td>string (JSON)</td><td>Mappa <code>{&quot;id&quot;:0\|1, ...}</code> da salvare così com'è</td></tr><tr><td><code>showSponsorLogo</code></td><td>int</td><td><code>1</code> = mostra <code>sponsor.png</code> sulle pagine, <code>0</code> = nascondilo</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma <code>OK</code>.</p></section>
+<section id="wifi"><h2>WiFi</h2>
+<h3 id="get-wificredential" class="route"><code>GET /wifiCredential</code></h3>
+<p>Restituisce lo stato della connessione WiFi STA.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{ &quot;ssid&quot;: &quot;MyNetwork&quot;, &quot;staConnected&quot;: true, &quot;staIp&quot;: &quot;192.168.1.42&quot; }</code></pre>
+<h3 id="get-wifiscan" class="route"><code>GET /wifiScan</code></h3>
+<p>Scansione asincrona delle reti WiFi vicine. Richiamarla finché <code>scanning</code> è <code>true</code>: la prima chiamata avvia la scansione, quelle successive restituiscono <code>{&quot;scanning&quot;:true}</code> finché è in corso, poi l'elenco.</p>
+<p>Se la STA non è connessa, la scansione sospende i tentativi di riconnessione (che altrimenti la farebbero fallire) e li riprende a fine scansione. Durante la scansione l'AP può sparire per qualche istante: il client deve ritentare.</p>
+<p><b>Risposta JSON (a scansione conclusa):</b></p>
+<pre><code>{ &quot;scanning&quot;: false, &quot;networks&quot;: [ { &quot;ssid&quot;: &quot;MyNetwork&quot;, &quot;rssi&quot;: -55, &quot;channel&quot;: 6, &quot;secure&quot;: true } ] }</code></pre>
+<h3 id="get-wificonnect" class="route"><code>GET /wifiConnect</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Avvia la connessione WiFi STA.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>ssid</code></td><td>string</td><td>SSID della rete</td></tr><tr><td><code>pw</code></td><td>string</td><td>Password della rete</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma (la connessione avviene in background).</p>
+<h3 id="get-wifistop" class="route"><code>GET /wifiStop</code></h3>
+<p>Interrompe i tentativi di riconnessione WiFi STA.</p>
+<p><b>Risposta:</b> testo di conferma.</p>
+<h3 id="get-setappassword" class="route"><code>GET /setApPassword</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Cambia la password dell'Access Point WiFi.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>current</code></td><td>string</td><td>Password attuale dell'AP</td></tr><tr><td><code>newpwd</code></td><td>string</td><td>Nuova password (minimo 8 caratteri)</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma o messaggio di errore.</p>
+<h3 id="get-resetappassword" class="route"><code>GET /resetApPassword</code></h3>
+<p>⚠️ <b>Non richiede autorizzazione</b> — route di emergenza per ripristinare la password AP al valore di default (chip ID). Accessibile via rete STA anche se si è persa la password AP.</p>
+<p><b>Risposta:</b> testo di conferma.</p></section>
+<section id="mqtt"><h2>MQTT</h2>
+<h3 id="get-mqttsettings" class="route"><code>GET /mqttSettings</code></h3>
+<p>Restituisce la configurazione MQTT corrente.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{
+  &quot;subTopic&quot;: &quot;gara1&quot;,
+  &quot;eventName&quot;: &quot;evento&quot;,
+  &quot;prefix&quot;: &quot;chronofit&quot;,
+  &quot;showPopup&quot;: 1,
+  &quot;acquireRow&quot;: 0,
+  &quot;immediateMode&quot;: 0,
+  &quot;brokerHost&quot;: &quot;broker.example.com&quot;,
+  &quot;brokerPort&quot;: 1883,
+  &quot;brokerUser&quot;: &quot;&quot;,
+  &quot;brokerPass&quot;: &quot;&quot;
+}</code></pre>
+<p>Il topic di pubblicazione è: <code>{prefix}/{eventName}/{stationName}/{chipId}/checkpoint</code></p>
+<h3 id="get-mqttsave" class="route"><code>GET /mqttSave</code></h3>
+<p>Salva le impostazioni MQTT generali.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>subTopic</code></td><td>string</td><td>Subtopic (nome gara)</td></tr><tr><td><code>eventName</code></td><td>string</td><td>Nome evento</td></tr><tr><td><code>prefix</code></td><td>string</td><td>Prefisso del topic (default: <code>chronofit</code>)</td></tr><tr><td><code>showPopup</code></td><td>int</td><td>Mostra popup UI alla ricezione di un messaggio MQTT (0/1)</td></tr><tr><td><code>acquireRow</code></td><td>int</td><td>Acquisisce il competitor ricevuto nella lista atleti (0/1)</td></tr><tr><td><code>immediateMode</code></td><td>int</td><td>Registra la riga ricevuta immediatamente senza conferma utente (0/1)</td></tr></tbody></table></div>
+<h3 id="get-mqttbrokersave" class="route"><code>GET /mqttBrokerSave</code></h3>
+<p>Salva la configurazione del broker MQTT e riconnette.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>host</code></td><td>string</td><td>Hostname o IP del broker</td></tr><tr><td><code>port</code></td><td>int</td><td>Porta (default: 1883)</td></tr><tr><td><code>user</code></td><td>string</td><td>Username (opzionale)</td></tr><tr><td><code>pass</code></td><td>string</td><td>Password (opzionale)</td></tr></tbody></table></div>
+<h3 id="get-mqttconfirmpending" class="route"><code>GET /mqttConfirmPending</code></h3>
+<p>Conferma un'azione MQTT in attesa di approvazione.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>ID dell'azione pending</td></tr></tbody></table></div>
+<h3 id="get-mqttdiscardpending" class="route"><code>GET /mqttDiscardPending</code></h3>
+<p>Scarta un'azione MQTT in attesa di approvazione.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>id</code></td><td>string</td><td>ID dell'azione pending</td></tr></tbody></table></div></section>
+<section id="email"><h2>Email</h2>
+<h3 id="get-email" class="route"><code>GET /email</code></h3>
+<p>Invia un'email (richiede connessione internet via STA).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>address</code></td><td>string</td><td>Indirizzo email destinatario</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma (l'invio avviene in modo asincrono).</p></section>
+<section id="stampa"><h2>Stampa</h2>
+<h3 id="get-print" class="route"><code>GET /print</code></h3>
+<p>Invia testo alla stampante termica seriale.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>text</code></td><td>string</td><td>Testo da stampare (URL-encoded)</td></tr><tr><td><code>cr</code></td><td>int</td><td><code>1</code> = aggiunge carriage return, <code>0</code> = no</td></tr></tbody></table></div></section>
+<section id="gestione-file"><h2>Gestione file</h2>
+<h3 id="get-download" class="route"><code>GET /download</code></h3>
+<p>Scarica un file dal filesystem dell'ESP32.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>file</code></td><td>string</td><td>Percorso del file (es. <code>/session.json</code>)</td></tr></tbody></table></div>
+<p>⚠️ Protetto da path traversal: sono ammessi solo percorsi relativi alla root del filesystem.</p>
+<h3 id="delete-delete" class="route"><code>DELETE /delete</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Elimina un file dal filesystem.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>file</code></td><td>string</td><td>Percorso del file da eliminare</td></tr></tbody></table></div>
+<h3 id="post-upload" class="route"><code>POST /upload</code></h3>
+<p>Upload generico di un file nel filesystem.</p>
+<p><b>Body:</b> <code>multipart/form-data</code> con il file nel campo <code>upload</code>.</p>
+<p>⚠️ Protetto da path traversal.</p>
+<h3 id="post-uploadfs" class="route"><code>POST /uploadFS</code></h3>
+<p>Upload di un'intera immagine del filesystem (LittleFS). Usato per l'aggiornamento OTA del filesystem.</p>
+<p><b>Body:</b> <code>multipart/form-data</code> con il file nel campo <code>fs</code>.</p></section>
+<section id="firmware-ota"><h2>Firmware OTA</h2>
+<h3 id="post-update" class="route"><code>POST /update</code></h3>
+<p>Aggiornamento firmware OTA.</p>
+<p><b>Body:</b> <code>multipart/form-data</code> con il file <code>.bin</code> nel campo <code>fw</code>.</p>
+<p><b>Risposta:</b> testo di conferma. Il dispositivo si riavvia automaticamente al termine.</p>
+<h3 id="post-updatefs" class="route"><code>POST /updatefs</code></h3>
+<p>Aggiornamento OTA del filesystem (LittleFS), usato dalla pagina <code>update.html</code>.</p>
+<p><b>Body:</b> <code>multipart/form-data</code> con l'immagine <code>.bin</code> del filesystem.</p>
+<p><b>Risposta:</b> <code>OK - Riavvio...</code> oppure <code>ERRORE</code>. Se va a buon fine il dispositivo si riavvia. 🔒 L'autorizzazione è verificata all'inizio dell'upload.</p></section>
+<section id="debug"><h2>Debug</h2>
+<h3 id="get-setserialdebug" class="route"><code>GET /setSerialDebug</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Attiva o disattiva i messaggi di debug sulla seriale.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>enabled</code></td><td>int</td><td><code>1</code> attiva, <code>0</code> disattiva; senza parametro inverte lo stato</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>serialDebug ON</code> / <code>serialDebug OFF</code></p>
+<h3 id="get-setnmeadeltadebug" class="route"><code>GET /setNmeaDeltaDebug</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Attiva o disattiva la stampa sulla seriale dello scarto tra PPS e frase NMEA.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>enabled</code></td><td>int</td><td><code>1</code> attiva, <code>0</code> disattiva; senza parametro inverte lo stato</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>nmeaDeltaDebug ON</code> / <code>nmeaDeltaDebug OFF</code></p></section>
+<section id="note-generali"><h2>Note generali</h2>
+<ul><li>Tutte le risposte sono in <code>text/plain</code> o <code>application/json</code> a seconda della route.</li><li>Il server non implementa CORS — le richieste cross-origin vanno gestite lato client.</li><li>Le route GET usano parametri query string (<code>?param=value&amp;...</code>).</li><li>Le route POST usano body JSON (<code>Content-Type: application/json</code>) salvo dove indicato diversamente (multipart).</li><li>Il WebSocket è l'unico canale bidirezionale; tutte le altre route sono unidirezionali (request/response).</li></ul></section>
+<footer>Le route marcate con 🔒 richiedono l'header <code>X-Token</code> se sul dispositivo è configurato un token.</footer>
+</main>
+</div>
+<script>
+document.getElementById('api-search').addEventListener('input', function () {
+  var q = this.value.trim().toLowerCase();
+  document.querySelectorAll('nav.toc ul li').forEach(function (li) {
+    li.classList.toggle('hidden', !!q && li.textContent.toLowerCase().indexOf(q) < 0);
+  });
+  document.querySelectorAll('nav.toc > ol > li').forEach(function (li) {
+    var subs = li.querySelectorAll('ul li'), any = false;
+    subs.forEach(function (s) { if (!s.classList.contains('hidden')) any = true; });
+    li.classList.toggle('hidden', !!q && !any && li.firstElementChild.textContent.toLowerCase().indexOf(q) < 0);
+  });
+});
+</script>
+</body>
+</html>

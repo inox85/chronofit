@@ -2174,3 +2174,7 @@ input:checked + .slider:before {
 .cells-table tbody tr { border-top: 1px solid #eee; }
 .cells-table tr.cell-row-lost td { color: #c62828; }
 .cells-table tr.cell-row-conflict td { color: #c62828; font-weight: bold; }
+
+/* Titolo "Attesi" con l'icona del registro competitor */
+.comp-list-title { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.comp-list-edit-btn { border: none; background: transparent; cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; }

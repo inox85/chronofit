@@ -1033,6 +1033,22 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     wifiRxActivity();
   });
 
+  // Linea di start del tempo trascorso: l = 0 (qualsiasi) | 1-4. Senza
+  // parametri restituisce il valore attuale. Salvata in NVS (el_start).
+  server.on("/elapsedStartLine", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("l")) {
+      int l = request->getParam("l")->value().toInt();
+      if (l < 0 || l > 4) {
+        request->send(400, "text/plain", "Parameter l must be 0-4");
+        return;
+      }
+      elapsedStartLine = l;
+      writeIntToSettings("el_start", l);
+    }
+    request->send(200, "application/json", String("{\"l\":") + elapsedStartLine + "}");
+    wifiRxActivity();
+  });
+
   server.on("/checkPointFields", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!request->hasParam("l")) {
       request->send(400, "text/plain", "Missing parameter: l (line number)");

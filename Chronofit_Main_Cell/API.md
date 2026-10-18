@@ -197,6 +197,17 @@ Aggiorna la configurazione di una linea tramite query string. Solo `l` è obblig
 
 ---
 
+### `GET /elapsedStartLine`
+Linea il cui primo passaggio fa partire il tempo trascorso (modalità elapsed). Senza parametri restituisce il valore attuale. Salvata in NVS (`el_start`), default `0`.
+
+| Parametro | Tipo | Obbligatorio | Descrizione |
+|---|---|---|---|
+| `l` | int | — | `0` = qualsiasi linea, `1`–`4` = solo quella linea |
+
+**Risposta:** `{ "l": 0 }`
+
+---
+
 ### `POST /checkPointFields`
 Aggiorna la configurazione di una linea (competitor, ID linea, delay, stato). Tutti i campi sono inviati nel body.
 
@@ -457,6 +468,13 @@ Aggiornamento firmware OTA.
 **Body:** `multipart/form-data` con il file `.bin` nel campo `fw`.
 
 **Risposta:** testo di conferma. Il dispositivo si riavvia automaticamente al termine.
+
+### `POST /updatefs`
+Aggiornamento OTA del filesystem (LittleFS), usato dalla pagina `update.html`.
+
+**Body:** `multipart/form-data` con l'immagine `.bin` del filesystem.
+
+**Risposta:** `OK - Riavvio...` oppure `ERRORE`. Se va a buon fine il dispositivo si riavvia. 🔒 L'autorizzazione è verificata all'inizio dell'upload.
 
 ---
 

@@ -56,7 +56,7 @@ const TRANSLATIONS = {
 
     // ── Exit discipline confirm ───────────────────────────────────────────────
     'exit_discipline.title':   'Exit discipline?',
-    'exit_discipline.message': 'This will permanently clear all recorded times for this session. Continue?',
+    'exit_discipline.message': 'Choose another discipline? Recorded times and competitors are kept.',
 
     // ── Clear session ─────────────────────────────────────────────────────────
     'clear.title':   'Confirm',
@@ -145,6 +145,10 @@ const TRANSLATIONS = {
     'table.show_cancel':     'Show cancel button',
     'table.show_send':       'Show send button',
     'settings.keep_comp_focus': 'Keep competitor input active after detection',
+    'settings.elapsed_start_line': 'Start line (elapsed time)',
+    'settings.elapsed_start_any':  'Any line',
+    'settings.elapsed_rearm_typed': 'Reset the elapsed time with a typed competitor',
+    'settings.elapsed_rearm_list':  'Reset the elapsed time with a competitor chosen from the list',
     'settings.propagate_competitor': 'Propagate competitor number to managed, unassigned lines',
     'settings.timekeepers_label': 'Timekeepers (name & phone) — printed on the receipt',
     'settings.timekeepers_ph': 'One per line, e.g. Mario Rossi 333-1234567',
@@ -168,6 +172,7 @@ const TRANSLATIONS = {
 
     // ── Card titles ───────────────────────────────────────────────────────────
     'card.competitors': 'Comp.',
+    'athlete.edit_competitors': 'Add or edit competitors',
     'card.time':        'Time',
     'card.checkpoints': 'Checkpoints',
     'card.status':      'Status',
@@ -221,6 +226,7 @@ const TRANSLATIONS = {
     'table.show_test':     'Show test column',
     'table.show_trigger':       'Show detection column',
     'table.time_precision':  'Time precision decimals',
+    'table.time_format': 'Time format',
     'table.show_line_1':     'Show line 1',
     'table.show_line_2':     'Show line 2',
     'table.show_line_3':     'Show line 3',
@@ -289,6 +295,7 @@ const TRANSLATIONS = {
     // ── About overlay ─────────────────────────────────────────────────────────
     'about.firmware': '🔧 Firmware',
     'about.manual':   '📄 Manual',
+    'about.api':      '🔌 API manual',
     'about.wifi_fix': '🖥️ WiFi fix tool',
 
     // ── Main UI ───────────────────────────────────────────────────────────────
@@ -398,7 +405,7 @@ const TRANSLATIONS = {
 
     // ── Exit discipline confirm ───────────────────────────────────────────────
     'exit_discipline.title':   'Uscire dalla disciplina?',
-    'exit_discipline.message': 'Questa operazione cancellerà definitivamente tutti i tempi registrati in questa sessione. Continuare?',
+    'exit_discipline.message': 'Scegliere un\'altra disciplina? I tempi registrati e i competitor restano.',
 
     // ── Clear session ─────────────────────────────────────────────────────────
     'clear.title':   'Conferma',
@@ -487,6 +494,10 @@ const TRANSLATIONS = {
     'table.show_cancel':     'Mostra pulsante annulla',
     'table.show_send':       'Mostra pulsante invia',
     'settings.keep_comp_focus': 'Mantieni input competitor attivo dopo rilevazione',
+    'settings.elapsed_start_line': 'Linea di start (tempo trascorso)',
+    'settings.elapsed_start_any':  'Qualsiasi linea',
+    'settings.elapsed_rearm_typed': 'Azzera il tempo trascorso con un competitor digitato',
+    'settings.elapsed_rearm_list':  'Azzera il tempo trascorso con un competitor scelto dall\'elenco',
     'settings.propagate_competitor': 'Propaga il numero competitor alle linee gestite non assegnate',
     'settings.timekeepers_label': 'Cronometristi (nome e telefono) — stampati sullo scontrino',
     'settings.timekeepers_ph': 'Uno per riga, es. Mario Rossi 333-1234567',
@@ -510,6 +521,7 @@ const TRANSLATIONS = {
 
     // ── Card titles ───────────────────────────────────────────────────────────
     'card.competitors': 'Attesi',
+    'athlete.edit_competitors': 'Aggiungi o modifica competitor',
     'card.time':        'Orario',
     'card.checkpoints': 'Gestione transiti',
     'card.status':      'Utilità',
@@ -563,6 +575,7 @@ const TRANSLATIONS = {
     'table.show_test':     'Mostra colonna prova',
     'table.show_trigger':       'Mostra colonna rilevamento',
     'table.time_precision':  'Decimali precisione tempo',
+    'table.time_format': 'Formato tempi',
     'table.show_line_1':     'Mostra linea 1',
     'table.show_line_2':     'Mostra linea 2',
     'table.show_line_3':     'Mostra linea 3',
@@ -631,6 +644,7 @@ const TRANSLATIONS = {
     // ── About overlay ─────────────────────────────────────────────────────────
     'about.firmware': '🔧 Firmware',
     'about.manual':   '📄 Manuale',
+    'about.api':      '🔌 Manuale API',
     'about.wifi_fix': '🖥️ Strumento fix WiFi',
 
     // ── Main UI ───────────────────────────────────────────────────────────────

@@ -34,6 +34,38 @@ const VIEW_FIELDS = ['showRank', 'showIndex', 'showLine', 'showTest', 'showName'
 
 let viewPrefs = null;
 
+// Formato dei tempi scelto nelle impostazioni, comune a console e viste dello
+// stesso browser: 'clock' = hh:mm:ss.mmm, 'seconds' = secondi totali con la
+// virgola (71,450). I decimali restano quelli scelti a parte.
+const TIME_FORMAT_KEY = 'chronofit_time_format';
+let timeFormat = 'clock';
+try { if (localStorage.getItem(TIME_FORMAT_KEY) === 'seconds') timeFormat = 'seconds'; } catch (e) { /* default */ }
+
+function secondsText(h, m, s, msStr) {
+  return String(h * 3600 + m * 60 + s) + ',' + msStr;
+}
+
+// Cambio dal menu "Formato tempi": salva, allinea gli altri menu della pagina e ridisegna.
+function setTimeFormat(value) {
+  timeFormat = value === 'seconds' ? 'seconds' : 'clock';
+  try { localStorage.setItem(TIME_FORMAT_KEY, timeFormat); } catch (e) { /* solo per questa pagina */ }
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+}
+
+function syncTimeFormatSelects() {
+  document.querySelectorAll('.time-format-select').forEach(sel => { sel.value = timeFormat; });
+}
+document.addEventListener('DOMContentLoaded', syncTimeFormatSelects);
+
+function onTimeFormatChanged() { renderTable(); }
+window.addEventListener('storage', e => {
+  if (e.key !== TIME_FORMAT_KEY) return;
+  timeFormat = e.newValue === 'seconds' ? 'seconds' : 'clock';
+  syncTimeFormatSelects();
+  onTimeFormatChanged();
+});
+
 function _presetPrefs() {
   const disc = (typeof DISCIPLINES !== 'undefined') ? DISCIPLINES.find(d => d.id === DISCIPLINE_ID) : null;
   return disc ? { ...disc.prefs } : {};
@@ -123,6 +155,7 @@ function formatTime(h, m, s, ms, precision) {
     : precision === 2
       ? String(Math.floor(msT / 10)).padStart(2, "0")
       : String(msT).padStart(3, "0");
+  if (timeFormat === 'seconds') return secondsText(h, m, s, msStr);
   return (
     String(h).padStart(2, "0") + ":" +
     String(m).padStart(2, "0") + ":" +
@@ -172,8 +205,8 @@ function upsertRow(cp) {
       '<td class="col-name"></td>' +
       '<td class="col-surname"></td>' +
       '<td class="timestamp"></td>' +
-      '<td class="delta-time"></td>' +
       '<td class="elapsed-time"></td>' +
+      '<td class="delta-time"></td>' +
       '<td class="penality-cell"></td>';
     tbody.appendChild(row);
   }
@@ -300,8 +333,8 @@ function applyColumnVisibility() {
     ['col-name-col',     'col-name',      p.showName],
     ['col-surname-col',  'col-surname',   p.showSurname],
     ['timestamp-col',    'timestamp',     p.timestamp],
-    ['delta-time-col',   'delta-time',    p.deltaTime],
     ['elapsed-time-col', 'elapsed-time',  p.elapsedTime],
+    ['delta-time-col',   'delta-time',    p.deltaTime],
     ['penality-col',     'penality-cell', p.penality],
   ];
   cols.forEach(([th, td, show]) => {
@@ -535,3 +568,6 @@ window.addEventListener('load', () => {
   setTimeout(() => splash.classList.add('finished'), 1000);
   setTimeout(() => splash.remove(), 2000);
 });
+
+// Elenco competitor cambiato in un'altra scheda (console): nomi aggiornati
+window.addEventListener('storage', e => { if (e.key === ATHLETES_KEY) renderTable(); });
