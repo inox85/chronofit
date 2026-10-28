@@ -45,11 +45,9 @@ def half(with_pegs, with_pins=True):
     # finestra ottica frontale
     cuts.append(box(-1, LIP + 0.5, OFF[1] + SR_LENS_Y[0], OFF[1] + SR_LENS_Y[1],
                     OFF[2] + SR_LENS_Z[0], ZP + 1))
-    # parte inferiore asportata sotto il sensore: cavo e manicotto liberi (resta il blocco posteriore con i fori)
-    cuts.append(box(-1, px1, -1, OFF[1] + SR_Y0, -1, ZP + 1))
-    # accesso a potenziometro e LED dall'alto
-    cuts.append(cyl_y(OFF[0] + SR_POT_X, ZP, 2.8, py1 - 0.1, H + 1))
-    cuts.append(cyl_y(OFF[0] + SR_LED_X, ZP, 1.8, py1 - 0.1, H + 1))
+    # sopra e sotto aperti (cavo libero, trimmer accessibile): restano fronte, pareti laterali e blocco posteriore
+    cuts.append(box(LIP, px1, -1, OFF[1] + SR_Y0, -1, ZP + 1))
+    cuts.append(box(LIP, px1, OFF[1] + SR_Y1, H + 1, -1, ZP + 1))
     # fori di fissaggio GL10
     for y in HOLE_Y:
         cuts.append(cyl_z(HOLE_X, y, HOLE_D / 2, -1, ZP + 1))

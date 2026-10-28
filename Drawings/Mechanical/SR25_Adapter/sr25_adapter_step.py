@@ -35,9 +35,8 @@ def half(with_pegs, with_pins=True):
     pz0 = ZP - (SR_T + 0.3) / 2
     cuts = [box(px0, px1, py0, py1, pz0, ZP + 1),
             box(-1, LIP + 0.5, OFF[1] + SR_LENS_Y[0], OFF[1] + SR_LENS_Y[1], OFF[2] + SR_LENS_Z[0], ZP + 1),
-            box(-1, px1, -1, OFF[1] + SR_Y0, -1, ZP + 1),   # parte inferiore asportata: cavo libero
-            cyl_y(OFF[0] + SR_POT_X, ZP, 2.8, py1 - 0.1, H + 1),
-            cyl_y(OFF[0] + SR_LED_X, ZP, 1.8, py1 - 0.1, H + 1)]
+            box(LIP, px1, -1, OFF[1] + SR_Y0, -1, ZP + 1),            # sotto aperto: cavo libero
+            box(LIP, px1, OFF[1] + SR_Y1, H + 1, -1, ZP + 1)]         # sopra aperto: trimmer accessibile
     cuts += [cyl_z(HOLE_X, y, HOLE_D / 2, -1, ZP + 1) for y in HOLE_Y]
     if not with_pegs:
         cuts += [cyl_z(x, y, 1.6, ZP - 3.0, ZP + 1) for x, y in PEGS]

@@ -20,4 +20,4 @@ OFF = np.array([LIP + 0.1, 1.7, 2.5])  # sensore -> guscio (0,1 mm di gioco dava
 CLR = 0.2                            # gioco della tasca attorno al sensore
 ZP = T / 2                           # piano di divisione
 
-PEGS = ((19.0, 47.2), (36.2, 24.0))   # centraggi A / sedi B
+PEGS = ((36.2, 16.0), (36.2, 33.0))   # centraggi A / sedi B
