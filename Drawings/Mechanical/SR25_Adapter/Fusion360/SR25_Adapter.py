@@ -29,7 +29,7 @@ ZP = T / 2
 PEGS = ((19.0, 47.2), (36.2, 24.0))
 
 # Volumi di riferimento dagli STL (mm^3), per il controllo finale
-EXPECTED_A, EXPECTED_B = 9160.0, 9081.0
+EXPECTED_A, EXPECTED_B = 8563.0, 8484.0
 
 
 def cm(v):
@@ -117,9 +117,8 @@ def run(context):
                    (-1, OFF[1] + SR_LENS_Y[0], OFF[2] + SR_LENS_Z[0]),
                    (-1, OFF[1] + SR_LENS_Y[1], OFF[2] + SR_LENS_Z[1]),
                    LIP + 0.5 + 1, both)
-        # uscita cavo dal fondo (manicotto del sensore da 7 mm)
-        b.circles("Uscita cavo", (0, -1, 0), (0, 1, 0), [(OFF[0] + SR_CABLE_X, -1, ZP)], 3.7,
-                  CUT, py0 + 0.1 + 1, both)
+        # parte inferiore asportata sotto il sensore: cavo e manicotto liberi (resta il blocco posteriore con i fori)
+        b.rect_cut("Parte inferiore", (0, 0, -1), (0, 0, 1), (-1, -1, -1), (px1, OFF[1] + SR_Y0, -1), T + 2, both)
         # accesso a potenziometro e LED dall'alto
         b.circles("Potenziometro", (0, py1 - 0.1, 0), (0, 1, 0),
                   [(OFF[0] + SR_POT_X, py1 - 0.1, ZP)], 2.8, CUT, H + 1 - (py1 - 0.1), both)

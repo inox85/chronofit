@@ -45,8 +45,8 @@ def half(with_pegs, with_pins=True):
     # finestra ottica frontale
     cuts.append(box(-1, LIP + 0.5, OFF[1] + SR_LENS_Y[0], OFF[1] + SR_LENS_Y[1],
                     OFF[2] + SR_LENS_Z[0], ZP + 1))
-    # uscita cavo dal fondo: il sensore ha un manicotto da 7 mm
-    cuts.append(cyl_y(OFF[0] + SR_CABLE_X, ZP, 3.7, -1, py0 + 0.1))
+    # parte inferiore asportata sotto il sensore: cavo e manicotto liberi (resta il blocco posteriore con i fori)
+    cuts.append(box(-1, px1, -1, OFF[1] + SR_Y0, -1, ZP + 1))
     # accesso a potenziometro e LED dall'alto
     cuts.append(cyl_y(OFF[0] + SR_POT_X, ZP, 2.8, py1 - 0.1, H + 1))
     cuts.append(cyl_y(OFF[0] + SR_LED_X, ZP, 1.8, py1 - 0.1, H + 1))
