@@ -1,0 +1,10 @@
+{
+  "autodeskProduct": "Fusion",
+  "type": "script",
+  "author": "Chronofit",
+  "description": {
+    "": "Guscio adattatore Leuze SR25C per i fori di fissaggio della SICK GL10 (due metà)"
+  },
+  "supportedOS": "windows|mac",
+  "editEnabled": true
+}
