@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Chronofit – Preventivo</title>
+<style>
+  @font-face { font-family: 'Nunito'; src: url('../data/Nunito-Bold.woff2') format('woff2'); font-weight: bold; }
+  :root { --primary: #800020; --text: #333333; --muted: #666; --line: #e3d6d9; --tint: #fbf5f6; }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, Roboto, sans-serif; color: var(--text); font-size: 10pt; line-height: 1.45;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #ccc; }
+  .page { width: 210mm; height: 297mm; margin: 0 auto; background: white; position: relative;
+          padding: 11mm 16mm 0; display: flex; flex-direction: column; overflow: hidden; }
+  @media screen { .page { margin: 10mm auto; box-shadow: 0 2px 12px rgba(0,0,0,.25); } }
+
+  header { display: flex; align-items: flex-end; justify-content: space-between;
+           padding-bottom: 3mm; border-bottom: 1mm solid var(--primary); }
+  header img { height: 11mm; display: block; }
+  header .t { text-align: right; font-family: 'Nunito', sans-serif; font-weight: bold; line-height: 1.15; }
+  header .t b { color: var(--primary); font-size: 18pt; display: block; }
+  header .t span { color: var(--muted); font-size: 9pt; }
+
+  .meta { display: flex; justify-content: space-between; gap: 10mm; margin: 5mm 0 4mm; }
+  .meta .box { flex: 1; }
+  .meta .lbl { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); font-size: 8.5pt;
+               text-transform: uppercase; letter-spacing: .4px; margin-bottom: 1mm; }
+  .fill { border-bottom: 0.3mm solid #999; height: 6mm; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 1mm 4mm; }
+  .kv span:nth-child(odd) { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); }
+
+  .obj { background: var(--tint); border-left: 1mm solid var(--primary); padding: 2.5mm 4mm; margin-bottom: 5mm; }
+  .obj b { font-family: 'Nunito', sans-serif; color: var(--primary); }
+
+  table.items { width: 100%; border-collapse: collapse; }
+  table.items th { font-family: 'Nunito', sans-serif; font-weight: bold; color: white; background: var(--primary);
+                   text-align: left; padding: 2mm 3mm; font-size: 9.5pt; }
+  table.items th.r, table.items td.r { text-align: right; white-space: nowrap; }
+  table.items td { padding: 2mm 3mm; border-bottom: 0.25mm solid var(--line); vertical-align: top; }
+  table.items td .title { font-family: 'Nunito', sans-serif; font-weight: bold; color: #000; font-size: 10.5pt; }
+  table.items td .desc { color: var(--muted); font-size: 9pt; margin-top: 0.8mm; }
+  table.items td.n { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); width: 8mm; }
+  table.items td.price { font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 10.5pt; }
+
+  .totals { margin-left: auto; width: 82mm; margin-top: 3mm; }
+  .totals .row { display: flex; justify-content: space-between; padding: 1.5mm 3mm; }
+  .totals .grand { background: var(--primary); color: white; font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 13pt;
+                   padding: 2.5mm 3mm; }
+  .totals .note { font-size: 8.5pt; color: var(--muted); text-align: right; padding: 1mm 3mm 0; }
+
+  h3 { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); font-size: 10.5pt; margin: 5mm 0 1.5mm; }
+  ul.cond { margin: 0; padding-left: 5mm; font-size: 9.3pt; }
+  ul.cond li { margin: 1mm 0; }
+
+  .sign { display: flex; justify-content: space-between; gap: 20mm; margin-top: 6mm; margin-bottom: 8mm; }
+  .sign div { flex: 1; font-size: 9pt; color: var(--muted); }
+  .sign .line { border-bottom: 0.3mm solid #999; height: 12mm; margin-bottom: 1.5mm; }
+
+  footer { margin-top: auto; margin-bottom: 14mm; background: var(--primary); color: white; height: 9mm;
+           display: flex; align-items: center; justify-content: space-between; padding: 0 4mm;
+           font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 8pt; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <img src="../data/logo-black.png" alt="chronofit">
+    <div class="t"><b>Preventivo</b><span>Sistema di cronometraggio Chronofit RF</span></div>
+  </header>
+
+  <div class="meta">
+    <div class="box">
+      <div class="lbl">Spett.le</div>
+      <div class="fill"></div>
+      <div class="fill"></div>
+      <div class="fill"></div>
+    </div>
+    <div class="box">
+      <div class="kv">
+        <span>Preventivo n.</span><span class="fill" style="height:5mm"></span>
+        <span>Data</span><span>12/10/2026</span>
+        <span>Validità</span><span>30 giorni dalla data</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="obj"><b>Oggetto:</b> fornitura del sistema di cronometraggio a fotocellule radio Chronofit RF,
+  configurato per le gare di equitazione, con assistenza in gara.</div>
+
+  <table class="items">
+    <tr><th></th><th>Descrizione</th><th class="r">Importo</th></tr>
+    <tr>
+      <td class="n">1</td>
+      <td><div class="title">Sistema di cronometraggio Chronofit RF</div>
+          <div class="desc">Unità centrale Main RF con console web su WiFi propria (telefono, tablet o PC, senza app),
+          fotocellula e ingresso pedana integrati; fotocellule radio Cell RF con timbratura locale (precisione inferiore al millisecondo);
+          batterie ricaricabili; viste per secondo schermo; manuale d'uso e guida rapida.</div></td>
+      <td class="r price">€ 1.500,00</td>
+    </tr>
+    <tr>
+      <td class="n">2</td>
+      <td><div class="title">Personalizzazione per l'equitazione</div>
+          <div class="desc">Configurazione della disciplina Equitazione: colonne e ordinamento della lista passaggi,
+          Δ e tempo trascorso, linee nominate per prova, ritardi di lockout tarati sul passaggio del cavallo, vista dedicata per il secondo schermo.</div></td>
+      <td class="r price">€ 150,00</td>
+    </tr>
+    <tr>
+      <td class="n">3</td>
+      <td><div class="title">Catadiottri maggiorati</div>
+          <div class="desc">Riflettori di dimensioni maggiorate per ogni fotocellula: allineamento più semplice e rilevamento
+          affidabile su distanze ampie e all'aperto.</div></td>
+      <td class="r price">€ 80,00</td>
+    </tr>
+    <tr>
+      <td class="n">4</td>
+      <td><div class="title">Consulenza durante le gare</div>
+          <div class="desc">Supporto alla prima messa in campo: posizionamento e allineamento delle fotocellule,
+          abbinamento, verifica del collegamento radio e assistenza all'operatore durante la gara.</div></td>
+      <td class="r price">€ 120,00</td>
+    </tr>
+  </table>
+
+  <div class="totals">
+    <div class="row"><span>Sistema</span><span>€ 1.500,00</span></div>
+    <div class="row"><span>Personalizzazioni e servizi</span><span>€ 350,00</span></div>
+    <div class="row grand"><span>Totale</span><span>€ 1.850,00</span></div>
+    <div class="note">Importi IVA esclusa</div>
+  </div>
+
+  <h3>Condizioni</h3>
+  <ul class="cond">
+    <li><b>Pagamento</b>: da concordare all'ordine.</li>
+    <li><b>Consegna</b>: da concordare, a conferma dell'ordine.</li>
+    <li><b>Garanzia</b>: a norma di legge sui componenti hardware; aggiornamenti firmware dalla console del sistema.</li>
+    <li>La consulenza in gara comprende la prima manifestazione; eventuali trasferte sono da concordare.</li>
+  </ul>
+
+  <div class="sign">
+    <div><div class="line"></div>Chronofit</div>
+    <div><div class="line"></div>Per accettazione (timbro e firma)</div>
+  </div>
+
+  <footer>
+    <span>Chronofit · Via Iacopo del Meglio 8 · 50143 Firenze</span>
+    <span>info@chronofit.it</span>
+  </footer>
+</div>
+</body>
+</html>

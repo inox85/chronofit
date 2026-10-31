@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Chronofit RF – Guida rapida</title>
+<style>
+  @font-face { font-family: 'Nunito'; src: url('../data/Nunito-Bold.woff2') format('woff2'); font-weight: bold; }
+  :root { --primary: #800020; --text: #333333; --muted: #666; --line: #e3d6d9; --bg: #f5f5f5; }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, Roboto, sans-serif; color: var(--text); font-size: 9.6pt; line-height: 1.38;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #ccc; }
+  .page { width: 210mm; height: 297mm; margin: 0 auto; background: white; position: relative;
+          padding: 11mm 13mm 0 13mm; display: flex; flex-direction: column; overflow: hidden; }
+  @media screen { .page { margin: 10mm auto; box-shadow: 0 2px 12px rgba(0,0,0,.25); } }
+
+  /* intestazione */
+  header { display: flex; align-items: flex-end; justify-content: space-between;
+           padding-bottom: 4mm; border-bottom: 1.2mm solid var(--primary); }
+  header img { height: 12mm; display: block; }
+  header .title { text-align: right; font-family: 'Nunito', sans-serif; font-weight: bold; }
+  header .title h1 { margin: 0; font-size: 19pt; color: var(--primary); line-height: 1.1; }
+  header .title .sub { font-size: 10pt; color: var(--muted); }
+
+  .lead { margin: 4mm 0 3.5mm; font-size: 10pt; }
+
+  h2 { font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 11pt; color: white; background: var(--primary);
+       margin: 0 0 2mm; padding: 1.2mm 3mm; letter-spacing: .2px; }
+  .card { background: white; box-shadow: 0 0.4mm 1.4mm rgba(0,0,0,0.18); padding: 0 0 2.5mm; margin-bottom: 3.5mm; }
+  .card > *:not(h2) { margin-left: 3mm; margin-right: 3mm; }
+
+  .grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 4mm; }
+
+  ol { padding-left: 5mm; margin-top: 0; margin-bottom: 0; }
+  ol li { margin-bottom: 1.2mm; }
+  ol li::marker { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); }
+  p { margin: 0 0 1.5mm; }
+  b, strong { color: #000; }
+  .url { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); }
+
+  table { border-collapse: collapse; width: calc(100% - 6mm); font-size: 8.8pt; }
+  th { font-family: 'Nunito', sans-serif; font-weight: bold; text-align: left; color: var(--primary);
+       border-bottom: 0.5mm solid var(--primary); padding: 1mm 1.5mm; }
+  td { border-bottom: 0.25mm solid var(--line); padding: 1mm 1.5mm; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.k { font-family: 'Nunito', sans-serif; font-weight: bold; white-space: nowrap; }
+  .led { display: inline-block; width: 6.5mm; height: 6.5mm; border-radius: 50%; background: var(--primary); color: white;
+         font-family: 'Nunito', sans-serif; font-weight: bold; text-align: center; line-height: 6.5mm; font-size: 9pt; }
+
+  .wifi { display: grid; grid-template-columns: auto 1fr; gap: 0.6mm 3mm; margin: 1mm 3mm 2mm;
+          border: 0.4mm dashed var(--primary); padding: 2mm 3mm; background: #fbf5f6; }
+  .wifi span:nth-child(odd) { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); }
+  .fill { border-bottom: 0.3mm solid #999; display: inline-block; min-width: 22mm; }
+
+  .note { font-size: 8.8pt; color: var(--muted); }
+  .states { display: flex; flex-wrap: wrap; gap: 0.8mm 4mm; font-size: 8.5pt; margin: 1mm 3mm 0; }
+  .card > ol + .wifi, .card p + ol { margin-top: 0; }
+
+  footer { margin-top: auto; margin-bottom: 12mm; background: var(--primary); color: white;
+           padding: 2.5mm 4mm; display: flex; justify-content: space-between; font-size: 8.5pt;
+           font-family: 'Nunito', sans-serif; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <img src="../data/logo-black.png" alt="chronofit">
+    <div class="title">
+      <h1>Guida rapida</h1>
+      <div class="sub">Main RF e fotocellule radio</div>
+    </div>
+  </header>
+
+  <p class="lead">La <b>Main</b> è l'unità centrale: crea una rete WiFi e ospita la console, che si apre dal browser di
+  telefono, tablet o PC, senza app da installare. Le <b>Cell</b> sono fotocellule radio: inviano i passaggi alla Main
+  e si configurano dalla sua console. Anche la Main ha una fotocellula e un ingresso per la pedana.</p>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2>Primo utilizzo</h2>
+        <ol>
+          <li>Accendi la Main e collegati alla sua rete WiFi (vedi sotto).</li>
+          <li>Apri il browser su <span class="url">http://192.168.10.1</span>: la console è già pronta per l'equitazione.</li>
+          <li><b>Solo la prima volta</b>, abbina le Cell: apri <b>Fotocellule</b> (icona del segnale nella card Utilità)
+              e premi <b>Abbina nuove celle</b>. Entro 60 s accendi le Cell: ognuna suona e lampeggia per 3 s e compare in elenco.</li>
+          <li>Assegna a ogni Cell la sua <b>linea</b> (es. 1 = partenza, 2 = arrivo) e scegli se attivare il beep.</li>
+          <li>Premi <b>Test</b> su ogni Cell per verificare che il passaggio arrivi.</li>
+        </ol>
+        <p class="note">Metti le Cell sollevate da terra, con vista libera verso la Main, e allinea ogni fotocellula
+        finché <b>LED2 si spegne</b>. Abbinamento e impostazioni restano salvati. Il cronometro parte al primo passaggio.</p>
+      </div>
+
+      <div class="card">
+        <h2>Connessione WiFi</h2>
+        <p><b>Rete della Main</b>: è sempre attiva, anche senza Internet.</p>
+        <div class="wifi">
+          <span>Rete WiFi</span><span style="white-space:nowrap">ChronofitMainCellRF_<span class="fill"></span></span>
+          <span>Password</span><span>la parte del nome dopo «_»</span>
+          <span>Indirizzo</span><span>http://192.168.10.1</span>
+        </div>
+        <p><b>Rete esterna</b> (facoltativa, per usare la console dalla rete del campo o con Internet):</p>
+        <ol>
+          <li>Tocca <b>🌍</b> nella card Utilità: si apre Impostazioni → WiFi.</li>
+          <li><b>🔍 Cerca reti</b>, scegli la rete, scrivi la password e premi <b>Connetti</b>.</li>
+          <li>Nella <b>barra in alto</b> compaiono la rete (📶) e l'IP ricevuto.
+              Da ogni dispositivo su quella rete apri <span class="url">http://&lt;IP&gt;</span>; un tocco sull'IP lo copia.</li>
+        </ol>
+        <div class="states"><span>🟢 Internet ok</span><span>🟡 connessa, senza Internet</span><span>🔄 🔁 in connessione</span><span>🔴 non connessa</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Schermo</h2>
+        <p>Accanto al pulsante <b>schermo intero</b> ci sono <b>🔍− e 🔍+</b>: adattano console e viste al display
+        (50–200 %). Lo zoom resta salvato su ogni dispositivo.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Accensione e ricarica</h2>
+        <table>
+          <tr><td class="k">Accendere</td><td>Tieni premuto il pulsante finché i 4 LED si accendono in sequenza.</td></tr>
+          <tr><td class="k">Spegnere</td><td>Tieni premuto: i LED si spengono uno ogni mezzo secondo, poi tre beep. Se rilasci prima, si annulla.</td></tr>
+          <tr><td class="k">Ricaricare</td><td>Alimentatore USB. LED4 lampeggia in carica, resta fisso a carica completa.</td></tr>
+          <tr><td class="k">Batteria scarica</td><td>Sotto 2,9 V l'unità si spegne da sola. Sotto il 30 % suonano 3 beep ogni minuto.</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Significato dei LED</h2>
+        <table>
+          <tr><th></th><th>Main</th><th>Cell</th></tr>
+          <tr><td><span class="led">1</span></td>
+              <td><b>Fisso</b>: telefono/PC collegato</td>
+              <td><b>Fisso</b>: sincronizzata · <b>Lento</b>: non abbinata · <b>Veloce</b>: Main non raggiungibile · <b>Doppio</b>: segnale debole</td></tr>
+          <tr><td><span class="led">2</span></td>
+              <td><b>Acceso</b>: fotocellula o pedana attiva</td>
+              <td><b>Acceso</b>: fascio interrotto · <b>Lampo</b>: passaggio</td></tr>
+          <tr><td><span class="led">3</span></td>
+              <td><b>Fisso</b>: Cell collegate · <b>Lento</b>: nessuna Cell · <b>Veloce</b>: abbinamento aperto</td>
+              <td><b>Lampo</b>: confermato · <b>Fisso</b>: in attesa · <b>Veloce</b>: passaggio perso</td></tr>
+          <tr><td><span class="led">4</span></td>
+              <td><b>Lampeggio</b>: in carica · <b>Fisso</b>: carica completa</td>
+              <td><b>Lampeggio</b>: in carica · <b>Fisso</b>: carica completa</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Problemi comuni</h2>
+        <table>
+          <tr><td class="k">Nessuna connessione</td><td>Verifica la rete WiFi del telefono/PC e ricarica la pagina.</td></tr>
+          <tr><td class="k">Cell «Persa»</td><td>Controlla che sia accesa, avvicinala o sollevala. LED1 lento: abbinala di nuovo.</td></tr>
+          <tr><td class="k">Passaggi doppi</td><td>Aumenta il <b>Ritardo</b> della linea (tocca il tipo di linea; di fabbrica 200 ms).</td></tr>
+          <tr><td class="k">Triangolo rosso</td><td>Due fotocellule sulla stessa linea: cambiane una.</td></tr>
+        </table>
+        <p class="note" style="margin-top:2mm"><b>Gara di salto ostacoli</b> (campana, conto alla rovescia, penalità e classifica automatiche): si accende da ⚙️ → Dispositivo → <b>Gara assistita</b>; spenta, il cronometraggio è quello standard.</p>
+        <p class="note" style="margin-top:2mm">Manuale completo: nella console tocca il <b>logo in alto</b> → <b>Manuale</b>.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Chronofit · Via Iacopo del Meglio 8 · 50143 Firenze</span>
+    <span>info@chronofit.it</span>
+  </footer>
+</div>
+</body>
+</html>

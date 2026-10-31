@@ -11,6 +11,7 @@
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/manifest.json">
   <script src="/i18n.js"></script>
+  <script src="/ui_dialogs.js"></script>
 
   <!-- Questa pagina non ha la navbar della GUI operatore (che riserva 60px
        in cima e per cui .container/.card.table-card hanno vincoli di
@@ -18,7 +19,7 @@
        qui la card deve riempire l'intero schermo. -->
   <style>
     #view_container {
-      height: 100vh;
+      height: calc(100 * var(--zvh, 1vh));
     }
     #view_container .card.table-card {
       max-width: none;
@@ -69,6 +70,17 @@
         <img src="/sponsor.png" alt="Sponsor" class="sponsor-img sponsor-visibility-toggle">
       </div>
 
+      <!-- Equitazione: cavaliere in pista, tempo, risultato e classifica (equestrian.js) -->
+      <div id="eqViewPanel" class="eq-view-panel" data-state="none" style="display:none;">
+        <div id="eqViewRider" class="eq-view-rider"></div>
+        <div id="eqViewMeta" class="eq-view-meta"></div>
+        <div id="eqViewClock" class="eq-view-clock"></div>
+        <div id="eqViewResult" class="eq-view-result"></div>
+      </div>
+      <div id="eqViewRankWrap" class="table-wrapper" style="flex:0 1 auto; display:none;">
+        <table class="eq-view-rank"><thead><tr id="eqViewRankHead"></tr></thead><tbody id="eqViewRankBody"></tbody></table>
+      </div>
+      <div id="eqViewRows">
       <div class="card-title" data-i18n="card.arrivals">Arrivals</div>
 
       <!-- Stessa griglia (stesse colonne e stesse classi) della tabella Arrivi
@@ -93,6 +105,7 @@
           </thead>
           <tbody></tbody>
         </table>
+      </div>
       </div>
 
     </div>
@@ -133,6 +146,10 @@
           <option value="seconds">sss,mmm</option>
         </select>
       </div>
+      <div class="toggle-row" id="eqViewRowsRow" style="display:none;">
+        <span id="eqViewRowsLabel">Mostra anche la griglia dei passaggi</span>
+        <label class="switch"><input type="checkbox" id="eqViewRowsToggle" onchange="eqViewRowsChanged(this.checked)"><span class="slider"></span></label>
+      </div>
       <div class="toggle-row">
         <span data-i18n="table.reverse_order">Reverse row order</span>
         <label class="switch"><input type="checkbox" id="vs-reverseOrder"><span class="slider"></span></label>
@@ -163,6 +180,20 @@
       <div class="toggle-row"><span data-i18n="table.show_disabled">Show disabled line rows</span>
         <label class="switch"><input type="checkbox" id="vs-showDisabled"><span class="slider"></span></label></div>
 
+      <hr class="divider">
+
+      <!-- Linee mostrate nella griglia (come il tab "Lines" della console) -->
+      <div class="toggle-row"><span data-i18n="table.show_line_1">Show line 1</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="1"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_line_2">Show line 2</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="2"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_line_3">Show line 3</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="3"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_line_4">Show line 4</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="4"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_out_of_sensor">Show out-of-sensor rows</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="6"><span class="slider"></span></label></div>
+
       <div class="button-row">
         <button class="big-button" data-i18n="view.use_console" id="resetViewSettings">Use console settings</button>
         <button class="big-button" data-i18n="btn.close" id="closeViewSettings">Close</button>
@@ -180,5 +211,8 @@
   </script>
 
   <script src="/view_fullscreen.js"></script>
+  <script src="/zoom_controls.js"></script>
+  <script src="/equestrian.js"></script>
+  <script>eqViewInit();</script>
 </body>
 </html>

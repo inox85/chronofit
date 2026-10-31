@@ -12,6 +12,9 @@
 #include "printer.h"
 #include "buzzer.h"
 #include "settings.h"
+#include "license.h"
+#include "equestrian.h"
+#include <esp_system.h>
 #include "diagnostic.h"
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -165,158 +168,212 @@ void broadcastLineUpdate(int idx);
 
 static uint8_t reconnectAttempts = 0;
 static const uint8_t MAX_ATTEMPTS = 5;
-static TimerHandle_t wifiRetryTimer = nullptr;
+
+// ── Connessione come station ─────────────────────────────────────────────────
+// Le operazioni sul WiFi (cambio modalità, begin, reconnect) girano solo nel
+// loop(), in wifiLoop(): l'handler HTTP di /wifiConnect e l'evento di
+// disconnessione si limitano a prenotarle. Eseguite nel task async_tcp (con
+// delay) o da un timer FreeRTOS bloccavano il server web e la rete della Main
+// restava inutilizzabile fino al riavvio.
+static bool     s_wifiConnectPending = false;
+static uint32_t s_wifiConnectAtMs = 0;    // istante in cui eseguire il begin()
+static char     s_pendingSsid[64];
+static char     s_pendingPw[64];
+static uint32_t s_wifiRetryAtMs = 0;      // 0 = nessun nuovo tentativo in attesa
+static uint32_t s_lastPsCheckMs = 0;
 
 static void scheduleWifiRetry(uint32_t backoffMs) {
-  if (wifiRetryTimer != nullptr) {
-    xTimerStop(wifiRetryTimer, 0);
-    xTimerDelete(wifiRetryTimer, 0);
-    wifiRetryTimer = nullptr;
-  }
-  wifiRetryTimer = xTimerCreate("wifiRetry", pdMS_TO_TICKS(backoffMs), pdFALSE, nullptr,
-    [](TimerHandle_t) {
-      wifiRetryTimer = nullptr;
-      WiFi.reconnect();
-    });
-  xTimerStart(wifiRetryTimer, 0);
+  uint32_t at = millis() + backoffMs;
+  s_wifiRetryAtMs = at ? at : 1;
 }
 
-
-bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
-
-  reconnectAttempts = 0;
-
-  // Avvisa il frontend prima che il WebSocket cada per il cambio modalità WiFi
-  StaticJsonDocument<64> wifiDoc;
-  wifiDoc["t"] = TYPE_WIFI_CONNECTING;
-  wifiDoc["ssid"] = ssid;
-  char wifiMsg[128];
-  serializeJson(wifiDoc, wifiMsg, sizeof(wifiMsg));
-  ws.textAll(wifiMsg);
-  delay(100); // lascia tempo al browser di ricevere il messaggio prima del disconnect
-
-  startAttemptTime = millis();
-
-  WiFi.mode(WIFI_AP_STA);  // ← aggiungi questa riga
-  
-  if (password == nullptr || strlen(password) == 0) {
-    WiFi.begin(ssid);
-  } else {
-    WiFi.begin(ssid, password);
+// Con la STA attiva il core Arduino rimette il risparmio energetico (modem
+// sleep): la rete della Main perde pacchetti e console e WebSocket vanno in
+// timeout. Va tenuto spento anche dopo scansioni e cambi di modalità.
+static void wifiNoPowerSave() {
+  wifi_ps_type_t ps;
+  if (esp_wifi_get_ps(&ps) == ESP_OK && ps != WIFI_PS_NONE) {
+    esp_wifi_set_ps(WIFI_PS_NONE);
   }
+}
 
-  Serial.print("Connessione a ");
-  Serial.print(ssid);
-
-
+static void registerWifiEvents() {
   static bool eventRegistered = false;
-  if (!eventRegistered) {
-    eventRegistered = true;
-    WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+  if (eventRegistered) return;
+  eventRegistered = true;
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
 
-      switch (event) {
+    switch (event) {
 
-        case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-          Serial.println("WiFi: associato all'AP");
-          break;
+      case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+        Serial.println("WiFi: associato all'AP");
+        break;
 
-        case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-          reconnectAttempts = 0;
-          wifiReconnecting = false;
-          if (wifiRetryTimer != nullptr) {
-            xTimerStop(wifiRetryTimer, 0);
-            xTimerDelete(wifiRetryTimer, 0);
-            wifiRetryTimer = nullptr;
-          }
-          Serial.println("WiFi: connesso, IP: " + WiFi.localIP().toString());
-          ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
-          break;
-
-        case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
-          uint8_t reason = info.wifi_sta_disconnected.reason;
-          Serial.printf("❌ WiFi: disconnesso, reason=%d\n", reason);
-
-          switch (reason) {
-            case WIFI_REASON_ASSOC_LEAVE:
-              // Disconnessione volontaria (WiFi.begin() su nuova rete): ignora
-              break;
-
-            case WIFI_REASON_AUTH_EXPIRE:
-            case WIFI_REASON_AUTH_FAIL:
-            case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
-              // Credenziali sbagliate: ferma sempre
-              if (!wifiReconnecting) {
-                WiFi.setAutoReconnect(false);
-                Serial.println("❌ WiFi: credenziali errate");
-                StaticJsonDocument<128> errDoc;
-                errDoc["t"] = TYPE_WIFI_ERROR;
-                errDoc["msg"] = "Wrong credentials";
-                char errJson[128];
-                serializeJson(errDoc, errJson, sizeof(errJson));
-                ws.textAll(errJson);
-              }
-              break;
-
-            case WIFI_REASON_NO_AP_FOUND:
-              if (reconnectAttempts == 0 && !wifiReconnecting) {
-                // Primo tentativo: AP proprio non esiste
-                WiFi.setAutoReconnect(false);
-                Serial.println("❌ WiFi: rete non trovata");
-                StaticJsonDocument<128> errDoc;
-                errDoc["t"] = TYPE_WIFI_ERROR;
-                errDoc["msg"] = "Network not found";
-                char errJson[128];
-                serializeJson(errDoc, errJson, sizeof(errJson));
-                ws.textAll(errJson);
-              } else {
-                // Durante reconnect: AP temporaneamente assente, riprova
-                goto retry;
-              }
-              break;
-
-            default:
-            retry:
-              // Retry infiniti con backoff cappato a 30s, timer singolo
-              reconnectAttempts++;
-              wifiReconnecting = true;
-              startAttemptTime = millis();
-              {
-                uint32_t backoff = min((uint32_t)(2000 * reconnectAttempts), (uint32_t)30000);
-                Serial.printf("🔄 WiFi: tentativo %d (backoff %lums)...\n", reconnectAttempts, (unsigned long)backoff);
-                scheduleWifiRetry(backoff);
-              }
-              break;
-          }
-          break;
+      case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+        reconnectAttempts = 0;
+        wifiReconnecting = false;
+        s_wifiRetryAtMs = 0;
+        esp_wifi_set_ps(WIFI_PS_NONE);
+        Serial.printf("WiFi: connesso, IP: %s, canale %d\n", WiFi.localIP().toString().c_str(), WiFi.channel());
+        ws.textAll(serializeMessage("✅ WiFi connected with IP address"));
+#if __has_include("main_radio.h")
+        // La radio delle Cell usa il canale NRF24 80 (2,480 GHz): i canali WiFi
+        // 12 e 13 (2,467/2,472 GHz, larghi 22 MHz) ci si sovrappongono. La rete
+        // della Main segue il canale del router, quindi lo disturba.
+        if (WiFi.channel() >= 12) {
+          Serial.printf("⚠️ WiFi: canale %d vicino alla radio delle Cell\n", WiFi.channel());
+          ws.textAll(serializeMessage("⚠️ WiFi canale " + String(WiFi.channel()) +
+                                      ": può disturbare la radio delle Cell. Imposta il router su un canale da 1 a 11."));
         }
+#endif
+        break;
 
-        case ARDUINO_EVENT_WIFI_STA_LOST_IP:
-          Serial.println("WiFi: IP perso");
-          ws.textAll(serializeMessage("WiFi IP lost"));
-          break;
+      case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
+        uint8_t reason = info.wifi_sta_disconnected.reason;
+        Serial.printf("❌ WiFi: disconnesso, reason=%d\n", reason);
 
-        default:
-          break;
+        switch (reason) {
+          case WIFI_REASON_ASSOC_LEAVE:
+            // Disconnessione volontaria (WiFi.begin() su nuova rete): ignora
+            break;
+
+          case WIFI_REASON_AUTH_EXPIRE:
+          case WIFI_REASON_AUTH_FAIL:
+          case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+            // Credenziali sbagliate: ferma sempre
+            if (!wifiReconnecting) {
+              WiFi.setAutoReconnect(false);
+              s_wifiRetryAtMs = 0;
+              Serial.println("❌ WiFi: credenziali errate");
+              StaticJsonDocument<128> errDoc;
+              errDoc["t"] = TYPE_WIFI_ERROR;
+              errDoc["msg"] = "Wrong credentials";
+              char errJson[128];
+              serializeJson(errDoc, errJson, sizeof(errJson));
+              ws.textAll(errJson);
+            }
+            break;
+
+          case WIFI_REASON_NO_AP_FOUND:
+            if (reconnectAttempts == 0 && !wifiReconnecting) {
+              // Primo tentativo: AP proprio non esiste
+              WiFi.setAutoReconnect(false);
+              s_wifiRetryAtMs = 0;
+              Serial.println("❌ WiFi: rete non trovata");
+              StaticJsonDocument<128> errDoc;
+              errDoc["t"] = TYPE_WIFI_ERROR;
+              errDoc["msg"] = "Network not found";
+              char errJson[128];
+              serializeJson(errDoc, errJson, sizeof(errJson));
+              ws.textAll(errJson);
+            } else {
+              // Durante reconnect: AP temporaneamente assente, riprova
+              goto retry;
+            }
+            break;
+
+          default:
+          retry:
+            // Retry infiniti con backoff cappato a 30 s, eseguiti da wifiLoop()
+            reconnectAttempts++;
+            wifiReconnecting = true;
+            startAttemptTime = millis();
+            {
+              uint32_t backoff = min((uint32_t)(2000 * reconnectAttempts), (uint32_t)30000);
+              Serial.printf("🔄 WiFi: tentativo %d (backoff %lums)...\n", reconnectAttempts, (unsigned long)backoff);
+              scheduleWifiRetry(backoff);
+            }
+            break;
+        }
+        break;
       }
-    });
-  }
 
-    // ← crea il task UNA SOLA VOLTA
-  static bool internetTaskStarted = false;
-  if (!internetTaskStarted) {
-    internetTaskStarted = true;
-    xTaskCreatePinnedToCore(
-      internetCheckTask,
-      "InternetCheck",
-      4096,
-      NULL,
-      1,
-      NULL,
-      0
-    );
-  }
+      case ARDUINO_EVENT_WIFI_STA_LOST_IP:
+        Serial.println("WiFi: IP perso");
+        ws.textAll(serializeMessage("WiFi IP lost"));
+        break;
 
+      default:
+        break;
+    }
+  });
+}
+
+// Prenota la connessione (eseguita da wifiLoop()) e la ricorda per l'avvio.
+bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs) {
+  strlcpy(s_pendingSsid, ssid ? ssid : "", sizeof(s_pendingSsid));
+  strlcpy(s_pendingPw, password ? password : "", sizeof(s_pendingPw));
+  reconnectAttempts = 0;
+  wifiReconnecting = false;
+  s_wifiRetryAtMs = 0;
+  startAttemptTime = millis();   // la console mostra "connessione in corso"
+  s_wifiConnectPending = true;
+  s_wifiConnectAtMs = 0;
+  writeIntToSettings("sta_auto", 1);
   return true;
+}
+
+// Disconnessione voluta dall'utente: niente nuovi tentativi né riconnessione all'avvio.
+void wifiStopStation() {
+  s_wifiConnectPending = false;
+  s_wifiRetryAtMs = 0;
+  writeIntToSettings("sta_auto", 0);
+}
+
+// All'avvio: si ricollega alla rete salvata, salvo disconnessione voluta (sta_auto = 0).
+void wifiAutoConnectAtBoot() {
+  if (readIntFromSettings("sta_auto", 1) != 1) return;
+  String s = readStringFromSettings("ssid", "");
+  if (s.isEmpty()) return;
+  String p = readStringFromSettings("pw", "");
+  Serial.println("WiFi: riconnessione automatica a " + s);
+  connectToWiFi(s.c_str(), p.c_str());
+}
+
+void wifiLoop() {
+  uint32_t now = millis();
+
+  if (s_wifiConnectPending) {
+    if (s_wifiConnectAtMs == 0) {
+      // Avvisa il frontend prima che il WebSocket cada per il cambio di canale
+      StaticJsonDocument<128> wifiDoc;
+      wifiDoc["t"] = TYPE_WIFI_CONNECTING;
+      wifiDoc["ssid"] = s_pendingSsid;
+      char wifiMsg[160];
+      serializeJson(wifiDoc, wifiMsg, sizeof(wifiMsg));
+      ws.textAll(wifiMsg);
+      s_wifiConnectAtMs = now + 150;    // tempo al browser per riceverlo
+      if (s_wifiConnectAtMs == 0) s_wifiConnectAtMs = 1;
+    } else if ((int32_t)(now - s_wifiConnectAtMs) >= 0) {
+      s_wifiConnectPending = false;
+      s_wifiConnectAtMs = 0;
+      registerWifiEvents();
+      WiFi.setSleep(false);              // il core non riattiva il modem sleep
+      WiFi.mode(WIFI_AP_STA);
+      WiFi.setAutoReconnect(true);
+      startAttemptTime = millis();
+      if (s_pendingPw[0] == '\0') WiFi.begin(s_pendingSsid);
+      else                        WiFi.begin(s_pendingSsid, s_pendingPw);
+      wifiNoPowerSave();
+      Serial.printf("Connessione a %s\n", s_pendingSsid);
+
+      static bool internetTaskStarted = false;
+      if (!internetTaskStarted) {
+        internetTaskStarted = true;
+        xTaskCreatePinnedToCore(internetCheckTask, "InternetCheck", 4096, NULL, 1, NULL, 0);
+      }
+    }
+  }
+
+  if (s_wifiRetryAtMs != 0 && (int32_t)(now - s_wifiRetryAtMs) >= 0) {
+    s_wifiRetryAtMs = 0;
+    WiFi.reconnect();
+  }
+
+  if (now - s_lastPsCheckMs >= 1000) {
+    s_lastPsCheckMs = now;
+    wifiNoPowerSave();
+  }
 }
 
 void internetCheckTask(void *pvParameters) {
@@ -331,7 +388,7 @@ void internetCheckTask(void *pvParameters) {
       internetOK = false;
     }
 
-    vTaskDelay(pdMS_TO_TICKS(5000)); // ogni 30 s
+    vTaskDelay(pdMS_TO_TICKS(20000)); // ogni 20 s (una connessione TCP aperta e chiusa a ogni giro frammenta lo heap)
   }
 }
 
@@ -376,15 +433,73 @@ bool isAuthorized(AsyncWebServerRequest *request) {
   return false;
 }
 
+// Il browser rivalida a ogni richiesta (no-cache) e il device risponde 304 se il file non e' cambiato:
+// dopo un aggiornamento ricarica solo cio' che e' stato modificato, senza aspettare la scadenza della cache.
+static bool sendNotModified(AsyncWebServerRequest *request, const char *etag) {
+  if (!request->hasHeader("If-None-Match") || request->header("If-None-Match") != etag) return false;
+  AsyncWebServerResponse *r = request->beginResponse(304);
+  r->addHeader("ETag", etag);
+  r->addHeader("Cache-Control", "no-cache");
+  request->send(r);
+  return true;
+}
+
+// ETag dei file .gz: il CRC32 che li chiude (cambia solo se cambia il contenuto)
+static bool gzEtag(const String &gz, char *etag) {
+  File f = LittleFS.open(gz, "r");
+  if (!f) return false;
+  size_t n = f.size();
+  uint8_t t[4];
+  bool ok = n >= 18 && f.seek(n - 8) && f.read(t, 4) == 4;
+  f.close();
+  if (ok) snprintf(etag, 16, "\"%02x%02x%02x%02x\"", t[3], t[2], t[1], t[0]);
+  return ok;
+}
+
 static void serveGzipped(AsyncWebServerRequest *request, const char* path, const char* mime) {
   String gz = String(path) + ".gz";
   if (LittleFS.exists(gz)) {
+    char etag[16];
+    bool tagged = gzEtag(gz, etag);
+    if (tagged && sendNotModified(request, etag)) return;
     AsyncWebServerResponse *r = request->beginResponse(LittleFS, gz, mime);
     r->addHeader("Content-Encoding", "gzip");
-    r->addHeader("Cache-Control", "public, max-age=3600");
+    r->addHeader("Cache-Control", "no-cache");
+    if (tagged) r->addHeader("ETag", etag);
     request->send(r);
   } else {
     request->send(LittleFS, path, mime);
+  }
+}
+
+// File non compresso (immagini): ETag dalla dimensione
+static void serveValidated(AsyncWebServerRequest *request, const char *path, const char *mime) {
+  File f = LittleFS.open(path, "r");
+  if (!f) { request->send(404); return; }
+  char etag[16];
+  snprintf(etag, sizeof(etag), "\"%x\"", (unsigned)f.size());
+  f.close();
+  if (sendNotModified(request, etag)) return;
+  AsyncWebServerResponse *r = request->beginResponse(LittleFS, path, mime);
+  r->addHeader("Cache-Control", "no-cache");
+  r->addHeader("ETag", etag);
+  request->send(r);
+}
+
+// Motivo dell'ultimo riavvio (utile per capire un reset: panic, watchdog, brownout, alimentazione…)
+static const char *resetReasonText() {
+  switch (esp_reset_reason()) {
+    case ESP_RST_POWERON:   return "power-on";
+    case ESP_RST_EXT:       return "pin reset";
+    case ESP_RST_SW:        return "software (ESP.restart)";
+    case ESP_RST_PANIC:     return "panic (eccezione o abort)";
+    case ESP_RST_INT_WDT:   return "watchdog interrupt";
+    case ESP_RST_TASK_WDT:  return "watchdog task";
+    case ESP_RST_WDT:       return "watchdog";
+    case ESP_RST_DEEPSLEEP: return "deep sleep";
+    case ESP_RST_BROWNOUT:  return "brownout (tensione troppo bassa)";
+    case ESP_RST_SDIO:      return "sdio";
+    default:                return "sconosciuto";
   }
 }
 
@@ -458,27 +573,19 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   });
 
   server.on("/logo.webp", HTTP_GET, [](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/logo.webp", "image/webp");
-    r->addHeader("Cache-Control", "public, max-age=2592000");
-    request->send(r);
+    serveValidated(request, "/logo.webp", "image/webp");
   });
 
   server.on("/logo-black.webp", HTTP_GET, [](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/logo-black.webp", "image/webp");
-    r->addHeader("Cache-Control", "public, max-age=2592000");
-    request->send(r);
+    serveValidated(request, "/logo-black.webp", "image/webp");
   });
 
   server.on("/en.png", HTTP_GET, [](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/en.png", "image/png");
-    r->addHeader("Cache-Control", "public, max-age=2592000");
-    request->send(r);
+    serveValidated(request, "/en.png", "image/png");
   });
 
   server.on("/it.png", HTTP_GET, [](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *r = request->beginResponse(LittleFS, "/it.png", "image/png");
-    r->addHeader("Cache-Control", "public, max-age=2592000");
-    request->send(r);
+    serveValidated(request, "/it.png", "image/png");
   });
 
   server.on("/disciplines.js", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -505,35 +612,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     serveGzipped(request, "/broadcast.js", "application/javascript");
   });
 
-  // Altri file serviti dal .gz (se c'è): senza queste route il server statico apre prima il
-  // file NON compresso e manda 4-5 volte più byte (i18n.js 41 KB → ~10 KB, ecc.).
-  {
-    static const struct { const char *path; const char *mime; } GZ_FILES[] = {
-      {"/i18n.js",                       "application/javascript"},
-      {"/script_view.js",                "application/javascript"},
-      {"/script_view_enduro.js",         "application/javascript"},
-      {"/script_view_equitazione.js",    "application/javascript"},
-      {"/script_enduro_competitor.js",   "application/javascript"},
-      {"/view.html",                     "text/html"},
-      {"/view_enduro.html",              "text/html"},
-      {"/view_equitazione.html",         "text/html"},
-      {"/enduro_competitor_start.html",  "text/html"},
-      {"/enduro_competitor_finish.html", "text/html"},
-      {"/manuale.html",                  "text/html"},
-    };
-    for (const auto &f : GZ_FILES) {
-      const char *path = f.path, *mime = f.mime;
-      server.on(path, HTTP_GET, [path, mime](AsyncWebServerRequest *request) {
-        serveGzipped(request, path, mime);
-      });
-    }
-  }
-
-  // 404 semplice. Prima ogni file mancante veniva rediretto a http://192.168.1.1/index.html
-  // (un vecchio indirizzo del dispositivo, oggi 192.168.10.1): il browser restava ad aspettare un
-  // host che non esiste e la pagina (splash compreso) non finiva mai di caricare.
   server.onNotFound([](AsyncWebServerRequest *req){
-    req->send(404, "text/plain", "Not found");
+    String url = req->url();
+    if (url == "/index.html" || url == "/") {
+      req->send(404, "text/plain", "Not found");
+    } else {
+      // relativo: vale sia sulla rete della Main (192.168.10.1) sia sull'IP della rete esterna
+      req->redirect("/index.html");
+    }
   });
 
   server.on("/setNmeaDeltaDebug", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -643,6 +729,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
         temp_mm  = 0;
         temp_ss = 0;
 
+        writeIntToSettings("syncMode", syncMode);
+
         debug("Attesa di un segnale di start");
         request->send(200, "text/plain", "Wait GPS");
 
@@ -659,14 +747,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     if (request->hasParam("lineNumber")) {
         lineNumber = request->getParam("lineNumber")->value().toInt();
     }
-    if (lineNumber < 0 || lineNumber > 5) {
-      request->send(400, "text/plain", "Bad lineNumber");
-      return;
-    }
     if (request->hasParam("competitor")) {
         competitors[lineNumber] = request->getParam("competitor")->value().toInt();
     }
 
+    if (lineNumber < 0 || lineNumber > 5) {
+      request->send(400, "text/plain", "Bad lineNumber");
+      return;
+    }
     sensorManual[lineNumber] = true;
     sensorTriggered[lineNumber] = true;
     sensorTime[lineNumber] = mowMicros;
@@ -873,6 +961,14 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     // --- JSON completo ---
   server.on("/email", HTTP_GET, [](AsyncWebServerRequest *request) {
 
+    // La connessione sicura (TLS) vuole ~50-60 KB in un blocco unico: se non ci sono si rinuncia
+    // invece di rischiare un riavvio a gara in corso.
+    if (internetOK && request->hasParam("address") && ESP.getMaxAllocHeap() < 60000) {
+      request->send(507, "text/plain", "Not enough memory to send the email now");
+      wifiRxActivity();
+      return;
+    }
+
     if(internetOK && request->hasParam("address")){
       String emailAddress = request->getParam("address")->value();
       Serial.println("Richiesta invio mail da:");
@@ -1026,6 +1122,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     WiFi.setAutoReconnect(false);
     WiFi.disconnect(false);
     reconnectAttempts = MAX_ATTEMPTS;
+    wifiStopStation();
     wifiReconnecting = false;
     Serial.println("🛑 WiFi: riconnessione interrotta dall'utente");
     request->send(200, "text/plain", "OK");
@@ -1103,8 +1200,43 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
        }
   });
 
+  // Elenco competitor: copia di sicurezza sull'unità (la console lo tiene nel localStorage del browser).
+  // Si perde con l'aggiornamento del filesystem; /clearSession non la tocca.
+  server.on("/athletes", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!isAuthorized(request)) return;
+    if (!LittleFS.exists("/athletes.json")) { request->send(404, "application/json", "[]"); return; }
+    request->send(LittleFS, "/athletes.json", "application/json");
+    wifiRxActivity();
+  });
+
+  server.on("/athletes", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
+    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+      static File f;
+      static bool refused = false, wrote = true;
+      if (index == 0) {
+        if (f) f.close();
+        refused = true; wrote = true;
+        if (!isAuthorized(request)) return;   // 401 gia' inviato
+        if (total == 0 || total > 65536) { request->send(413, "application/json", "{\"ok\":false,\"error\":\"size\"}"); return; }
+        f = LittleFS.open("/athletes.tmp", "w");
+        if (!f) { request->send(500, "application/json", "{\"ok\":false,\"error\":\"fs\"}"); return; }
+        refused = false;
+      }
+      if (refused) return;
+      if (f.write(data, len) != len) wrote = false;
+      if (index + len < total) return;
+      f.close();
+      bool ok = wrote;
+      if (ok) { LittleFS.remove("/athletes.json"); ok = LittleFS.rename("/athletes.tmp", "/athletes.json"); }
+      else LittleFS.remove("/athletes.tmp");
+      if (ok) request->send(200, "application/json", "{\"ok\":true}");
+      else request->send(500, "application/json", "{\"ok\":false,\"error\":\"fs\"}");
+      wifiRxActivity();
+    });
+
   server.on("/clearSession", HTTP_GET, [&](AsyncWebServerRequest *request) {
     if (!isAuthorized(request)) return;
+    equestrianClear();   // i turni di equitazione fanno parte della sessione
     if (LittleFS.exists("/session.json")) {
       if (LittleFS.remove("/session.json")) {
         request->send(200, "text/plain", "✅ Sessione cancellata con successo!");
@@ -1159,7 +1291,11 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     Serial.printf("Ricevuti: %s, %d\n", text.c_str(), cr);
 
-    // 🔧 GPS: commenta temporaneamente la chiamata
+    // Con "Stampa su carta" spenta non si stampa nulla, neanche su richiesta
+    if (!printEnabled) {
+      request->send(409, "text/plain", "Print disabled");
+      return;
+    }
     printOnPrinter(text, cr);
 
     request->send(200, "text/plain", "Printed successfully");
@@ -1177,10 +1313,12 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
 
     if (request->hasParam("printEnabled")) {
       printEnabled = request->getParam("printEnabled")->value().toInt();
+      writeIntToSettings("printEn", printEnabled);
     }
 
     if (request->hasParam("buzzerEnable")) {
       buzzerActive = request->getParam("buzzerEnable")->value().toInt();
+      writeIntToSettings("buzzActive", buzzerActive);
     }
 
     if(request->hasParam("stationName"))
@@ -1220,6 +1358,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
   [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
 
     String body;
+    body.reserve(len);
     for (size_t i = 0; i < len; i++) body += (char)data[i];
     debug("Ricevuti nuovi settings: " + body);
 
@@ -1228,8 +1367,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     int line = doc["l"].as<int>();
     int idx = line - 1;
     competitors[idx] = doc["c"].as<int>();
-    delays[idx]      = doc["d"].as<int>();
-    lineEnabled[idx] = doc["e"].as<int>();
+    if (doc.containsKey("d")) lineDelaySet(idx, doc["d"].as<long>());
+    if (doc.containsKey("e")) lineEnabled[idx] = doc["e"].as<int>();
     if (doc.containsKey("t1")) {
       lineDevice[idx] = doc["t1"].as<String>().substring(0, 32);
       if (idx >= 0 && idx <= 3) writeStringToSettings(("lt1_" + String(idx + 1)).c_str(), lineDevice[idx]);
@@ -1247,6 +1386,36 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     wifiRxActivity();
   });
 
+  // Disattivazione automatica delle linee dopo il primo passaggio (NVS line_once).
+  // Senza parametri restituisce lo stato, con v=0|1 lo imposta.
+  server.on("/lineDisableAfterPass", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("v")) {
+      lineDisableAfterPass = request->getParam("v")->value().toInt() ? 1 : 0;
+      writeIntToSettings("line_once", lineDisableAfterPass);
+    }
+    request->send(200, "application/json", String("{\"v\":") + lineDisableAfterPass + "}");
+    wifiRxActivity();
+  });
+
+  // Licenza a numero di accensioni (license.h): stato e applicazione di un codice.
+  server.on("/license", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "application/json", licenseJson());
+    wifiRxActivity();
+  });
+  server.on("/licenseApply", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String code = request->hasParam("code") ? request->getParam("code")->value() : "";
+    LicenseResult r = licenseApply(code.c_str());
+    const char *err = r == LICENSE_ERR_FORMAT ? "format" : r == LICENSE_ERR_INVALID ? "invalid" : r == LICENSE_ERR_USED ? "used" : "";
+    if (r != LICENSE_OK) {
+      request->send(400, "application/json", String("{\"ok\":false,\"error\":\"") + err + "\"}");
+    } else {
+      request->send(200, "application/json", licenseJson());
+    }
+    wifiRxActivity();
+  });
+
+  equestrianRegisterRoutes(server);   // /eq, /eqCmd, /eqEnable, /eqConfig (gare di equitazione)
+
   // Linea di start del tempo trascorso: l = 0 (qualsiasi) | 1-4. Senza
   // parametri restituisce il valore attuale. Salvata in NVS (el_start).
   server.on("/elapsedStartLine", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -1263,17 +1432,6 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     wifiRxActivity();
   });
 
-  // Disattivazione automatica delle linee dopo il primo passaggio (NVS line_once).
-  // Senza parametri restituisce lo stato, con v=0|1 lo imposta.
-  server.on("/lineDisableAfterPass", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if (request->hasParam("v")) {
-      lineDisableAfterPass = request->getParam("v")->value().toInt() ? 1 : 0;
-      writeIntToSettings("line_once", lineDisableAfterPass);
-    }
-    request->send(200, "application/json", String("{\"v\":") + lineDisableAfterPass + "}");
-    wifiRxActivity();
-  });
-
   server.on("/checkPointFields", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!request->hasParam("l")) {
       request->send(400, "text/plain", "Missing parameter: l (line number)");
@@ -1286,7 +1444,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     }
     int idx = line - 1;
     if (request->hasParam("c"))  competitors[idx] = request->getParam("c")->value().toInt();
-    if (request->hasParam("d"))  delays[idx]      = request->getParam("d")->value().toInt();
+    if (request->hasParam("d"))  lineDelaySet(idx, request->getParam("d")->value().toInt());
     if (request->hasParam("e"))  lineEnabled[idx] = request->getParam("e")->value().toInt();
     if (request->hasParam("t1")) {
       lineDevice[idx] = request->getParam("t1")->value().substring(0, 32);
@@ -1303,6 +1461,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
 
     String body;
+    body.reserve(len);
     for (size_t i = 0; i < len; i++) body += (char)data[i];
     debug("Ricevuto JSON per stampa riga : " + body);
 
@@ -1490,6 +1649,8 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["hwName"]              = String(HW_NAME);
     doc["freeRam"]             = ESP.getFreeHeap();
     doc["minFreeRam"]          = ESP.getMinFreeHeap();
+    doc["maxAllocRam"]         = ESP.getMaxAllocHeap();   // blocco libero più grande (frammentazione)
+    doc["resetReason"]         = resetReasonText();       // motivo dell'ultimo riavvio
     doc["lastDeltaPPSSync"]    = lastDeltaPPSSync;
     doc["usDriftAtPPS"]        = usDriftAtPPS;
     doc["extimatedDriftByPPS"] = extimatedDriftByPPS;
@@ -1500,14 +1661,29 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     doc["fsUsedBytes"]  = usedBytes;
     doc["fsFreeBytes"]  = totalBytes - usedBytes;
   
-    JsonArray files = doc.createNestedArray("files");
-    File root = LittleFS.open("/");
-    File file = root.openNextFile();
-    while (file) {
-      JsonObject obj = files.createNestedObject();
-      obj["name"] = file.name();
-      obj["size"] = file.size();
-      file = root.openNextFile();
+    // L'elenco dei file (un oggetto per file: svariati KB di heap per richiesta) lo vuole solo
+    // la pagina admin: si chiede con ?files=1. Le altre pagine lo scaricavano a ogni richiesta.
+    if (request->hasParam("files")) {
+      JsonArray files = doc.createNestedArray("files");
+      File root = LittleFS.open("/");
+      File file = root.openNextFile();
+      while (file) {
+        JsonObject obj = files.createNestedObject();
+        obj["name"] = file.name();
+        obj["size"] = file.size();
+        file = root.openNextFile();
+      }
+    }
+
+    // Stack libero dei task (byte): serve a dimensionarli. Si chiede con ?tasks=1.
+    if (request->hasParam("tasks")) {
+      static const char *TASKS[] = {"loopTask", "async_tcp", "tiT", "wifi", "sys_evt", "Tmr Svc", "BuzzerTask",
+                                    "PrinterTask", "InternetCheck", "mqtt", "sendMailTask", "IDLE0", "IDLE1"};
+      JsonObject tk = doc.createNestedObject("tasks");
+      for (const char *name : TASKS) {
+        TaskHandle_t h = xTaskGetHandle(name);
+        if (h) tk[name] = (uint32_t)uxTaskGetStackHighWaterMark(h);
+      }
     }
   
     // ── dati GPS base ────────────────────────────────────────
@@ -1552,6 +1728,7 @@ void registerRoutes(AsyncWebServer &server, AsyncWebSocket &ws) {
     }
   
     String json;
+    json.reserve(measureJson(doc) + 1);   // niente raddoppi successivi della stringa
     serializeJson(doc, json);
     request->send(200, "application/json", json);
     wifiTxActivity();

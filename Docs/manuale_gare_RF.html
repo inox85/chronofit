@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chronofit Main RF — Gare di equitazione</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  :root {
+    --primary: #8b0a1a; --text: #222; --muted: #666; --line: #e3e3e3;
+    --bg: #f6f6f4; --card: #fff; --accent: #1565c0; --ok: #2e7d32; --warn: #ef6c00; --err: #c62828;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; color: var(--text); background: var(--bg); line-height: 1.55; font-size: 16px; }
+  header { background: #111; color: #fff; padding: 18px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header img { height: 38px; }
+  header h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  header .sub { color: #bbb; font-size: 14px; }
+  .print-btn { margin-left: auto; background: var(--primary); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1180px; margin: 0 auto; gap: 24px; padding: 24px 16px; }
+  nav.toc { position: sticky; top: 16px; align-self: start; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; max-height: calc(100vh - 32px); overflow: auto; }
+  nav.toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin: 4px 0; font-size: 14px; }
+  nav.toc a { color: var(--text); text-decoration: none; }
+  nav.toc a:hover { color: var(--primary); }
+  main { min-width: 0; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; margin-bottom: 18px; }
+  section h2 { margin: 0 0 12px; font-size: 21px; color: var(--primary); border-bottom: 2px solid #f0e3e5; padding-bottom: 6px; }
+  section h3 { font-size: 17px; margin: 18px 0 6px; }
+  p { margin: 8px 0; }
+  ul, ol { margin: 6px 0 10px; padding-left: 22px; }
+  li { margin: 3px 0; }
+  code, kbd { background: #f1f1f1; border-radius: 4px; padding: 1px 5px; font-family: Consolas, monospace; font-size: 14px; }
+  kbd { border: 1px solid #ccc; border-bottom-width: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 15px; }
+  th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: #fafafa; color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .03em; }
+  .note, .tip, .warn { border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: 15px; }
+  .note { background: #eef4fc; border-left: 4px solid var(--accent); }
+  .tip  { background: #edf7ee; border-left: 4px solid var(--ok); }
+  .warn { background: #fff4e5; border-left: 4px solid var(--warn); }
+  .steps { counter-reset: s; list-style: none; padding-left: 0; }
+  .steps > li { counter-increment: s; position: relative; padding-left: 38px; margin: 10px 0; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .diagram { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+  .box { border: 2px solid var(--primary); border-radius: 10px; padding: 8px 14px; text-align: center; background: #fff; font-size: 14px; }
+  .box b { display: block; font-size: 15px; }
+  .arrow { color: var(--muted); font-size: 14px; text-align: center; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .cardlet { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: #fcfcfc; }
+  .cardlet h4 { margin: 0 0 6px; font-size: 15px; }
+  /* LED animati */
+  .led { display: inline-block; width: 13px; height: 13px; border-radius: 50%; background: #cfcfcf; vertical-align: -1px; margin-right: 6px; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); }
+  .led.on { background: #43a047; box-shadow: 0 0 6px 2px rgba(67,160,71,.5); }
+  @keyframes blink { 0%,49.9% { background:#43a047; box-shadow:0 0 6px 2px rgba(67,160,71,.5) } 50%,100% { background:#cfcfcf; box-shadow:none } }
+  @keyframes dbl { 0%,9.9%{background:#cfcfcf;box-shadow:none} 10%,19.9%{background:#43a047;box-shadow:0 0 6px 2px rgba(67,160,71,.5)} 20%,29.9%{background:#cfcfcf;box-shadow:none} 30%,100%{background:#43a047;box-shadow:0 0 6px 2px rgba(67,160,71,.5)} }
+  @keyframes flick { 0%,59.9%{background:#43a047;box-shadow:0 0 6px 2px rgba(67,160,71,.5)} 60%,64.9%{background:#cfcfcf;box-shadow:none} 65%,79.9%{background:#43a047;box-shadow:0 0 6px 2px rgba(67,160,71,.5)} 80%,84.9%{background:#cfcfcf;box-shadow:none} 85%,100%{background:#43a047;box-shadow:0 0 6px 2px rgba(67,160,71,.5)} }
+  @keyframes blip { 0%,14.9%{background:#43a047;box-shadow:0 0 6px 2px rgba(67,160,71,.5)} 15%,100%{background:#cfcfcf;box-shadow:none} }
+  .led.slow { animation: blink 1s infinite; } .led.fast { animation: blink .25s infinite; }
+  .led.double { animation: dbl 1s infinite; } .led.flicker { animation: flick 1.2s infinite; } .led.blip { animation: blip 1.6s infinite; }
+  .badge { display: inline-block; font-size: 12px; font-weight: bold; border-radius: 10px; padding: 1px 8px; color: #fff; }
+  .b-ok { background: var(--ok); } .b-grey { background: #9e9e9e; } .b-err { background: var(--err); }
+  .bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; vertical-align: -2px; margin-right: 4px; }
+  .bars i { width: 4px; background: #cfd4da; border-radius: 1px; }
+  .bars i:nth-child(1){height:5px} .bars i:nth-child(2){height:8px} .bars i:nth-child(3){height:11px} .bars i:nth-child(4){height:14px}
+  .g4 i { background: var(--ok); } .g3 i:nth-child(-n+3) { background: var(--ok); } .g2 i:nth-child(-n+2) { background: var(--warn); } .g1 i:nth-child(1) { background: var(--err); }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 10px 0 30px; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; max-height: none; } }
+  @media print {
+    body { background: #fff; font-size: 12pt; }
+    header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+    header img { filter: invert(1); }
+    .print-btn, nav.toc { display: none; }
+    .layout { display: block; padding: 0; }
+    section { border: 0; padding: 0 0 8px; break-inside: avoid-page; }
+    .led { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="/logo.webp" alt="Chronofit">
+  <div>
+    <h1>Chronofit Main RF — Gare di equitazione</h1>
+    <div class="sub">Salto ostacoli: turni, campana, penalità e classifica</div>
+  </div>
+  <button class="print-btn" onclick="window.print()">🖨 Stampa / PDF</button>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h2>Indice</h2>
+    <ol>
+      <li><a href="#cose">Che cosa fa</a></li>
+      <li><a href="#attivare">Attivare le gare</a></li>
+      <li><a href="#inbreve">In breve: un turno</a></li>
+      <li><a href="#preparare">Preparare la gara</a></li>
+      <li><a href="#tipi">I tipi di gara</a></li>
+      <li><a href="#regolamento">Il regolamento</a></li>
+      <li><a href="#turno">Il turno passo passo</a></li>
+      <li><a href="#fasi">Barrage e due fasi</a></li>
+      <li><a href="#classifica">La classifica</a></li>
+      <li><a href="#correzioni">Correzioni dei giudici</a></li>
+      <li><a href="#uscite">Vista pubblica, CSV, risultato</a></li>
+      <li><a href="#tasti">Scorciatoie da tastiera</a></li>
+      <li><a href="#salvataggio">Salvataggio e riavvii</a></li>
+      <li><a href="#problemi">Risoluzione dei problemi</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="cose">
+      <h2>1. Che cosa fa</h2>
+      <p>Con le gare accese il dispositivo non si limita a registrare i passaggi: <b>segue il turno di ogni cavaliere</b> dalla campana al risultato.</p>
+      <ul>
+        <li><b>Campana</b> con conto alla rovescia e beep negli ultimi 5 secondi; il tempo parte dalla fotocellula di partenza o, allo scadere, da solo.</li>
+        <li><b>Partenza, intermedio e arrivo</b> presi dalle fotocellule (o dai tocchi manuali sulle linee).</li>
+        <li><b>Errori</b> (abbattimenti, rifiuti, cadute…) con le loro penalità, <b>penalità per il tempo concesso</b> superato ed <b>eliminazione automatica</b> (2° rifiuto, caduta, tempo limite).</li>
+        <li><b>Classifica</b> calcolata subito, anche per barrage e gare a due fasi, con correzioni dei giudici ed esportazione in CSV.</li>
+        <li><b>Regolamento configurabile</b>: cinque tipi di gara già pronti (Tabella A, A con barrage, due fasi, Tabella C, A senza cronometro), duplicabili e modificabili.</li>
+      </ul>
+      <div class="warn">I valori predefiniti del regolamento sono <b>un punto di partenza</b>: verificali con il regolamento della gara (FEI/FISE) prima di usarli.</div>
+    </section>
+
+    <section id="attivare">
+      <h2>2. Attivare le gare</h2>
+      <p>⚙️ → <b>🛠 Dispositivo</b> → <b>Gara assistita (equitazione)</b>. È spenta di default; spegnendola la Main torna al cronometraggio standard (i passaggi restano registrati in entrambi i casi).</p>
+      <ul>
+        <li><b>Spente</b>: il cronometro è quello standard, la console non mostra il pannello del cavaliere e il tocco su un nome dell'elenco <b>Attesi</b> assegna il competitor come sempre.</li>
+        <li><b>Accese</b>: in cima alla console compare il <b>pannello del cavaliere</b> (numero e nome, orologio, stato e pulsanti) e accanto la <b>Classifica</b>. Nell'intestazione della Classifica l'interruttore <b>Classifica / Passaggi</b> sceglie se vedere la classifica oppure la lista dei passaggi (in questo caso il menu e <b>Esporta CSV</b> non sono visibili); la scelta resta nel browser.</li>
+        <li>Spegnendo le gare con un turno in corso, quel turno viene <b>annullato</b> (i passaggi restano registrati): la console chiede conferma.</li>
+        <li>Lo stato acceso/spento resta salvato anche dopo lo spegnimento.</li>
+      </ul>
+      <p>Le linee sono quelle della card <b>Gestione transiti</b> (1–4): un ingresso della Main (fotocellula o pedana, assegnabile alla linea) oppure una <a href="/manuale.html#fotocellule">fotocellula radio</a> assegnata alla linea.</p>
+    </section>
+
+    <section id="inbreve">
+      <h2>3. In breve: un turno</h2>
+      <ol class="steps">
+        <li><b>Seleziona il cavaliere</b>: tocca il suo nome nell'elenco <b>Attesi</b>, oppure scrivi il numero nel pannello e tocca <b>Pronto</b>. Le linee di partenza, arrivo e (se c'è) intermedia vengono armate con il suo numero.</li>
+        <li><b>🔔 Campana</b>: parte il conto alla rovescia (45 s di default).</li>
+        <li>Il cavaliere passa la <b>fotocellula di partenza</b>: il tempo parte (se il conto alla rovescia scade prima, parte da solo: il turno è segnato <i>partenza automatica</i>).</li>
+        <li>Durante il percorso tocca il pulsante dell'<b>errore</b> a ogni errore; il pannello aggiorna penalità e posizione.</li>
+        <li><b>Arrivo</b>: il tempo si ferma sulla fotocellula di arrivo. Controlla il risultato, <b>📋 Copia risultato</b> se serve, poi <b>✔ Conferma</b> (oppure seleziona subito il cavaliere successivo: il turno si conferma da solo).</li>
+      </ol>
+    </section>
+
+    <section id="preparare">
+      <h2>4. Preparare la gara</h2>
+      <p>Tocca ⚙️ nel pannello del cavaliere (<b>Gara e regolamento</b>). La scheda <b>Gara</b> contiene:</p>
+      <table>
+        <tr><th>Campo</th><th>Significato</th></tr>
+        <tr><td>Tipo di gara</td><td>Il regolamento da usare (vedi <a href="#tipi">I tipi di gara</a>).</td></tr>
+        <tr><td>Linea di partenza · Linea di arrivo</td><td>Le linee (1–4) che avviano e fermano il tempo. Possono essere la <b>stessa linea</b> (una sola fotocellula): in quel caso il secondo passaggio vale come arrivo solo dopo almeno 2 secondi dalla partenza.</td></tr>
+        <tr><td>Linea intermedia (arrivo 1ª fase)</td><td>Facoltativa; deve essere diversa da partenza e arrivo (altrimenti non viene usata). Vedi <a href="#fasi">Barrage e due fasi</a>.</td></tr>
+        <tr><td>Lunghezza percorso (m) · Velocità (m/min)</td><td>Servono a calcolare il <b>tempo concesso</b>. Predefinita: velocità 350 m/min, lunghezza da inserire.</td></tr>
+        <tr><td>Tempo concesso manuale (s, vuoto = calcolato)</td><td>Se lo scrivi, sostituisce quello calcolato. Il tempo concesso e il tempo limite calcolati compaiono subito sotto questo campo.</td></tr>
+        <tr><td>Lunghezza 2ª fase / barrage (m) · Tempo concesso 2ª fase / barrage (s)</td><td>Compaiono con i tipi che hanno una seconda fase. Vuoti = come la 1ª fase (il tempo vuoto = calcolato).</td></tr>
+        <tr><td>Fase del prossimo turno</td><td>Quale fase correrà il prossimo cavaliere che selezioni <b>toccando il suo nome in Attesi</b> (percorso base o 2ª fase/barrage).</td></tr>
+      </table>
+      <p>Sotto i campi compaiono il <b>tempo concesso calcolato</b> e il <b>tempo limite</b>.</p>
+      <div class="note"><b>Come si calcola il tempo concesso.</b> Lunghezza ÷ velocità, <b>arrotondato al secondo superiore</b>. Esempio: 400 m a 350 m/min = 68,57 s → <b>69 s</b>. Il tempo limite è il tempo concesso moltiplicato per il fattore del regolamento (2 di default): 69 s → 138 s.</div>
+    </section>
+
+    <section id="tipi">
+      <h2>5. I tipi di gara</h2>
+      <p>Sono cinque, già pronti. Il tipo si sceglie nella scheda <b>Gara</b>; si può duplicarne uno e adattarlo (vedi <a href="#regolamento">Il regolamento</a>).</p>
+      <table>
+        <tr><th>Tipo</th><th>Come funziona</th></tr>
+        <tr><td><b>Tabella A a tempo</b></td><td>Una sola fase. Classifica per <b>penalità, poi tempo</b>. Penalità per il tempo concesso superato: 1 punto ogni 4 secondi iniziati. Tempo limite = 2 × tempo concesso.</td></tr>
+        <tr><td><b>Tabella A con barrage</b></td><td>Come la precedente, più il <b>barrage</b>: un secondo percorso (fase 2) per i cavalieri che lo corrono. La classifica finale mette prima chi ha corso il barrage.</td></tr>
+        <tr><td><b>Due fasi</b></td><td>Due fasi <b>consecutive</b>: il cavaliere non si ferma tra la 1ª e la 2ª fase. Con la linea intermedia come arrivo della 1ª fase, se la 1ª fase è netta la 2ª parte subito. Classifica finale: penalità sommate, poi tempo della 2ª fase.</td></tr>
+        <tr><td><b>Tabella C (errori in secondi)</b></td><td>Gli errori si pagano in <b>secondi aggiunti</b> al tempo (abbattimento +4 s). Nessuna penalità per il tempo concesso e nessun tempo limite. Classifica per <b>tempo totale</b> (con i secondi di penalità).</td></tr>
+        <tr><td><b>Tabella A senza cronometro</b></td><td>Classifica per <b>sole penalità</b>: il tempo non decide la posizione e i pari penalità condividono la posizione. Le penalità per il tempo concesso restano attive se hai un tempo concesso: per escluderle metti <i>Penalità per il superamento del tempo concesso → Nessuna</i> nel regolamento.</td></tr>
+      </table>
+      <h3>Valori predefiniti</h3>
+      <table>
+        <tr><th></th><th>A a tempo / con barrage / due fasi / senza cronometro</th><th>Tabella C</th></tr>
+        <tr><td>Conto alla rovescia dopo la campana</td><td>45 s, partenza automatica allo scadere, beep negli ultimi 5 s</td><td>uguale</td></tr>
+        <tr><td>Penalità per il tempo concesso</td><td>punti: 1 ogni 4 s iniziati</td><td>nessuna</td></tr>
+        <tr><td>Tempo limite</td><td>2 × tempo concesso</td><td>nessuno</td></tr>
+        <tr><td>Abbattimento</td><td>4 penalità</td><td>+4 s</td></tr>
+        <tr><td>Rifiuto</td><td>4 penalità · gruppo 1: <b>elimina al 2° rifiuto</b></td><td>0 · gruppo 1: elimina al 2° rifiuto</td></tr>
+        <tr><td>Rifiuto con abbattimento</td><td>4 penalità + 6 s · gruppo 1</td><td>+6 s · gruppo 1</td></tr>
+        <tr><td>Caduta</td><td colspan="2">elimina subito</td></tr>
+      </table>
+    </section>
+
+    <section id="regolamento">
+      <h2>6. Il regolamento</h2>
+      <p>Nella scheda <b>Regolamento</b> di ⚙️ scegli il tipo da modificare e imposti:</p>
+      <table>
+        <tr><th>Campo</th><th>Effetto</th></tr>
+        <tr><td>Nome</td><td>Il nome del tipo di gara (compare nel pannello e nelle viste).</td></tr>
+        <tr><td>Conto alla rovescia dopo la campana (s)</td><td>0 = nessun conto alla rovescia: la campana suona e il tempo parte solo dalla fotocellula (o da ▶ Partenza).</td></tr>
+        <tr><td>Partenza automatica allo scadere</td><td>Allo scadere il tempo parte da solo, con un beep lungo, e il turno è segnato <i>partenza automatica</i>. Spenta: allo scadere si attende la fotocellula.</td></tr>
+        <tr><td>Beep negli ultimi 5 secondi</td><td>Un beep al secondo prima della partenza.</td></tr>
+        <tr><td>Penalità per il superamento del tempo concesso</td><td><b>Nessuna</b> · <b>Punti</b> (si sommano alle penalità di percorso) · <b>Secondi aggiunti</b> (contano nel tempo totale della classifica a tempo).</td></tr>
+        <tr><td>Ogni (s) · Penalità</td><td>Per ogni intervallo di quei secondi oltre il tempo concesso, quella penalità.</td></tr>
+        <tr><td>Conta anche l'intervallo iniziato</td><td>Acceso: un intervallo appena iniziato conta intero (4 s di default: 1 s oltre = 1 punto). Spento: contano solo gli intervalli completi.</td></tr>
+        <tr><td>Tempo limite = tempo concesso ×</td><td>Il fattore (0 = nessun tempo limite). Superato il limite il tempo si ferma e il cavaliere è eliminato.</td></tr>
+        <tr><td>Classifica</td><td><b>Penalità, poi tempo</b> · <b>Tempo (con i secondi di penalità)</b> · <b>Solo penalità</b>.</td></tr>
+        <tr><td>Formula</td><td><b>Una fase</b> · <b>Con barrage</b> · <b>Due fasi</b> (con <i>Fasi consecutive</i> acceso o spento).</td></tr>
+        <tr><td>Errori</td><td>Fino a 8 tipi di errore, ciascuno con: <b>Errore</b> (nome), <b>Pen.</b> (punti, anche decimali), <b>+s</b> (secondi aggiunti al tempo), <b>Gruppo</b>, <b>Elimina a</b>, <b>Elimina</b>. <b>+ Errore</b> ne aggiunge uno, ✕ toglie quello della riga.</td></tr>
+      </table>
+      <p><small>Limiti dei campi: conto alla rovescia 0–600 s; «Ogni» 1–600 s; penalità di tempo 0–100; fattore del tempo limite 0–10; punti dell'errore da −100 a 100; secondi dell'errore da −600 a 600; gruppo 0–9; «Elimina a» 0–20; lunghezza 0–5000 m; velocità 0–1000 m/min.</small></p>
+      <h3>Eliminazione: Gruppo, «Elimina a», «Elimina»</h3>
+      <ul>
+        <li><b>Elimina</b> (casella): al primo errore di quel tipo il cavaliere è eliminato (es. <i>Caduta</i>).</li>
+        <li><b>Gruppo + Elimina a</b>: gli errori dello stesso gruppo si sommano; raggiunto il numero indicato il cavaliere è eliminato. Con i valori predefiniti i due tipi di rifiuto sono nel gruppo 1 con «Elimina a 2»: due rifiuti, anche di tipo diverso, eliminano.</li>
+        <li>Quando un cavaliere risulta eliminato mentre corre, <b>il tempo si ferma</b>.</li>
+      </ul>
+      <h3>Esempio di calcolo (Tabella A)</h3>
+      <p>Tempo concesso 69 s. Il cavaliere arriva in 75,32 s con un abbattimento: il tempo è 75,32 s (al centesimo, per difetto); sono passati 6,32 s oltre il concesso, quindi 2 intervalli da 4 s iniziati = <b>2 punti</b> di penalità di tempo. Totale = 4 (abbattimento) + 2 = <b>6 penalità</b>.</p>
+      <h3>Esempio di calcolo (Tabella C)</h3>
+      <p>Il cavaliere arriva in 71,40 s con un abbattimento (+4 s): il tempo diventa 75,40 s e la classifica usa quel tempo. Nessuna penalità di tempo.</p>
+      <h3>Gestire i tipi di gara</h3>
+      <ul>
+        <li><b>Duplica</b>: crea una copia del tipo selezionato, da adattare al tuo regolamento (massimo 8 tipi).</li>
+        <li><b>Elimina tipo</b>: toglie il tipo selezionato (ne deve restare almeno uno).</li>
+        <li><b>Ripristina predefiniti</b>: chiede conferma e agisce <b>subito, senza premere Salva</b>. Riporta i cinque tipi originali <b>e anche i dati della scheda Gara</b> (linee 1 e 2, velocità 350 m/min, lunghezza vuota, nessuna intermedia); le modifiche precedenti vanno perse.</li>
+        <li>Le altre modifiche si applicano con <b>Salva</b>. Cambiare le regole di un tipo (errori, penalità, eliminazioni) <b>ricalcola anche i turni già corsi</b>; il tempo concesso e il tempo limite restano invece quelli del momento in cui il turno è stato creato. La classifica usa il tipo scelto nella scheda Gara. Non eliminare né cambiare tipo a gara iniziata: modifica il regolamento prima di cominciare.</li>
+      </ul>
+    </section>
+
+    <section id="turno">
+      <h2>7. Il turno passo passo</h2>
+      <p>Ogni turno attraversa questi stati:</p>
+      <table>
+        <tr><th>Stato</th><th>Cosa succede</th><th>Come ci si arriva</th></tr>
+        <tr><td><b>Pronto</b></td><td>Cavaliere selezionato, linee armate, in attesa della campana.</td><td>Tocco sul nome in Attesi, oppure numero + <b>Pronto</b>.</td></tr>
+        <tr><td><b>Conto alla rovescia</b></td><td>La campana è suonata; beep negli ultimi 5 s.</td><td><b>🔔 Campana</b> (se il conto alla rovescia è 0 la campana suona e lo stato non cambia).</td></tr>
+        <tr><td><b>In corso</b></td><td>Il tempo scorre; gli errori si possono segnare.</td><td>Passaggio sulla linea di partenza, oppure fine del conto alla rovescia (partenza automatica), oppure <b>▶ Partenza</b>.</td></tr>
+        <tr><td><b>Interrotto</b></td><td>Il tempo è fermo (per esempio per ricostruire un ostacolo); la pausa non conta nel tempo.</td><td><b>🔔 Interrompi</b> durante il percorso. <b>🔔 Riprendi</b> lo fa ripartire.</td></tr>
+        <tr><td><b>Arrivato</b></td><td>Tempo fermo; risultato calcolato; da controllare.</td><td>Passaggio sulla linea di arrivo, oppure <b>⏹ Arrivo</b>; oppure eliminazione/ritiro; oppure superamento del tempo limite.</td></tr>
+        <tr><td><b>Confermato</b></td><td>Turno chiuso, definitivo (si può comunque correggere dalla classifica).</td><td><b>✔ Conferma</b>, oppure selezione del cavaliere successivo.</td></tr>
+        <tr><td><b>Annullato</b></td><td>Il turno non conta e non compare in classifica.</td><td><b>Annulla turno</b>, oppure selezione di un altro cavaliere su un turno non concluso.</td></tr>
+      </table>
+      <h3>Pulsanti del pannello</h3>
+      <table>
+        <tr><th>Pulsante</th><th>Cosa fa</th></tr>
+        <tr><td>🔔 Campana / Interrompi / Riprendi</td><td>Un solo pulsante che cambia con lo stato: avvia il conto alla rovescia, ferma il tempo durante il percorso, lo fa ripartire.</td></tr>
+        <tr><td>▶ Partenza · ⏹ Arrivo</td><td>Fanno partire e fermare il tempo <b>a mano</b>, al posto delle fotocellule (se non funzionano o per un ripristino).</td></tr>
+        <tr><td>Pulsanti degli errori</td><td>Un tocco aggiunge un errore di quel tipo (compare il conteggio); <b>−</b> ne toglie uno. Attivi da «In corso» in poi (non nel conto alla rovescia).</td></tr>
+        <tr><td>Eliminato · Ritirato</td><td>Segnano a mano lo stato del cavaliere (restano evidenziati; toccali di nuovo per toglierli). Un ritirato o eliminato ferma il tempo.</td></tr>
+        <tr><td>Annulla turno</td><td>Toglie il turno dalla classifica.</td></tr>
+        <tr><td>✔ Conferma</td><td>Conferma un turno «Arrivato».</td></tr>
+        <tr><td>📋 Copia risultato</td><td>Copia il testo per comunicare il risultato (es. «12 Rossi Mario · Tempo 75,32 s · Penalità percorso 4 · Penalità tempo 2 · Totale 6 pen. · 3°»).</td></tr>
+        <tr><td>Fase</td><td>Con i tipi a più fasi: con <b>Pronto</b> e il numero scritto sceglie la fase del turno; con il tocco su un nome in Attesi vale la <b>Fase del prossimo turno</b> impostata nella scheda Gara.</td></tr>
+      </table>
+      <ul>
+        <li>Il tocco su un nome in <b>Attesi</b> seleziona il cavaliere solo se nessun campo competitor è selezionato; altrimenti assegna il numero a quel campo. Selezionando il cavaliere le linee di partenza, arrivo e intermedia vengono assegnate al suo numero e <b>abilitate</b>.</li>
+        <li>Se selezioni un altro cavaliere mentre un turno è <b>in corso o interrotto</b>, la console chiede conferma: confermando, il turno in corso viene annullato.</li>
+        <li>Con la gara assistita accesa il tempo trascorso della Main segue il turno: si azzera quando selezioni un cavaliere e parte con la sua partenza.</li>
+        <li>Il passaggio sulla linea di partenza vale solo se il turno è «Pronto» o in conto alla rovescia; quello sulla linea di arrivo solo se è «In corso». I passaggi su una linea <b>disabilitata</b> della barriera (non manuali) non muovono il turno; il tocco manuale sul numero di linea (o i tasti <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd>) lo muove invece come una barriera abilitata.</li>
+        <li><b>Tempo limite</b>: quando il tempo supera il limite il turno si chiude da solo: diventa «Arrivato» con eliminazione per tempo limite, con un beep grave.</li>
+      </ul>
+    </section>
+
+    <section id="fasi">
+      <h2>8. Barrage e due fasi</h2>
+      <h3>Barrage</h3>
+      <ol>
+        <li>Corri il percorso base (fase 1) con tutti i cavalieri.</li>
+        <li>Per chi va al barrage imposta <b>Fase del prossimo turno</b> = Barrage nella scheda Gara (⚙️) e seleziona il cavaliere dall'elenco Attesi; in alternativa scegli la fase nel menu del pannello e scrivi il numero con <b>Pronto</b>. Oppure, dalla classifica, tocca la riga e usa <b>▶ Barrage</b>.</li>
+        <li>Il barrage è un turno a parte, con la sua lunghezza e il suo tempo concesso (se impostati nella scheda Gara) e si classifica come da regolamento.</li>
+      </ol>
+      <p>Nel menu della classifica scegli: <b>Percorso base</b>, <b>Barrage</b> o <b>Classifica finale</b> (chi ha corso il barrage in testa, poi gli altri secondo il percorso base). Con la formula <b>Due fasi</b> le voci sono <b>1ª fase</b>, <b>2ª fase</b> e <b>Classifica finale</b>.</p>
+      <h3>Due fasi consecutive</h3>
+      <p>Nel tipo <b>Due fasi</b> imposta nella scheda Gara la <b>linea intermedia (arrivo 1ª fase)</b>, diversa da partenza e arrivo, e la lunghezza della 2ª fase per il suo tempo concesso. Al passaggio sull'intermedia:</p>
+      <ul>
+        <li><b>1ª fase netta</b> (0 punti di penalità, né eliminato né ritirato; i secondi aggiunti non contano): la 1ª fase si chiude con il suo tempo e parte subito la 2ª, dallo stesso istante, con un <b>doppio beep</b>. Il pannello mostra «2ª fase» e il risultato della 1ª.</li>
+        <li><b>1ª fase con penalità</b> (o eliminazione/ritiro): il turno finisce lì, con il risultato della 1ª fase.</li>
+      </ul>
+      <p><b>Classifica finale a due fasi</b>: prima chi ha corso la 2ª fase (penalità delle due fasi sommate, poi tempo della 2ª fase; l'eliminazione in una fase elimina il cavaliere), poi gli altri secondo la 1ª fase. Nella classifica compare il dettaglio «(1ª fase + 2ª fase)».</p>
+      <p>Se spegni <b>Fasi consecutive</b> nel regolamento, le due fasi si corrono come turni separati: riselezioni il cavaliere scegliendo la fase 2.</p>
+      <div class="note">Con gli altri tipi di gara la linea intermedia registra solo il <b>tempo intermedio</b>, che compare nel pannello, nella vista pubblica e nel CSV.</div>
+    </section>
+
+    <section id="classifica">
+      <h2>9. La classifica</h2>
+      <p>È calcolata nel browser da tutti i turni conclusi («Arrivato» o «Confermato»): per ogni cavaliere conta <b>l'ultimo turno concluso</b> della fase. I turni annullati, in corso o non ancora arrivati non entrano. Le righe «Arrivato» non ancora confermate sono evidenziate.</p>
+      <table>
+        <tr><th>Modalità di classifica</th><th>Ordine</th></tr>
+        <tr><td>Penalità, poi tempo</td><td>Meno penalità prima; a pari penalità il tempo minore. In pari su entrambi: stessa posizione.</td></tr>
+        <tr><td>Tempo (con i secondi di penalità)</td><td>Tempo minore, comprensivo dei secondi aggiunti (errori in secondi, penalità di tempo a secondi).</td></tr>
+        <tr><td>Solo penalità</td><td>Meno penalità prima; i pari penalità hanno la stessa posizione, indipendentemente dal tempo.</td></tr>
+      </table>
+      <ul>
+        <li>In ogni modalità i cavalieri in gara vengono prima dei <b>ritirati</b>, che vengono prima degli <b>eliminati</b>; ritirati ed eliminati non hanno posizione (<i>RIT.</i> / <i>ELIM.</i>).</li>
+        <li>Colonne: posizione, numero, cavaliere, tempo, penalità percorso, penalità tempo, totale. La colonna <b>Tempo</b> mostra il tempo del percorso con i secondi degli errori ma senza le penalità di tempo a secondi, che però contano nell'ordine.</li>
+        <li>La classifica finale a due fasi segue sempre le penalità sommate e poi il tempo della 2ª fase, qualunque sia la modalità scelta.</li>
+        <li>Con un solo percorso il menu della classifica non serve e non compare.</li>
+      </ul>
+    </section>
+
+    <section id="correzioni">
+      <h2>10. Correzioni dei giudici</h2>
+      <p>Tocca una riga della classifica per aprire <b>Modifica turno</b>:</p>
+      <ul>
+        <li><b>Errori</b>: aggiungi o togli errori anche a turno concluso; penalità e posizione si ricalcolano subito.</li>
+        <li><b>Stato</b>: <i>In gara</i>, <i>Eliminato</i> o <i>Ritirato</i>. <i>In gara</i> toglie anche un'eliminazione per tempo limite; un'eliminazione dovuta agli errori si toglie correggendo gli errori.</li>
+        <li><b>Tempo corretto (s)</b>: scrivi il tempo deciso dai giudici e premi <b>Applica</b>; <b>Ripristina</b> torna al tempo cronometrato. Il tempo corretto è il tempo <b>finale</b>: i secondi degli errori (+s) non vengono aggiunti in più; la penalità per il tempo concesso si ricalcola su di esso.</li>
+        <li><b>Fase</b>: sposta il turno tra le fasi (per esempio se un barrage è stato registrato come percorso base).</li>
+        <li><b>▶ Barrage / ▶ 2ª fase</b>: dal turno della 1ª fase prepara (stato Pronto) il turno della fase successiva dello stesso cavaliere: poi suona la campana come di consueto.</li>
+        <li><b>✔ Conferma</b> e <b>Annulla turno</b>.</li>
+      </ul>
+    </section>
+
+    <section id="uscite">
+      <h2>11. Vista pubblica, CSV, risultato</h2>
+      <ul>
+        <li><b>Vista pubblica</b> <a href="/view_equitazione.html" target="_blank"><code>/view_equitazione.html</code></a>: per il secondo schermo. Con le gare accese mostra il cavaliere in pista, il tempo, il risultato e la classifica; con le gare spente mostra la griglia dei passaggi. Nelle sue impostazioni <b>Mostra anche la griglia dei passaggi</b>. La classifica mostra le prime 15 posizioni (Pos., #, Cavaliere, Tempo, Totale) e passa da sola alla classifica finale quando c'è almeno un barrage o una 2ª fase conclusi.</li>
+        <li><b>Esporta CSV</b> (nell'intestazione della Classifica, accanto al menu): scarica <code>classifica_equitazione.csv</code>, con la classifica della fase scelta nel menu. Separatore <code>;</code>, apribile in Excel. Colonne: Pos., #, Cavaliere, Tempo, Intermedio, Penalità percorso, Penalità tempo, Totale, Stato.</li>
+        <li><b>📋 Copia risultato</b>: il testo da comunicare ai giudici o dare al microfono. Se il browser non permette di copiare, il testo compare in un popup da copiare a mano.</li>
+        <li>I nomi dei cavalieri vengono dal <b>registro atleti</b> (vedi il manuale, «Registro atleti e file CSV»): senza registro compare solo il numero. Nella vista pubblica nome e cognome compaiono solo se il registro atleti è caricato nel browser che la mostra.</li>
+      </ul>
+    </section>
+
+    <section id="tasti">
+      <h2>12. Scorciatoie da tastiera</h2>
+      <p>Con una tastiera collegata (PC, tablet con tastiera) la console ha queste scorciatoie. Non scattano mentre scrivi in un campo, con un popup aperto, con <kbd>Ctrl</kbd>/<kbd>Alt</kbd>/<kbd>Cmd</kbd> premuti, e il tasto tenuto premuto non le ripete.</p>
+      <table>
+        <tr><th>Tasto</th><th>Cosa fa</th></tr>
+        <tr><td><kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd></td><td>Passaggio manuale sulle linee <b>1, 2, 3, 4</b>: equivalgono al tocco sul numero della linea (la cella lampeggia). Nelle gare servono, per esempio, per far partire e arrivare il tempo se una fotocellula non risponde; funzionano anche con maiuscole bloccate o Maiusc.</td></tr>
+        <tr><td><kbd>1</kbd> – <kbd>4</kbd></td><td>Abilitano o disabilitano la linea corrispondente (come il pulsante ✓); compare un avviso di conferma.</td></tr>
+      </table>
+      <div class="tip">I tasti <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd><kbd>V</kbd> sono vicini sulla tastiera: sono pensati per toccare una linea dopo l'altra senza guardare. Il passaggio manuale vale anche con la linea disabilitata.</div>
+    </section>
+
+    <section id="salvataggio">
+      <h2>13. Salvataggio e riavvii</h2>
+      <ul>
+        <li>I turni (fino a 400) si salvano nel dispositivo pochi secondi dopo ogni modifica e restano dopo lo spegnimento. Si cancellano con <b>Cancella sessione</b>.</li>
+        <li>Il regolamento (i tipi di gara) e lo stato acceso/spento sono salvati a parte.</li>
+        <li>Dopo un <b>riavvio a metà turno</b> il turno pronto, in conto alla rovescia, in corso o interrotto viene annullato (il tempo era riferito all'accensione precedente) e il cronometro riparte da zero: seleziona di nuovo il cavaliere. Un turno già arrivato ma non confermato viene confermato al riavvio. Con 400 turni salvati la selezione di un nuovo cavaliere dà errore: cancella la sessione.</li>
+        <li>Con le gare accese il dispositivo usa circa 29 KB di memoria in più per i turni; spegnendole la memoria torna libera.</li>
+      </ul>
+    </section>
+
+    <section id="problemi">
+      <h2>14. Risoluzione dei problemi</h2>
+      <table>
+        <tr><th>Sintomo</th><th>Causa e rimedio</th></tr>
+        <tr><td>Il tempo non parte al passaggio della fotocellula</td><td>Il turno deve essere «Pronto» o in conto alla rovescia (seleziona prima il cavaliere); la linea deve essere quella di <b>partenza</b> del regolamento; una barriera su una linea disabilitata non conta (abilitala, o usa <b>▶ Partenza</b> / tocco manuale). Con la <b>licenza esaurita</b> (accensioni finite) i passaggi non fanno partire il turno: vedi il manuale principale.</td></tr>
+        <tr><td>Il tempo si ferma subito dopo la partenza (stessa linea per partenza e arrivo)</td><td>Con partenza = arrivo il secondo passaggio vale solo dopo 2 s. Se si ferma comunque, controlla che la fotocellula non dia doppi segnali (Ritardo della linea).</td></tr>
+        <tr><td>Il pulsante degli errori è grigio</td><td>Gli errori si segnano da «In corso» in poi; nel conto alla rovescia sono disattivati.</td></tr>
+        <tr><td>Il cavaliere risulta eliminato senza che l'abbia deciso</td><td>Secondo rifiuto, caduta, o tempo limite superato. Se è un errore, correggi dalla classifica (<b>Modifica turno</b> → errori / stato / tempo corretto).</td></tr>
+        <tr><td>La classifica è vuota</td><td>Entrano solo i turni «Arrivato» o «Confermato»; controlla anche la fase scelta nel menu della classifica.</td></tr>
+        <tr><td>Il pannello del cavaliere non compare</td><td>Le gare sono spente: accendile da ⚙️ → 🛠 Dispositivo → Gara assistita (equitazione).</td></tr>
+        <tr><td>Dopo un riavvio il turno è sparito</td><td>Un turno interrotto da un riavvio viene annullato: riseleziona il cavaliere. I turni conclusi restano.</td></tr>
+        <tr><td>Un cavaliere compare solo con il numero</td><td>Non è nel registro atleti: caricalo o aggiungilo dal registro (✏️ accanto ad Attesi, o pressione lunga sul campo competitor).</td></tr>
+      </table>
+      <p>Per tutto il resto (collegamento, linee, sessione, licenza…) vedi il <a href="/manuale.html">manuale principale</a>.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer>Chronofit — Chronofit Main RF — Gare di equitazione</footer>
+
+</body>
+</html>

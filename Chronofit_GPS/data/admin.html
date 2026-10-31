@@ -545,6 +545,12 @@
         <div class="m-value" id="freeRam">—</div>
         <div class="m-sub" id="minFreeRam">min —</div>
       </div>
+
+      <div class="metric-card">
+        <div class="m-label">Ultimo riavvio</div>
+        <div class="m-value" id="resetReason" style="font-size:18px;">—</div>
+        <div class="m-sub">motivo</div>
+      </div>
  
       <div class="metric-card">
         <div class="m-label">Ultimo sync</div>
@@ -720,7 +726,7 @@
 
     async function loadData() {
       try {
-        const res = await fetch('/systemSettings');
+        const res = await fetch('/systemSettings?files=1');   // l'elenco dei file lo manda solo su richiesta
         data = await res.json();
         console.log(data);
         initPage(); // funzione che aggiorna UI
@@ -774,7 +780,9 @@
       document.getElementById('rtcTemp').textContent  = data.rtcTemp.toFixed(2) + ' °C';
       document.getElementById('rtcAging').textContent = data.rtcAging;
       document.getElementById('freeRam').textContent  = fmtBytes(data.freeRam);
-      document.getElementById('minFreeRam').textContent = 'min ' + fmtBytes(data.minFreeRam);
+      document.getElementById('resetReason').textContent = data.resetReason || '—';
+      document.getElementById('minFreeRam').textContent = 'min ' + fmtBytes(data.minFreeRam) +
+        (data.maxAllocRam ? ' · blocco ' + fmtBytes(data.maxAllocRam) : '');
 
       const pct = ((data.fsUsedBytes / data.fsTotalBytes) * 100).toFixed(1);
       document.getElementById('storage-pct').textContent = pct + '%';

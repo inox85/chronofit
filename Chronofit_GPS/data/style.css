@@ -60,7 +60,7 @@ span{
   /* Altezza fissa = viewport meno la navbar.
      Tutti i figli si estendono alla stessa altezza (align-items:stretch)
      e il contenuto che eccede scorre internamente — senza allungare il layout. */
-  height: calc(100vh - 60px);
+  height: calc(calc(100 * var(--zvh, 1vh)) - 60px);
   overflow: hidden;              /* solo il contenuto delle card scorre */
   box-sizing: border-box;
   margin: 0;
@@ -70,7 +70,7 @@ span{
      60px + padding verticale 5px+5px). Usata dai cap in px di arrivals-area/
      sidebar-stack/comp-list-card per restringersi su schermi bassi invece
      di eccedere e venire tagliati dall'overflow:hidden qui sopra. */
-  --content-h: calc(100vh - 70px);
+  --content-h: calc(calc(100 * var(--zvh, 1vh)) - 70px);
 }
 
 .time-header {
@@ -344,7 +344,7 @@ span{
   }
   .container .table-card .table-wrapper {
     overflow-y: auto;
-    max-height: 60vh;
+    max-height: calc(60 * var(--zvh, 1vh));
   }
   .comp-list-card  { order: unset; }
   .sidebar-stack   { order: unset; }
@@ -520,6 +520,7 @@ hr {
 }
 .cp-line-send:hover  { filter: brightness(0.88); }
 .cp-line-send:active { filter: brightness(0.75); }
+.cp-line-send.key-hit { filter: brightness(0.75); }   /* lampeggio al passaggio da tastiera (Z X C V) */
 
 /* ── Colonna Tipo (due righe: nome dispositivo + auto/manuale) ──────────── */
 .cp-tipo-cell,
@@ -593,7 +594,6 @@ hr {
     box-sizing: border-box;
   }
 }
-
 .comp-input.comp-active {
   background-color: #d8d8d8 !important;
   outline: 2px solid #888;
@@ -601,8 +601,8 @@ hr {
 
 /* ── Line edit overlay ───────────────────────────────────────────────── */
 #lineEditOverlay .fullscreen-popup.line-edit-popup {
-  width: min(98vw, 720px);
-  max-width: 98vw;
+  width: min(calc(98 * var(--zvw, 1vw)), 720px);
+  max-width: calc(98 * var(--zvw, 1vw));
   padding: 18px 14px;
 }
 
@@ -927,6 +927,14 @@ pre {
 .navbar-icon-btn:hover  { opacity: 1; border-color: rgba(255,255,255,0.4); }
 .navbar-icon-btn.active { opacity: 1; border-color: #fff; }
 
+/* ── Pulsante "apri la vista" (accanto all'icona della disciplina) ────────── */
+#view-btn {
+  color: #fff;
+  opacity: 0.85;
+}
+#view-btn svg { display: block; }
+
+
 /* ── Discipline selection overlay — fullscreen ─────────────────────────────── */
 #disciplineOverlay {
   background: #1c1c1e;   /* solido: niente backdrop semi-trasparente */
@@ -1094,18 +1102,20 @@ pre {
   border-radius: 0;
 }
 
+.lang-flag:hover  { opacity: 0.8; }
+.lang-flag.active { opacity: 1; border-color: #fff; }
+
 /* ── Pulsante schermo intero (accanto alle bandiere) ──────────────────────── */
-#fullscreen-nav-btn,
-#view-btn {
+#fullscreen-nav-btn {
   color: #fff;
   opacity: 0.85;
 }
-#view-btn svg { display: block; }
 #fullscreen-nav-btn.is-fullscreen { opacity: 0.55; }
 #fullscreen-nav-btn svg { display: block; }
 
-.lang-flag:hover  { opacity: 0.8; }
-.lang-flag.active { opacity: 1; border-color: #fff; }
+.athlete-csv-hint, .athlete-csv-hint span { font-size: 14px; color: #666; text-align: left; }
+.athlete-csv-hint { margin: 6px 0 0; }
+.athlete-csv-hint a { color: var(--primary-color); margin-left: 6px; white-space: nowrap; }
 
 /* ======= TOGGLE SWITCH ======= */
 
@@ -1387,7 +1397,7 @@ input:checked + .slider:before {
   border-radius: 0;
   box-shadow: 0 5px 20px rgba(0,0,0,0.3);
   max-width: 400px;
-  max-height: 90vh;
+  max-height: calc(90 * var(--zvh, 1vh));
   overflow-y: auto;
   padding: 24px;
   text-align: center;
@@ -1667,6 +1677,11 @@ input:checked + .slider:before {
   background: #d0e8ff;
 }
 
+/* Già corso, ma ancora nell'elenco (toggle Mantieni nell'elenco i competitor) */
+.comp-list-item.comp-list-done {
+  opacity: 0.4;
+}
+
 .comp-list-num {
   font-size: 30px;
   font-weight: bold;
@@ -1698,7 +1713,7 @@ input:checked + .slider:before {
 #athleteOverlay .fullscreen-popup.athlete-popup {
   width: 94%;
   max-width: 640px;
-  max-height: 90vh;
+  max-height: calc(90 * var(--zvh, 1vh));
   overflow-y: auto;
   color: #222;
 }
@@ -2087,7 +2102,7 @@ input#mqtt-broker-pass {
 .global-settings-popup {
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
+  max-height: calc(90 * var(--zvh, 1vh));
 }
 .global-settings-popup .gs-tab {
   flex: 1;
@@ -2105,7 +2120,7 @@ input#mqtt-broker-pass {
 #printOverlay .fullscreen-popup.print-popup {
   width: 94%;
   max-width: 520px;
-  max-height: 92vh;
+  max-height: calc(92 * var(--zvh, 1vh));
   overflow-y: auto;
   text-align: left;
   padding: 20px 22px;
@@ -2319,6 +2334,192 @@ input#mqtt-broker-pass {
 .cells-table tr.cell-row-lost td { color: #c62828; }
 .cells-table tr.cell-row-conflict td { color: #c62828; font-weight: bold; }
 
+
+/* ── IP della Main come station (navbar, accanto all'icona disciplina) ─────── */
+.sta-ip-nav {
+  align-self: center;
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-weight: bold;
+  font-size: 15px;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border: 1px solid rgba(255,255,255,0.35);
+  cursor: pointer;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.sta-ip-nav:hover { border-color: rgba(255,255,255,0.8); }
+.sta-ip-nav { display: inline-flex; align-items: center; gap: 6px; }
+.sta-ip-nav .sta-ssid {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+  font-weight: normal;
+}
+@media (max-width: 600px) {
+  .sta-ip-nav { font-size: 12px; padding: 1px 5px; }
+  .sta-ip-nav .sta-ssid { max-width: 80px; }
+}
+
 /* Titolo "Attesi" con l'icona del registro competitor */
 .comp-list-title { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .comp-list-edit-btn { border: none; background: transparent; cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; }
+
+/* Anteprima dell'importazione CSV dei competitor */
+.csv-preview-warnings { color: #ef6c00; font-size: 15px; margin: 4px 0 8px; padding-left: 20px; text-align: left; }
+.csv-preview-scroll { max-height: calc(50 * var(--zvh, 1vh)); overflow: auto; border: 1px solid #ddd; }
+.csv-preview-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.csv-preview-table th { position: sticky; top: 0; background: #333; color: #fff; padding: 6px 8px; text-align: left; }
+.csv-preview-table td { padding: 4px 8px; border-bottom: 1px solid #eee; text-align: left; }
+.csv-preview-table tr.csv-dup td { background: #fff3e0; }
+
+/* Caricamento competitor: zona di trascinamento, scelta sostituisci/unisci, stato delle righe */
+.athlete-drop { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px 10px; margin: 4px 0 8px;
+                border: 2px dashed var(--primary-color); border-radius: 12px; background: #fafafa; cursor: pointer; text-align: center; }
+.athlete-drop.drag { background: #f3e5e8; border-style: solid; }
+.athlete-drop-ico { font-size: 34px; line-height: 1; }
+.athlete-drop-title { font-weight: bold; font-size: 18px; }
+.athlete-drop-sub { font-size: 14px; color: #666; }
+.athlete-paste-label { font-size: 14px; color: #555; margin: 10px 0 4px; text-align: left; }
+.csv-mode { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; text-align: left; }
+.csv-mode label { display: flex; align-items: flex-start; gap: 8px; font-size: 16px; cursor: pointer; }
+.csv-mode input[type=radio] { width: auto; min-width: 0; margin: 4px 0 0; flex: 0 0 auto; }
+.csv-st { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 13px; font-weight: bold; white-space: nowrap; }
+.csv-st-new { background: #e8f5e9; color: #2e7d32; }
+.csv-st-updated { background: #fff3e0; color: #ef6c00; }
+.csv-st-same { background: #eee; color: #666; }
+.csv-st-dup { background: #ffebee; color: #c62828; }
+
+/* Indicatore della licenza nella navbar: sotto i 10 utilizzi (arancione) o esaurita (rosso) */
+.license-nav { border: none; border-radius: 12px; padding: 2px 10px; margin-right: 6px; font-weight: bold;
+               font-size: 15px; background: #ef6c00; color: #fff; cursor: pointer; white-space: nowrap; }
+.license-nav.license-nav-blocked { background: #c62828; }
+
+/* ═══ Equitazione (equestrian.js): percorso in corso e classifica ═══ */
+/* I pulsanti della console hanno width:100% di default: qui ognuno ha la sua misura */
+.eq-card button, .eq-rank-card button { width: auto; }
+.eq-card, .eq-rank-card { min-width: 0; }
+.eq-enable-row { margin-bottom: 2px; }
+.eq-enable-hint { font-size: 13px; color: #777; text-align: left; margin: 0 0 10px; line-height: 1.35; }
+.eq-row { display: flex; flex-wrap: wrap; gap: 5px; flex: 1 1 auto; min-height: 0; overflow: auto; align-content: flex-start; }
+.arrivals-area.eq-show-rows .eq-row { flex: 0 0 auto; }
+.arrivals-area:not(.eq-show-rows):not(.eq-off) > .arrivals-row { display: none; }
+/* Gara assistita spenta: console identica al cronometraggio standard */
+.arrivals-area.eq-off > .eq-row { display: none; }
+.arrivals-area.eq-show-rows .eq-rank-wrap, .arrivals-area.eq-show-rows #eqRankSel, .arrivals-area.eq-show-rows #eqCsvBtn { display: none; }
+.eq-view-switch { display: inline-flex; flex: 0 0 auto; gap: 0; margin-right: auto; }
+.eq-switch-btn { border: 2px solid var(--primary-color); background: #fff; color: var(--primary-color); font-family: 'Nunito', sans-serif;
+                 font-weight: bold; font-size: 14px; padding: 4px 12px; cursor: pointer; }
+.eq-switch-btn:first-child { border-radius: 6px 0 0 6px; }
+.eq-switch-btn:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+.eq-switch-btn.active { background: var(--primary-color); color: #fff; }
+.eq-card { flex: 1 1 380px; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; box-sizing: border-box; }
+.eq-rank-card { flex: 1 1 320px; display: flex; flex-direction: column; padding: 10px 12px; box-sizing: border-box; min-height: 0; }
+.eq-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.eq-rider { display: flex; flex: 1; align-items: baseline; gap: 10px; min-width: 0; }
+.eq-num { font-size: 30px; font-weight: bold; color: var(--primary-color); }
+.eq-name { font-size: 20px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eq-meta { font-size: 14px; color: #666; }
+.eq-icon-btn { border: none; background: transparent; font-size: 22px; cursor: pointer; }
+.eq-main { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.eq-clock { font-size: 54px; font-weight: bold; line-height: 1; font-variant-numeric: tabular-nums; color: #222; }
+.eq-clock.run { color: #2e7d32; }
+.eq-clock.pause { color: #1565c0; }
+.eq-clock.cd { color: #ef6c00; }
+.eq-clock.cd-warn { color: #c62828; }
+.eq-clock.over { color: #c62828; }
+.eq-state { font-size: 16px; color: #555; text-align: center; }
+.eq-phase-info { font-size: 15px; font-weight: bold; color: #1565c0; text-align: center; }
+.eq-phase-info:empty { display: none; }
+.eq-card[data-state="finished"] .eq-state { color: #ef6c00; font-weight: bold; }
+.eq-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.eq-actions .eq-btn { flex: 1 1 0; }
+.eq-btn { padding: 10px 8px; border: none; border-radius: 8px; background: #e0e0e0; color: #222; font-family: 'Nunito', sans-serif;
+          font-weight: bold; font-size: 17px; cursor: pointer; min-width: 0; }
+.eq-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.eq-btn.eq-bell { background: #f9a825; color: #222; font-size: 20px; }
+.eq-btn.eq-confirm { background: #2e7d32; color: #fff; }
+.eq-btn.on { background: #c62828; color: #fff; }
+.eq-actions-small .eq-btn { font-size: 15px; padding: 9px 8px; }
+.eq-faults { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+.eq-fault { display: flex; min-width: 0; }
+.eq-fault-add { flex: 1; display: flex; flex-direction: column; align-items: flex-start; position: relative; padding: 8px 30px 8px 10px; border: 2px solid #ddd;
+                border-radius: 8px 0 0 8px; background: #fff; cursor: pointer; font-family: 'Nunito', sans-serif; text-align: left; min-width: 0; }
+.eq-fault-add:disabled { opacity: 0.45; cursor: not-allowed; }
+.eq-fault.has .eq-fault-add { border-color: #c62828; background: #ffebee; }
+.eq-fault-label { font-weight: bold; font-size: 15px; }
+.eq-fault-detail { font-size: 12px; color: #777; }
+.eq-fault-count { position: absolute; top: 4px; right: 6px; background: #c62828; color: #fff; border-radius: 10px; padding: 0 7px; font-weight: bold; font-size: 14px; }
+.eq-fault-minus { width: 38px; border: 2px solid #ddd; border-left: none; border-radius: 0 8px 8px 0; background: #f5f5f5; font-size: 20px; cursor: pointer; }
+.eq-fault-minus:disabled { opacity: 0.4; cursor: default; }
+.eq-result:empty { display: none; }
+.eq-res-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+.eq-res-grid div { background: #f5f5f5; border-radius: 8px; padding: 6px 4px; display: flex; flex-direction: column; }
+.eq-res-grid span { font-size: 12px; color: #666; }
+.eq-res-grid b { font-size: 24px; }
+.eq-res-grid .eq-res-total { background: var(--primary-color); color: #fff; }
+.eq-res-grid .eq-res-total span { color: #fff; }
+.eq-res-big { font-size: 26px; font-weight: bold; text-align: center; padding: 6px; }
+.eq-res-elim { color: #c62828; }
+.eq-card .eq-copy { width: 100%; margin-top: 6px; }
+.eq-select-row { display: flex; gap: 6px; align-items: center; }
+.eq-select-row input { flex: 1 1 auto; width: auto; max-width: none; min-width: 0; min-height: 42px; margin: 0; border-radius: 8px; }
+.eq-select-row select { flex: 0 1 auto; min-width: 0; height: 42px; font-size: 16px; }
+.eq-select-row .eq-btn { flex: 0 0 auto; padding: 10px 22px; }
+.eq-rank-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.eq-rank-head select { flex: 0 1 200px; min-width: 110px; height: 32px; font-size: 15px; }
+#eqCsvBtn { flex: 0 0 auto; height: 32px; font-size: 14px; padding: 0 12px; border-radius: 6px; }
+.eq-rank-head .card-title { flex: 1; text-align: left; margin: 0; }
+.eq-rank-wrap { overflow: auto; }
+.eq-rank-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.eq-rank-table th { position: sticky; top: 0; background: #333; color: #fff; padding: 6px; text-align: left; font-size: 13px; }
+.eq-rank-table td { padding: 5px 6px; border-bottom: 1px solid #eee; font-size: 15px; }
+.eq-rank-table tr { cursor: pointer; }
+.eq-rank-table tr.eq-unconfirmed td { background: #fff8e1; }
+.eq-rank-table .eq-name { font-size: 15px; max-width: 180px; }
+.eq-empty { text-align: center; color: #999; cursor: default; }
+.eq-tag { background: #c62828; color: #fff; border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+.eq-settings-popup { max-width: min(760px, calc(96 * var(--zvw, 1vw))); }
+.eq-settings-body { max-height: calc(60 * var(--zvh, 1vh)); overflow: auto; text-align: left; }
+.eq-set-row input[type=text], .eq-set-row input[type=number] { max-width: 180px; }
+.eq-calc { font-size: 15px; color: #444; margin: 4px 0 10px; }
+.eq-note { font-size: 14px; color: #8d6e63; background: #fff8e1; padding: 8px; border-radius: 6px; }
+.eq-var-actions { justify-content: flex-start; gap: 6px; flex-wrap: wrap; margin: 4px 0 10px; }
+/* Pulsanti piccoli dei popup dell'equitazione (i button della console sono larghi al 100%) */
+.eq-mini { width: auto; height: auto; padding: 7px 14px; font-size: 15px; border-radius: 6px; color: #fff; flex: 0 0 auto; }
+.eq-mini:disabled { opacity: 0.4; cursor: not-allowed; }
+.eq-fault-table .eq-mini { padding: 4px 9px; }
+.eq-inline { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+.eq-inline input[type=text] { width: 100px; max-width: 100px; margin: 0; min-height: 34px; }
+#eqEditOverlay .button-row .big-button { width: auto; flex: 1 1 0; }
+.eq-fault-table-wrap { overflow-x: auto; }
+.eq-fault-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.eq-fault-table th { text-align: left; font-size: 12px; color: #666; padding: 2px 4px; }
+.eq-fault-table td { padding: 2px 3px; }
+.eq-fault-table input[type=text] { min-width: 150px; }
+.eq-fault-table input[type=number] { width: 64px; max-width: 64px; }
+.eq-edit-head { font-size: 16px; }
+
+/* Vista equitazione: cavaliere in pista e classifica */
+.eq-view-panel { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0 10px; }
+.eq-view-panel[data-state="none"] { display: none; }
+.eq-view-rider { font-size: calc(6 * var(--zvh, 1vh)); font-weight: bold; text-align: center; line-height: 1.15; }
+.eq-view-rider span, .eq-view-result span, .eq-view-result b { font-size: inherit; }
+.eq-view-num { color: var(--primary-color); }
+.eq-view-meta { font-size: calc(2.4 * var(--zvh, 1vh)); color: #666; }
+.eq-view-clock { font-size: calc(13 * var(--zvh, 1vh)); font-weight: bold; line-height: 1; font-variant-numeric: tabular-nums; }
+.eq-view-clock.cd { color: #ef6c00; }
+.eq-view-clock.cd-warn, .eq-view-clock.over { color: #c62828; }
+.eq-view-clock.pause { color: #1565c0; }
+.eq-view-result { display: flex; gap: 24px; font-size: calc(3.2 * var(--zvh, 1vh)); align-items: baseline; flex-wrap: wrap; justify-content: center; }
+.eq-view-total b { color: var(--primary-color); }
+.eq-view-pos { font-size: calc(4.5 * var(--zvh, 1vh)); font-weight: bold; }
+.eq-view-rank { width: 100%; max-width: 1100px; margin: 0 auto; border-collapse: collapse; font-size: calc(2.6 * var(--zvh, 1vh)); }
+.eq-view-rank th:nth-child(-n+2), .eq-view-rank td:nth-child(-n+2) { width: 1%; white-space: nowrap; padding-right: 24px; }
+.eq-view-rank th:nth-child(n+4), .eq-view-rank td:nth-child(n+4) { text-align: right; width: 1%; white-space: nowrap; padding-left: 32px; }
+.eq-view-rank th { background: #333; color: #fff; padding: 4px 8px; text-align: left; font-size: inherit; }
+.eq-view-rank td { font-size: inherit; }
+.eq-view-rank td { padding: 3px 8px; border-bottom: 1px solid #eee; }
+.eq-view-rank tr.eq-view-cur td { background: #fff3e0; }

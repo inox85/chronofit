@@ -60,10 +60,27 @@ function secondsText(h, m, s, msStr) {
   return String(h * 3600 + m * 60 + s) + ',' + msStr;
 }
 
+// Orologio grande: segue il formato dei tempi, come le tabelle
+// ('seconds' = secondi totali con la virgola, es. 3725,000)
+let lastClockHms = null;
+function clockText(h, m, s) {
+  if (timeFormat === 'seconds') return secondsText(h, m, s, '000');
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.000';
+}
+function setClock(el, h, m, s) {
+  if (!el) return;
+  lastClockHms = [h, m, s];
+  el.innerText = clockText(h, m, s);
+}
+function refreshClock() {
+  if (lastClockHms) setClock(document.getElementById('time'), ...lastClockHms);
+}
+
 // Cambio dal menu "Formato tempi": salva, allinea gli altri menu della pagina e ridisegna.
 function setTimeFormat(value) {
   timeFormat = value === 'seconds' ? 'seconds' : 'clock';
   try { localStorage.setItem(TIME_FORMAT_KEY, timeFormat); } catch (e) { /* solo per questa pagina */ }
+  refreshClock();
   syncTimeFormatSelects();
   onTimeFormatChanged();
 }
@@ -77,6 +94,7 @@ function onTimeFormatChanged() { onTimePrecisionChange(timePrecision); }
 window.addEventListener('storage', e => {
   if (e.key !== TIME_FORMAT_KEY) return;
   timeFormat = e.newValue === 'seconds' ? 'seconds' : 'clock';
+  refreshClock();
   syncTimeFormatSelects();
   onTimeFormatChanged();
 });
@@ -593,16 +611,9 @@ function handlePowerUpdate(data) {
   }
 }
 
-// Orologio in tempo reale (arriva una volta al secondo, quindi i millisecondi sono sempre 000):
-// segue il "Formato tempi" scelto nelle impostazioni, come le colonne della tabella.
-function clockText(h, m, s) {
-  if (timeFormat === 'seconds') return secondsText(h, m, s, '000');
-  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.000';
-}
-
 function updateClockFromData(data) {
   let hourAdj = (data.h + timeOffset + 24) % 24;
-  document.getElementById("time").innerText = clockText(hourAdj, data.m, data.s);
+  setClock(document.getElementById("time"), hourAdj, data.m, data.s);
 
   const syncStatus = data.sy;
   const elapsedTimeControls = document.getElementById("elapsedTimeControls");
@@ -611,7 +622,7 @@ function updateClockFromData(data) {
   if (syncStatus == ELAPSED_WAITING_START) {
     elapsedTimeControls.classList.remove("hidden");
     document.getElementById("startButton").innerText = "Start";
-    document.getElementById("time").innerText = clockText(0, 0, 0);
+    setClock(document.getElementById("time"), 0, 0, 0);
   }
   if (syncStatus == ELAPSED_TIME_STARTED) {
     elapsedTimeControls.classList.remove("hidden");
@@ -769,7 +780,7 @@ function recalcDeltaTimes() {
     if (!tsCell || !deltaCell) continue;
     row.classList.remove("negative-row");
     const timestamp = tsCell.textContent.trim();
-    if (["00:00:00.000", "00:00:00.00", "00:00:00.0"].includes(timestamp))
+    if (["00:00:00.000", "00:00:00.00", "00:00:00.0", "0,000", "0,00", "0,0"].includes(timestamp))
       row.classList.add("negative-row");
     const currentMs = rowToMs(row);
     if (nextTime === null) { deltaCell.textContent = "—"; nextTime = currentMs; continue; }

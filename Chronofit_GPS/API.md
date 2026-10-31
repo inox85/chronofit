@@ -32,6 +32,8 @@ Connessione WebSocket bidirezionale per il push real-time degli eventi.
 | `6` | `TYPE_EMAIL_SENT` | Conferma email inviata |
 | `11` | `TYPE_LINE_UPDATED` | Configurazione linea aggiornata |
 | `12` | `TYPE_CELLS_UPDATED` | Cambiata la lista delle fotocellule wireless (stesso JSON di `GET /cells`); inviato solo quando cambia qualcosa di visibile |
+| `20` | `TYPE_EQ_UPDATE` | Equitazione: turno attivo cambiato o in corso (vedi [Equitazione](#equitazione-salto-ostacoli)) |
+| `21` | `TYPE_EQ_CONFIG` | Equitazione: regolamento cambiato |
 
 ---
 
@@ -99,13 +101,15 @@ Calibrazione della base tempi del RTC.
 ## Checkpoint e sessione
 
 ### `GET /checkPoint`
-Registra manualmente un passaggio (normalmente generato dall'hardware IR). Conta come passaggio di una linea abilitata anche se la linea è disattivata (beep incluso). Con `lineNumber` fuori da 0–5 risponde `400`.
+Registra manualmente un passaggio (normalmente generato dall'hardware IR).
 
 **Parametri:**
 
 | Parametro | Tipo | Default | Descrizione |
 |---|---|---|---|
 | `lineNumber` | int | 0 | Indice **0-based** della linea (0 = linea 1) che ha rilevato il passaggio |
+
+Il passaggio manuale conta come valido anche su una linea disabilitata (riga con `e = 1`, beep, può far partire il tempo trascorso). `lineNumber` fuori da 0–5 → 400.
 
 **Risposta:** testo di conferma con timestamp. Il base timbra l'istante di *arrivo* della richiesta: latenza e jitter di rete finiscono nel tempo (per le fotocellule wireless usare `/remoteCheckpoint`).
 
@@ -184,6 +188,16 @@ Scarica il file di sessione come allegato (Content-Disposition: attachment).
 
 ---
 
+### 🔒 `GET /athletes` · `POST /athletes`
+Copia di sicurezza dell'elenco competitor della console, che il browser tiene nel `localStorage`: se la console si apre da un altro dispositivo o indirizzo, o i dati del sito vengono cancellati, l'elenco locale risulta vuoto e la console lo ripristina da questa copia.
+
+- `GET`: restituisce il JSON dell'elenco (array di `{competitor, name, surname, team, …}`); 404 con `[]` se la copia non esiste.
+- `POST`: corpo JSON dell'intero elenco (massimo 64 KB, scritto in `/athletes.json` in modo atomico). Risposta `{ "ok": true }`, oppure 413 `size` / 500 `fs`.
+
+La copia **si perde con l'aggiornamento del filesystem** (`fs.bin`); `/clearSession` non la tocca.
+
+---
+
 ### 🔒 `GET /clearSession`
 Cancella l'intera sessione corrente (elimina `session.json`). Notifica tutti i client WebSocket.
 
@@ -201,21 +215,35 @@ Aggiorna la configurazione di una linea tramite query string. Solo `l` è obblig
 | `l` | int | ✅ | Numero linea (1–4) |
 | `ld` | string | — | ID linea |
 | `c` | int | — | Numero competitor assegnato |
-| `d` | int | — | Delay linea in millisecondi |
-| `e` | int | — | Abilitato: `1` / `0` (con `0` i passaggi restano in sessione come righe disabilitate, senza beep né start del tempo) |
+| `d` | int | — | Delay (lockout) della linea in millisecondi, salvato in NVS (`ldelay_<linea>`, default `0`) |
+| `e` | int | — | Abilitato: `1` / `0` |
 
 **Esempio:** `GET /checkPointFields?l=2&c=7&e=1`
 
 ---
 
 ### `GET /lineDisableAfterPass`
-Disattivazione automatica delle linee dopo il primo passaggio. Con il valore `1`, al primo passaggio una linea abilitata viene disattivata (`e = 0`, notificato con `TYPE_LINE_UPDATED`) e resta così finché non viene riabilitata con `/checkPointFields` (`e=1`). I passaggi successivi restano in sessione come righe disabilitate, senza beep e senza far partire il tempo. Salvato in NVS (`line_once`), default `0`.
+Disattivazione automatica delle linee dopo il primo passaggio. Con il valore `1`, al primo passaggio una linea abilitata viene disattivata (`e = 0`, notificato con `TYPE_LINE_UPDATED`) e resta così finché non viene riabilitata con `/checkPointFields` (`e=1`). I passaggi successivi restano in sessione come righe disabilitate. Salvato in NVS (`line_once`), default `0`.
 
 | Parametro | Tipo | Obbligatorio | Descrizione |
 |---|---|---|---|
 | `v` | int | — | `1` attiva, `0` disattiva. Senza parametro restituisce solo lo stato |
 
 **Risposta:** `{ "v": 0 }`
+
+---
+
+### `GET /license`
+Stato della licenza a numero di accensioni (vedi `license.h`).
+
+**Risposta:** `{ "device": "f43aece0f908", "left": 49, "unlimited": false, "active": true, "seq": 3, "boot": 2716393851, "contact": "" }`
+
+- `device`: codice dispositivo da comunicare al produttore (seriale della scheda, eFuse MAC in 12 cifre esadecimali, come `sn` in `/systemSettings`). `left`: accensioni residue dopo quella in corso (`-1` = illimitata). Un'accensione vera si conta solo dopo 90 s di funzionamento o al primo passaggio registrato (`LICENSE_COMMIT_MS`): programmazione, pressione di EN e monitor seriale non consumano utilizzi. `active`: `false` = licenza esaurita, i passaggi non vengono registrati. `boot` cambia a ogni avvio: sotto i 20 utilizzi la console mostra il popup a ogni caricamento della pagina, e di nuovo se `boot` cambia.
+
+### `GET /licenseApply`
+Applica un codice di sblocco generato dal produttore (`Firmware/License/keygen.py`). Parametro `code` (16 caratteri, `XXXX-XXXX-XXXX-XXXX`). Imposta le accensioni residue al valore del codice.
+
+**Risposta:** come `GET /license`; errore 400 `{ "ok": false, "error": "format" | "invalid" | "used" }`.
 
 ---
 
@@ -243,7 +271,7 @@ Aggiorna la configurazione di una linea (competitor, ID linea, delay, stato). Tu
 | `l` | Numero linea (1–4) |
 | `ld` | ID linea (stringa) |
 | `c` | Numero competitor assegnato |
-| `d` | Delay linea in millisecondi |
+| `d` | Delay (lockout) della linea in millisecondi, salvato in NVS (`ldelay_<linea>`, default `0`) |
 | `e` | Abilitato: `1` / `0` |
 
 ---
@@ -267,6 +295,72 @@ Modifica un passaggio esistente nella sessione (aggiorna `session.json`).
 ```
 
 Il campo `index` identifica il record da modificare. Se non esiste viene creato.
+
+---
+
+## Equitazione (salto ostacoli)
+
+Turno del cavaliere, campana, penalità e classifica, calcolati dal dispositivo (`equestrian.cpp`). Sono le **gare**, spente di default (`GET /eqEnable`; nella console il toggle «Gare» si vede solo con la disciplina Equitazione): da spente il dispositivo non usa i passaggi per i turni, i comandi rispondono `off` e la linea di start del tempo trascorso è quella scelta con `/elapsedStartLine`, cioè il cronometraggio standard. Le pagine (`data/equestrian.js`, console e view equitazione) mostrano lo stato e inviano i comandi. Funziona sopra il cronometraggio elapsed normale: i passaggi restano registrati nella sessione come sempre.
+
+**Turno** (`st`): `ready` (cavaliere selezionato, linee riarmate) → `countdown` (campana suonata, conto alla rovescia) → `running` (partito: passaggio sulla linea di partenza, fine del conto alla rovescia con partenza automatica, o comando) ⇄ `paused` (campana durante il percorso: interruzione) → `finished` (passaggio sulla linea di arrivo, tempo limite superato, eliminazione o ritiro) → `confirmed`. Un turno può diventare `cancelled`. Selezionando il cavaliere successivo il turno `finished` diventa `confirmed`, uno non ancora partito `cancelled`. Se la linea di partenza coincide con quella di arrivo, l'arrivo vale solo dopo 2 s dalla partenza.
+
+**Calcolo** (per turno):
+- penalità percorso = Σ errori × punti; gli errori con secondi (es. rifiuto con abbattimento) li aggiungono al tempo;
+- eliminazione: errore con `elim`, errori di un gruppo arrivati a `elimAt` (es. 2° rifiuto), tempo limite superato, o manuale;
+- tempo = cronometrato (senza le interruzioni) + correzioni in secondi, troncato al centesimo; oppure il tempo corretto dal giudice (`time`);
+- penalità tempo = intervalli di `every` s oltre il tempo concesso (iniziati se `commenced`, altrimenti completi) × `amount`, in punti (`mode` 1) o in secondi aggiunti al tempo (`mode` 2);
+- tempo concesso = `ta` se impostato, altrimenti lunghezza / velocità arrotondato al secondo superiore; tempo limite = concesso × `tl`. La 2ª fase o il barrage usano `ta2` / `length2`, se impostati;
+- linea intermedia (`course.mid`): con una variante a due fasi consecutive (`final` 2, `consec`) è l'arrivo della 1ª fase. Se il cavaliere è netto (0 penalità, non eliminato né ritirato) la 1ª fase si chiude confermata e parte subito, da quell'istante, un nuovo turno della 2ª fase; altrimenti il turno finisce lì. Con le altre varianti registra solo il tempo intermedio del turno (`mid`). Il dispositivo arma con il cavaliere anche la linea intermedia.
+
+Messaggi WebSocket: `{ "t": 20, "rev": 12, "cur": {…turno…} }` (`TYPE_EQ_UPDATE`) a ogni cambiamento e ogni secondo durante conto alla rovescia e percorso; `{ "t": 21 }` (`TYPE_EQ_CONFIG`) quando cambia il regolamento. Quando `rev` cambia le pagine ricaricano `GET /eq`.
+
+### `GET /eqEnable`
+Accende (`on=1`) o spegne (`on=0`) le gare, salvata in NVS (`eq_on`, default spenta). Senza parametri restituisce lo stato. Spegnendola il turno attivo viene chiuso (arrivato → confermato, altrimenti annullato) e la linea di start del tempo trascorso torna a quella di `/elapsedStartLine`. Invia `{ "t": 21 }`.
+
+**Risposta:** `{ "on": true }`
+
+### `GET /eq`
+Stato completo: `on` (gare accese), regolamento (come `GET /eqConfig`), `rev`, `cur` (id del turno attivo, `0` = nessuno), `taMs` e `taMs2` (tempo concesso della 1ª e della 2ª fase/barrage) e `rounds`, tutti i turni (al massimo 400, salvati in `/eq_rounds.json`; vengono cancellati con la sessione).
+
+Turno: `{ "id", "comp", "phase", "v" (variante), "st", "auto" (partenza automatica), "ta", "tl" (ms), "t" (tempo ms), "fp" (penalità percorso), "tp" (penalità tempo), "pts" (totale), "tt" (tempo con le penalità in secondi), "elim", "ret", "reason" ("refusals" | "time_limit" | "manual" | etichetta dell'errore), "ovr" (tempo corretto), "mid" (tempo intermedio ms, 0 = non passato), "faults" [conteggi per tipo], "cd" (ms al termine del conto alla rovescia) }`. `fp`, `tp` e `pts` sono in punti (anche decimali).
+
+### `GET /eqCmd`
+Comandi del turno. Risposta `{ "ok": true }` o errore 400 `{ "ok": false, "error": "off" | "running" | "state" | "no_round" | "fault" | "cmd" }`.
+
+| `c` | Altri parametri | Effetto |
+|---|---|---|
+| `select` | `comp`, `phase` (opz.), `force=1`, `rearm=0` (opz.) | Nuovo turno per il cavaliere: assegna il suo numero alle linee di partenza e arrivo, le riabilita (non con `rearm=0`: ne lascia invariato lo stato) e mette il tempo trascorso in attesa. Con un turno in corso risponde `running`, salvo `force=1` |
+| `reset` | `rearm=0` (opz.) | Reset del tempo trascorso: annulla il turno attivo (confermato se concluso) e ne crea uno pronto per lo stesso cavaliere, così la campana torna attiva. Con `rearm=0` le linee non vengono riabilitate. Senza turno attivo risponde `no_round` |
+| `bell` | — | Campana: avvia il conto alla rovescia, o interrompe / riprende il percorso |
+| `start` / `finish` | `id` (opz.) | Partenza / arrivo manuale |
+| `fault` | `k` (indice dell'errore), `d` (`1` / `-1`), `id` | Aggiunge o toglie un errore; un'eliminazione ferma il percorso |
+| `status` | `s` = `elim` \| `ret` \| vuoto, `id` | Eliminato, ritirato o annulla lo stato |
+| `confirm` / `cancel` | `id` | Conferma o annulla il turno |
+| `time` | `ms` (`-1` = torna al tempo cronometrato), `id` | Tempo corretto dal giudice |
+| `phase` | `p` (`1` / `2`), `id` | Fase o barrage del turno |
+
+Senza `id` il comando vale per il turno attivo.
+
+### `GET /eqConfig`
+Regolamento e dati della gara (salvati in NVS, chiave `eq_cfg`). Con `reset=1` ripristina le varianti predefinite.
+
+```json
+{ "v": 1,
+  "variants": [ { "name": "Tabella A a tempo", "cd": 45, "auto": true, "warn": true,
+                  "tp": { "mode": 1, "every": 4, "amount": 1, "commenced": true }, "tl": 2,
+                  "rank": 0, "final": 0, "consec": false,
+                  "faults": [ { "label": "Abbattimento", "pts": 4, "sec": 0, "group": 0, "elimAt": 0, "elim": false } ] } ],
+  "course": { "variant": 0, "start": 1, "finish": 2, "length": 350, "speed": 350, "ta": 0, "phase": 1, "mid": 0, "length2": 0, "ta2": 0 } }
+```
+
+- `cd`: secondi di conto alla rovescia (`0` = niente), `auto`: partenza automatica allo zero, `warn`: beep negli ultimi 5 s;
+- `tp.mode`: `0` nessuna penalità tempo, `1` in punti, `2` in secondi; `tl`: tempo limite come multiplo del concesso (`0` = nessuno);
+- `rank`: `0` punti poi tempo, `1` solo tempo, `2` solo punti; `final`: `0` percorso unico, `1` con barrage, `2` due fasi; `consec`: due fasi consecutive (servono la linea intermedia);
+- `faults` (max 8): `group` + `elimAt` = eliminazione al numero di errori del gruppo; `elim` = eliminazione immediata;
+- `course`: variante in uso, linee di partenza e arrivo, lunghezza (m), velocità (m/min), tempo concesso fisso (ms, `0` = calcolato), fase predefinita, linea intermedia (`mid`, `0` = nessuna, diversa da partenza e arrivo), lunghezza e tempo concesso fisso della 2ª fase/barrage (`length2`, `ta2`, `0` = come la 1ª fase / calcolato).
+
+### `POST /eqConfig`
+Salva il regolamento: corpo JSON come la risposta di `GET /eqConfig` (max 8 varianti). Risposta `{ "ok": true }` o 400 `{ "ok": false, "error": "config" }`. La linea di partenza diventa anche la linea di start del tempo trascorso.
 
 ---
 
@@ -309,6 +403,8 @@ Aggiorna attributi del dispositivo.
 ---
 
 ### `GET /systemSettings`
+**Parametri opzionali:** `files=1` aggiunge `files` (elenco dei file: pesa svariati KB di RAM per richiesta, lo usa solo la pagina admin); `tasks=1` aggiunge `tasks` (stack libero in byte di ogni task, per dimensionarli).
+
 Restituisce informazioni complete sull'hardware e sul sistema.
 
 **Risposta JSON (campi principali):**
@@ -318,6 +414,8 @@ Restituisce informazioni complete sull'hardware e sul sistema.
 | `cpuTemp` | Temperatura CPU |
 | `freeRam` | RAM libera (byte) |
 | `minFreeRam` | Minimo RAM libera raggiunto |
+| `maxAllocRam` | Blocco di RAM libera più grande (byte): indica la frammentazione |
+| `resetReason` | Motivo dell'ultimo riavvio (power-on, software, panic, watchdog, brownout…) |
 | `fwVersion` | Versione firmware |
 | `hwName` | Nome hardware |
 | `fsTotal` / `fsUsed` | Dimensione filesystem totale/usata |

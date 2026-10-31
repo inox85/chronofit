@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chronofit — Assistenza</title>
+  <!-- Pagina di servizio (assistenza/rivenditore): NON è collegata dalla console.
+       Si apre digitando /service.html. Contiene le operazioni che l'utente finale
+       non deve fare, per ora la taratura della batteria di Main e celle RF. -->
+  <style>
+    :root { --primary: #800020; }
+    @font-face {
+      font-family: 'Nunito';
+      src: url('/Nunito-Bold.woff2') format('woff2');
+      font-weight: bold;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; font-weight: bold; background: #f0f0f0; margin: 0; padding: 0; }
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 56px; background: #111; display: flex; align-items: center; padding: 0 20px; gap: 12px; z-index: 1000; }
+    .navbar-title { color: #fff; font-size: 18px; letter-spacing: 1px; }
+    .page { max-width: 620px; margin: 0 auto; padding: 76px 16px 40px; }
+    .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: #888; margin: 24px 0 12px; }
+    .card { background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 16px; }
+    .field-row { display: flex; flex-direction: column; gap: 6px; }
+    .field-row label { font-size: 13px; color: #555; }
+    input[type=text], input[type=password] { font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 14px; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; }
+    .field-hint { font-size: 12px; color: #aaa; font-weight: normal; }
+    .help { font-size: 14px; color: #555; font-weight: normal; line-height: 1.45; margin: 0 0 4px; }
+    .help ol { margin: 6px 0 0; padding-left: 20px; }
+    .bat-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+    .bat-row:last-child { border-bottom: none; }
+    .bat-name { font-size: 16px; color: #222; }
+    .bat-sub { display: block; font-size: 12px; color: #999; font-weight: normal; margin-top: 2px; }
+    .bat-value { font-size: 18px; color: #222; white-space: nowrap; text-align: right; }
+    .bat-cal { display: flex; gap: 6px; align-items: center; }
+    .bat-cal input { width: 78px; text-align: right; padding: 8px 8px; }
+    .bat-cal span { font-size: 13px; color: #888; }
+    .btn { padding: 9px 14px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 14px; cursor: pointer; white-space: nowrap; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .empty { color: #aaa; font-size: 14px; font-weight: normal; padding: 6px 0; }
+    .offline { color: #c62828; font-size: 12px; font-weight: normal; }
+    .curve-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0 4px; }
+    .curve-table th, .curve-table td { padding: 5px 6px; text-align: right; border-bottom: 1px solid #f0f0f0; }
+    .curve-table th:first-child, .curve-table td:first-child { text-align: left; }
+    .curve-table th { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .curve-table td.def { color: #aaa; font-weight: normal; }
+    .curve-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .btn.secondary { background: #e0e0e0; color: #333; }
+    @media (max-width: 520px) {
+      .bat-row { grid-template-columns: 1fr auto; }
+      .bat-cal { grid-column: 1 / -1; justify-content: flex-end; }
+    }
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: #222; color: #fff; font-size: 14px; padding: 10px 20px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; z-index: 9999; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok  { background: #2e7d32; }
+    #toast.err { background: #c62828; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <img src="/logo.png" alt="Chronofit" style="height:32px;" onerror="this.style.display='none'"/>
+    <span class="navbar-title">Assistenza</span>
+  </div>
+
+  <div class="page">
+
+    <div class="section-title">Accesso</div>
+    <div class="card">
+      <div class="field-row">
+        <label for="api-token">API Token <span class="field-hint">(richiesto solo se configurato sul dispositivo)</span></label>
+        <input type="password" id="api-token" placeholder="X-Token" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="section-title">Taratura batteria</div>
+    <div class="card">
+      <div class="help">
+        Ogni scheda va tarata una volta (il fattore resta salvato nella scheda, anche dopo gli aggiornamenti).
+        <ol>
+          <li>Scollega il caricatore e misura la tensione della batteria col tester.</li>
+          <li>Scrivi il valore misurato accanto alla scheda e premi <b>Tara</b>.</li>
+          <li>La cella conferma con un beep; la lettura aggiornata compare dopo qualche secondo.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="card" id="bat-list"><div class="empty">Caricamento…</div></div>
+
+    <div class="section-title">Curva di scarica</div>
+    <div class="card">
+      <div class="help">
+        La Main converte la tensione in carica con una curva: una per la Main e una comune a tutte le celle.
+        Le impara da sola dalle scariche complete: carica la scheda fino in fondo, poi lasciala accesa fino a
+        quando si spegne per batteria scarica, senza ricaricarla a metà e con un uso il più possibile costante.
+        Ogni scarica completa aggiorna la curva (media delle ultime 4). Tara prima la scheda: la registrazione parte
+        solo quando, dopo la carica, la tensione letta scende sotto i 4,1 V.
+      </div>
+      <div id="curve-box"><div class="empty">Caricamento…</div></div>
+      <div class="curve-actions">
+        <button class="btn secondary" id="reset-main">Curva tipica per la Main</button>
+        <button class="btn secondary" id="reset-cell">Curva tipica per le celle</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="/ui_dialogs.js"></script>
+  <script>
+    const TOKEN_KEY = 'chronofit_branding_token';   // stesso token della pagina Branding
+
+    function getToken() { return document.getElementById('api-token').value || ''; }
+    document.getElementById('api-token').value = localStorage.getItem(TOKEN_KEY) || '';
+    document.getElementById('api-token').addEventListener('input', e => localStorage.setItem(TOKEN_KEY, e.target.value));
+
+    let toastTimer;
+    function showToast(msg, type = 'ok') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'show ' + type;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.className = '', 2800);
+    }
+
+    function fmtV(mv) { return mv ? (mv / 1000).toFixed(2) + ' V' : '—'; }
+
+    function el(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    async function calibrate(urlFor, input, btn) {
+      const v = parseFloat(String(input.value).replace(',', '.'));
+      if (!(v >= 2.5 && v <= 5.0)) { showToast('Inserisci una tensione tra 2,5 e 5,0 V', 'err'); return; }
+      btn.disabled = true;
+      try {
+        const res = await fetch(urlFor(Math.round(v * 1000)), { headers: getToken() ? { 'X-Token': getToken() } : {} });
+        if (res.status === 401) throw new Error('token non valido o mancante');
+        if (!res.ok) throw new Error((await res.text()) || res.status);
+        showToast('Taratura inviata', 'ok');
+        input.value = '';
+        setTimeout(load, 3000);   // la cella RF la applica al sync successivo
+      } catch (e) {
+        showToast('Errore: ' + e.message, 'err');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function batteryRow(name, sub, mv, urlFor, online) {
+      const row = el('div', 'bat-row');
+      const n = el('div', 'bat-name', name);
+      if (sub) n.appendChild(el('span', 'bat-sub', sub));
+      row.appendChild(n);
+      row.appendChild(el('div', 'bat-value', fmtV(mv)));
+      const cal = el('div', 'bat-cal');
+      if (online) {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.inputMode = 'decimal';
+        inp.placeholder = 'es. 3,92';
+        cal.appendChild(inp);
+        cal.appendChild(el('span', null, 'V'));
+        const btn = el('button', 'btn', 'Tara');
+        btn.addEventListener('click', () => calibrate(urlFor, inp, btn));
+        cal.appendChild(btn);
+      } else {
+        cal.appendChild(el('span', 'offline', 'non connessa'));
+      }
+      row.appendChild(cal);
+      return row;
+    }
+
+    async function load() {
+      const box = document.getElementById('bat-list');
+      try {
+        const data = await (await fetch('/cells', { cache: 'no-store' })).json();
+        box.textContent = '';
+        if (data.main) {
+          box.appendChild(batteryRow('Main', 'unità centrale', data.main.bat, mv => `/batteryCal?mv=${mv}`, true));
+        }
+        (data.cells || []).filter(c => c.rf).sort((a, b) => (a.line || 9) - (b.line || 9)).forEach(c => {
+          const sub = c.line ? 'linea ' + c.line : 'nessuna linea';
+          box.appendChild(batteryRow('Cella ' + String(c.id).slice(-6), sub, c.bat,
+            mv => `/cellCmd?id=${c.id}&cmd=batcal&mv=${mv}`, c.connected));
+        });
+        if (!box.children.length) box.appendChild(el('div', 'empty', 'Nessuna scheda trovata'));
+      } catch (e) {
+        box.textContent = '';
+        box.appendChild(el('div', 'empty', 'Impossibile leggere lo stato dal dispositivo'));
+      }
+    }
+    load();
+
+    // ── Curva di scarica ──
+    async function loadCurve() {
+      const box = document.getElementById('curve-box');
+      try {
+        const d = await (await fetch('/batteryCurve', { cache: 'no-store' })).json();
+        box.textContent = '';
+        const tbl = el('table', 'curve-table');
+        const head = el('tr');
+        ['Tensione', 'Tipica', 'Main', 'Celle'].forEach(h => head.appendChild(el('th', null, h)));
+        tbl.appendChild(head);
+        // Carica sulla scala intera (100 % = inizio della scarica, ~4,1 V)
+        for (let i = d.grid.length - 1; i >= 0; i--) {
+          const tr = el('tr');
+          tr.appendChild(el('td', null, (d.grid[i] / 1000).toFixed(1) + ' V'));
+          tr.appendChild(el('td', null, d.default[i] + ' %'));
+          [d.main, d.cell].forEach(c => {
+            tr.appendChild(c.pct ? el('td', null, Math.round(c.pct[i]) + ' %') : el('td', 'def', '—'));
+          });
+          tbl.appendChild(tr);
+        }
+        box.appendChild(tbl);
+        const n = c => c.n ? `appresa da ${c.n} scaric${c.n === 1 ? 'a' : 'he'}` : 'tipica';
+        box.appendChild(el('div', 'bat-sub', `Main: ${n(d.main)} · Celle: ${n(d.cell)}`));
+        const logs = d.logging || [];
+        const lg = el('div', 'bat-sub', logs.length
+          ? 'Scariche in registrazione: ' + logs.map(l => `${l.id === 'Main' ? 'Main' : 'cella ' + l.id.slice(-6)} ${l.minutes} min, ${(l.startMv / 1000).toFixed(2)} → ${(l.lastMv / 1000).toFixed(2)} V`).join(' · ')
+          : 'Nessuna scarica in registrazione.');
+        box.appendChild(lg);
+      } catch (e) {
+        box.textContent = '';
+        box.appendChild(el('div', 'empty', 'Impossibile leggere la curva dal dispositivo'));
+      }
+    }
+    async function resetCurve(kind) {
+      if (!(await uiConfirm('Tornare alla curva tipica? La curva appresa viene persa.'))) return;
+      try {
+        const res = await fetch(`/batteryCurveReset?kind=${kind}`, { headers: getToken() ? { 'X-Token': getToken() } : {} });
+        if (res.status === 401) throw new Error('token non valido o mancante');
+        if (!res.ok) throw new Error((await res.text()) || res.status);
+        showToast('Curva tipica ripristinata', 'ok');
+        loadCurve();
+      } catch (e) {
+        showToast('Errore: ' + e.message, 'err');
+      }
+    }
+    document.getElementById('reset-main').addEventListener('click', () => resetCurve('main'));
+    document.getElementById('reset-cell').addEventListener('click', () => resetCurve('cell'));
+    loadCurve();
+    setInterval(loadCurve, 60000);
+  </script>
+</body>
+</html>

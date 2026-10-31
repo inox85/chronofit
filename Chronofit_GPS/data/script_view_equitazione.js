@@ -45,10 +45,27 @@ function secondsText(h, m, s, msStr) {
   return String(h * 3600 + m * 60 + s) + ',' + msStr;
 }
 
+// Orologio grande: segue il formato dei tempi, come le tabelle
+// ('seconds' = secondi totali con la virgola, es. 3725,000)
+let lastClockHms = null;
+function clockText(h, m, s) {
+  if (timeFormat === 'seconds') return secondsText(h, m, s, '000');
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.000';
+}
+function setClock(el, h, m, s) {
+  if (!el) return;
+  lastClockHms = [h, m, s];
+  el.innerText = clockText(h, m, s);
+}
+function refreshClock() {
+  if (lastClockHms) setClock(document.getElementById('time'), ...lastClockHms);
+}
+
 // Cambio dal menu "Formato tempi": salva, allinea gli altri menu della pagina e ridisegna.
 function setTimeFormat(value) {
   timeFormat = value === 'seconds' ? 'seconds' : 'clock';
   try { localStorage.setItem(TIME_FORMAT_KEY, timeFormat); } catch (e) { /* solo per questa pagina */ }
+  refreshClock();
   syncTimeFormatSelects();
   onTimeFormatChanged();
 }
@@ -62,6 +79,7 @@ function onTimeFormatChanged() { renderTable(); }
 window.addEventListener('storage', e => {
   if (e.key !== TIME_FORMAT_KEY) return;
   timeFormat = e.newValue === 'seconds' ? 'seconds' : 'clock';
+  refreshClock();
   syncTimeFormatSelects();
   onTimeFormatChanged();
 });
@@ -370,6 +388,9 @@ function fillSettingsForm() {
   });
   document.getElementById('vs-sort-col').value = viewPrefs.sortCol;
   document.getElementById('vs-precision').value = viewPrefs.timePrecision;
+  document.querySelectorAll('#viewSettingsOverlay .line-vis-toggle').forEach(el => {
+    el.checked = !!viewPrefs.lines[el.dataset.line];
+  });
 }
 
 function onSettingsChange() {
@@ -379,6 +400,13 @@ function onSettingsChange() {
   });
   viewPrefs.sortCol = document.getElementById('vs-sort-col').value;
   viewPrefs.timePrecision = Number(document.getElementById('vs-precision').value) || 2;
+  // Copia: viewPrefs.lines può essere DEFAULT_LINE_VISIBILITY o l'oggetto della console.
+  // Le linee senza interruttore (5 = test di sync) mantengono il valore che avevano.
+  const lines = { ...viewPrefs.lines };
+  document.querySelectorAll('#viewSettingsOverlay .line-vis-toggle').forEach(el => {
+    lines[el.dataset.line] = el.checked;
+  });
+  viewPrefs.lines = lines;
   saveOwnPrefs();
   renderTable();
 }
@@ -410,17 +438,10 @@ window.addEventListener('storage', (e) => {
 });
 
 // ── Orologio ─────────────────────────────────────────────────────────────────
-// Orologio in tempo reale (arriva una volta al secondo, quindi i millisecondi sono sempre 000):
-// segue il "Formato tempi" scelto nelle impostazioni, come le colonne della tabella.
-function clockText(h, m, s) {
-  if (timeFormat === 'seconds') return secondsText(h, m, s, '000');
-  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.000';
-}
-
 function updateClockFromData(data) {
   const timeEl = document.getElementById('time');
   if (!timeEl) return;
-  timeEl.innerText = clockText(data.h, data.m, data.s);
+  setClock(timeEl, data.h, data.m, data.s);
 }
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
@@ -505,6 +526,7 @@ const TYPE_SESSION_CLEARED = 2;
 const TYPE_ROW_UPDATED     = 4;
 
 function handleMessage(data) {
+  if (typeof eqHandleMessage === 'function' && eqHandleMessage(data)) return;   // gare di equitazione
   switch (data.t) {
     case TYPE_CHECKPOINT:
     case TYPE_ROW_UPDATED:

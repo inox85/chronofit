@@ -10,6 +10,13 @@ void activateAccessPoint();
 
 bool connectToWiFi(const char* ssid, const char* password, uint32_t timeoutMs = 10000);
 
+// Da chiamare nel loop(): esegue connessione e nuovi tentativi della STA.
+void wifiLoop();
+// Dopo activateAccessPoint(): si ricollega alla rete salvata (se non disconnessa dall'utente).
+void wifiAutoConnectAtBoot();
+// Disconnessione voluta: niente riconnessione all'avvio.
+void wifiStopStation();
+
 // POST del file session.json a Hooklistener
 // postSessionJson(
 //   "https://app.hooklistener.com/w/my-first-endpoint-lwi8/esp32",

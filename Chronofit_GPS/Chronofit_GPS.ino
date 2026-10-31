@@ -18,6 +18,8 @@
 #include "diagnostic.h"
 #include "printer.h"
 #include "settings.h"
+#include "license.h"
+#include "equestrian.h"
 #include "RTC.h"
 #include <FastLED.h>
 #include "esp_netif.h"
@@ -149,7 +151,6 @@ void initGPS(){
 }
 
 void setup() {
-  delay(1000);
   // setup()
   esp_task_wdt_config_t wdt_config = {
       .timeout_ms = 30000,  // 30 secondi
@@ -217,10 +218,13 @@ void setup() {
   GPSRefreshInterval = readIntFromSettings("refInt", 0);
   utcOffset = readIntFromSettings("utcOffset", 0);
   elapsedStartLine = readIntFromSettings("el_start", 0);
-  lineDisableAfterPass = readIntFromSettings("line_once", 0);
+  lineDelaysLoad();
   if (elapsedStartLine < 0 || elapsedStartLine > 4) elapsedStartLine = 0;
+  licenseBegin();   // conta l'accensione; a licenza esaurita niente passaggi
+  lineDisableAfterPass = readIntFromSettings("line_once", 0);
   int rtcAging = readIntFromSettings("rtcAging", 0);
   buzzerActive = readIntFromSettings("buzzActive", 0);
+  printEnabled = readIntFromSettings("printEn", 1);
 
   Serial.print("Writing aging factor: ");
   Serial.println(rtcAging);
@@ -233,6 +237,11 @@ void setup() {
 
   if(syncMode == MODE_SYNC_GPS)
     syncStatus = SYNC_FIRST_GPS_SYNC;
+  // Modalità elapsed salvata: all'accensione il cronometro è in attesa dello start
+  if (syncMode == MODE_ELAPSED_TIME) {
+    syncStatus = ELAPSED_WAITING_START;
+    temp_hh = 0; temp_mm = 0; temp_ss = 0;
+  }
 
   Serial.println();
   Serial.print("Time cal factor: ");
@@ -261,7 +270,10 @@ void setup() {
 
   sessionRowIndex = getLastSessionRowIndex();
 
+  equestrianBegin();   // regolamento (NVS) e turni della sessione (LittleFS), per le gare di equitazione
+
   activateAccessPoint();
+  wifiAutoConnectAtBoot();
 
   mqttSetup();
 
@@ -274,7 +286,7 @@ void configFS(){
     Serial.println("Errore nel montaggio di LittleFS");
     return;
   }
-  server.serveStatic("/", LittleFS, "/").setCacheControl("public, max-age=2592000");
+  server.serveStatic("/", LittleFS, "/").setCacheControl("no-cache");
 
 }
 
@@ -299,6 +311,7 @@ void updateWifiLed(uint8_t ledIndex) {
 bool validNmea = false;  // globale, non locale al loop
 
 void loop() {
+  wifiLoop();
 
   if(shouldRestart){
     delay(500);
@@ -346,7 +359,7 @@ void loop() {
 
   if((millis() - lastClientCheck) > LAST_CLIENT_CHECK){
     lastClientCheck = millis();
-    ws.cleanupClients();
+    ws.cleanupClients(WS_MAX_CLIENTS);
     if (cellsPoll()) broadcastCells();   // fotocellule wireless: connessa/persa/linea/segnale
 
     #ifdef VER2
@@ -457,6 +470,9 @@ void loop() {
   
   handleSensorTrigger();
 
+  equestrianLoop();   // conto alla rovescia, partenza automatica, tempo limite, salvataggio turni
+  licenseLoop();      // conta l'accensione dopo LICENSE_COMMIT_MS di funzionamento
+
   updateWifiLed(COM_LED);
 
 }
@@ -474,8 +490,8 @@ bool checkConnectedClient(){
 void handleSensorTrigger(){
   for (int i = 0; i < 6; i++) {
     bool triggered = false;
-    uint64_t tUs = 0;
     bool manual = false;
+    uint64_t tUs = 0;
     portENTER_CRITICAL(&isrMux);
       if (sensorTriggered[i]) {
         triggered = true;
@@ -488,12 +504,12 @@ void handleSensorTrigger(){
 
     if (triggered) {
       // Linea disabilitata: il passaggio della barriera va in sessione come riga
-      // disabilitata, ma non suona e non fa partire il tempo. Il passaggio
-      // manuale dalla console (tocco sul numero di linea, Start) conta invece
-      // come su una linea abilitata.
+      // disabilitata, ma non suona e non fa partire il tempo trascorso. Il
+      // passaggio manuale dalla console (tocco sul numero di linea, Start) conta
+      // invece come su una linea abilitata.
       bool enabled = i >= 4 || lineEnabled[i] || manual;
       if (enabled) playBinary(i+1);
-      if (syncMode == MODE_SYNC_LINE && syncStatus == SYNC_WAIT_LINE_SIGNAL && enabled){
+      if (syncMode == MODE_SYNC_LINE && syncStatus == SYNC_WAIT_LINE_SIGNAL){
         lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;
         handleLineSync();
@@ -502,7 +518,7 @@ void handleSensorTrigger(){
           printSyncStart(MODE_SYNC_LINE, pt.hh, pt.mm, pt.ss, pt.ms);
         }
       }else if(syncMode == MODE_ELAPSED_TIME && syncStatus == ELAPSED_WAITING_START &&
-               enabled && (elapsedStartLine == 0 || elapsedStartLine == i + 1))   // solo la linea di start, se abilitata
+               enabled && licenseActive() && (elapsedStartLine == 0 || elapsedStartLine == i + 1))   // solo la linea di start, se abilitata
       {
         lastSyncTrigger = tUs;
         syncReference = lastSyncTrigger;
@@ -516,12 +532,14 @@ void handleSensorTrigger(){
           PreciseTime pt = getPreciseSensorTime(i);
           printSyncConfirm(syncMode, pt.hh, pt.mm, pt.ss, pt.ms);
           printEnabled = 0;
-          checkPointRoutine(i, manual);
+          checkPointRoutine(i);
           printEnabled = 1;
         } else {
           checkPointRoutine(i, manual);
         }
       }
+      // Gare di equitazione: partenza/arrivo/intermedio del turno attivo (da spente non fa nulla)
+      equestrianOnPassage(i + 1, tUs, enabled);
     }
   }
 }

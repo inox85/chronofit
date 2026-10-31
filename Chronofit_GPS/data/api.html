@@ -87,6 +87,9 @@
 <li><a href="#checkpoint-e-sessione">Checkpoint e sessione</a>
 <ul><li><a href="#get-checkpoint"><code>GET /checkPoint</code></a></li><li><a href="#get-getcheckpoints"><code>GET /getCheckpoints</code></a></li><li><a href="#get-downloadsession"><code>GET /downloadSession</code></a></li><li><a href="#get-clearsession"><code>GET /clearSession</code> 🔒</a></li><li><a href="#get-checkpointfields"><code>GET /checkPointFields</code></a></li><li><a href="#get-linedisableafterpass"><code>GET /lineDisableAfterPass</code></a></li><li><a href="#get-elapsedstartline"><code>GET /elapsedStartLine</code></a></li><li><a href="#post-checkpointfields"><code>POST /checkPointFields</code></a></li><li><a href="#post-sendcheckpointrow"><code>POST /sendCheckPointRow</code></a></li><li><a href="#post-updatecheckpointrow"><code>POST /updateCheckPointRow</code></a></li></ul>
 </li>
+<li><a href="#equitazione">Equitazione</a>
+<ul><li><a href="#get-eqenable"><code>GET /eqEnable</code></a></li><li><a href="#get-eq"><code>GET /eq</code></a></li></ul>
+</li>
 <li><a href="#impostazioni-di-sistema">Impostazioni di sistema</a>
 <ul><li><a href="#get-allsettings"><code>GET /allSettings</code></a></li><li><a href="#get-setattribute"><code>GET /setAttribute</code> 🔒</a></li></ul>
 </li>
@@ -116,7 +119,7 @@
 <h3 id="ws-ws" class="route"><code>WS /ws</code></h3>
 <p>Connessione WebSocket per la ricezione in tempo reale degli eventi del dispositivo.</p>
 <p><b>Messaggi inviati dal server (JSON):</b></p>
-<div class="tw"><table><thead><tr><th>Campo <code>t</code></th><th>Evento</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>0</code></td><td>Nuovo passaggio</td><td>Checkpoint registrato (trigger HW o manuale)</td></tr><tr><td><code>1</code></td><td>Aggiornamento orologio</td><td>Tick ogni secondo con orario corrente</td></tr><tr><td><code>2</code></td><td>Sessione cancellata</td><td>La sessione è stata azzerata</td></tr><tr><td><code>3</code></td><td>Parametri aggiornati</td><td>Impostazioni di sistema modificate</td></tr><tr><td><code>4</code></td><td>Riga aggiornata</td><td>Un passaggio è stato modificato</td></tr><tr><td><code>5</code></td><td>Messaggio generico</td><td>Notifica testuale</td></tr><tr><td><code>6</code></td><td>Email inviata</td><td>Conferma invio email</td></tr><tr><td><code>11</code></td><td>Linea aggiornata</td><td>Configurazione di una linea modificata</td></tr></tbody></table></div></section>
+<div class="tw"><table><thead><tr><th>Campo <code>t</code></th><th>Evento</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>0</code></td><td>Nuovo passaggio</td><td>Checkpoint registrato (trigger HW o manuale)</td></tr><tr><td><code>1</code></td><td>Aggiornamento orologio</td><td>Tick ogni secondo con orario corrente</td></tr><tr><td><code>2</code></td><td>Sessione cancellata</td><td>La sessione è stata azzerata</td></tr><tr><td><code>3</code></td><td>Parametri aggiornati</td><td>Impostazioni di sistema modificate</td></tr><tr><td><code>4</code></td><td>Riga aggiornata</td><td>Un passaggio è stato modificato</td></tr><tr><td><code>5</code></td><td>Messaggio generico</td><td>Notifica testuale</td></tr><tr><td><code>6</code></td><td>Email inviata</td><td>Conferma invio email</td></tr><tr><td><code>11</code></td><td>Linea aggiornata</td><td>Configurazione di una linea modificata</td></tr><tr><td><code>20</code></td><td>Equitazione: turno</td><td>Turno in pista cambiato o in corso (<code>cur</code>, come un turno di <code>GET /eq</code>)</td></tr><tr><td><code>21</code></td><td>Equitazione: regolamento</td><td>Regolamento o dati della gara modificati</td></tr></tbody></table></div></section>
 <section id="tempo-e-sincronizzazione"><h2>Tempo e sincronizzazione</h2>
 <h3 id="get-time" class="route"><code>GET /time</code></h3>
 <p>Restituisce l'orario corrente del dispositivo.</p>
@@ -133,7 +136,7 @@
 <div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>offset</code></td><td>int</td><td>Offset UTC (-12 … +14)</td></tr></tbody></table></div></section>
 <section id="checkpoint-e-sessione"><h2>Checkpoint e sessione</h2>
 <h3 id="get-checkpoint" class="route"><code>GET /checkPoint</code></h3>
-<p>Registra manualmente un passaggio su una linea. Conta come passaggio di una linea abilitata anche se la linea è disattivata.</p>
+<p>Registra manualmente un passaggio su una linea. Conta come valido anche se la linea è disabilitata.</p>
 <p><b>Parametri:</b></p>
 <div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Default</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>lineNumber</code></td><td>int</td><td>0</td><td>Numero della linea che ha rilevato il passaggio</td></tr></tbody></table></div>
 <p><b>Risposta:</b> testo di conferma con timestamp.</p>
@@ -152,10 +155,10 @@
 <h3 id="get-checkpointfields" class="route"><code>GET /checkPointFields</code></h3>
 <p>Aggiorna la configurazione di una linea via query string. Solo <code>l</code> è obbligatorio.</p>
 <p><b>Parametri:</b></p>
-<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>✅</td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>string</td><td>—</td><td>ID linea</td></tr><tr><td><code>c</code></td><td>int</td><td>—</td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>int</td><td>—</td><td>Delay di rilevamento in millisecondi</td></tr><tr><td><code>e</code></td><td>int</td><td>—</td><td>Abilitato: <code>1</code> / disabilitato: <code>0</code> (con <code>0</code> i passaggi restano in sessione come righe disabilitate, senza beep né start del tempo)</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>✅</td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>string</td><td>—</td><td>ID linea</td></tr><tr><td><code>c</code></td><td>int</td><td>—</td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>int</td><td>—</td><td>Delay di rilevamento in millisecondi</td></tr><tr><td><code>e</code></td><td>int</td><td>—</td><td>Abilitato: <code>1</code> / disabilitato: <code>0</code></td></tr></tbody></table></div>
 <p><b>Esempio:</b> <code>GET /checkPointFields?l=2&amp;c=7&amp;e=1</code></p>
 <h3 id="get-linedisableafterpass" class="route"><code>GET /lineDisableAfterPass</code></h3>
-<p>Disattivazione automatica delle linee dopo il primo passaggio. Con il valore <code>1</code>, al primo passaggio una linea abilitata viene disattivata (<code>e = 0</code>, notificato con <code>TYPE_LINE_UPDATED</code>) e resta così finché non viene riabilitata con <code>/checkPointFields</code> (<code>e=1</code>). I passaggi successivi restano in sessione come righe disabilitate, senza beep e senza far partire il tempo. Salvato in NVS (<code>line_once</code>), default <code>0</code>.</p>
+<p>Disattivazione automatica delle linee dopo il primo passaggio. Con il valore <code>1</code>, al primo passaggio una linea abilitata viene disattivata (<code>e = 0</code>, notificato con <code>TYPE_LINE_UPDATED</code>) e resta così finché non viene riabilitata con <code>/checkPointFields</code> (<code>e=1</code>). I passaggi successivi restano in sessione come righe disabilitate. Salvato in NVS (<code>line_once</code>), default <code>0</code>.</p>
 <div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>v</code></td><td>int</td><td>—</td><td><code>1</code> attiva, <code>0</code> disattiva. Senza parametro restituisce solo lo stato</td></tr></tbody></table></div>
 <p><b>Risposta:</b> <code>{ &quot;v&quot;: 0 }</code></p>
 <h3 id="get-elapsedstartline" class="route"><code>GET /elapsedStartLine</code></h3>
@@ -195,6 +198,13 @@
   &quot;penality&quot;: 0
 }</code></pre>
 <p>Il campo <code>index</code> identifica il record da modificare. Se non esiste viene creato.</p></section>
+<section id="equitazione"><h2>Equitazione</h2>
+<p>Con le <b>gare</b> accese (⚙️ → Dispositivo → Gare, solo con la disciplina Equitazione) il dispositivo gestisce turni, penalità e classifica del salto ostacoli. Queste route servono per esempio a un tabellone esterno; i comandi del turno si danno dalla console.</p>
+<h3 id="get-eqenable" class="route"><code>GET /eqEnable</code></h3>
+<p>Stato delle gare: <code>{ &quot;on&quot;: true }</code>.</p>
+<h3 id="get-eq" class="route"><code>GET /eq</code></h3>
+<p>Stato completo: <code>on</code> (gare accese), tipi di gara (<code>variants</code>), dati della gara (<code>course</code>: linee di partenza, arrivo e intermedia, lunghezze, velocità), <code>cur</code> (id del turno in pista, <code>0</code> = nessuno), <code>taMs</code> / <code>taMs2</code> (tempo concesso della 1ª e 2ª fase) e <code>rounds</code>, tutti i turni.</p>
+<p>Turno: <code>{ &quot;id&quot;, &quot;comp&quot; (numero del cavaliere), &quot;phase&quot; (1 o 2), &quot;st&quot; (&quot;ready&quot; | &quot;countdown&quot; | &quot;running&quot; | &quot;paused&quot; | &quot;finished&quot; | &quot;confirmed&quot; | &quot;cancelled&quot;), &quot;t&quot; (tempo ms), &quot;mid&quot; (tempo intermedio ms), &quot;fp&quot; (penalità percorso), &quot;tp&quot; (penalità tempo), &quot;pts&quot; (totale), &quot;elim&quot;, &quot;ret&quot;, &quot;reason&quot;, &quot;faults&quot; [conteggi per tipo di errore], &quot;cd&quot; (ms alla fine del conto alla rovescia) }</code>. La classifica si ricava dai turni conclusi (<code>finished</code> / <code>confirmed</code>).</p></section>
 <section id="impostazioni-di-sistema"><h2>Impostazioni di sistema</h2>
 <h3 id="get-allsettings" class="route"><code>GET /allSettings</code></h3>
 <p>Restituisce la configurazione completa del dispositivo.</p>

@@ -55,6 +55,7 @@ const lineColors = {
 // ── Precisione temporale ──────────────────────────────────────
 // 1 = decimi, 2 = centesimi, 3 = millisecondi
 let timePrecision = 3;
+let _suppressPrefSave = false;   // vedi _applyTimeFormatPref()
 let timePrecision2 = 3;
 
 // Formato dei tempi scelto nelle impostazioni, comune a console e viste dello
@@ -68,10 +69,27 @@ function secondsText(h, m, s, msStr) {
   return String(h * 3600 + m * 60 + s) + ',' + msStr;
 }
 
+// Orologio grande: segue il formato dei tempi, come le tabelle
+// ('seconds' = secondi totali con la virgola, es. 3725,000)
+let lastClockHms = null;
+function clockText(h, m, s) {
+  if (timeFormat === 'seconds') return secondsText(h, m, s, '000');
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.000';
+}
+function setClock(el, h, m, s) {
+  if (!el) return;
+  lastClockHms = [h, m, s];
+  el.innerText = clockText(h, m, s);
+}
+function refreshClock() {
+  if (lastClockHms) setClock(document.getElementById('time'), ...lastClockHms);
+}
+
 // Cambio dal menu "Formato tempi": salva, allinea gli altri menu della pagina e ridisegna.
 function setTimeFormat(value) {
   timeFormat = value === 'seconds' ? 'seconds' : 'clock';
   try { localStorage.setItem(TIME_FORMAT_KEY, timeFormat); } catch (e) { /* solo per questa pagina */ }
+  refreshClock();
   syncTimeFormatSelects();
   onTimeFormatChanged();
 }
@@ -90,6 +108,7 @@ function onTimeFormatChanged() {
 window.addEventListener('storage', e => {
   if (e.key !== TIME_FORMAT_KEY) return;
   timeFormat = e.newValue === 'seconds' ? 'seconds' : 'clock';
+  refreshClock();
   syncTimeFormatSelects();
   onTimeFormatChanged();
 });
@@ -502,6 +521,7 @@ function _readLinesPrefs(containerId) {
 }
 
 function saveViewPrefs() {
+  if (_suppressPrefSave) return;
   const prefs = {
     timestamp:     document.getElementById("toggle-timestamp").checked,
     deltaTime:     document.getElementById("toggle-delta-time").checked,
@@ -520,6 +540,7 @@ function saveViewPrefs() {
     showTrigger:      document.getElementById("toggle-trigger")?.checked   ?? false,
     splitsMode:    document.getElementById("toggle-splits").checked,
     timePrecision: document.getElementById("time-precision").value,
+    timeFormat:    timeFormat,
     sortCol:       sortCol,
     showCompList:  document.getElementById('comp-list-card')?.style.display !== 'none',
     showSecondArrivalsCard: document.getElementById('secondArrivalsCard')?.style.display !== 'none',
@@ -529,6 +550,7 @@ function saveViewPrefs() {
     elapsedRearmList:  document.getElementById('toggle-elapsed-rearm-list')?.checked ?? false,
     rearmTyped:      document.getElementById('toggle-rearm-typed')?.checked ?? false,
     rearmList:       document.getElementById('toggle-rearm-list')?.checked ?? false,
+    keepWaiting:     document.getElementById('toggle-keep-waiting')?.checked ?? false,
     propagateCompetitor: getPropagateCompetitorMode(),
     lines: _readLinesPrefs('stab-lines'),
     secondary: {
@@ -565,11 +587,23 @@ function _currentDisciplinePrefs() {
   return DISCIPLINES.find(d => d.id === activeDisciplineId)?.prefs;
 }
 
+// Formato dei tempi da preferenze/preset: cambia (e ridisegna) solo se è diverso
+// da quello attuale, perché restoreViewPrefs() gira a ogni aggiornamento impostazioni.
+// Durante il ripristino non si salvano le preferenze: lo stato letto dalla pagina
+// è ancora a metà e sovrascriverebbe quelle salvate.
+function _applyTimeFormatPref(value) {
+  const wanted = value === 'seconds' ? 'seconds' : 'clock';
+  if (wanted === timeFormat) return;
+  _suppressPrefSave = true;
+  try { setTimeFormat(wanted); } finally { _suppressPrefSave = false; }
+}
+
 function restoreViewPrefs() {
   const raw = localStorage.getItem(VIEW_PREFS_KEY);
   if (!raw) {
     const disc = _currentDisciplinePrefs();
     if (disc) {
+      _applyTimeFormatPref(disc.timeFormat);
       if (disc.showSecondArrivalsCard !== undefined) setSecondArrivalsCardVisible(disc.showSecondArrivalsCard);
       _applyLinesPrefs('stab-lines', disc.lines);
       _applyLinesPrefs('stab-lines-2', disc.linesSecondary);
@@ -608,6 +642,8 @@ function restoreViewPrefs() {
       timePrecision = val;
       document.getElementById("time-precision").value = val;
     }
+    // Preferenze salvate prima di questa voce: vale il default della disciplina
+    _applyTimeFormatPref(prefs.timeFormat ?? _currentDisciplinePrefs()?.timeFormat);
 
     if (prefs.lines) {
       document.querySelectorAll('#stab-lines .line-vis-toggle').forEach(el => {
@@ -642,6 +678,8 @@ function restoreViewPrefs() {
     // rearmOnCompetitor = toggle unico delle versioni precedenti, vale per entrambi i casi
     setChkPref('toggle-rearm-typed', prefs.rearmTyped ?? prefs.rearmOnCompetitor);
     setChkPref('toggle-rearm-list',  prefs.rearmList  ?? prefs.rearmOnCompetitor);
+    setChkPref('toggle-keep-waiting', prefs.keepWaiting);
+    try { renderCompQuickList(); } catch (e) { /* elenco non ancora pronto: si disegna all'avvio */ }
     if (prefs.propagateCompetitor !== undefined) setPropagateCompetitorMode(prefs.propagateCompetitor);
 
     updateVisibleColumns();
@@ -855,6 +893,11 @@ function applyDisciplinePreset(prefs) {
 
   updateArrivalsCardTitles();
 
+  // Formato dei tempi (tabelle e orologio): 'clock' hh:mm:ss.mmm | 'seconds' sss,mmm.
+  // È comune a console e viste dello stesso browser, quindi al cambio disciplina
+  // si riallineano anche loro.
+  setTimeFormat(prefs.timeFormat);
+
   saveViewPrefs();
 }
 
@@ -973,6 +1016,7 @@ function selectDiscipline(id) {
   localStorage.setItem(DISCIPLINE_KEY, id);
   localStorage.setItem(DISC_LOCK_KEY, '1');
   applyDisciplinePreset(disc.prefs);
+  if (typeof eqOnDisciplineChange === 'function') eqOnDisciplineChange();   // gare solo in Equitazione
   updateDisciplineNavBtn();
   // refresh active highlight without closing
   renderDisciplineCards();
@@ -1005,8 +1049,8 @@ function goToTiming() {
 
 // ── Vista associata alla disciplina (secondo schermo) ────────────────────────
 // Ogni disciplina ha la sua vista di sola lettura (campo `view` in disciplines.js).
-// Si apre in una finestra a parte: nell'app Chronofit Viewer è una nuova finestra
-// dell'applicazione, nel browser un popup che si può portare sul secondo schermo.
+// Si apre in una finestra a parte: nell'app Chronofit Viewer è una finestra dell'applicazione,
+// nel browser un popup che si può portare sul secondo schermo.
 let disciplineViewWin = null;
 function openDisciplineView() {
   const disc = DISCIPLINES.find(d => d.id === activeDisciplineId) ?? DISCIPLINES[0];
@@ -1047,6 +1091,7 @@ function openExitDisciplineConfirm() {
     localStorage.removeItem(DISC_LOCK_KEY);
     localStorage.removeItem(DISCIPLINE_KEY);
     activeDisciplineId = 'generic';
+    if (typeof eqOnDisciplineChange === 'function') eqOnDisciplineChange();
     openDisciplineOverlay();
   };
 }
@@ -1138,6 +1183,12 @@ function withCompetitorSource(source, fn) {
 }
 
 function fillCompFromList(num) {
+  // Gare di equitazione: senza un campo competitor selezionato, il tocco prepara il
+  // turno del cavaliere (linee riarmate, tempo in attesa della campana)
+  if (!activeCompLine && typeof EQ !== 'undefined' && EQ.on && eqDisciplineActive()) {
+    eqSelect(num, undefined, 'list');
+    return;
+  }
   // Se nessun input è attivo, non fare niente, salvo la modalità "always"
   // della tendina "Assegnazione numero competitor": allora il numero va su
   // tutte le linee gestite.
@@ -1195,7 +1246,12 @@ function renderCompQuickList(scrollToCompetitor = null) {
   if (!container) return;
   // Chi è già "uscito" (arrived=true) resta nel registro — serve ancora per
   // i nomi in tabella — ma sparisce dalla quick-list degli Attesi.
-  const waiting = athleteRegistry.filter(a => !a.arrived);
+  // Con le Gare accese l'elenco segue la fase del prossimo turno (vedi eqWaitingFilter)
+  const eqWait = typeof eqWaitingFilter === 'function' ? eqWaitingFilter() : null;
+  const isWaiting = a => eqWait ? eqWait(a.competitor) : !a.arrived;
+  // Toggle "Mantieni i competitor nell'elenco": nessuno sparisce, chi ha già corso resta attenuato
+  const keepAll = !!document.getElementById('toggle-keep-waiting')?.checked;
+  const waiting = keepAll ? athleteRegistry.slice() : athleteRegistry.filter(isWaiting);
   if (waiting.length === 0) {
     container.innerHTML = '<p class="comp-list-empty">—</p>';
     return;
@@ -1203,7 +1259,7 @@ function renderCompQuickList(scrollToCompetitor = null) {
   const sorted = waiting.sort((a, b) => Number(a.competitor) - Number(b.competitor));
   container.innerHTML = sorted.map(a => {
     const nameParts = [a.name, a.surname].filter(s => s && s !== '-').join(' ');
-    return `<div class="comp-list-item" data-competitor="${a.competitor}"
+    return `<div class="comp-list-item${keepAll && !isWaiting(a) ? ' comp-list-done' : ''}" data-competitor="${a.competitor}"
       onmousedown="event.preventDefault()" onclick="fillCompFromListGuarded(${a.competitor})">
       <span class="comp-list-num">${a.competitor}</span>${nameParts ? `<span class="comp-list-name">${nameParts}</span>` : ''}
     </div>`;
@@ -1222,7 +1278,7 @@ function markAthleteArrived(compNum) {
   const a = athleteRegistry.find(x => Number(x.competitor) === Number(compNum));
   if (!a || a.arrived) return;
   a.arrived = true;
-  localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+  saveAthletes();
   renderCompQuickList();
 }
 
@@ -1230,7 +1286,7 @@ function markAthleteArrived(compNum) {
 function maybeAutoAcquireCompetitor(compNum) {
   if (compNum > 0 && !athleteRegistry.find(a => Number(a.competitor) === compNum)) {
     athleteRegistry.push({ competitor: compNum, name: '-', surname: '-', team: '-' });
-    localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+    saveAthletes();
     renderCompQuickList(compNum);
   }
 }
@@ -1316,8 +1372,8 @@ function openLineEdit(line, focusField) {
   if (tkField) tkField.value = localStorage.getItem(TIMEKEEPERS_KEY) || '';
   _lineEditSnapshot.timekeepers = tkField?.value ?? '';
 
-  loadDisableAfterPass();
   updatePropagateCompetitorHint();
+  loadDisableAfterPass();
   loadElapsedStartLine();
   document.getElementById('lineEditOverlay').style.display = 'flex';
 
@@ -1336,8 +1392,8 @@ function openLineEdit(line, focusField) {
   }, 80);
 }
 
-// Toggle "Disattiva la linea dopo il primo passaggio": l'impostazione sta nel
-// dispositivo (NVS), che disattiva la linea anche se la console non è aperta.
+// Toggle "Disattiva la linea dopo il primo passaggio": l'impostazione sta nella
+// Main (NVS), che disattiva la linea anche se la console non è aperta.
 function loadDisableAfterPass() {
   const el = document.getElementById('toggle-disable-after-pass');
   if (!el) return;
@@ -1422,13 +1478,22 @@ async function _saveAllLineSettings() {
 // "Salva e stampa": salva tutte le linee e stampa lo scontrino completo.
 // Se il dispositivo non conferma il salvataggio di una o più linee, avvisa
 // l'operatore e NON stampa/chiude: il popup resta aperto per poter ritentare.
+// "Stampa su carta" spenta: nessuna stampa, neanche dai pulsanti di stampa
+function printingOn() {
+  return document.getElementById('printToggle')?.checked !== false;
+}
+function printingOffNotice() {
+  uiAlert(t('print.disabled'));
+}
+
 async function saveAndPrintLineEdit() {
   const { failedLines } = await _saveAllLineSettings();
   if (failedLines.length) {
     alert(t('cp.save_error', failedLines.join(', ')));
     return;
   }
-  await printLineSettingsReceipt();
+  if (printingOn()) await printLineSettingsReceipt();
+  else printingOffNotice();
   closeLineEdit();
 }
 
@@ -1441,7 +1506,7 @@ async function saveAndCloseLineEdit() {
     alert(t('cp.save_error', failedLines.join(', ')));
     return;
   }
-  if (changedLines.length || timekeepersChanged) {
+  if ((changedLines.length || timekeepersChanged) && printingOn()) {
     await printLineSettingsReceipt(changedLines, timekeepersChanged);
   }
   closeLineEdit();
@@ -1647,6 +1712,12 @@ function rearmElapsedIfNeeded() {
   setElapsedTimemode();
 }
 
+// Pulsante Reset: tempo trascorso in attesa dello start e, con le Gare accese, turno pronto per la campana
+function resetElapsedButton() {
+  setElapsedTimemode();
+  if (typeof eqReset === 'function') eqReset();
+}
+
 function setElapsedTimemode(){
   let url = `/setTime?mode=${encodeURIComponent(3)}`;
   console.log(url);
@@ -1760,6 +1831,99 @@ function clearSession() {
 
 // Popup "About": mostra anche la versione firmware del device, letta al volo
 // da /systemSettings (lo stesso endpoint usato da admin.html/update.html).
+// ── Licenza a numero di accensioni (/license, /licenseApply) ──
+// Sotto LICENSE_WARN_LEFT utilizzi residui compaiono l'indicatore nella navbar e,
+// a ogni caricamento della pagina (dopo lo splash), il popup di avviso. A licenza
+// esaurita il popup resta aperto finché non arriva un codice valido.
+const LICENSE_WARN_LEFT = 20;
+let licenseState = null;
+let licensePopupBoot = null;   // avvio della Main per cui il popup è già comparso in questa pagina
+
+function licenseStatusText(d) {
+  if (!d.active) return t('license.blocked');
+  if (d.unlimited) return t('license.unlimited');
+  if (d.left < LICENSE_WARN_LEFT) return t('license.low', d.left);
+  return t('license.left', d.left);
+}
+
+function renderLicense(d) {
+  licenseState = d;
+  document.getElementById('licenseStatus').textContent = licenseStatusText(d);
+  document.getElementById('licenseStatus').style.color = !d.active ? '#c62828'
+    : (!d.unlimited && d.left < LICENSE_WARN_LEFT) ? '#ef6c00' : '';
+  document.getElementById('licenseDevice').textContent = d.device;
+  document.getElementById('licenseContact').textContent = d.contact ? t('license.contact', d.contact) : t('license.contact_generic');
+  document.getElementById('licenseCloseBtn').style.display = d.active ? '' : 'none';
+  const nav = document.getElementById('license-nav');
+  if (nav) {
+    const low = !d.unlimited && d.left < LICENSE_WARN_LEFT;
+    nav.style.display = (!d.active || low) ? '' : 'none';
+    nav.className = 'license-nav' + (d.active ? '' : ' license-nav-blocked');
+    nav.textContent = '🔑 ' + (d.active ? d.left : t('license.blocked_short'));
+    nav.title = licenseStatusText(d);
+  }
+  const about = document.getElementById('aboutLicense');
+  if (about) about.textContent = d.active ? (d.unlimited ? '∞' : String(d.left)) : t('license.blocked_short');
+}
+
+function checkLicense() {
+  fetch('/license', { cache: 'no-store' })
+    .then(res => res.ok ? res.json() : null)
+    .then(d => {
+      if (!d) return;
+      renderLicense(d);
+      // una volta per pagina (e di nuovo se la Main si riavvia), non a ogni riconnessione
+      const low = !d.unlimited && d.left < LICENSE_WARN_LEFT;
+      if (!d.active || (low && d.boot !== licensePopupBoot)) {
+        licensePopupBoot = d.boot;
+        afterSplash(() => openLicenseOverlay(false));
+      }
+    })
+    .catch(() => {});
+}
+
+// Esegue fn quando lo splash iniziale è sparito
+function afterSplash(fn) {
+  if (!document.getElementById('splash')) { fn(); return; }
+  setTimeout(() => afterSplash(fn), 200);
+}
+
+function openLicenseOverlay(fromAbout) {
+  if (fromAbout) document.getElementById('aboutOverlay').style.display = 'none';
+  document.getElementById('licenseMsg').textContent = '';
+  document.getElementById('licenseOverlay').style.display = 'flex';
+  if (fromAbout) checkLicenseQuiet();
+}
+
+function checkLicenseQuiet() {
+  fetch('/license', { cache: 'no-store' }).then(res => res.ok ? res.json() : null).then(d => { if (d) renderLicense(d); }).catch(() => {});
+}
+
+function closeLicenseOverlay() {
+  if (licenseState && !licenseState.active) return;   // bloccata: serve un codice
+  document.getElementById('licenseOverlay').style.display = 'none';
+}
+
+function applyLicenseCode() {
+  const code = document.getElementById('licenseCode').value.trim();
+  const msg = document.getElementById('licenseMsg');
+  if (!code) { msg.textContent = t('license.err_format'); msg.style.color = '#c62828'; return; }
+  fetch(`/licenseApply?code=${encodeURIComponent(code)}`)
+    .then(res => res.json().then(d => ({ ok: res.ok, d })))
+    .then(({ ok, d }) => {
+      if (!ok) {
+        msg.textContent = t('license.err_' + (d.error || 'invalid'));
+        msg.style.color = '#c62828';
+        return;
+      }
+      renderLicense(d);
+      document.getElementById('licenseCode').value = '';
+      msg.textContent = t('license.applied');
+      msg.style.color = '#2e7d32';
+    })
+    .catch(() => { msg.textContent = t('license.err_network'); msg.style.color = '#c62828'; });
+}
+
 function openAboutOverlay() {
   document.getElementById('aboutOverlay').style.display = 'flex';
   const el = document.getElementById('aboutFwVersion');
@@ -1836,6 +2000,8 @@ function connectWebSocket() {
   ws = new WebSocket(`ws://${window.location.host}/ws`);
 
   ws.onopen = () => {
+    if (typeof eqLoad === 'function') eqLoad();   // gare di equitazione: stato aggiornato anche dopo una riconnessione
+    checkLicense();   // anche dopo un riavvio della Main
     console.log("✅ WebSocket connected");
     wsConnecting = false;
     connectionLost = false;
@@ -2104,9 +2270,12 @@ function scrollRowIntoView(tableId, selector) {
 }
 
 function handleMessage(data) {
+  if (typeof eqHandleMessage === 'function' && eqHandleMessage(data)) return;   // gare di equitazione
   switch (data.t) {
     case TYPE_CHECKPOINT:
-      if (data.ln !== 5) resetLineCompetitor(data.ln);
+      // Il passaggio di una linea disabilitata (riga con e = 0) non consuma il
+      // competitor: resta assegnato alla linea per il prossimo passaggio valido.
+      if (data.ln !== 5 && (data.e ?? 1)) resetLineCompetitor(data.ln);
       addEventToTableFromCheckpoint({ ...data, x: 0 });
       reorderTable();
       if (document.getElementById("toggle-splits").checked) applyCompetitorSplits();
@@ -2153,7 +2322,7 @@ function handleMessage(data) {
 
     case TYPE_EMAIL_SENT:
       console.log("📧 Email sent confirmation:", data)
-      showGeneralPopup("Email sent successfully!", "rgb(9, 139, 0)", 3000 );
+      showGeneralPopup(t('email.sent_ok'), "rgb(9, 139, 0)", 3000 );
       break;
 
     case TYPE_WIFI_CONNECTING:
@@ -2260,18 +2429,11 @@ function hideGeneralPopup() {
 }
 
 
-// Orologio in tempo reale (arriva una volta al secondo, quindi i millisecondi sono sempre 000):
-// segue il "Formato tempi" scelto nelle impostazioni, come le colonne della tabella.
-function clockText(h, m, s) {
-  if (timeFormat === 'seconds') return secondsText(h, m, s, '000');
-  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.000';
-}
-
 function updateClockFromData(data) {
 
     let hourAdj = (data.h + timeOffset + 24) % 24;
 
-    document.getElementById("time").innerText = clockText(hourAdj, data.m, data.s);
+    setClock(document.getElementById("time"), hourAdj, data.m, data.s);
 
 
     let statusElem = document.getElementById("status");
@@ -2313,6 +2475,7 @@ function updateClockFromData(data) {
     clientNavBar.innerText = data.cl;
 
     lastWifiStatus = wifiStatus;
+    updateStaIpNav(wifiStatus);
     const stopBtn = document.getElementById("stopReconnectBtn");
     if (wifiStatus == WIFI_STATUS_INTERNET_OK) {
       wifiNavBar.innerText = "🟢";
@@ -2338,14 +2501,14 @@ function updateClockFromData(data) {
     }
 
     if(syncStatus === SYNC_NONE){
-      document.getElementById("time").innerText = clockText(0, 0, 0);
+      setClock(document.getElementById("time"), 0, 0, 0);
       statusElem.innerText = t('status.manual_not_set');
     }
     if(syncStatus === SYNC_MANUAL_SET){
       statusElem.innerText = t('status.manual_ok');
     }
     if(syncStatus === SYNC_WAIT_LINE_SIGNAL){
-      document.getElementById("time").innerText = clockText(0, 0, 0);
+      setClock(document.getElementById("time"), 0, 0, 0);
       statusElem.innerText = t('status.line_waiting');
     }
     if(syncStatus === SYNC_SET_BY_LINE_SIGNAL){
@@ -2379,7 +2542,7 @@ function updateClockFromData(data) {
       elapsedTimeControls.classList.remove("hidden");
       const startButton = document.getElementById("startButton");
       startButton.innerText = t('btn.start');
-      document.getElementById("time").innerText = clockText(0, 0, 0);
+      setClock(document.getElementById("time"), 0, 0, 0);
       statusElem.innerText = t('status.elapsed_waiting');
     }if(syncStatus == ELAPSED_TIME_STARTED){
       elapsedTimeControls.classList.remove("hidden");
@@ -2427,7 +2590,7 @@ function clearEventTableRows() {
   // L'elenco dei competitor resta: si azzera solo lo stato "arrivato", legato
   // ai passaggi della sessione appena cancellata, così tornano tutti tra gli Attesi.
   athleteRegistry.forEach(a => { delete a.arrived; });
-  localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+  saveAthletes();
   assignedCompetitorSet.clear();
   localStorage.removeItem("chronofit_assigned");
   renderCompQuickList();
@@ -2463,6 +2626,7 @@ function sleep(ms) {
 }
 
 async function printFixInfos() {
+  if (!printingOn()) { printingOffNotice(); return; }
   const fixInfos = document
     .getElementById("pos")
     .innerText
@@ -2496,6 +2660,15 @@ function sendToPrinter(text, cr) {
 // replay della sessione salvata all'avvio: aggiorna comunque il tracking per
 // linea (serve da base per il primo checkpoint live), ma non invia annullamenti
 // automatici al firmware per righe già storiche.
+// Passaggio registrato prima dello start dall'accensione della Main (campo
+// "ps"): il suo tempo non ha un riferimento, quindi non lo si mostra.
+function markPreStartRow(row, preStart) {
+  if (!row || !Number(preStart)) return;
+  row.classList.add('row-prestart');
+  const ts = row.querySelector('td.timestamp');
+  if (ts) ts.textContent = t('row.before_start');
+}
+
 function addEventToTableFromCheckpoint(checkpoint, isLive = true) {
   // checkpoint deve avere: index, lineNumber, competitor, hour, minute, millis
   const rowIndex = checkpoint.id;
@@ -2533,7 +2706,7 @@ function addEventToTableFromCheckpoint(checkpoint, isLive = true) {
   // possono essere visibili solo nella seconda card).
   const audibleInMain      = isLineVisible('event-table', lineNumber);
   const audibleInSecondary = isSecondArrivalsCardActive() && isLineVisible('event-table-2', lineNumber);
-  if (lineNumber != 5 && lineNumber != 6 && (audibleInMain || audibleInSecondary)) {
+  if (enabled && lineNumber != 5 && lineNumber != 6 && (audibleInMain || audibleInSecondary)) {
     playSound("/sound" + lineNumber + ".mp3");
   }
 
@@ -2544,9 +2717,11 @@ function addEventToTableFromCheckpoint(checkpoint, isLive = true) {
   }
 
   const row = addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table', timePrecision);
+  markPreStartRow(row, checkpoint.ps);
 
   if (isSecondArrivalsCardActive()) {
-    addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table-2', timePrecision2);
+    const row2 = addEventToTable(rowIndex, lineNumber, competitor, hour, minute, second, millis, penality, enabled, test, trigger, cancelled, edited, 'event-table-2', timePrecision2);
+    markPreStartRow(row2, checkpoint.ps);
   }
 
   // Notifica il firmware (e gli altri client) solo se SIAMO noi a introdurre
@@ -2712,7 +2887,7 @@ function recalcDeltaTimes(tableId = "event-table", precision = timePrecision) {
     row.classList.remove("negative-row");
 
     const timestamp = tsCell.textContent.trim();
-    if (timestamp === "00:00:00.000" || timestamp === "00:00:00.00" || timestamp === "00:00:00.0") {
+    if (["00:00:00.000", "00:00:00.00", "00:00:00.0", "0,000", "0,00", "0,0"].includes(timestamp)) {
       row.classList.add("negative-row");
     }
 
@@ -3100,6 +3275,7 @@ function handleInputUpdate(e) {
 
   if (e.target.classList.contains('comp-input') && data.c) {
     propagateCompetitorIfNeeded(data.l, data.c);
+    if (typeof eqOnCompetitorAssigned === 'function') eqOnCompetitorAssigned(data.c, _competitorSource);
   }
 }
 
@@ -3152,7 +3328,7 @@ function assignCompetitorToManagedLines(competitor) {
 }
 
 // Toggle "Riarma la linea con un competitor digitato / scelto dall'elenco":
-// riabilita la linea prima di mandarne lo stato al dispositivo, sia per la linea
+// riabilita la linea prima di mandarne lo stato alla Main, sia per la linea
 // selezionata sia per quelle su cui il competitor viene propagato.
 function rearmLineIfNeeded(lineNumber) {
   const id = _competitorSource === 'list' ? 'toggle-rearm-list' : 'toggle-rearm-typed';
@@ -3291,7 +3467,6 @@ function syncFullscreenToggleUI() {
 document.addEventListener('fullscreenchange', syncFullscreenToggleUI);
 document.addEventListener('webkitfullscreenchange', syncFullscreenToggleUI);
 
-// ── Pulsante schermo intero nella navbar ─────────────────────────────────────
 // Serve quando si esce dal fullscreen (Esc, gesto del telefono, ecc.): un tocco lo richiede di
 // nuovo. Dentro il fullscreen lo stesso pulsante lo chiude. La scelta aggiorna la stessa
 // preferenza dell'interruttore nelle impostazioni.
@@ -3440,6 +3615,42 @@ if ('serviceWorker' in navigator) {
     .catch(err => console.error('❌ Registrazione SW fallita:', err));
 }
 
+// Scorciatoie da tastiera della console:
+//  - tasti 1–4: abilitano/disabilitano la linea corrispondente, come il pulsante ✓ della linea;
+//  - tasti Z, X, C, V: passaggio manuale sulle linee 1, 2, 3, 4, come il clic sul numero della linea.
+// Non scattano mentre si scrive in un campo, con un popup aperto o con Ctrl/Alt/Meta premuti;
+// i passaggi usano e.code (posizione del tasto, valido anche con Maiusc/Blocco maiuscole o altre
+// lingue di tastiera) e ignorano la ripetizione automatica, per non generare passaggi doppi.
+const KEY_PASSAGE_LINE = { KeyZ: 1, KeyX: 2, KeyC: 3, KeyV: 4 };
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.altKey || e.metaKey || e.repeat) return;
+  const passageLine = KEY_PASSAGE_LINE[e.code];
+  if (!passageLine && !/^[1-4]$/.test(e.key)) return;
+  const el = e.target;
+  if (el && el.closest && el.closest('input, textarea, select, [contenteditable="true"]')) return;
+  const popupOpen = [...document.querySelectorAll('.fullscreen-overlay, .ui-dlg-back')]
+    .some(o => getComputedStyle(o).display !== 'none');
+  if (popupOpen) return;
+  if (passageLine) {
+    const cell = document.querySelector(`.cp-line-send[data-line="${passageLine}"]`);
+    if (!cell) return;
+    e.preventDefault();
+    sendCheckPoint(passageLine);
+    cell.classList.add('key-hit');
+    setTimeout(() => cell.classList.remove('key-hit'), 150);
+    return;
+  }
+  const line = Number(e.key);
+  const btn = document.querySelector(`.line-enable-btn[data-line="${line}"]`);
+  if (!btn) return;
+  e.preventDefault();
+  const willEnable = (btn.dataset.enabled ?? '1') === '0';
+  toggleLineEnable(line);
+  if (typeof showGeneralPopup === 'function') {
+    showGeneralPopup(t(willEnable ? 'cp.key_enabled' : 'cp.key_disabled', line), willEnable ? '#2e7d32' : '#616161', 1500);
+  }
+});
+
 // Su "Invio" (tastiera fisica) o "Vai" (tastiera Android) togli il focus dal campo.
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
@@ -3454,10 +3665,11 @@ document.addEventListener('keydown', (e) => {
   el.blur();
 });
 
-// Avvio dell'interfaccia (dissolvenza dello splash e menu iniziale). Prima partiva solo
-// all'evento "load", che scatta quando TUTTE le risorse (immagini comprese) sono finite:
-// se il dispositivo ne lascia una in sospeso (succede a cache vuota, con molte richieste
-// insieme) restava lo splash "Loading session…" per sempre. Ora parte comunque entro 4 s.
+// Avvio dell'interfaccia (dissolvenza dello splash, menu iniziale e richiesta del
+// fullscreen). Prima partiva solo all'evento "load", che scatta quando TUTTE le
+// risorse (immagini comprese) sono finite: se il dispositivo ne lascia una in
+// sospeso (succede a cache vuota, con molte richieste insieme) restava lo splash
+// "Caricamento sessione..." per sempre. Ora parte comunque entro 4 s.
 let appReadyDone = false;
 function onAppReady() {
   if (appReadyDone) return;
@@ -3491,7 +3703,6 @@ function onAppReady() {
     document.addEventListener('touchstart', onFirstInteract, { once: true });
   }, 1000 + 1000 + 500); // 1s attesa + 3s dissolvenza
 }
-
 window.addEventListener("load", onAppReady);
 setTimeout(onAppReady, 4000);
 
@@ -4182,6 +4393,8 @@ document.getElementById("toggle-rearm-typed")
 .addEventListener("change", () => saveViewPrefs());
 document.getElementById("toggle-rearm-list")
 .addEventListener("change", () => saveViewPrefs());
+document.getElementById("toggle-keep-waiting")
+.addEventListener("change", () => { saveViewPrefs(); renderCompQuickList(); });
 document.getElementById("propagate-competitor-mode")
 .addEventListener("change", () => { updatePropagateCompetitorHint(); saveViewPrefs(); });
 
@@ -4808,16 +5021,16 @@ function showMqttCard(topic, d, doAcquire, onDiscard, timeoutSec, onTimeout, acq
   const ms = String(d?.ms ?? "--").padStart(3, "0");
 
   const parts2 = [];
-  if (acquireRow)        parts2.push(`row L${lineNum ?? "?"}`);
-  if (acquireCompetitor) parts2.push(`competitor <strong>${competitor || "—"}</strong>`);
-  const verb = immediateMode ? "Acquired" : "Will acquire";
-  const desc = parts2.length > 0 ? `${verb}: ${parts2.join(" + ")}` : "(info only)";
+  if (acquireRow)        parts2.push(`${t('mqtt.n_row')} L${lineNum ?? "?"}`);
+  if (acquireCompetitor) parts2.push(`${t('mqtt.n_competitor')} <strong>${competitor || "—"}</strong>`);
+  const verb = immediateMode ? t('mqtt.n_acquired') : t('mqtt.n_will_acquire');
+  const desc = parts2.length > 0 ? `${verb}: ${parts2.join(" + ")}` : t('mqtt.n_info_only');
 
   const hasTimed       = timeoutSec !== null;
   const countdownSpan  = `<span class="mqtt-countdown">(${timeoutSec})</span>`;
   const timeoutOnClose = hasTimed && onTimeout !== "accept";
-  const acceptLabel    = hasTimed && !timeoutOnClose ? `✓ Accept ${countdownSpan}` : "✓ Accept";
-  const closeLabel     = timeoutOnClose ? `✕ Close ${countdownSpan}` : "✕ Close";
+  const acceptLabel    = hasTimed && !timeoutOnClose ? `${t('mqtt.n_accept')} ${countdownSpan}` : t('mqtt.n_accept');
+  const closeLabel     = timeoutOnClose ? `${t('mqtt.n_close')} ${countdownSpan}` : t('mqtt.n_close');
   const actionsHtml = doAcquire
     ? `<button class="mqtt-notif-btn mqtt-notif-accept">${acceptLabel}</button>
        <button class="mqtt-notif-btn mqtt-notif-close">${closeLabel}</button>`
@@ -5108,6 +5321,40 @@ pause`;
 // ══════════════════════════════════════════════
 
 let athleteRegistry = JSON.parse(localStorage.getItem("chronofit_athletes") || "[]");
+
+// ── Copia dell'elenco competitor sull'unità ──
+// L'elenco sta nel localStorage del browser: con un altro dispositivo, un altro indirizzo o i dati del sito
+// cancellati risulterebbe vuoto. Una copia in /athletes.json sull'unità lo ripristina da sola (si perde con fs.bin).
+let _athletesPushTimer = null;
+function pushAthletesToUnit(allowEmpty = false) {
+  if (!allowEmpty && athleteRegistry.length === 0) return;   // un elenco vuoto per errore non cancella la copia
+  clearTimeout(_athletesPushTimer);
+  _athletesPushTimer = setTimeout(() => {
+    fetch('/athletes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(athleteRegistry) })
+      .catch(() => { /* senza unità resta il solo localStorage */ });
+  }, 1500);
+}
+function saveAthletes() {
+  localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+  pushAthletesToUnit();
+}
+// All'avvio: elenco locale vuoto e copia sull'unità presente = ripristino; il contrario = prima copia sull'unità
+async function syncAthletesWithUnit() {
+  try {
+    const res = await fetch('/athletes', { cache: 'no-store' });
+    const unit = res.ok ? await res.json() : [];
+    if (!Array.isArray(unit)) return;
+    if (athleteRegistry.length === 0 && unit.length > 0) {
+      athleteRegistry = unit;
+      localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+      renderCompQuickList();
+      if (typeof showGeneralPopup === 'function') showGeneralPopup(t('athlete.restored', unit.length), '#455a64', 3500);
+    } else if (athleteRegistry.length > 0 && unit.length === 0) {
+      pushAthletesToUnit();
+    }
+  } catch (e) { /* unità non raggiungibile (pagina statica): resta il localStorage */ }
+}
+syncAthletesWithUnit();
 let assignedCompetitorSet = new Set(JSON.parse(localStorage.getItem("chronofit_assigned") || "[]"));
 let selectedAthlete  = null;
 let athleteTargetLine = null;
@@ -5343,15 +5590,15 @@ function updatePrintPreview() {
   const countEl   = document.getElementById('print-row-count');
 
   if (rows.length === 0) {
-    if (previewEl) previewEl.textContent = '(no rows in range)';
-    if (countEl)   countEl.textContent   = 'No rows in range';
+    if (previewEl) previewEl.textContent = t('print.no_rows_preview');
+    if (countEl)   countEl.textContent   = t('print.no_rows');
     return;
   }
 
   const lines = _buildPrintLines(rows.slice(0, 3));
-  const more  = rows.length > 3 ? `\n… (+${rows.length - 3} more)` : '';
+  const more  = rows.length > 3 ? '\n' + t('print.more', rows.length - 3) : '';
   if (previewEl) previewEl.textContent = lines.join('\n') + more;
-  if (countEl)   countEl.textContent   = `${rows.length} row${rows.length !== 1 ? 's' : ''} selected`;
+  if (countEl)   countEl.textContent   = rows.length === 1 ? t('print.row_selected') : t('print.rows_selected', rows.length);
 }
 
 const PRINT_ROW_FORMAT_DEFAULT = '#{index} {test} {competitor} {line} {delta}';
@@ -5386,6 +5633,7 @@ function _sendToPrinterAsync(text, cr) {
 /* Avvia il job di stampa (500 ms tra una riga e la successiva) */
 async function startPrintJob() {
   if (_printRunning) return;
+  if (!printingOn()) { printingOffNotice(); return; }
   _printSavePrefs();
   _printAbort   = false;
   _printRunning = true;
@@ -5542,8 +5790,11 @@ function resetAssignedAthletes() {
   renderAthleteList(document.getElementById("athlete-search").value);
 }
 
-function clearAthleteRegistry() {
+async function clearAthleteRegistry() {
+  // un tocco sbagliato non deve svuotare l'elenco
+  if (athleteRegistry.length && !(await uiConfirm(t('athlete.clear_confirm', athleteRegistry.length)))) return;
   athleteRegistry = [];
+  pushAthletesToUnit(true);   // cancellazione voluta: anche la copia sull'unità
   assignedCompetitorSet.clear();
   localStorage.removeItem("chronofit_athletes");
   localStorage.removeItem("chronofit_assigned");
@@ -5584,7 +5835,7 @@ function addAthleteManual() {
     athleteRegistry.push(entry);             // aggiunge al fondo
   }
 
-  localStorage.setItem(ATHLETES_KEY, JSON.stringify(athleteRegistry));
+  saveAthletes();
   renderCompQuickList(num);
 
   status.style.color = "green";
@@ -5600,89 +5851,356 @@ function addAthleteManual() {
   renderAthleteList(document.getElementById("athlete-search")?.value ?? "");
 }
 
-function loadAthleteRegistry() {
+// ── Caricamento del registro competitor (file CSV/JSON o testo incollato) ──
+// Qualunque sorgente passa dall'anteprima: si vede cosa verrebbe importato
+// (nuovi, aggiornati, scartati) e si sceglie se sostituire l'elenco o unirlo.
+
+// Il testo incollato (CSV o JSON) apre l'anteprima
+function previewAthleteText() {
   const raw = document.getElementById("athlete-json-input").value.trim();
   const status = document.getElementById("athlete-load-status");
+  status.textContent = "";
+  if (!raw) { status.style.color = "red"; status.textContent = "❌ " + t('csvprev.err_empty'); return; }
   try {
-    const data = JSON.parse(raw);
-    if (!Array.isArray(data)) throw new Error("Root must be a JSON array");
-    if (data.length > 0 && data[0].competitor === undefined)
-      throw new Error('Each entry must have a "competitor" field');
-    athleteRegistry = data;
-    localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
-    renderCompQuickList();
-    status.style.color = "green";
-    status.textContent = t('athlete.loaded', athleteRegistry.length);
-    renderAthleteList(document.getElementById("athlete-search").value);
+    openCsvPreview(analyzeAthleteText(raw), t('csvprev.pasted'), false);
   } catch (e) {
     status.style.color = "red";
     status.textContent = `❌ ${e.message}`;
   }
 }
 
-// ── Template CSV d'esempio per il caricamento dei competitors ──
-// Colonne: competitor (obbligatoria) + name, surname e quante altre si vuole (team, category…).
-function downloadAthleteTemplate() {
-  const rows = [
-    "competitor;name;surname;team;category",
-    "1;Mario;Rossi;ASD Firenze;Senior",
-    "2;Giulia;Bianchi;ASD Firenze;Junior",
-    "3;Luca;Verdi;Polisportiva Prato;Senior"
-  ];
-  const blob = new Blob(["\uFEFF" + rows.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8;" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "competitors_template.csv";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+// Compatibilità: il vecchio pulsante "Carica" apriva direttamente il JSON incollato
+function loadAthleteRegistry() { previewAthleteText(); }
+
+// ── Analisi del testo ──
+const CSV_COLUMN_ALIASES = {
+  competitor: ['competitor', 'pettorale', 'pett', 'bib', 'numero', 'num', 'nr', 'n', 'no', 'number', '#'],
+  name:       ['name', 'nome', 'firstname', 'first'],
+  surname:    ['surname', 'cognome', 'lastname', 'last'],
+  team:       ['team', 'squadra', 'societa', 'club', 'asd'],
+  category:   ['category', 'categoria', 'cat']
+};
+
+function csvColumnKey(header) {
+  const h = String(header).trim();
+  const norm = h.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9#]/g, '');
+  for (const key in CSV_COLUMN_ALIASES) if (CSV_COLUMN_ALIASES[key].includes(norm)) return key;
+  return h;
 }
 
-// ── CSV parser ──
-function parseCsvRegistry(text) {
-  const lines = text.trim().split(/\r?\n/).filter(l => l.trim() !== "");
-  if (lines.length < 2) throw new Error("CSV must have a header row and at least one data row");
+// Separatore più frequente nella prima riga: ";" (Excel italiano), "," o tabulazione
+function detectCsvDelimiter(line) {
+  const count = ch => line.split(ch).length - 1;
+  const cands = [[';', count(';')], ['\t', count('\t')], [',', count(',')]];
+  cands.sort((a, b) => b[1] - a[1]);
+  return cands[0][1] > 0 ? cands[0][0] : ';';
+}
 
-  const headers = lines[0].split(";").map(h => h.trim());
-  if (!headers.includes("competitor")) throw new Error('CSV must have a "competitor" column');
+// Divide una riga CSV rispettando le virgolette ("Rossi, Mario")
+function splitCsvLine(line, d) {
+  const out = [];
+  let cur = '', quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quoted) {
+      if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else quoted = false; }
+      else cur += c;
+    } else if (c === '"') quoted = true;
+    else if (c === d) { out.push(cur.trim()); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur.trim());
+  return out;
+}
 
-  return lines.slice(1).map(line => {
-    const values = line.split(";").map(v => v.trim());
-    const obj = {};
-    headers.forEach((h, i) => {
-      const v = values[i] ?? "";
-      obj[h] = h === "competitor" ? Number(v) : v;
+function finishAthleteAnalysis(data, format, skipped) {
+  if (data.length === 0) throw new Error(t('csvprev.err_none'));
+  const seen = new Set();
+  const duplicates = new Set();
+  data.forEach(a => { if (seen.has(a.competitor)) duplicates.add(a.competitor); seen.add(a.competitor); });
+  return { data, format, skipped, duplicates: [...duplicates].sort((a, b) => a - b) };
+}
+
+// CSV: con intestazione (colonna "competitor" o un suo equivalente: pettorale, bib…)
+// oppure, senza intestazione, pettorale;squadra;cognome;nome (le colonne dopo, es. la
+// nazionalità, si ignorano). Le righe senza pettorale numerico vengono scartate.
+function analyzeCsvRegistry(text) {
+  const lines = text.replace(/^﻿/, "").split(/\r?\n/)
+    .map((l, i) => ({ n: i + 1, text: l })).filter(l => l.text.trim() !== "");
+  if (lines.length < 1) throw new Error(t('csvprev.err_empty'));
+
+  const d = detectCsvDelimiter(lines[0].text);
+  const keys = splitCsvLine(lines[0].text, d).map(csvColumnKey);
+  const data = [];
+  const skipped = [];
+  let format;
+  if (keys.includes('competitor')) {
+    format = 'header';
+    if (lines.length < 2) throw new Error("CSV must have a header row and at least one data row");
+    lines.slice(1).forEach(l => {
+      const values = splitCsvLine(l.text, d);
+      const obj = {};
+      keys.forEach((k, i) => {
+        const v = values[i] ?? "";
+        if (k in obj && k !== 'competitor') return;   // intestazione ripetuta: vale la prima
+        obj[k] = k === "competitor" ? Number(v) : v;
+      });
+      if (!Number.isInteger(obj.competitor) || obj.competitor < 1) skipped.push(l);
+      else data.push(obj);
     });
-    return obj;
+  } else {
+    format = 'columns';
+    lines.forEach(l => {
+      const [num, team, surname, name] = splitCsvLine(l.text, d);
+      const competitor = Number(num);
+      if (!num || !Number.isInteger(competitor) || competitor < 1) { skipped.push(l); return; }
+      data.push({ competitor, name: name || "-", surname: surname || "-", team: team || "-" });
+    });
+  }
+  return finishAthleteAnalysis(data, format, skipped);
+}
+
+function analyzeJsonRegistry(text) {
+  const arr = JSON.parse(text);
+  if (!Array.isArray(arr)) throw new Error("Root must be a JSON array");
+  const data = [];
+  const skipped = [];
+  arr.forEach((a, i) => {
+    const competitor = Number(a && a.competitor);
+    if (!Number.isInteger(competitor) || competitor < 1) skipped.push({ n: i + 1 });
+    else data.push({ ...a, competitor });
+  });
+  return finishAthleteAnalysis(data, 'json', skipped);
+}
+
+// JSON se il testo comincia con [ o {, altrimenti CSV
+function analyzeAthleteText(text) {
+  const head = text.replace(/^﻿/, "").trimStart()[0];
+  return (head === '[' || head === '{') ? analyzeJsonRegistry(text) : analyzeCsvRegistry(text);
+}
+
+function parseCsvRegistry(text) {
+  return analyzeCsvRegistry(text).data;
+}
+
+// Testo del file: UTF-8 se valido, altrimenti Windows-1252 (i CSV salvati da
+// Excel), che altrimenti rovinerebbe le lettere accentate.
+function decodeCsvBuffer(buffer) {
+  try {
+    return { text: new TextDecoder('utf-8', { fatal: true }).decode(buffer), legacy: false };
+  } catch (e) {
+    return { text: new TextDecoder('windows-1252').decode(buffer), legacy: true };
+  }
+}
+
+// ── Anteprima dell'importazione ──
+const CSV_MODE_KEY = 'chronofit_csv_import_mode';
+let csvPreviewData = null;   // { result, fileName, legacy }
+
+function csvImportMode() {
+  return document.querySelector('input[name="csvImportMode"]:checked')?.value === 'merge' ? 'merge' : 'replace';
+}
+
+// Righe da importare: per un pettorale ripetuto vale la prima
+function csvUniqueRows(result) {
+  const seen = new Set();
+  return result.data.filter(a => { if (seen.has(a.competitor)) return false; seen.add(a.competitor); return true; });
+}
+
+// Stato di una riga rispetto all'elenco attuale: new | updated | same
+function csvRowStatus(a) {
+  const cur = athleteRegistry.find(x => Number(x.competitor) === a.competitor);
+  if (!cur) return 'new';
+  const same = Object.keys(a).every(k => k === 'competitor' || String(cur[k] ?? '') === String(a[k] ?? ''));
+  return same ? 'same' : 'updated';
+}
+
+function openCsvPreview(result, fileName, legacy) {
+  csvPreviewData = { result, fileName, legacy };
+  let saved = 'replace';
+  try { saved = localStorage.getItem(CSV_MODE_KEY) === 'merge' ? 'merge' : 'replace'; } catch (e) { /* default */ }
+  const radio = document.querySelector(`input[name="csvImportMode"][value="${saved}"]`);
+  if (radio) radio.checked = true;
+  document.getElementById('csvPreviewOverlay').style.display = 'flex';
+  updateCsvPreview();
+}
+
+// Ridisegna conteggi, avvisi e tabella secondo la modalità scelta
+function updateCsvPreview() {
+  if (!csvPreviewData) return;
+  const { result, fileName, legacy } = csvPreviewData;
+  const mode = csvImportMode();
+  try { localStorage.setItem(CSV_MODE_KEY, mode); } catch (e) { /* solo per questa sessione */ }
+
+  const fmtKey = { header: 'csvprev.fmt_header', columns: 'csvprev.fmt_columns', json: 'csvprev.fmt_json' }[result.format];
+  document.getElementById('csvPreviewSummary').textContent = t('csvprev.summary', result.data.length, fileName, t(fmtKey));
+
+  const rows = csvUniqueRows(result);
+  const status = rows.map(csvRowStatus);
+  const nNew = status.filter(s => s === 'new').length;
+  const nUpd = status.filter(s => s === 'updated').length;
+  const nSame = status.filter(s => s === 'same').length;
+  const incoming = new Set(rows.map(a => a.competitor));
+  const removed = athleteRegistry.filter(a => !incoming.has(Number(a.competitor))).length;
+
+  document.getElementById('csvModeReplaceLabel').textContent = t('csvprev.mode_replace', rows.length, athleteRegistry.length);
+  document.getElementById('csvModeMergeLabel').textContent = t('csvprev.mode_merge', nNew, nUpd, nSame);
+
+  const warns = [];
+  if (mode === 'replace' && athleteRegistry.length && removed) warns.push(t('csvprev.removed', removed));
+  if (result.skipped.length) {
+    const nums = result.skipped.slice(0, 8).map(l => l.n).join(', ') + (result.skipped.length > 8 ? '…' : '');
+    warns.push(t('csvprev.skipped', result.skipped.length, nums));
+  }
+  if (result.duplicates.length) warns.push(t('csvprev.duplicates', result.duplicates.join(', ')));
+  if (legacy) warns.push(t('csvprev.encoding'));
+  const ul = document.getElementById('csvPreviewWarnings');
+  ul.innerHTML = '';
+  warns.forEach(w => { const li = document.createElement('li'); li.textContent = w; ul.appendChild(li); });
+
+  const seen = new Set();
+  const dup = new Set(result.duplicates);
+  const tbody = document.getElementById('csvPreviewBody');
+  tbody.innerHTML = '';
+  result.data.forEach((a, i) => {
+    const repeated = seen.has(a.competitor);
+    seen.add(a.competitor);
+    const st = repeated ? 'dup' : csvRowStatus(a);
+    const tr = document.createElement('tr');
+    if (dup.has(a.competitor)) tr.className = 'csv-dup';
+    [String(i + 1), String(a.competitor), a.surname || '', a.name || '', a.team || ''].forEach(v => {
+      const td = document.createElement('td');
+      td.textContent = v && v !== '-' ? v : '';
+      tr.appendChild(td);
+    });
+    const td = document.createElement('td');
+    const badge = document.createElement('span');
+    badge.className = 'csv-st csv-st-' + st;
+    badge.textContent = t('csvprev.st_' + st);
+    td.appendChild(badge);
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  });
+  document.getElementById('csvImportBtn').textContent = t('csvprev.import_n', mode === 'merge' ? nNew + nUpd : rows.length);
+}
+
+function closeCsvPreview() {
+  csvPreviewData = null;
+  document.getElementById('csvPreviewOverlay').style.display = 'none';
+}
+
+function confirmCsvImport() {
+  if (!csvPreviewData) return;
+  const { result, fileName } = csvPreviewData;
+  const rows = csvUniqueRows(result);
+  const mode = csvImportMode();
+  if (mode === 'merge') {
+    rows.forEach(a => {
+      const idx = athleteRegistry.findIndex(x => Number(x.competitor) === a.competitor);
+      if (idx >= 0) athleteRegistry[idx] = { ...athleteRegistry[idx], ...a };
+      else athleteRegistry.push(a);
+    });
+  } else {
+    athleteRegistry = rows.slice();
+  }
+  saveAthletes();
+  renderCompQuickList();
+  const status = document.getElementById("athlete-load-status");
+  status.style.color = "green";
+  status.textContent = t('athlete.loaded_csv', athleteRegistry.length);
+  document.getElementById("athlete-json-input").value = "";
+  renderAthleteList(document.getElementById("athlete-search")?.value ?? "");
+  closeCsvPreview();
+}
+
+// ── Scelta o trascinamento del file ──
+// Un file non viene caricato subito: si apre l'anteprima da confermare.
+function handleAthleteFile(file) {
+  if (!file) return;
+  const status = document.getElementById("athlete-load-status");
+  status.textContent = "";
+  file.arrayBuffer().then(buffer => {
+    const { text, legacy } = decodeCsvBuffer(buffer);
+    openCsvPreview(analyzeAthleteText(text), file.name, legacy);
+  }).catch(err => {
+    status.style.color = "red";
+    status.textContent = `❌ ${err.message}`;
   });
 }
 
-// ── File picker ──
 document.getElementById("athlete-file-input").addEventListener("change", e => {
   const file = e.target.files[0];
-  if (!file) return;
-  const status = document.getElementById("athlete-load-status");
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const text = ev.target.result;
-    e.target.value = "";
-    if (file.name.toLowerCase().endsWith(".csv")) {
-      try {
-        const data = parseCsvRegistry(text);
-        athleteRegistry = data;
-        localStorage.setItem("chronofit_athletes", JSON.stringify(athleteRegistry));
-        renderCompQuickList();
-        status.style.color = "green";
-        status.textContent = t('athlete.loaded_csv', athleteRegistry.length);
-        renderAthleteList(document.getElementById("athlete-search").value);
-      } catch (err) {
-        status.style.color = "red";
-        status.textContent = `❌ ${err.message}`;
-      }
-    } else {
-      document.getElementById("athlete-json-input").value = text;
-    }
-  };
-  reader.readAsText(file);
+  e.target.value = "";
+  handleAthleteFile(file);
 });
+
+(function () {
+  const zone = document.getElementById("athlete-drop");
+  if (!zone) return;
+  ['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove('drag'); }));
+  zone.addEventListener('drop', e => handleAthleteFile(e.dataTransfer?.files?.[0]));
+})();
+
+
+// ── IP della Main come station, nella navbar accanto all'icona disciplina ────
+// Mostra rete (SSID) e IP. Visibile solo quando la Main è collegata a una rete WiFi esterna (stato w = 2/3
+// nel messaggio orario): l'IP si chiede a /wifiCredential al passaggio a
+// "connesso" e, finché non è valido, al più ogni 5 s. Un tocco lo copia.
+let _staIpNav = '';
+let _staSsidNav = '';
+// Nome della rete (📶, accorciato con … se lungo) e IP
+function renderStaIpNav(el) {
+  el.innerHTML = '';
+  if (_staSsidNav) {
+    const ss = document.createElement('span');
+    ss.className = 'sta-ssid';
+    ss.textContent = '📶 ' + _staSsidNav;
+    el.appendChild(ss);
+  }
+  const ip = document.createElement('span');
+  ip.className = 'sta-ip';
+  ip.textContent = _staIpNav;
+  el.appendChild(ip);
+}
+let _staIpNavFetchMs = 0;
+let _staIpNavWasConnected = false;
+function updateStaIpNav(wifiStatus) {
+  const el = document.getElementById('sta-ip-nav');
+  if (!el) return;
+  const connected = wifiStatus == WIFI_STATUS_CONNECTED || wifiStatus == WIFI_STATUS_INTERNET_OK;
+  if (!connected) {
+    _staIpNavWasConnected = false;
+    _staIpNav = '';
+    _staSsidNav = '';
+    el.style.display = 'none';
+    return;
+  }
+  const now = Date.now();
+  const justConnected = !_staIpNavWasConnected;
+  _staIpNavWasConnected = true;
+  if (!justConnected && _staIpNav) return;
+  if (!justConnected && now - _staIpNavFetchMs < 5000) return;
+  _staIpNavFetchMs = now;
+  fetch('/wifiCredential')
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+      if (!data || !data.staConnected || !data.staIp || data.staIp === '0.0.0.0') return;
+      _staIpNav = data.staIp;
+      _staSsidNav = data.ssid || '';
+      renderStaIpNav(el);
+      el.title = (_staSsidNav ? _staSsidNav + ' · ' : '') + data.staIp + ' — ' + t('wifi.copy_ip_hint');
+      if (_staIpNavWasConnected) el.style.display = '';
+    })
+    .catch(() => {});
+}
+
+let _staIpNavCopyTimer = null;
+async function copyStaIpNav() {
+  const el = document.getElementById('sta-ip-nav');
+  if (!el || !_staIpNav) return;
+  const ok = await copyTextToClipboard(_staIpNav);
+  el.textContent = ok ? '✔ ' + t('wifi.ip_copied') : t('wifi.copy_failed');
+  clearTimeout(_staIpNavCopyTimer);
+  _staIpNavCopyTimer = setTimeout(() => renderStaIpNav(el), 1500);
+}

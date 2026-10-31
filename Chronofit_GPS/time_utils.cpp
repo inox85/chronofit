@@ -13,6 +13,7 @@
 #include "params.h"
 #include "diagnostic.h"
 #include "settings.h"
+#include "license.h"
 #include <WiFi.h>
 #include "RTC.h"
 
@@ -152,6 +153,9 @@ void setExtimatedDriftParams(int us){
 }
 
 void checkPointRoutine(int i, bool manual) {
+  if (!licenseActive()) return;   // licenza esaurita: nessun passaggio
+  if (i < 4) licenseCountPassage();   // un passaggio vero conta subito l'accensione in corso
+
 
   PreciseTime t = getPreciseSensorTime(i);
   int us_drift = t.us_drift;
@@ -204,10 +208,14 @@ void checkPointRoutine(int i, bool manual) {
   if (checkpoint.containsKey(LINE_MODE_FIELD))   ordered[LINE_MODE_FIELD]   = checkpoint[LINE_MODE_FIELD];
   ordered[CANCELLED_FIELD] = checkpoint[CANCELLED_FIELD];
   ordered[EDITED_FIELD]    = checkpoint[EDITED_FIELD];
+  // Modalità elapsed, prima del primo start dall'accensione: il tempo trascorso
+  // non ha un riferimento (es. passaggio di una linea disabilitata o non di start),
+  // la console lo mostra come "prima dello start". Nelle altre modalità l'ora è reale.
+  if (syncMode == MODE_ELAPSED_TIME && syncReference == 0) ordered["ps"] = 1;
 
   // Disattivazione dopo il primo passaggio: la linea resta disattivata finché
-  // l'operatore non la riabilita dalla console: i passaggi successivi restano in
-  // sessione come righe disabilitate, senza beep né start del tempo. Lo stato della linea va
+  // l'operatore non la riabilita dalla console. I passaggi successivi finiscono
+  // comunque in sessione, come righe disabilitate. Lo stato della linea va
   // inviato prima del passaggio: la console, quando riceve il passaggio,
   // azzera il competitor e rimanda anche lo stato del pulsante di abilitazione,
   // che deve essere già spento, altrimenti riabiliterebbe la linea.
@@ -238,6 +246,7 @@ void checkPointRoutine(int i, bool manual) {
   char mqttPayload[384];
   serializeJson(ordered, mqttPayload, sizeof(mqttPayload));
   mqttPublishCheckpoint(mqttPayload);
+
 
 }
 
@@ -477,7 +486,7 @@ void handleLineSync() {
 }
 
 void broadcastAsync(const String& message) {
-  ws.cleanupClients();  // rimuove client chiusi
+  ws.cleanupClients(WS_MAX_CLIENTS);  // rimuove client chiusi
 
   for (auto& client : ws.getClients()) {
     client.text(message);  // invio asincrono, non blocca
@@ -568,7 +577,7 @@ void broadcastTime() {
 
   char buf[256];
   serializeJson(doc, buf, sizeof(buf));
-  ws.cleanupClients();
+  ws.cleanupClients(WS_MAX_CLIENTS);
   ws.textAll(buf);
   //wifiTxActivity();
 }

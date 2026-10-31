@@ -72,15 +72,25 @@ extern String lineDevice[6];   // testo libero (default: "FPC 102" / "Non gestit
 extern int lineMode[6];     // 0=auto   | 1=manuale
 extern int competitors[6];
 extern unsigned long delays[6];
+// Ritardo (lockout) di ogni linea, salvato in NVS (ldelay_<linea>, linee 1-4).
+// Default 0, come prima: finché l'operatore non lo imposta non cambia nulla.
+constexpr unsigned long LINE_DELAY_DEFAULT_MS = 0;
+void lineDelaysLoad();
+void lineDelaySet(int idx, long ms);   // idx 0..5; salva in NVS solo se cambia
 extern int lineEnabled[6];
 extern int elapsedStartLine;
-extern int lineDisableAfterPass;   // 1 = la linea si disattiva dopo il primo passaggio (NVS line_once)
+// Massimo di client WebSocket contemporanei (console, viste, stream…): oltre, cleanupClients()
+// chiude i più vecchi. Ogni client costa un socket TCP e le sue code di messaggi.
+constexpr uint16_t WS_MAX_CLIENTS = 8;   // = predefinito della libreria (ESP32)
+extern int lineDisableAfterPass;
 extern volatile unsigned long lastSensorsSignal[6];
 extern int sensorsPins[6];
 extern volatile  bool lastSensorState[6];
 extern volatile bool sensorTriggered[6];
+// Passaggio manuale dalla console (tocco sul numero di linea, Start): conta
+// come valido anche con la linea disabilitata
+extern volatile bool sensorManual[6];
 extern volatile uint64_t sensorTime[6];
-extern volatile bool sensorManual[6];   // passaggio manuale dalla console: conta anche su linea disabilitata
 
 extern volatile int syncTestRequested;
 

@@ -18,7 +18,7 @@
        qui la card deve riempire l'intero schermo. -->
   <style>
     #view_container {
-      height: 100vh;
+      height: calc(100 * var(--zvh, 1vh));
     }
     #view_container .card.table-card {
       max-width: none;
@@ -109,7 +109,7 @@
        principale): linee usate per le due coppie partenza/arrivo + colonna
        di ordinamento delle righe risultanti. -->
   <div id="netTimesSettingsOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:85vh;">
+    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:calc(85 * var(--zvh, 1vh));">
 
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="lines" data-i18n="table.tab_lines" onclick="switchNetTimesSettingsTab('lines')">👁 Lines</button>
@@ -222,5 +222,6 @@
   </script>
 
   <script src="/view_fullscreen.js"></script>
+  <script src="/zoom_controls.js"></script>
 </body>
 </html>

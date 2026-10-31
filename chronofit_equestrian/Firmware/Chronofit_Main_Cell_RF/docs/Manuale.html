@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Chronofit RF – Manuale d'uso</title>
+<style>
+  @font-face { font-family: 'Nunito'; src: url('../data/Nunito-Bold.woff2') format('woff2'); font-weight: bold; }
+  :root { --primary: #800020; --text: #333333; --muted: #666; --line: #e3d6d9; --tint: #fbf5f6;
+          --ok: #2e7d32; --warn: #ef6c00; --err: #c62828; --accent: #1565c0; }
+
+  /* Pagina A4: intestazione e piè di pagina fissi (ripetuti su ogni pagina),
+     spazio riservato con thead/tfoot della tabella di impaginazione. */
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, Roboto, sans-serif; color: var(--text); font-size: 10pt; line-height: 1.45;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .pg-header { position: fixed; top: 0; left: 0; right: 0; height: 30mm; padding: 11mm 16mm 0; background: white; }
+  .pg-header .bar { display: flex; align-items: flex-end; justify-content: space-between;
+                    padding-bottom: 3mm; border-bottom: 1mm solid var(--primary); }
+  .pg-header img { height: 9mm; display: block; }
+  .pg-header .t { text-align: right; font-family: 'Nunito', sans-serif; font-weight: bold; line-height: 1.15; }
+  .pg-header .t b { color: var(--primary); font-size: 12pt; display: block; }
+  .pg-header .t span { color: var(--muted); font-size: 8.5pt; }
+
+  .pg-footer { position: fixed; bottom: 14mm; left: 16mm; right: 16mm; height: 9mm; background: var(--primary); color: white;
+               display: flex; align-items: center; justify-content: space-between; padding: 0 4mm;
+               font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 8pt; }
+
+  table.layout { width: 100%; border-collapse: collapse; }
+  table.layout > thead > tr > td { height: 36mm; padding: 0; }
+  table.layout > tfoot > tr > td { height: 34mm; padding: 0; }
+  table.layout > tbody > tr > td { padding: 0 16mm; }
+
+  /* copertina dentro la prima pagina */
+  .cover { padding: 4mm 0 2mm; }
+  .cover h1 { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); font-size: 24pt; margin: 0; line-height: 1.1; }
+  .cover .sub { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--muted); font-size: 12pt; margin: 1.5mm 0 6mm; }
+  .toc { columns: 2; column-gap: 8mm; background: var(--tint); border-left: 1mm solid var(--primary); padding: 3mm 5mm; margin-bottom: 6mm; }
+  .toc h3 { column-span: all; margin: 0 0 1.5mm; font-family: 'Nunito', sans-serif; color: var(--primary); font-size: 10.5pt; }
+  .toc ol { margin: 0; padding-left: 5.5mm; }
+  .toc li { margin: 0.6mm 0; break-inside: avoid; }
+  .toc li::marker { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); }
+
+  section { margin-bottom: 6mm; }
+  h2 { font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 12.5pt; color: white; background: var(--primary);
+       margin: 0 0 2.5mm; padding: 1.4mm 3.5mm; break-after: avoid; }
+  h3 { font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 10.5pt; color: var(--primary);
+       margin: 4mm 0 1.5mm; break-after: avoid; }
+  p { margin: 0 0 2mm; }
+  ul, ol { margin: 0 0 2.5mm; padding-left: 5.5mm; }
+  li { margin: 0.8mm 0; }
+  b, strong { color: #000; }
+  code { font-family: Consolas, monospace; font-size: 9pt; background: #f1f1f1; padding: 0 1.2mm; }
+
+  table.t { width: 100%; border-collapse: collapse; margin: 1mm 0 3mm; font-size: 9.3pt; }
+  table.t th { font-family: 'Nunito', sans-serif; font-weight: bold; text-align: left; color: var(--primary);
+               border-bottom: 0.5mm solid var(--primary); padding: 1.2mm 2mm; }
+  table.t td { border-bottom: 0.25mm solid var(--line); padding: 1.3mm 2mm; vertical-align: top; }
+  table.t { display: inline-table; vertical-align: top; }
+  table.t tr { break-inside: avoid; }
+  table.t td:first-child { font-family: 'Nunito', sans-serif; font-weight: bold; color: #000; }
+  table.t td.n { width: 34%; }
+
+  ol.steps { counter-reset: s; list-style: none; padding-left: 0; }
+  ol.steps > li { counter-increment: s; position: relative; padding-left: 8mm; margin: 1.8mm 0; break-inside: avoid; }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 5.5mm; height: 5.5mm; border-radius: 50%;
+                          background: var(--primary); color: white; font-family: 'Nunito', sans-serif; font-weight: bold;
+                          font-size: 8.5pt; text-align: center; line-height: 5.5mm; }
+
+  .box-note, .box-tip, .box-warn { padding: 2mm 3.5mm; margin: 2mm 0 3mm; font-size: 9.3pt; break-inside: avoid; }
+  .box-note { background: #eef4fc; border-left: 1mm solid var(--accent); }
+  .box-tip  { background: #edf7ee; border-left: 1mm solid var(--ok); }
+  .box-warn { background: #fff4e5; border-left: 1mm solid var(--warn); }
+
+  .diagram { display: flex; align-items: center; justify-content: center; gap: 3mm; margin: 3mm 0; break-inside: avoid; }
+  .diagram .node { border: 0.5mm solid var(--primary); padding: 2mm 3mm; text-align: center; font-size: 8.8pt; background: white;
+                   box-shadow: 0 0.4mm 1.2mm rgba(0,0,0,.15); }
+  .diagram .node b { display: block; font-family: 'Nunito', sans-serif; color: var(--primary); font-size: 10pt; }
+  .diagram .arrow { text-align: center; color: var(--muted); font-size: 8.5pt; font-family: 'Nunito', sans-serif; font-weight: bold; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .cardlet { box-shadow: 0 0.4mm 1.4mm rgba(0,0,0,0.18); break-inside: avoid; }
+  .cardlet h4 { margin: 0; padding: 1.2mm 3mm; font-family: 'Nunito', sans-serif; background: var(--tint); color: var(--primary);
+                border-bottom: 0.4mm solid var(--primary); font-size: 10pt; }
+  .cardlet table.t { margin: 0; font-size: 8.8pt; }
+  .cardlet table.t td:first-child { width: 22mm; }
+
+  .badge { display: inline-block; font-size: 8pt; font-weight: bold; padding: 0 2mm; color: white; font-family: 'Nunito', sans-serif; }
+  .b-ok { background: var(--ok); } .b-grey { background: #9e9e9e; } .b-err { background: var(--err); }
+  .bars { display: inline-flex; gap: 0.5mm; align-items: flex-end; height: 3.5mm; vertical-align: -0.5mm; margin-right: 1mm; }
+  .bars i { width: 1mm; background: #cfd4da; }
+  .bars i:nth-child(1){height:1.2mm} .bars i:nth-child(2){height:2mm} .bars i:nth-child(3){height:2.8mm} .bars i:nth-child(4){height:3.5mm}
+  .g4 i { background: var(--ok); } .g3 i:nth-child(-n+3) { background: var(--ok); } .g2 i:nth-child(-n+2) { background: var(--warn); } .g1 i:nth-child(1) { background: var(--err); }
+
+  pre { background: #f4f4f4; padding: 2.5mm 3.5mm; font-size: 8.8pt; margin: 1mm 0 2.5mm; break-inside: avoid; }
+
+  .wifi { display: grid; grid-template-columns: auto 1fr; gap: 0.8mm 4mm; border: 0.4mm dashed var(--primary);
+          padding: 2.5mm 4mm; background: var(--tint); margin: 2mm 0 3mm; break-inside: avoid; }
+  .wifi span:nth-child(odd) { font-family: 'Nunito', sans-serif; font-weight: bold; color: var(--primary); }
+  .fill { border-bottom: 0.3mm solid #999; display: inline-block; min-width: 30mm; }
+
+  .pb { break-before: page; }
+  .keep { display: inline-block; width: 100%; vertical-align: top; }
+
+  @media screen {
+    body { background: #ccc; }
+    .screen-wrap { width: 210mm; margin: 10mm auto; background: white; box-shadow: 0 2px 12px rgba(0,0,0,.25); position: relative; }
+    .pg-header { position: sticky; z-index: 2; }
+    .pg-footer { position: static; margin: 0 16mm 14mm; }
+    table.layout > thead > tr > td { height: 6mm; }
+    table.layout > tfoot > tr > td { height: 6mm; }
+  }
+</style>
+</head>
+<body>
+<div class="screen-wrap">
+
+<div class="pg-header">
+  <div class="bar">
+    <img src="../data/logo-black.png" alt="chronofit">
+    <div class="t"><b>Manuale d'uso</b><span>Main RF e fotocellule radio</span></div>
+  </div>
+</div>
+
+<table class="layout">
+<thead><tr><td></td></tr></thead>
+<tfoot><tr><td></td></tr></tfoot>
+<tbody><tr><td>
+
+  <div class="cover">
+    <h1>Manuale d'uso</h1>
+    <div class="sub">Chronofit Main RF e fotocellule radio Cell RF</div>
+    <div class="toc">
+      <h3>Indice</h3>
+      <ol>
+        <li>Il sistema</li>
+        <li>Accensione, batteria e ricarica</li>
+        <li>Collegarsi alla Main</li>
+        <li>Apertura</li>
+        <li>Gestione transiti (linee)</li>
+        <li>Il cronometro</li>
+        <li>Gara di salto ostacoli</li>
+        <li>Lista passaggi</li>
+        <li>Registro atleti e file CSV</li>
+        <li>Fotocellule radio</li>
+        <li>Significato dei LED</li>
+        <li>Viste per secondo schermo</li>
+        <li>Impostazioni e barra superiore</li>
+        <li>Aggiornamento firmware</li>
+        <li>Risoluzione dei problemi</li>
+      </ol>
+    </div>
+  </div>
+
+  <section>
+    <h2>1. Il sistema</h2>
+    <p>Il sistema è composto da una <b>Main</b>, l'unità centrale, e da una o più <b>Cell RF</b>, le fotocellule remote.
+    La Main crea una propria rete WiFi e ospita la <b>console</b>, che si apre dal browser di un telefono, tablet o PC senza installare nulla.</p>
+    <div class="diagram">
+      <div class="node"><b>Telefono / PC</b>console nel browser</div>
+      <div class="arrow">WiFi<br>⟷</div>
+      <div class="node"><b>Main RF</b>console · fotocellula · pedana</div>
+      <div class="arrow">radio<br>⟷</div>
+      <div class="node"><b>Cell RF</b>fotocellule remote (fino a 8)</div>
+    </div>
+    <ul>
+      <li><b>Main</b>: registra i tempi, ha una fotocellula e un ingresso per la pedana, salva la sessione e mostra la console.</li>
+      <li><b>Cell RF</b>: rileva il passaggio, lo timbra con precisione al microsecondo e lo invia via radio alla Main. Si configura solo dalla console della Main.</li>
+      <li>Ogni passaggio viene assegnato a una <b>linea</b> (da 1 a 4): per esempio linea 1 partenza, linea 2 arrivo.</li>
+    </ul>
+    <div class="box-note">La precisione dei tempi delle celle è inferiore al millisecondo. Se la radio perde un pacchetto, il passaggio resta in coda nella cella e viene reinviato (entro 5 minuti): non va perso.</div>
+  </section>
+
+  <section>
+    <h2>2. Accensione, batteria e ricarica</h2>
+    <table class="t">
+      <tr><th>Operazione</th><th>Come</th></tr>
+      <tr><td class="n">Accendere</td><td>Tieni premuto il pulsante finché i 4 LED si accendono in sequenza.</td></tr>
+      <tr><td class="n">Spegnere</td><td>Tieni premuto il pulsante: i LED si spengono uno ogni mezzo secondo. Quando sono tutti spenti la scheda si spegne con tre beep. Se rilasci prima, l'operazione si annulla. Con l'alimentatore USB collegato la scheda non si spegne: dopo i tre beep resta accesa.</td></tr>
+      <tr><td class="n">Vedere la carica</td><td>Premi brevemente il pulsante: per 3 secondi i LED mostrano la carica come una barra. 4 LED = oltre il 75 %, 3 = oltre il 50 %, 2 = oltre il 25 %, 1 lampeggiante = sotto il 25 %.</td></tr>
+      <tr><td class="n">Ricaricare</td><td>Collega l'alimentatore USB. LED4 lampeggia durante la carica e resta acceso a carica completa.</td></tr>
+      <tr><td class="n">Batteria scarica</td><td>Sotto circa 2,9 V tutti i LED lampeggiano velocissimi e la scheda si spegne da sola. Prima, sotto il 30 % (circa 3,55 V), Main e celle fanno 3 beep brevi ogni minuto.</td></tr>
+    </table>
+    <p>La carica della batteria di Main e celle compare in console, in <b>Fotocellule</b>, come percentuale e tensione: 3,9 V o più = 100 %, 3,1 V = 0 %. La stessa percentuale compare anche accanto all'icona del segnale, sotto il numero di ogni linea, per la cella della linea o per la Main se la linea usa un suo ingresso: passandoci sopra con il mouse, o toccandola, si vede il tempo residuo stimato. La stima è calcolata dalla Main dal calo della tensione e diventa disponibile dopo circa un minuto se la Main conosce già il consumo medio, altrimenti dopo una decina di minuti di funzionamento; in carica è sospesa.
+    La percentuale è <b style="color:var(--ok)">verde</b>, <b style="color:var(--warn)">arancione</b> sotto il 35 % e <b style="color:var(--err)">rossa</b> sotto il 15 %.
+    Mentre la Main è in carica è <b style="color:var(--accent)">blu</b> con ⚡ e risulta più alta del reale.
+    La lettura viene tarata in fabbrica o dall'assistenza: se ti sembra sbagliata, contatta l'assistenza.</p>
+  </section>
+
+  <section>
+    <h2>3. Collegarsi alla Main</h2>
+    <ol class="steps">
+      <li>Accendi la Main.</li>
+      <li>Sul telefono o PC collegati alla rete WiFi <b>ChronofitMainCellRF_…</b>. La password di fabbrica coincide con la parte del nome dopo il trattino basso (l'identificativo della scheda).</li>
+      <li>Apri il browser all'indirizzo <b>http://192.168.10.1</b>.</li>
+    </ol>
+    <div class="wifi">
+      <span>Rete WiFi</span><span style="white-space:nowrap">ChronofitMainCellRF_<span class="fill"></span></span>
+      <span>Password</span><span>la parte del nome dopo «_»</span>
+      <span>Indirizzo</span><span>http://192.168.10.1</span>
+    </div>
+    <div class="box-tip">Possono collegarsi più dispositivi insieme: per esempio un telefono come console e un PC con una vista a schermo intero. La card <b>Utilità</b> mostra quanti client sono collegati (🔗).</div>
+    <div class="keep">
+    <h3>Collegare la Main a una rete WiFi esterna</h3>
+    <p>Facoltativo: serve per usare la console dalla rete WiFi del campo o per avere Internet. La rete della Main resta comunque attiva.</p>
+    <ol class="steps">
+      <li>Tocca <b>🌍</b> nella card <b>Utilità</b>: si apre <b>Impostazioni → WiFi</b>.</li>
+      <li>Premi <b>🔍 Cerca reti</b> e scegli la rete dall'elenco (oppure scrivi il nome nel campo SSID).</li>
+      <li>Scrivi la password e premi <b>Connetti</b>.</li>
+      <li>A connessione riuscita l'indirizzo IP ricevuto compare in verde nella finestra WiFi; nella <b>barra in alto</b>, compaiono il nome della rete (📶) e l'IP.
+          Da qualunque dispositivo collegato a quella rete apri <b>http://&lt;IP&gt;</b>. Un tocco sull'IP lo copia negli appunti.</li>
+    </ol>
+    <table class="t">
+      <tr><th>Icona 🌍 in Utilità</th><th>Significato</th></tr>
+      <tr><td class="n">🟢</td><td>Connessa alla rete esterna, Internet raggiungibile</td></tr>
+      <tr><td class="n">🟡</td><td>Connessa alla rete esterna, senza Internet</td></tr>
+      <tr><td class="n">🔄 / 🔁</td><td>Connessione / riconnessione in corso (durante la riconnessione compare <b>Stop</b>)</td></tr>
+      <tr><td class="n">🔴</td><td>Non connessa a una rete esterna</td></tr>
+    </table>
+    </div>
+    <p>Per scollegarla usa <b>⛔ Disconnetti</b> nella stessa finestra. La rete scelta resta salvata: a ogni accensione la Main si ricollega da sola. Dopo <b>Disconnetti</b> invece resta scollegata, anche ai riavvii successivi, finché non premi di nuovo <b>Connetti</b>.</p>
+    <div class="box-warn">Quando la Main si collega alla rete esterna, la sua rete WiFi passa sul canale di quella rete: telefoni e PC collegati alla Main perdono la connessione per qualche secondo e devono ricollegarsi. Conviene collegarla prima della gara, non durante. Imposta il router su un canale da 1 a 11: i canali 12 e 13 disturbano la radio delle fotocellule (la console lo segnala).</div>
+  </section>
+
+  <section>
+    <div class="keep"><h2>4. Apertura</h2>
+    <p>La console è dedicata all'<b>equitazione</b>: all'apertura è già pronta, con la lista passaggi che mostra linea, concorrente, prova, nome, cognome, tempo trascorso e Δ (tempi al centesimo). Non c'è una disciplina da scegliere.</p>
+    <p>Le colonne restano personalizzabili, sia come visibilità sia come ordine (tocca l'intestazione della tabella).</p>
+    <p>Le bandierine in alto cambiano la lingua (italiano o inglese).</p>
+    </div>
+    <h3>Licenza</h3>
+    <p>La Main funziona con una licenza a numero di accensioni: ogni accensione consuma un utilizzo, ma solo se la Main resta accesa almeno 90 secondi o registra un passaggio: riavvii, programmazione e aggiornamenti non lo consumano. Gli utilizzi residui si vedono nelle <b>Informazioni</b> (tocca il logo in alto). Sotto i <b>20 utilizzi</b> compare <b>🔑</b> con il numero nella barra in alto e, a ogni apertura della console, un avviso: contatta il produttore per avere per tempo un nuovo codice. A utilizzi esauriti la Main non registra passaggi finché non inserisci il <b>codice di sblocco</b> nella finestra della licenza; al produttore comunica il <b>codice dispositivo</b> che compare nella stessa finestra.</p>
+  </section>
+
+  <section>
+    <h2>5. Gestione transiti (linee)</h2>
+    <p>La card <b>Gestione transiti</b> ha una riga per ogni linea (1–4):</p>
+    <table class="t">
+      <tr><th>Elemento</th><th>Cosa fa</th></tr>
+      <tr><td class="n">Numero di linea<br>(riquadro colorato)</td><td><b>Tocco</b>: registra un passaggio manuale su quella linea, con l'ora del tocco.<br><b>Pressione lunga (1 s)</b>: registra un passaggio "fuori pressostato" (linea F.P.) per il concorrente della linea.<br>Sotto il numero compare il <b>segnale</b> della fotocellula radio assegnata alla linea.</td></tr>
+      <tr><td class="n">Tipo</td><td>Tocca per aprire le impostazioni della linea: nome (campo <b>Prova</b>, per esempio "Barriera 1"), rilevamento <b>Auto/Man.</b> (colonna <b>Ril.</b>), <b>Ritardo</b> in millisecondi (colonna <b>ms</b>).</td></tr>
+      <tr><td class="n">Concorrente</td><td>Il numero del concorrente atteso su quella linea, che viene assegnato al prossimo passaggio. <b>Pressione lunga</b>: apre la scheda <b>Carica</b> del registro atleti.</td></tr>
+      <tr><td class="n">✓</td><td>Abilita o disabilita la linea. Una linea disabilitata non suona e non fa partire il tempo, ma registra i passaggi come righe disabilitate: le vedi attivando <b>Mostra righe linee disabilitate</b> nelle impostazioni della tabella. Un passaggio arrivato prima del primo start dall'accensione compare come "prima dello start". Il tocco sul numero della linea (e il pulsante <b>Start</b>) registra invece un passaggio normale anche con la linea disabilitata, e può far partire il tempo.</td></tr>
+    </table>
+    <div class="box-note">Il <b>Ritardo</b> (colonna <b>ms</b>) è il lockout della linea: dopo un passaggio, per quel tempo, eventuali altri fronti sulla stessa linea vengono ignorati. Vale per gli ingressi della Main e per le fotocellule radio assegnate alla linea (fino a 60 s). Il valore resta salvato sulla Main anche dopo lo spegnimento; di fabbrica è 200 ms.</div>
+    <h3>Scorciatoie da tastiera</h3>
+    <p>Con una tastiera collegata (non mentre scrivi in un campo, con un popup aperto o con Ctrl/Alt/Cmd premuti):</p>
+    <table class="t">
+      <tr><th>Tasto</th><th>Cosa fa</th></tr>
+      <tr><td class="n">Z X C V</td><td>Passaggio manuale sulle linee <b>1, 2, 3, 4</b>, come il tocco sul numero della linea (la cella lampeggia). Vale anche con la linea disabilitata. Funziona con Maiusc o maiuscole bloccate, e il tasto tenuto premuto non ripete il passaggio.</td></tr>
+      <tr><td class="n">1 – 4</td><td>Abilita o disabilita la linea corrispondente (come il pulsante ✓).</td></tr>
+    </table>
+    <p>La card <b>Attesi</b> elenca gli atleti del registro non ancora transitati. Tocca un nome per metterlo sulla linea attiva; con l'icona ✏️ accanto al titolo apri il registro per aggiungere o modificare un competitor.</p>
+  </section>
+
+  <section>
+    <h2>6. Il cronometro</h2>
+    <p>La Main lavora a <b>tempo trascorso</b>: dopo l'accensione o un reset l'orologio resta a <code>00:00:00.000</code> e parte con il <b>primo passaggio della linea di start</b>. La linea di start si sceglie nel popup delle linee (<b>Linea di start (tempo trascorso)</b>): con <b>Qualsiasi linea</b> vale il primo passaggio di una linea abilitata. Il passaggio della barriera su una linea disabilitata non fa mai partire il tempo (il tocco sul numero e i tasti <code>Z X C V</code> sì). Con <b>Azzera il tempo trascorso con un competitor digitato</b> e/o <b>… scelto dall'elenco</b> l'orologio torna in attesa dello start quando assegni un competitor in quel modo (scritto nel campo o toccato nell'elenco Attesi/registro).</p>
+    <ul>
+      <li><b>Start</b>: registra un passaggio manuale sulla linea di start (la 1 se è impostato «Qualsiasi linea»). Se il cronometro è in attesa lo avvia. A tempo avviato il pulsante diventa <b>Stop</b> e registra un altro passaggio sulla linea di start (la 1 se è impostato «Qualsiasi linea»). Con la <b>gara assistita</b> accesa vale la linea di partenza della gara.</li>
+      <li><b>Reset</b>: riporta il cronometro in attesa del prossimo passaggio. I tempi già registrati restano.</li>
+    </ul>
+    <div class="box-warn">Dopo un riavvio della Main il cronometro riparte da zero. Se riavvii a metà gara, i nuovi tempi non sono confrontabili con quelli registrati prima.</div>
+  </section>
+
+  <section>
+    <h2>7. Gara di salto ostacoli</h2>
+    <p>È una funzione facoltativa, spenta di default: finché è spenta la Main cronometra come sempre (sezioni 5, 6 e 8). Si accende da ⚙️ → <b>Dispositivo</b> → <b>Gara assistita</b>, e si spegne allo stesso modo quando vuoi tornare al cronometraggio standard; i passaggi restano registrati in entrambi i casi.</p>
+    <p>Con la gara assistita accesa, in cima alla console c'è il pannello <b>Percorso</b>: la Main segue il turno di ogni cavaliere, fa il conto alla rovescia dopo la campana, prende partenza e arrivo dalle fotocellule e <b>calcola da sola penalità e classifica</b>. Accanto c'è la <b>Classifica</b>; con l'interruttore <b>Classifica / Passaggi</b> scegli se vedere sotto anche la lista passaggi.</p>
+    <h3>Prima della gara</h3>
+    <p>Tocca ⚙️ nel pannello (<b>Gara e regolamento</b>):</p>
+    <ul>
+      <li><b>Gara</b>: tipo di gara (Tabella A a tempo, con barrage, due fasi, senza cronometro, Tabella C), linea di partenza e linea di arrivo (possono essere la stessa), lunghezza del percorso e velocità. Il <b>tempo concesso</b> si calcola da solo; puoi anche scriverlo a mano. Nelle Tabelle A il tempo limite è il doppio del concesso; nella Tabella C non c'è tempo limite né penalità di tempo (gli errori sono secondi aggiunti).</li>
+      <li><b>Regolamento</b>: per ogni tipo di gara, conto alla rovescia dopo la campana (45 s), partenza automatica allo scadere, penalità per il superamento del tempo concesso (nelle Tabelle A: 1 punto ogni 4 s iniziati), errori con le loro penalità. <b>Gruppo</b> ed <b>Elimina a</b> eliminano per esempio al 2° rifiuto; <b>Elimina</b> elimina subito (caduta). Con <b>Duplica</b> crei una variante per il tuo regolamento. Il documento <b>Gare di equitazione</b> (Informazioni → 🐎 Gare di equitazione, e in PDF) descrive in dettaglio tipi di gara, regolamento, classifica e correzioni.</li>
+    </ul>
+    <h3>Gare a due fasi consecutive</h3>
+    <p>Nel tipo di gara <b>Due fasi</b> il cavaliere non si ferma tra le fasi: imposta in <b>Gara</b> la <b>linea intermedia (arrivo 1ª fase)</b>, cioè la fotocellula a fine 1ª fase, diversa da partenza e arrivo, e la lunghezza della 2ª fase per il suo tempo concesso. Al passaggio sull'intermedia:</p>
+    <ul>
+      <li><b>1ª fase netta</b> (0 penalità): la 1ª fase si chiude con il suo tempo e parte subito il tempo della 2ª fase, con un doppio beep della Main. Il pannello mostra «2ª fase» e il risultato della 1ª.</li>
+      <li><b>1ª fase con penalità</b>: il turno finisce lì, con il risultato della 1ª fase.</li>
+    </ul>
+    <p>La classifica finale mette prima chi ha corso la 2ª fase (penalità, poi tempo della 2ª fase) e dopo gli altri secondo la 1ª fase. Nel <b>Regolamento</b> l'opzione <b>Fasi consecutive</b> si può spegnere per correre le due fasi come turni separati, riselezionando il cavaliere. Con gli altri tipi di gara la linea intermedia registra solo il <b>tempo intermedio</b>, che compare nel pannello, nella vista e nel CSV.</p>
+    <div class="box-warn">I valori predefiniti sono un punto di partenza: verificali con il regolamento della gara (FEI/FISE) prima di usarli.</div>
+    <h3>Durante il turno</h3>
+    <ol>
+      <li><b>Seleziona il cavaliere</b>: tocca il suo nome nell'elenco Attesi, oppure scrivi il numero nel pannello e tocca <b>Pronto</b>. Le linee di partenza, arrivo e, se c'è, intermedia vengono riarmate con il suo numero.</li>
+      <li><b>🔔 Campana</b>: parte il conto alla rovescia (beep negli ultimi 5 secondi). Il tempo parte quando il cavaliere passa la fotocellula di partenza, o allo scadere del conto alla rovescia (partenza automatica, indicata nel risultato).</li>
+      <li><b>Errori</b>: tocca il pulsante dell'errore (Abbattimento, Rifiuto…) ogni volta che succede; <b>−</b> lo toglie. Le penalità e la posizione in classifica si aggiornano subito. Al 2° rifiuto, a una caduta o al tempo limite il turno si ferma con l'eliminazione.</li>
+      <li><b>Interruzione</b>: con il percorso in corso, <b>🔔 Interrompi</b> ferma il tempo (per esempio per ricostruire un ostacolo) e <b>🔔 Riprendi</b> lo fa ripartire.</li>
+      <li><b>Arrivo</b>: il tempo si ferma al passaggio sulla fotocellula di arrivo. Il pannello mostra tempo, penalità percorso, penalità tempo, totale e posizione: <b>📋 Copia risultato</b> lo copia per comunicarlo ai giudici. Tocca <b>✔ Conferma</b>, o semplicemente seleziona il cavaliere successivo.</li>
+    </ol>
+    <p>Se le fotocellule non funzionano, <b>▶ Partenza</b> e <b>⏹ Arrivo</b> fanno partire e fermare il tempo a mano. <b>Eliminato</b> e <b>Ritirato</b> segnano lo stato del cavaliere; <b>Annulla turno</b> lo toglie dalla classifica.</p>
+    <h3>Correzioni e classifica</h3>
+    <p>Tocca una riga della classifica per modificare quel turno: errori, stato, fase e <b>tempo corretto</b> dai giudici (<b>Ripristina</b> torna al tempo cronometrato). Nel menu della classifica scegli la fase (percorso base, barrage, 2ª fase, classifica finale); <b>Esporta CSV</b> scarica la classifica. Nelle gare con barrage o due fasi, dal turno della prima fase si passa alla seconda con il pulsante della fase.</p>
+    <p>La vista <code>/view_equitazione.html</code> mostra al pubblico cavaliere in pista, tempo, risultato e classifica. I turni restano salvati anche dopo un riavvio della Main e vengono cancellati con <b>Cancella sessione</b>.</p>
+  </section>
+
+  <section>
+    <h2>8. Lista passaggi</h2>
+    <p>Ogni passaggio diventa una riga con linea, concorrente, nome e i tempi scelti dalla disciplina.</p>
+    <table class="t">
+      <tr><th>Azione</th><th>Come</th></tr>
+      <tr><td class="n">Impostazioni della tabella</td><td>Tocca l'<b>intestazione</b> della tabella: schede <i>Ordina</i>, <i>Colonne</i>, <i>Righe</i>, <i>Linee</i> (quali linee mostrare), decimali dei tempi. In fondo alla scheda <i>Colonne</i>, <b>Ordine colonne</b> sposta le colonne con le frecce ▲▼ (<i>Ordine predefinito</i> lo ripristina). L'ordine resta salvato nel browser e vale anche per le viste.</td></tr>
+      <tr><td class="n">Penalità</td><td>Tocca la cella ❌ della riga e inserisci il valore (la colonna è nascosta di default: attiva <b>Mostra colonna penalità</b> nella scheda <i>Colonne</i> delle impostazioni della tabella).</td></tr>
+      <tr><td class="n">Annullare un passaggio</td><td>Tocca 🚫 (il pulsante è nascosto di default: attiva <b>Mostra pulsante annulla</b> nella scheda <i>Colonne</i>): la riga resta, barrata, ed è esclusa dai calcoli. Tocca di nuovo per ripristinarla.</td></tr>
+      <tr><td class="n">Modificare una riga</td><td><b>Pressione lunga</b> sulla riga: concorrente e altri campi.</td></tr>
+      <tr><td class="n">Azioni ⋮</td><td><b>Scarica sessione</b> (CSV con tutti i passaggi) · <b>Scarica vista</b> (CSV della tabella così come la vedi) · <b>Cancella sessione</b>.</td></tr>
+    </table>
+    <p>Le colonne di tempo: <b>Evento</b> = tempo del passaggio dall'avvio del cronometro (la Main non ha l'ora reale) · <b>Trascorso</b> = tempo dal primo passaggio · <b>Δ</b> = tempo dal passaggio precedente · <b>T. gara</b> = tempo per concorrente (modalità split). Nelle impostazioni della tabella scegli anche i <b>decimali</b> e il <b>formato</b> dei tempi: <code>hh:mm:ss.mmm</code> oppure in secondi (<code>71,450</code>). Il formato vale per tutte le tabelle, per l'orologio grande e per le viste di quel browser.</p>
+    <div class="box-tip">Con <b>Auto-annulla battute ravvicinate</b> (nelle impostazioni di una linea, toccando il suo <b>Tipo</b>) una seconda battuta sulla stessa linea entro la soglia viene annullata in automatico.</div>
+  </section>
+
+  <section>
+    <h2>9. Registro atleti e file CSV</h2>
+    <p>Con il registro, nella lista passaggi compaiono nome e cognome accanto al numero. Si apre con l'icona ✏️ accanto ad «Attesi»; una <b>pressione lunga</b> sul campo concorrente di una linea apre direttamente la scheda <b>Carica</b>. Le schede sono:</p>
+    <ul>
+      <li><b>Seleziona</b>: cerca un atleta e assegnalo alla linea.</li>
+      <li><b>Carica</b>: trascina nell'area (o toccala per scegliere) un file <b>CSV</b> o JSON, oppure incolla il testo e premi <b>Anteprima</b>. Ogni caricamento passa dall'anteprima, dove scegli <i>Sostituisci l'elenco attuale</i> oppure <i>Aggiungi e aggiorna per pettorale</i> (la tabella mostra lo Stato: Nuovo, Aggiornato, Invariato, Ripetuto) e premi <b>Importa</b>.</li>
+      <li><b>Manuale</b>: aggiungi un atleta alla volta.</li>
+      <li><b>Auto</b>: aggiunge da solo i numeri che arrivano dai passaggi.</li>
+    </ul>
+    <h3>Formato del file CSV</h3>
+    <ul>
+      <li>Separatore: <b>punto e virgola</b> <code>;</code> (il "CSV" di Excel in italiano), virgola o tabulazione, riconosciuto da solo. Le virgolette permettono di usare il separatore dentro un valore.</li>
+      <li>Prima riga con i nomi delle colonne. <code>competitor</code> (il numero di pettorale) è <b>obbligatoria</b>; vanno bene anche <code>pettorale</code>, <code>bib</code>, <code>numero</code>.</li>
+      <li><code>name</code>/<code>nome</code>, <code>surname</code>/<code>cognome</code> e <code>team</code>/<code>squadra</code> vanno nelle colonne corrispondenti. Puoi aggiungere altre colonne a piacere (squadra, categoria…): compaiono nella scheda dell'atleta.</li>
+    </ul>
+<pre>competitor;name;surname;team;category
+1;Mario;Rossi;ASD Firenze;Senior
+2;Giulia;Bianchi;ASD Firenze;Junior
+3;Luca;Verdi;Polisportiva Prato;Senior</pre>
+    <p>Un file di esempio si scarica dalla console, nella scheda <b>Carica</b> del registro e nel manuale in linea.</p>
+    <div class="box-note">Salvando da Excel scegli <b>"CSV UTF-8 (delimitato da virgole)"</b> se ci sono lettere accentate: nonostante il nome, con le impostazioni italiane Excel usa il punto e virgola. Il registro è salvato nel browser: va caricato su ogni dispositivo che usi come console o come vista.</div>
+  </section>
+
+  <section>
+    <h2>10. Fotocellule radio</h2>
+    <p>Tocca l'icona del segnale nella card <b>Utilità</b> per aprire <b>Fotocellule</b>. In alto, il pulsante <b>💡 Legenda LED</b> spiega il significato dei LED.</p>
+    <h3>Abbinare una cella (solo la prima volta)</h3>
+    <ol class="steps">
+      <li>Premi <b>Abbina nuove celle</b>. L'abbinamento resta aperto per 60 secondi e il pulsante mostra il conto alla rovescia.</li>
+      <li>Accendi la cella vicino alla Main. Abbina una cella alla volta.</li>
+      <li>Quando la cella si abbina lampeggia e suona per 3 secondi, poi compare nell'elenco con la prima linea libera.</li>
+    </ol>
+    <p>Una cella già abbinata si ricollega da sola a ogni accensione, in qualunque ordine accendi Main e celle.</p>
+    <div class="keep"><h3>Impostazioni di ogni cella</h3>
+    <table class="t">
+      <tr><th>Voce</th><th>Significato</th></tr>
+      <tr><td class="n">Linea</td><td>A quale linea vanno i passaggi della cella. "—" = nessuna (la cella non invia passaggi).</td></tr>
+      <tr><td class="n">Lockout</td><td>Solo lettura: è il <b>Ritardo</b> della linea a cui è assegnata la cella, e si cambia dal popup della linea. Dopo un passaggio, per questi millisecondi la cella ignora altri fronti ed evita i doppi tempi (braccio, poi busto, poi gamba). <b>Più lungo</b> = meno doppi, ma non deve superare l'intervallo minimo fra due atleti. Per la corsa 200–500 ms.</td></tr>
+      <tr><td class="n">Beep al passaggio</td><td>La cella suona a ogni passaggio.</td></tr>
+      <tr><td class="n">🔔 Trova</td><td>La cella lampeggia e suona per 3 secondi, per riconoscerla.</td></tr>
+      <tr><td class="n">⏱️ Test</td><td>La cella invia un passaggio di prova, come se il fascio fosse stato interrotto. Il passaggio viene registrato come un passaggio vero (e può far partire il tempo): poi annullalo con 🚫 o usa <b>Reset</b>.</td></tr>
+      <tr><td class="n">🗑️ Rimuovi</td><td>La Main dimentica la cella. Per riusarla va abbinata di nuovo.</td></tr>
+    </table></div>
+    <h3>Stato e segnale</h3>
+    <p><span class="badge b-ok">Connessa</span> la cella comunica · <span class="badge b-grey">Persa</span> non si sente da più di 10 s ·
+       <span class="badge b-grey">Mai vista</span> abbinata ma non ancora accesa · <span class="badge b-err">Conflitto di linea</span> due sorgenti sulla stessa linea.</p>
+    <p>Il segnale indica la percentuale di scambi radio riusciti:
+      <span class="bars g4"><i></i><i></i><i></i><i></i></span>≥ 60 % ·
+      <span class="bars g3"><i></i><i></i><i></i><i></i></span>≥ 35 % ·
+      <span class="bars g2"><i></i><i></i><i></i><i></i></span>≥ 15 % ·
+      <span class="bars g1"><i></i><i></i><i></i><i></i></span>sotto.
+      Anche con un segnale basso i passaggi arrivano, perché vengono reinviati.</p>
+    <p><b>Potenza radio</b>: Main e celle la regolano da sole (minima, bassa, alta, massima) e la scheda della cella mostra quella attuale nei due sensi. Da vicino scende, perché la piena potenza satura il ricevitore; da lontano o con perdite sale. Dopo l'accensione possono servire alcuni secondi perché si assesti.</p>
+    <h3>Ingressi della Main</h3>
+    <p>Nella stessa finestra imposti a quale linea vanno la <b>fotocellula</b> e la <b>pedana</b> collegate alla Main. Per la pedana scegli anche se il passaggio scatta <b>al contatto</b> o <b>al rilascio</b> (partenza da pedana).</p>
+    <div class="box-tip"><b>Portata</b>: tieni le schede sollevate da terra (50 cm – 1 m), con le antenne parallele e lontane da oggetti metallici. Allinea ogni fotocellula finché LED2 si spegne: LED2 acceso significa fascio interrotto.</div>
+  </section>
+
+  <section>
+    <div class="keep"><h2>11. Significato dei LED</h2>
+    <p>I LED della scheda sono <b>a un solo colore</b>: conta solo se sono accesi, spenti o lampeggiano, e con quale ritmo.</p>
+    <div class="grid2">
+      <div class="cardlet">
+        <h4>Main</h4>
+        <table class="t">
+          <tr><td>LED1<br>WiFi</td><td><b>Fisso</b>: client collegato<br><b>Tremolio</b>: traffico<br><b>Spento</b>: nessun client</td></tr>
+          <tr><td>LED2<br>Ingressi</td><td><b>Acceso</b>: fotocellula o pedana attiva</td></tr>
+          <tr><td>LED3<br>Radio</td><td><b>Fisso</b>: celle connesse<br><b>Lampo</b>: pacchetto ricevuto<br><b>Lento</b>: nessuna cella<br><b>Veloce</b>: abbinamento aperto<br><b>Spento</b>: radio guasta</td></tr>
+          <tr><td>LED4<br>Ricarica</td><td><b>Fisso</b>: carica completa<br><b>Lampeggio</b>: in carica</td></tr>
+        </table>
+      </div>
+      <div class="cardlet">
+        <h4>Cell RF</h4>
+        <table class="t">
+          <tr><td>LED1<br>Collegamento</td><td><b>Fisso</b>: sincronizzata<br><b>Doppio</b>: precisione ridotta<br><b>Veloce</b>: Main non raggiungibile<br><b>Lento</b>: non abbinata</td></tr>
+          <tr><td>LED2<br>Sensore</td><td><b>Acceso</b>: fascio interrotto<br><b>Lampo</b>: passaggio</td></tr>
+          <tr><td>LED3<br>Consegna</td><td><b>Veloce</b>: passaggio rifiutato o perso negli ultimi 10 s<br><b>Fisso</b>: passaggi in coda<br><b>Lampo</b>: passaggio confermato</td></tr>
+          <tr><td>LED4<br>Ricarica</td><td><b>Fisso</b>: carica completa<br><b>Lampeggio</b>: in carica</td></tr>
+        </table>
+      </div>
+    </div>
+    <p style="margin-top:2.5mm">La stessa legenda, animata, si apre dalla console in <b>Fotocellule → 💡 Legenda LED</b>.</p></div>
+  </section>
+
+  <section>
+    <h2>12. Viste per secondo schermo</h2>
+    <p>Da un altro dispositivo collegato alla Main (TV, proiettore, tablet) puoi aprire una vista di sola lettura, che si aggiorna in tempo reale. Scrivi nel browser <b>http://192.168.10.1</b> seguito dall'indirizzo:</p>
+    <table class="t">
+      <tr><th>Indirizzo</th><th>Contenuto</th></tr>
+      <tr><td class="n"><code>/view.html</code></td><td>orologio e lista passaggi</td></tr>
+      <tr><td class="n"><code>/view_equitazione.html</code></td><td>lista passaggi come nella console; con la gara assistita accesa mostra cavaliere in pista, tempo, risultato e classifica (la lista passaggi si riattiva dalle impostazioni, toccando l'intestazione)</td></tr>
+      <tr><td class="n"><code>/view_enduro.html</code></td><td>vista Enduro con tempi netti</td></tr>
+      <tr><td class="n"><code>/enduro_competitor_start.html</code><br><code>/enduro_competitor_finish.html</code></td><td>schermate per i concorrenti: ultima partenza e ultimo arrivo</td></tr>
+    </table>
+    <ul>
+      <li>In ogni vista, in basso a destra, ci sono <b>🔍− 🔍+</b> (zoom) e il pulsante <b>schermo intero</b>.</li>
+      <li>Toccando l'intestazione della tabella si aprono le impostazioni della vista: ordinamento, decimali, colonne e <b>linee da mostrare</b>. Valgono solo per quel dispositivo; <b>Usa impostazioni della console</b> torna a seguire la console.</li>
+      <li>Nella vista <b>Equitazione</b>, a gara assistita spenta, l'orologio grande non scorre: resta fermo sul tempo trascorso dell'ultimo passaggio valido (esclusi annullati, linee disabilitate o nascoste).</li>
+    </ul>
+    <div class="box-note">Nome e cognome compaiono solo se nel browser di quel dispositivo è stato caricato il registro atleti.</div>
+  </section>
+
+  <section>
+    <div class="keep"><h2>13. Impostazioni e barra superiore</h2>
+    <p>Il pulsante ⚙️ apre le impostazioni:</p>
+    <ul>
+      <li><b>🌍 WiFi</b>: collega la Main a una rete WiFi esterna (con la ricerca delle reti), per accedere alla console anche da quella rete.</li>
+      <li><b>🛠 Dispositivo</b>: nome della stazione, buzzer della Main, <b>gara assistita</b> (sezione 7), schermo intero.</li>
+    </ul>
+    <p>Il logo in alto apre le informazioni sul dispositivo: versione del firmware, <b>Licenza</b> (utilizzi residui), manuale in linea, <b>Gare di equitazione</b>, <b>Manuale API</b>, strumento di correzione WiFi per PC.</p>
+    <table class="t">
+      <tr><th>Barra superiore</th><th>Funzione</th></tr>
+      <tr><td class="n">📶 rete · 192.168.x.x</td><td>Nome della rete WiFi esterna e IP della Main su quella rete, solo quando è connessa. Un tocco copia l'IP.</td></tr>
+      <tr><td class="n">🖥 Apri vista</td><td>Apre la vista Equitazione in una nuova finestra, per un secondo schermo.</td></tr>
+      <tr><td class="n">⛶ Schermo intero</td><td>Entra o esce dallo schermo intero.</td></tr>
+      <tr><td class="n">🔍− 🔍+</td><td>Riduce o ingrandisce la console (50–200 %) per adattarla al display. Lo zoom resta salvato su quel dispositivo, separato per ogni schermata. Se ingrandendo la barra esce dallo schermo, gli stessi pulsanti compaiono anche in basso a destra.</td></tr>
+      <tr><td class="n">Bandierine</td><td>Lingua italiana o inglese.</td></tr>
+    </table>
+  </div>
+  </section>
+
+  <section>
+    <h2>14. Aggiornamento firmware</h2>
+    <p>Dalla pagina <b>http://192.168.10.1/update.html</b> carichi il nuovo firmware (<code>fw.bin</code>) o la nuova interfaccia (<code>fs.bin</code>).</p>
+    <div class="box-warn">L'aggiornamento dell'<b>interfaccia</b> (<code>fs.bin</code>) cancella la sessione e l'elenco delle celle abbinate: scarica prima i tempi e, dopo l'aggiornamento, abbina di nuovo le celle. L'aggiornamento del solo <b>firmware</b> non cancella nulla.</div>
+  </section>
+
+  <section>
+    <h2>15. Risoluzione dei problemi</h2>
+    <table class="t">
+      <tr><th>Problema</th><th>Cosa fare</th></tr>
+      <tr><td class="n">"Nessuna connessione al dispositivo"</td><td>Verifica di essere collegato alla rete WiFi della Main e ricarica la pagina.</td></tr>
+      <tr><td class="n">Una cella resta "Persa"</td><td>Controlla che sia accesa (LED1). Avvicinala o sollevala da terra. Se LED1 lampeggia lento non è abbinata: abbinala di nuovo.</td></tr>
+      <tr><td class="n">Doppi passaggi</td><td>Aumenta il <b>Ritardo</b> della linea: vale per gli ingressi della Main e per le fotocellule radio della linea.</td></tr>
+      <tr><td class="n">Passaggi mancanti di atleti vicini</td><td>Il Ritardo è troppo lungo: riducilo.</td></tr>
+      <tr><td class="n">Triangolo rosso su una linea</td><td>Due celle sono sulla stessa linea (triangolo sul numero di linea), oppure una cella e un ingresso della Main (triangolo nell'icona delle fotocellule in Utilità): cambia la linea di una delle due.</td></tr>
+      <tr><td class="n">Batteria indicata non corretta</td><td>Controlla con il caricatore scollegato: in carica la tensione è più alta. Se resta sbagliata, contatta l'assistenza per la taratura.</td></tr>
+      <tr><td class="n">IP non visibile in alto</td><td>La Main non è connessa alla rete esterna (🌍 rossa o in connessione): ricollegala da Impostazioni → WiFi.</td></tr>
+      <tr><td class="n">Nome e cognome vuoti</td><td>Carica il registro atleti nel browser del dispositivo che stai usando.</td></tr>
+    </table>
+    <p>Per assistenza scrivi a <b>info@chronofit.it</b>.</p>
+  </section>
+
+</td></tr></tbody>
+</table>
+
+<div class="pg-footer">
+  <span>Chronofit · Via Iacopo del Meglio 8 · 50143 Firenze</span>
+  <span>info@chronofit.it</span>
+</div>
+
+</div>
+</body>
+</html>

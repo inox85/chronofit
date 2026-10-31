@@ -470,3 +470,8 @@ Chronofit_3_0/secrets.h
 /Software/ChronofitViewer/obj
 Chronofit_Main_Cell/secrets.h
 Software/ChronofitViewer/publish/ChronofitViewer.exe
+
+# Licenze (a numero di accensioni): il segreto non va mai nel repository
+License/license_secret.txt
+**/license_secret.h
+chronofit_equestrian/**/license_secret.h

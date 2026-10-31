@@ -1,7 +1,7 @@
 // Stati sincronizzazione orologio
 //#define VER2
 
-#define FW_VERSION "2.11.1a"
+#define FW_VERSION "2.15.0a"
 #define DEV_NAME    "Chronofit"
 #define HW_NAME      "HW VER. 2.0"
 
@@ -42,6 +42,8 @@
 #define TYPE_MQTT_PENDING             10
 #define TYPE_LINE_UPDATED             11
 #define TYPE_CELLS_UPDATED            12
+#define TYPE_EQ_UPDATE                20   // equitazione: turno attivo e revisione dei turni
+#define TYPE_EQ_CONFIG                21   // equitazione: regolamento o dati della gara modificati
 
 #define AGING_REG                     0x10
 #define DS3231_ADDR                   0x68

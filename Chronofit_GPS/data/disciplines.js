@@ -27,6 +27,8 @@
 //   showTrigger       bool — mode column
 //   splitsMode     bool — split times mode
 //   timePrecision  1=tenths | 2=hundredths | 3=milliseconds
+//   timeFormat     "clock" = hh:mm:ss.mmm | "seconds" = secondi totali con la
+//                  virgola, sss,mmm (tabelle e orologio); se omesso vale "clock"
 //   showDisabled   bool — show disabled rows
 //   showCompList   bool — competitor list card visible
 //   syncMode       0=manual | 1=line-closure | 2=GPS | 3=elapsed(no sync)
@@ -76,7 +78,7 @@ const DISCIPLINES = [
       timestamp: true,      deltaTime: false,  elapsedTime: false,
       penality: false,      showCancelBtn: true,  showSendBtn: true,
       showTest: true,     showTrigger: true,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false,
+      splitsMode: false,    timePrecision: 3,  timeFormat: "clock",  showDisabled: false,
       showCompList: true,   syncMode: 0,
       bgColor: "#f5f5f5",
       propagateCompetitor: "none",
@@ -97,7 +99,7 @@ const DISCIPLINES = [
       timestamp: true,     deltaTime: true,   elapsedTime: false,
       penality: false,      showCancelBtn: true,  showSendBtn: true,
       showTest: true,    showTrigger: true,
-      splitsMode: false,    timePrecision: 3,  showDisabled: false,
+      splitsMode: false,    timePrecision: 3,  timeFormat: "clock",  showDisabled: false,
       showCompList: true,   syncMode: 1,
       bgColor: "#f2e3c4",
       propagateCompetitor: "none",
@@ -118,7 +120,7 @@ const DISCIPLINES = [
       timestamp: true,      deltaTime: false,  elapsedTime: false,
       penality: false,      showCancelBtn: false,  showSendBtn: false,
       showTest: false,    showTrigger: false,
-      splitsMode: false,   timePrecision: 3,  showDisabled: false,
+      splitsMode: false,   timePrecision: 3,  timeFormat: "clock",  showDisabled: false,
       showCompList: true,  syncMode: 2,
       bgColor: "#d9f0d9",
       propagateCompetitor: "all",
@@ -144,7 +146,7 @@ const DISCIPLINES = [
       timestamp: false,     deltaTime: true,   elapsedTime: false,
       penality: true,       showCancelBtn: false,  showSendBtn: false,
       showTest: false,    showTrigger: false,
-      splitsMode: true,     timePrecision: 2,  showDisabled: false,
+      splitsMode: true,     timePrecision: 2,  timeFormat: "clock",  showDisabled: false,
       showCompList: false,  syncMode: 2,
       bgColor: "#d7ebf8",
       propagateCompetitor: "unassigned",
@@ -171,7 +173,7 @@ const DISCIPLINES = [
       timestamp: false,     deltaTime: true,   elapsedTime: true,
       penality: false,      showCancelBtn: false,  showSendBtn: false,
       showTest: true,       showTrigger: false,
-      splitsMode: false,    timePrecision: 2,  showDisabled: false,
+      splitsMode: false,    timePrecision: 2,  timeFormat: "seconds",  showDisabled: false,
       showCompList: true,   syncMode: 3,
       bgColor: "#e6d2b5",
       propagateCompetitor: "none",

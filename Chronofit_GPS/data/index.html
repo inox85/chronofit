@@ -10,6 +10,7 @@
   <!-- COLORE DELLA STATUS BAR SU ANDROID -->
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/manifest.json">
+  <script src="/ui_dialogs.js"></script>
   <script src="/i18n.js"></script>
   <script src="/disciplines.js"></script>
 </head>
@@ -105,6 +106,36 @@
   </div>
 
   <!-- Overlay Athlete Registry -->
+  <!-- Anteprima dell'importazione dei competitor (sopra il registro atleti) -->
+  <div id="csvPreviewOverlay" class="fullscreen-overlay" style="display:none; z-index:10040;">
+    <div class="fullscreen-popup" style="max-width:min(900px, calc(95 * var(--zvw, 1vw)));">
+      <h2 data-i18n="csvprev.title">Import preview</h2>
+      <p id="csvPreviewSummary" style="text-align:center;"></p>
+      <div class="csv-mode">
+        <label><input type="radio" name="csvImportMode" value="replace" checked onchange="updateCsvPreview()"><span id="csvModeReplaceLabel"></span></label>
+        <label><input type="radio" name="csvImportMode" value="merge" onchange="updateCsvPreview()"><span id="csvModeMergeLabel"></span></label>
+      </div>
+      <ul id="csvPreviewWarnings" class="csv-preview-warnings"></ul>
+      <div class="csv-preview-scroll">
+        <table class="csv-preview-table">
+          <thead><tr>
+            <th>#</th>
+            <th data-i18n="csvprev.bib">Bib</th>
+            <th data-i18n="csvprev.surname">Surname</th>
+            <th data-i18n="csvprev.name">Name</th>
+            <th data-i18n="csvprev.team">Team</th>
+            <th data-i18n="csvprev.col_status">Status</th>
+          </tr></thead>
+          <tbody id="csvPreviewBody"></tbody>
+        </table>
+      </div>
+      <div class="button-row">
+        <button class="big-button" data-i18n="csvprev.cancel" onclick="closeCsvPreview()">Cancel</button>
+        <button class="big-button" id="csvImportBtn" onclick="confirmCsvImport()">Import</button>
+      </div>
+    </div>
+  </div>
+
   <div id="athleteOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup athlete-popup">
       <h2 data-i18n="athlete.title">Competitor registry</h2>
@@ -134,18 +165,18 @@
 
       <!-- Tab: Load -->
       <div id="tab-load" class="tab-content" style="display:none;">
-        <p data-i18n-html="athlete.paste_info" style="color:#555; margin:4px 0 8px;">Paste JSON or load a file.<br>
-          Expected format: <code>[{"competitor":1,"name":"Mario","surname":"Rossi", ...}]</code></p>
-        <div class="button-row" style="margin-bottom:8px;">
-          <label class="big-button" style="cursor:pointer; background:var(--primary-color); width:100%; padding:5px 10px; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:bold;">
-            <span data-i18n="btn.open_file">📂 Open file</span>
-            <input type="file" id="athlete-file-input" accept=".json,.csv" style="display:none;">
-          </label>
-          <button class="big-button" data-i18n="btn.csv_template" onclick="downloadAthleteTemplate()">⬇ CSV template</button>
-        </div>
+        <label id="athlete-drop" class="athlete-drop">
+          <span class="athlete-drop-ico">📂</span>
+          <span class="athlete-drop-title" data-i18n="athlete.drop_title">Drop a CSV or JSON file here</span>
+          <span class="athlete-drop-sub" data-i18n="athlete.drop_sub">or tap to choose it</span>
+          <input type="file" id="athlete-file-input" accept=".json,.csv,.txt,text/csv" style="display:none;">
+        </label>
+        <p class="athlete-csv-hint"><span data-i18n="athlete.csv_hint">CSV: separator ";", "," or tab. The "competitor" column is required.</span>
+          <a href="/esempio_atleti.csv" download data-i18n="athlete.csv_example">⬇ Example CSV file</a></p>
+        <p class="athlete-paste-label" data-i18n="athlete.paste_or">Or paste the text (CSV or JSON):</p>
         <textarea id="athlete-json-input" data-i18n-ph="athlete.load_ph" placeholder='[{"competitor":1,"name":"Mario","surname":"Rossi"}]'></textarea>
         <div class="button-row">
-          <button class="big-button" data-i18n="btn.load"  onclick="loadAthleteRegistry()">Load</button>
+          <button class="big-button" data-i18n="btn.preview" onclick="previewAthleteText()">Preview</button>
           <button class="big-button" data-i18n="btn.clear" style="background:#c0392b;" onclick="clearAthleteRegistry()">Clear</button>
           <button class="big-button" data-i18n="btn.cancel" onclick="closeAthleteModal()">Cancel</button>
         </div>
@@ -233,7 +264,7 @@
 
   <!-- Overlay e popup per Edit Time -->
   <div id="tableSettingsOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:85vh;">
+    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:calc(85 * var(--zvh, 1vh));">
 
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="sort"    data-i18n="table.tab_sort"    onclick="switchSettingsTab('sort')">↕ Sort</button>
@@ -450,7 +481,7 @@
 
   <!-- Settings popup per la seconda card Arrivi (indipendente dalla prima) -->
   <div id="tableSettingsOverlay2" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:85vh;">
+    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:calc(85 * var(--zvh, 1vh));">
 
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="sort"    data-i18n="table.tab_sort"    onclick="switchSettingsTab2('sort')">↕ Sort</button>
@@ -951,6 +982,15 @@
           </label>
         </div>
 
+        <div class="toggle-row eq-enable-row">
+          <span id="eqEnableLabel">Gara assistita</span>
+          <label class="switch">
+            <input type="checkbox" id="eqEnableToggle" onchange="eqSetEnabled(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p class="eq-enable-hint" id="eqEnableHint"></p>
+
         <div class="toggle-row">
           <span data-i18n="main.fullscreen">Fullscreen</span>
           <label class="switch">
@@ -988,7 +1028,7 @@
 
   <!-- Overlay fotocellule wireless (cell) viste dal base -->
   <div id="cellsOverlay" class="fullscreen-overlay" style="display:none;" onclick="if(event.target===this)closeCellsOverlay()">
-    <div class="fullscreen-popup" style="width:min(96vw, 820px); max-width:none; overflow-x:auto;">
+    <div class="fullscreen-popup" style="width:min(calc(96 * var(--zvw, 1vw)), 820px); max-width:none; overflow-x:auto;">
       <h2 data-i18n="cells.title">Wireless photocells</h2>
       <div id="cellsList"></div>
       <div class="button-row">
@@ -998,6 +1038,27 @@
   </div>
 
   <!-- Overlay About Chronofit -->
+  <!-- Licenza a numero di accensioni: all'avvio mostra gli utilizzi residui; a
+       licenza esaurita resta aperto finché non si inserisce un codice valido. -->
+  <div id="licenseOverlay" class="fullscreen-overlay" style="display:none; z-index:10050;">
+    <div class="fullscreen-popup">
+      <h2 data-i18n="license.title">License</h2>
+      <p id="licenseStatus" style="text-align:center; font-size:20px;"></p>
+      <div class="toggle-row">
+        <span data-i18n="license.device">Device code</span>
+        <span id="licenseDevice" style="font-family:monospace; font-size:22px; user-select:all;">—</span>
+      </div>
+      <p id="licenseContact" style="text-align:center; color:#666; font-size:15px;"></p>
+      <input type="text" id="licenseCode" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false"
+             style="max-width:none; text-transform:uppercase; font-family:monospace;">
+      <p id="licenseMsg" style="text-align:center; min-height:1.2em;"></p>
+      <div class="button-row">
+        <button class="big-button" id="licenseCloseBtn" data-i18n="license.close" onclick="closeLicenseOverlay()">Close</button>
+        <button class="big-button" data-i18n="license.apply" onclick="applyLicenseCode()">Activate</button>
+      </div>
+    </div>
+  </div>
+
   <div id="aboutOverlay" class="fullscreen-overlay" style="display:none;">
     <div class="fullscreen-popup">
       <div style="text-align:center; margin-bottom:16px;">
@@ -1011,6 +1072,10 @@
       <div class="toggle-row">
         <span data-i18n="about.firmware">🔧 Firmware</span>
         <span style="text-align:right; font-size:15px;" id="aboutFwVersion">—</span>
+      </div>
+      <div class="toggle-row">
+        <span data-i18n="license.about">🔑 License</span>
+        <button class="small-button" id="aboutLicense" onclick="openLicenseOverlay(true)">—</button>
       </div>
 
       <div class="toggle-row">
@@ -1028,6 +1093,13 @@
       <div class="toggle-row">
         <span data-i18n="about.manual">📄 Manual</span>
         <a href="/manuale.html" target="_blank" rel="noopener">
+          <button class="big-button" data-i18n="btn.open_manual" style="width:auto; padding:5px 15px;">📖 Open</button>
+        </a>
+      </div>
+
+      <div class="toggle-row">
+        <span data-i18n="about.manual_eq">🐎 Equestrian competitions</span>
+        <a href="/manuale_gare.html" target="_blank" rel="noopener">
           <button class="big-button" data-i18n="btn.open_manual" style="width:auto; padding:5px 15px;">📖 Open</button>
         </a>
       </div>
@@ -1211,6 +1283,13 @@
           <span class="slider"></span>
         </label>
       </div>
+      <div class="toggle-row" style="margin-top:12px;">
+        <span data-i18n="settings.keep_waiting">Keep competitors in the list after their turn</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-keep-waiting" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
 
       <hr class="divider">
 
@@ -1237,6 +1316,31 @@
         <button class="big-button" data-i18n="btn.save_print" onclick="saveAndPrintLineEdit()">🖨 Save &amp; print</button>
         <button class="big-button" data-i18n="btn.save_close" onclick="saveAndCloseLineEdit()">Save &amp; close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Equitazione: gara e regolamento -->
+  <div id="eqSettingsOverlay" class="fullscreen-overlay" style="display:none; z-index:10030;">
+    <div class="fullscreen-popup eq-settings-popup">
+      <h2 id="eqSettingsTitle"></h2>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="course" id="eqTabCourse" onclick="eqSwitchSettingsTab('course')"></button>
+        <button class="tab-btn" data-tab="rules" id="eqTabRules" onclick="eqSwitchSettingsTab('rules')"></button>
+      </div>
+      <div id="eqSettingsBody" class="eq-settings-body"></div>
+      <div class="button-row">
+        <button class="big-button" id="eqSettingsClose" onclick="closeEqSettings()"></button>
+        <button class="big-button" id="eqSettingsSave" onclick="saveEqSettings()"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equitazione: modifica di un turno concluso (correzioni dei giudici) -->
+  <div id="eqEditOverlay" class="fullscreen-overlay" style="display:none; z-index:10030;">
+    <div class="fullscreen-popup">
+      <h2 id="eqEditTitle"></h2>
+      <div id="eqEditBody"></div>
+      <div class="button-row"><button class="big-button" id="eqEditClose" onclick="eqCloseEdit()"></button></div>
     </div>
   </div>
 
@@ -1285,6 +1389,9 @@
     <img src="/logo.png" alt="Logo" style="cursor:pointer;" onclick="openAboutOverlay()">
     <img data-src="/sponsor.png" alt="" class="navbar-sponsor-logo sponsor-visibility-toggle" style="display:none;">
     <div class="navbar-right">
+      <span id="sta-ip-nav" class="sta-ip-nav" style="display:none" onclick="copyStaIpNav()" title="Station IP"></span>
+      <!-- Licenza: compare solo sotto i 20 utilizzi residui o a licenza esaurita -->
+      <button id="license-nav" class="license-nav" style="display:none" onclick="openLicenseOverlay(false)"></button>
       <button id="discipline-btn" class="navbar-icon-btn" onclick="onDisciplineIconClick()" title="Select discipline">
         <span id="discipline-nav-emoji">⏱️</span>
       </button>
@@ -1295,7 +1402,7 @@
           <rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>
         </svg>
       </button>
-      <button id="fullscreen-nav-btn" class="navbar-icon-btn" onclick="toggleFullscreenFromNavbar()" title="Fullscreen" data-i18n-title="main.fullscreen" aria-label="Fullscreen">
+      <button id="fullscreen-nav-btn" class="navbar-icon-btn" onclick="toggleFullscreenFromNavbar()" title="Fullscreen" aria-label="Fullscreen">
         <svg id="fullscreen-nav-icon" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"
              stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
       </button>
@@ -1343,7 +1450,7 @@
 
         <div class="button-row hidden" id="elapsedTimeControls">
           <button class="small-button" data-i18n="btn.start" id="startButton" onclick="sendElapsedStart()">Start</button>
-          <button class="small-button" data-i18n="btn.reset" id="resetButton" onclick="setElapsedTimemode()">Reset</button>
+          <button class="small-button" data-i18n="btn.reset" id="resetButton" onclick="resetElapsedButton()">Reset</button>
         </div>
 
         <div class="table-wrapper">
@@ -1448,7 +1555,60 @@
     </div>
   </div>
 
-  <div class="arrivals-area">
+  <div class="arrivals-area eq-off">
+
+    <!-- Equitazione: percorso del cavaliere in pista (equestrian.js) -->
+    <div class="eq-row">
+      <div class="card eq-card" id="eqCard" data-state="none">
+        <div class="eq-head">
+          <div class="eq-rider"><span id="eqRiderNum" class="eq-num">—</span><span id="eqRiderName" class="eq-name"></span></div>
+          <button class="eq-icon-btn" onclick="openEqSettings()" title="Gara e regolamento">⚙️</button>
+        </div>
+        <div class="eq-meta" id="eqMeta"></div>
+        <div class="eq-main">
+          <div class="eq-clock" id="eqClock">—</div>
+          <div class="eq-state" id="eqState"></div>
+          <div class="eq-phase-info" id="eqPhaseInfo"></div>
+        </div>
+        <div class="eq-actions">
+          <button class="eq-btn eq-bell" id="eqBellBtn" onclick="eqDo('bell')">🔔</button>
+          <button class="eq-btn" id="eqStartBtn" onclick="eqDo('start')"></button>
+          <button class="eq-btn" id="eqFinishBtn" onclick="eqDo('finish')"></button>
+        </div>
+        <div class="eq-faults" id="eqFaults"></div>
+        <div class="eq-result" id="eqResult"></div>
+        <div class="eq-actions eq-actions-small">
+          <button class="eq-btn" id="eqElimBtn" onclick="eqDo('status', {id: EQ.cur.id, s: this.classList.contains('on') ? '' : 'elim'})"></button>
+          <button class="eq-btn" id="eqRetBtn" onclick="eqDo('status', {id: EQ.cur.id, s: this.classList.contains('on') ? '' : 'ret'})"></button>
+          <button class="eq-btn eq-confirm" id="eqConfirmBtn" onclick="eqDo('confirm')"></button>
+          <button class="eq-btn" id="eqCancelBtn" onclick="eqCancelCurrent()"></button>
+        </div>
+        <div class="eq-select-row">
+          <input type="text" id="eqCompInput" inputmode="numeric" autocomplete="off" placeholder="#">
+          <select id="eqPhaseSel"></select>
+          <button class="eq-btn" id="eqGoBtn" onclick="eqSelectFromInput()"></button>
+        </div>
+      </div>
+
+      <div class="card eq-rank-card" id="eqRankCard">
+        <div class="eq-rank-head">
+          <span class="eq-view-switch">
+            <button class="eq-switch-btn active" id="eqShowRank" onclick="eqShowRows(false)"></button>
+            <button class="eq-switch-btn" id="eqShowRows" onclick="eqShowRows(true)"></button>
+          </span>
+          <select id="eqRankSel" onchange="eqRankChange(this.value)"></select>
+          <button class="small-button" id="eqCsvBtn" onclick="eqExportCsv()"></button>
+        </div>
+        <div class="eq-rank-wrap">
+          <table class="eq-rank-table">
+            <thead><tr id="eqRankHead"></tr></thead>
+            <tbody id="eqRankBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
 
     <div class="arrivals-row">
 
@@ -1541,7 +1701,7 @@
   <!-- Settings popup della card Tempi netti: linee usate per le due coppie
        partenza/arrivo + colonna di ordinamento delle righe risultanti. -->
   <div id="netTimesSettingsOverlay" class="fullscreen-overlay" style="display:none;">
-    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:85vh;">
+    <div class="fullscreen-popup" style="display:flex; flex-direction:column; max-height:calc(85 * var(--zvh, 1vh));">
 
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="lines" data-i18n="table.tab_lines" onclick="switchNetTimesSettingsTab('lines')">👁 Lines</button>
@@ -1739,6 +1899,9 @@
   </div>
 
   <script src="/script.js"></script>
+  <script src="/zoom_controls.js"></script>
+  <script src="/equestrian.js"></script>
+  <script>eqConsoleInit(); eqConsoleLabels();</script>
   <script src="/column_order.js"></script>
   <script>
     // ordine delle colonne scelto dall'utente (column_order.js)

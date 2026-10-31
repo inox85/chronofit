@@ -36,6 +36,8 @@ Connessione WebSocket per la ricezione in tempo reale degli eventi del dispositi
 | `5` | Messaggio generico | Notifica testuale |
 | `6` | Email inviata | Conferma invio email |
 | `11` | Linea aggiornata | Configurazione di una linea modificata |
+| `20` | Equitazione: turno | Turno in pista cambiato o in corso (`cur`, come un turno di `GET /eq`) |
+| `21` | Equitazione: regolamento | Regolamento o dati della gara modificati |
 
 ---
 
@@ -83,7 +85,7 @@ Imposta solo l'offset UTC senza cambiare modalità.
 ## Checkpoint e sessione
 
 ### `GET /checkPoint`
-Registra manualmente un passaggio su una linea. Conta come passaggio di una linea abilitata anche se la linea è disattivata.
+Registra manualmente un passaggio su una linea. Conta come valido anche se la linea è disabilitata.
 
 **Parametri:**
 
@@ -144,14 +146,14 @@ Aggiorna la configurazione di una linea via query string. Solo `l` è obbligator
 | `ld` | string | — | ID linea |
 | `c` | int | — | Numero competitor assegnato |
 | `d` | int | — | Delay di rilevamento in millisecondi |
-| `e` | int | — | Abilitato: `1` / disabilitato: `0` (con `0` i passaggi restano in sessione come righe disabilitate, senza beep né start del tempo) |
+| `e` | int | — | Abilitato: `1` / disabilitato: `0` |
 
 **Esempio:** `GET /checkPointFields?l=2&c=7&e=1`
 
 ---
 
 ### `GET /lineDisableAfterPass`
-Disattivazione automatica delle linee dopo il primo passaggio. Con il valore `1`, al primo passaggio una linea abilitata viene disattivata (`e = 0`, notificato con `TYPE_LINE_UPDATED`) e resta così finché non viene riabilitata con `/checkPointFields` (`e=1`). I passaggi successivi restano in sessione come righe disabilitate, senza beep e senza far partire il tempo. Salvato in NVS (`line_once`), default `0`.
+Disattivazione automatica delle linee dopo il primo passaggio. Con il valore `1`, al primo passaggio una linea abilitata viene disattivata (`e = 0`, notificato con `TYPE_LINE_UPDATED`) e resta così finché non viene riabilitata con `/checkPointFields` (`e=1`). I passaggi successivi restano in sessione come righe disabilitate. Salvato in NVS (`line_once`), default `0`.
 
 | Parametro | Tipo | Obbligatorio | Descrizione |
 |---|---|---|---|
@@ -228,6 +230,20 @@ Modifica un passaggio esistente nella sessione.
 ```
 
 Il campo `index` identifica il record da modificare. Se non esiste viene creato.
+
+---
+
+## Equitazione
+
+Con le **gare** accese (⚙️ → Dispositivo → Gare, solo con la disciplina Equitazione) il dispositivo gestisce turni, penalità e classifica del salto ostacoli. Queste route servono per esempio a un tabellone esterno; i comandi del turno si danno dalla console.
+
+### `GET /eqEnable`
+Stato delle gare: `{ "on": true }`.
+
+### `GET /eq`
+Stato completo: `on` (gare accese), tipi di gara (`variants`), dati della gara (`course`: linee di partenza, arrivo e intermedia, lunghezze, velocità), `cur` (id del turno in pista, `0` = nessuno), `taMs` / `taMs2` (tempo concesso della 1ª e 2ª fase) e `rounds`, tutti i turni.
+
+Turno: `{ "id", "comp" (numero del cavaliere), "phase" (1 o 2), "st" ("ready" | "countdown" | "running" | "paused" | "finished" | "confirmed" | "cancelled"), "t" (tempo ms), "mid" (tempo intermedio ms), "fp" (penalità percorso), "tp" (penalità tempo), "pts" (totale), "elim", "ret", "reason", "faults" [conteggi per tipo di errore], "cd" (ms alla fine del conto alla rovescia) }`. La classifica si ricava dai turni conclusi (`finished` / `confirmed`).
 
 ---
 

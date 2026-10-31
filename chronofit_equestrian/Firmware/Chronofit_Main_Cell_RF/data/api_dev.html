@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ChronofitMainCell RF — API Reference</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<!-- Generata da api_docs.py a partire da API.md: non modificare a mano -->
+<style>
+  :root { --primary:#8b0a1a; --text:#222; --muted:#666; --line:#e3e3e3; --bg:#f6f6f4; --card:#fff; --code:#f1f1f1; --pre:#1e1e1e; --pre-fg:#e8e8e8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --primary:#ff8a95; --text:#e6e6e6; --muted:#a0a0a0; --line:#333; --bg:#151515; --card:#1f1f1f; --code:#2b2b2b; --pre:#0d0d0d; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif; color:var(--text); background:var(--bg); line-height:1.55; font-size:16px; }
+  header { background:#111; color:#fff; padding:16px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  header img { height:36px; }
+  header h1 { font-size:20px; margin:0; font-weight:600; }
+  header .sub { color:#bbb; font-size:14px; }
+  header .tag { background:var(--primary); color:#fff; border-radius:6px; padding:2px 8px; font-size:12px; font-weight:bold; }
+  .print-btn { margin-left:auto; background:#8b0a1a; color:#fff; border:0; border-radius:8px; padding:8px 14px; font-size:14px; cursor:pointer; }
+  .layout { display:grid; grid-template-columns:270px 1fr; max-width:1200px; margin:0 auto; gap:24px; padding:24px 16px; }
+  nav.toc { position:sticky; top:16px; align-self:start; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; max-height:calc(100vh - 32px); overflow:auto; }
+  nav.toc input { width:100%; padding:7px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px; margin-bottom:10px; background:var(--bg); color:var(--text); }
+  nav.toc ol { margin:0; padding-left:18px; }
+  nav.toc > ol > li { margin:6px 0; font-size:14px; font-weight:600; }
+  nav.toc ul { margin:2px 0 4px; padding-left:12px; list-style:none; font-weight:normal; }
+  nav.toc ul li { margin:1px 0; font-size:13px; }
+  nav.toc a { color:var(--text); text-decoration:none; }
+  nav.toc a:hover { color:var(--primary); }
+  nav.toc code { background:none; padding:0; font-size:12.5px; }
+  main { min-width:0; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 22px; margin-bottom:18px; }
+  section.intro { border-left:4px solid var(--primary); }
+  section h2 { margin:0 0 12px; font-size:21px; color:var(--primary); border-bottom:2px solid var(--line); padding-bottom:6px; }
+  h3.route { font-size:17px; margin:22px 0 6px; padding-top:12px; border-top:1px dashed var(--line); }
+  section h2 + h3.route, section h2 + p + h3.route { border-top:0; padding-top:0; }
+  h3.route code { font-size:16px; background:none; padding:0; color:var(--text); font-weight:700; }
+  .lock { font-size:14px; }
+  h4 { font-size:15px; margin:14px 0 4px; }
+  p { margin:8px 0; }
+  ul, ol { margin:6px 0 10px; padding-left:22px; }
+  li { margin:3px 0; }
+  code { background:var(--code); border-radius:4px; padding:1px 5px; font-family:Consolas,monospace; font-size:14px; }
+  pre { background:var(--pre); color:var(--pre-fg); border-radius:8px; padding:12px 14px; overflow:auto; font-size:13.5px; line-height:1.45; }
+  pre code { background:none; padding:0; color:inherit; font-size:inherit; }
+  .tw { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; margin:8px 0 12px; font-size:14.5px; }
+  th, td { text-align:left; padding:6px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.03em; }
+  a { color:var(--primary); }
+  .hidden { display:none !important; }
+  footer { text-align:center; color:var(--muted); font-size:13px; padding:10px 0 30px; }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns:1fr; padding:16px; }
+    nav.toc { position:static; max-height:none; }
+    section { padding:14px 16px; }
+  }
+  @media print {
+    header { background:#fff; color:#000; border-bottom:2px solid #000; }
+    .print-btn, nav.toc { display:none; }
+    .layout { display:block; padding:0; }
+    section { break-inside:auto; border:0; padding:0; }
+    pre { background:#f4f4f4; color:#000; }
+    body { background:#fff; color:#000; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <img src="/logo.webp" alt="Chronofit" onerror="this.style.display='none'">
+  <div><h1>ChronofitMainCell RF — API Reference</h1><div class="sub">Riferimento completo, comprese le route interne e di assistenza. Pagina non collegata dalla console.</div></div>
+  <span class="tag">Sviluppatori</span>
+  <button class="print-btn" onclick="window.print()">🖨 Stampa</button>
+</header>
+<div class="layout">
+<nav class="toc"><input id="api-search" type="search" placeholder="Cerca una route…" aria-label="Cerca una route"><ol>
+<li><a href="#autenticazione">Autenticazione</a>
+</li>
+<li><a href="#websocket">WebSocket</a>
+<ul><li><a href="#ws-ws"><code>WS /ws</code></a></li></ul>
+</li>
+<li><a href="#tempo">Tempo</a>
+<ul><li><a href="#get-time"><code>GET /time</code></a></li><li><a href="#get-settime"><code>GET /setTime</code> 🔒</a></li><li><a href="#get-setoffset"><code>GET /setOffset</code> 🔒</a></li><li><a href="#get-timebasecal"><code>GET /timeBaseCal</code></a></li></ul>
+</li>
+<li><a href="#checkpoint-e-sessione">Checkpoint e sessione</a>
+<ul><li><a href="#get-checkpoint"><code>GET /checkPoint</code></a></li><li><a href="#get-clocksync"><code>GET /clockSync</code></a></li><li><a href="#get-cells"><code>GET /cells</code></a></li><li><a href="#get-cellspair"><code>GET /cellsPair</code> 🔒</a></li><li><a href="#get-cellconfig"><code>GET /cellConfig</code> 🔒</a></li><li><a href="#get-cellcmd"><code>GET /cellCmd</code> 🔒</a></li><li><a href="#get-batterycurve"><code>GET /batteryCurve</code></a></li><li><a href="#get-batterycurvereset"><code>GET /batteryCurveReset</code> 🔒</a></li><li><a href="#get-batterycal"><code>GET /batteryCal</code> 🔒</a></li><li><a href="#get-cellremove"><code>GET /cellRemove</code> 🔒</a></li><li><a href="#get-localinputssave"><code>GET /localInputsSave</code> 🔒</a></li><li><a href="#get-remotecheckpoint"><code>GET /remoteCheckpoint</code> 🔒</a></li><li><a href="#get-getcheckpoints"><code>GET /getCheckpoints</code></a></li><li><a href="#get-downloadsession"><code>GET /downloadSession</code></a></li><li><a href="#get-athletes-post-athletes"><code>GET /athletes · POST /athletes</code> 🔒</a></li><li><a href="#get-clearsession"><code>GET /clearSession</code> 🔒</a></li><li><a href="#get-checkpointfields"><code>GET /checkPointFields</code></a></li><li><a href="#get-linedisableafterpass"><code>GET /lineDisableAfterPass</code></a></li><li><a href="#get-license"><code>GET /license</code></a></li><li><a href="#get-licenseapply"><code>GET /licenseApply</code></a></li><li><a href="#get-elapsedstartline"><code>GET /elapsedStartLine</code></a></li><li><a href="#post-checkpointfields"><code>POST /checkPointFields</code></a></li><li><a href="#post-updatecheckpointrow"><code>POST /updateCheckPointRow</code></a></li></ul>
+</li>
+<li><a href="#equitazione-salto-ostacoli">Equitazione (salto ostacoli)</a>
+<ul><li><a href="#get-eqenable"><code>GET /eqEnable</code></a></li><li><a href="#get-eq"><code>GET /eq</code></a></li><li><a href="#get-eqcmd"><code>GET /eqCmd</code></a></li><li><a href="#get-eqconfig"><code>GET /eqConfig</code></a></li><li><a href="#post-eqconfig"><code>POST /eqConfig</code></a></li></ul>
+</li>
+<li><a href="#impostazioni-di-sistema">Impostazioni di sistema</a>
+<ul><li><a href="#get-allsettings"><code>GET /allSettings</code></a></li><li><a href="#get-setattribute"><code>GET /setAttribute</code> 🔒</a></li><li><a href="#get-systemsettings"><code>GET /systemSettings</code></a></li><li><a href="#get-reset"><code>GET /reset</code> 🔒</a></li></ul>
+</li>
+<li><a href="#branding-e-discipline">Branding e discipline</a>
+<ul><li><a href="#get-brandingsettings"><code>GET /brandingSettings</code></a></li><li><a href="#get-brandingsave"><code>GET /brandingSave</code> 🔒</a></li></ul>
+</li>
+<li><a href="#wifi">WiFi</a>
+<ul><li><a href="#get-wificredential"><code>GET /wifiCredential</code></a></li><li><a href="#get-wifiscan"><code>GET /wifiScan</code></a></li><li><a href="#get-wificonnect"><code>GET /wifiConnect</code> 🔒</a></li><li><a href="#get-wifistop"><code>GET /wifiStop</code></a></li><li><a href="#get-setappassword"><code>GET /setApPassword</code> 🔒</a></li><li><a href="#get-resetappassword"><code>GET /resetApPassword</code></a></li></ul>
+</li>
+<li><a href="#gestione-file">Gestione file</a>
+<ul><li><a href="#get-download"><code>GET /download</code></a></li><li><a href="#delete-delete"><code>DELETE /delete</code> 🔒</a></li><li><a href="#post-upload"><code>POST /upload</code></a></li><li><a href="#post-uploadfs"><code>POST /uploadFS</code></a></li></ul>
+</li>
+<li><a href="#firmware-ota">Firmware OTA</a>
+<ul><li><a href="#post-update"><code>POST /update</code></a></li><li><a href="#post-updatefs"><code>POST /updatefs</code></a></li></ul>
+</li>
+<li><a href="#note-generali">Note generali</a>
+</li>
+</ol></nav>
+<main>
+<section class="intro"><p>Copia dell'API di <code>Chronofit_Main_Cell</code> per la versione sulla scheda delle barriere <code>Chronofit_BLE</code> con radio NRF24. Le differenze sono: le route delle fotocellule RF (<code>/cellsPair</code>, <code>/cellConfig</code>, <code>/cellCmd</code>, <code>/cellRemove</code>), gli ingressi locali (<code>/localInputsSave</code>), i campi <code>radio</code>/<code>local</code> e i campi delle celle RF in <code>GET /cells</code>, i campi batteria/radio in <code>/systemSettings</code>, e manca <code>/email</code> (invio della sessione via email, tolto per far stare il firmware nella partizione standard da 4 MB). L'AP si chiama <code>ChronofitMainCellRF_&lt;chipId&gt;</code>. Il protocollo radio è descritto in <code>rf_protocol.h</code>.</p>
+<p>Testo originale di <code>Chronofit_Main_Cell</code>: derivata da <code>Chronofit_GPS/API.md</code>. ChronofitMainCell è l'unità centrale del sistema a fotocellule wireless: stessa console e stessa API del base, ma <b>senza GPS, RTC termocompensato, stampante e MQTT</b>. Mancano quindi le route <code>/print</code>, tutte le route <code>/mqtt*</code> e <code>/sendCheckPointRow</code>, <code>/syncTest</code>, <code>/setNmeaDeltaDebug</code>, <code>/setSerialDebug</code>, ogni modalità di sincronizzazione dell'orario (resta solo l'elapsed, vedi <code>/setTime</code>) e i campi GPS/RTC di <code>/systemSettings</code>. L'AP si chiama <code>ChronofitMainCell_&lt;chipId&gt;</code> (stesso schema di password del base).</p>
+<p>Tutte le route sono esposte dal server HTTP AsyncWebServer sull'ESP32, raggiungibili sia via rete AP (<code>192.168.10.1</code>) che via STA (IP assegnato dal router).</p></section>
+<section id="autenticazione"><h2>Autenticazione</h2>
+<p>Alcune route richiedono autorizzazione. Il controllo avviene tramite la funzione <code>isAuthorized()</code>:</p>
+<ul><li>Se non è configurato nessun token NVS, tutte le richieste sono autorizzate.</li><li>Se è configurato un token, la richiesta deve includere l'header <code>X-Token: &lt;valore&gt;</code>.</li></ul>
+<p>Le route che richiedono autorizzazione sono marcate con 🔒.</p></section>
+<section id="websocket"><h2>WebSocket</h2>
+<h3 id="ws-ws" class="route"><code>WS /ws</code></h3>
+<p>Connessione WebSocket bidirezionale per il push real-time degli eventi.</p>
+<p><b>Messaggi inviati dal server (JSON):</b></p>
+<div class="tw"><table><thead><tr><th>Campo <code>t</code></th><th>Tipo evento</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>0</code></td><td><code>TYPE_CHECKPOINT</code></td><td>Nuovo passaggio registrato</td></tr><tr><td><code>1</code></td><td><code>TYPE_TIME_UPDATE</code></td><td>Aggiornamento orologio (ogni secondo)</td></tr><tr><td><code>2</code></td><td><code>TYPE_SESSION_CLEARED</code></td><td>Sessione cancellata</td></tr><tr><td><code>3</code></td><td><code>TYPE_PARAMS_UPDATED</code></td><td>Parametri di sistema aggiornati</td></tr><tr><td><code>4</code></td><td><code>TYPE_ROW_UPDATED</code></td><td>Riga sessione modificata</td></tr><tr><td><code>5</code></td><td><code>TYPE_GENERIC_MESSAGE</code></td><td>Messaggio generico</td></tr><tr><td><code>11</code></td><td><code>TYPE_LINE_UPDATED</code></td><td>Configurazione linea aggiornata</td></tr><tr><td><code>12</code></td><td><code>TYPE_CELLS_UPDATED</code></td><td>Cambiata la lista delle fotocellule, l'abbinamento o gli ingressi locali (stesso JSON di <code>GET /cells</code>); inviato solo quando cambia qualcosa di visibile</td></tr><tr><td><code>20</code></td><td><code>TYPE_EQ_UPDATE</code></td><td>Equitazione: turno attivo cambiato o in corso (vedi <a href="#equitazione-salto-ostacoli">Equitazione</a>)</td></tr><tr><td><code>21</code></td><td><code>TYPE_EQ_CONFIG</code></td><td>Equitazione: regolamento cambiato</td></tr></tbody></table></div></section>
+<section id="tempo"><h2>Tempo</h2>
+<h3 id="get-time" class="route"><code>GET /time</code></h3>
+<p>Restituisce l'orario corrente preciso.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{ &quot;hh&quot;: 10, &quot;mm&quot;: 23, &quot;ss&quot;: 45, &quot;ms&quot;: 678 }</code></pre>
+<h3 id="get-settime" class="route"><code>GET /setTime</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Riarma il cronometro in modalità <b>elapsed</b>: il tempo trascorso riparte da zero al prossimo segnale di start (sensore o cella wireless). ChronofitMainCell non ha sincronizzazione dell'orario: è l'unica modalità (all'avvio il dispositivo è già in attesa dello start).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>mode</code></td><td>int</td><td>Facoltativo; se presente deve essere <code>3</code> (elapsed), altrimenti risponde <code>400</code></td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>Wait start signal</code>.</p>
+<h3 id="get-setoffset" class="route"><code>GET /setOffset</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Imposta solo l'offset UTC senza cambiare modalità.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>offset</code></td><td>int</td><td>Offset UTC (-12 … +14)</td></tr></tbody></table></div>
+<h3 id="get-timebasecal" class="route"><code>GET /timeBaseCal</code></h3>
+<p>Calibrazione manuale della base tempi (fattore moltiplicativo salvato in NVS <code>timeCal</code>). Non c'è calibrazione automatica: senza RTC la deriva del quarzo ESP32 (~10–20 ppm) incide solo sull'ora assoluta, non sugli intervalli.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>delta_us</code></td><td>int</td><td>Deviazione in microsecondi misurata</td></tr><tr><td><code>minutes</code></td><td>int</td><td>Finestra di misurazione in minuti</td></tr></tbody></table></div></section>
+<section id="checkpoint-e-sessione"><h2>Checkpoint e sessione</h2>
+<h3 id="get-checkpoint" class="route"><code>GET /checkPoint</code></h3>
+<p>Registra manualmente un passaggio (normalmente generato dall'hardware IR). Conta come su una linea abilitata anche se la linea è disabilitata: riga abilitata, beep e, sulla linea di start in attesa, avvio del tempo trascorso (il passaggio della barriera di una linea disabilitata invece no).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Default</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>lineNumber</code></td><td>int</td><td>0</td><td>Indice <b>0-based</b> della linea (0 = linea 1) che ha rilevato il passaggio</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma con timestamp. Il base timbra l'istante di <i>arrivo</i> della richiesta: latenza e jitter di rete finiscono nel tempo (per le fotocellule wireless usare <code>/remoteCheckpoint</code>).</p>
+<h3 id="get-clocksync" class="route"><code>GET /clockSync</code></h3>
+<p>Restituisce l'orologio <code>esp_timer</code> del base in microsecondi (stringa decimale), campionato come prima istruzione dell'handler. Usato dalle fotocellule wireless per stimare l'offset di clock (round-trip, stile NTP).</p>
+<p><b>Risposta:</b> <code>text/plain</code>, es. <code>123456789012</code>.</p>
+<p><b>Parametri opzionali (battito di presenza della fotocellula):</b> <code>cell</code> (id), <code>line</code> (1–4), <code>rssi</code> (dBm), <code>rtt</code> (µs, miglior RTT misurato), <code>fw</code> (versione). Se <code>cell</code> e <code>line</code> sono presenti il base registra/aggiorna la cella in elenco (vedi <code>GET /cells</code>); senza parametri la route resta un semplice clock. La route non richiede autenticazione, quindi la presenza è solo informativa (falsificabile) e non influisce sui tempi.</p>
+<h3 id="get-cells" class="route"><code>GET /cells</code></h3>
+<p>Elenco delle fotocellule viste dalla Main: le Cell RF abbinate (<code>Chronofit_Cell_RF</code>, radio NRF24) e le Cell WiFi (<code>Chronofit_Cell</code>). Una cella è <code>connected</code> se si è fatta sentire negli ultimi 10 s (battito RF ogni ~1 s, <code>/clockSync</code> per le WiFi); altrimenti resta in elenco come persa. Al massimo 8 celle: una Cell WiFi persa da più tempo può essere sostituita da una nuova, una Cell RF abbinata resta finché non viene rimossa (<code>/cellRemove</code>). Lo stesso JSON viene inviato sul WebSocket (<code>t = 12</code>) a ogni cambiamento.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{
+  &quot;t&quot;: 12, &quot;n&quot;: 2, &quot;total&quot;: 2,
+  &quot;cells&quot;: [
+    { &quot;id&quot;: &quot;1a2b3c4d&quot;, &quot;line&quot;: 2, &quot;rssi&quot;: -50, &quot;rtt&quot;: 1450, &quot;fw&quot;: &quot;CR1.0.0&quot;,
+      &quot;ip&quot;: &quot;RF&quot;, &quot;connected&quot;: true, &quot;conflict&quot;: false,
+      &quot;ageMs&quot;: 600, &quot;lastEventAgeMs&quot;: 42000, &quot;events&quot;: 7,
+      &quot;rf&quot;: true, &quot;link&quot;: 100, &quot;bat&quot;: 3950, &quot;batPct&quot;: 83, &quot;batMin&quot;: 245, &quot;txMain&quot;: 1, &quot;txCell&quot;: 1, &quot;input&quot;: false, &quot;pending&quot;: 0,
+      &quot;lockoutMs&quot;: 200, &quot;buzzer&quot;: 1 },
+    { &quot;id&quot;: &quot;a4cf12345678&quot;, &quot;line&quot;: 3, &quot;rssi&quot;: -58, &quot;rtt&quot;: 3100, &quot;fw&quot;: &quot;C1.1.1&quot;,
+      &quot;ip&quot;: &quot;192.168.10.2&quot;, &quot;connected&quot;: true, &quot;conflict&quot;: false,
+      &quot;ageMs&quot;: 1800, &quot;lastEventAgeMs&quot;: -1, &quot;events&quot;: 0, &quot;rf&quot;: false }
+  ],
+  &quot;radio&quot;: { &quot;ok&quot;: true, &quot;id&quot;: &quot;5e6f7a8b&quot;, &quot;channel&quot;: 80, &quot;pairingS&quot;: 0 },
+  &quot;main&quot;: { &quot;bat&quot;: 3910, &quot;batPct&quot;: 79, &quot;charging&quot;: false, &quot;batMin&quot;: 310 },
+  &quot;local&quot;: { &quot;barrierLine&quot;: 1, &quot;padLine&quot;: 0, &quot;padEdge&quot;: 1, &quot;barrier&quot;: false, &quot;pad&quot;: false }
+}</code></pre>
+<ul><li><code>conflict</code> è <code>true</code> se la linea della cella è usata anche da un'altra cella connessa o da un ingresso locale della Main.</li><li><code>ageMs</code> è <code>-1</code> per una Cell RF abbinata che non si è ancora fatta sentire da quando la Main è accesa; <code>lastEventAgeMs</code> è <code>-1</code> se la cella non ha ancora inviato passaggi.</li><li><code>rtt</code> è il ritardo (µs) del campione di sync migliore.</li><li>Cell RF: l'NRF24 non misura l'RSSI, quindi <code>rssi</code> è un valore convenzionale ricavato da <code>link</code> (percentuale di scambi riusciti sugli ultimi 20): -50 = link ≥ 60 % (4 tacche), -60 = ≥ 35 % (3), -70 = ≥ 15 % (2), -80 = sotto (1), 0 = sconosciuto. <code>bat</code> è la batteria della cella in mV e <code>batPct</code> la sua carica in % (vedi sotto), <code>input</code> lo stato del fascio, <code>pending</code> i passaggi in coda sulla cella. <code>lossAck</code> / <code>lossResp</code>: scambi falliti sugli ultimi 20, rispettivamente senza ACK hardware (il pacchetto non è arrivato alla Main: distanza, ostacoli, alimentazione del modulo) e senza risposta (la Main l'ha ricevuto ma non ha risposto entro 60 ms: Main occupata, per esempio durante una scrittura in flash). Presenti dalla versione CR1.1.0 della cella. <code>line</code> 0 = nessuna linea (la cella non invia passaggi).</li><li><code>radio</code>: stato del modulo NRF24 della Main, suo id (= kit delle celle) e secondi rimanenti di abbinamento.</li><li><code>lockoutMs</code>: lockout effettivo della cella = Ritardo della sua linea (al massimo 60000 ms).</li><li><code>txMain</code> / <code>txCell</code>: potenza di trasmissione scelta in automatico, rispettivamente della Main verso la cella e della cella verso la Main: 0 = minima … 3 = massima (<code>RF24_PA_MIN</code>…<code>RF24_PA_MAX</code>), -1 = non ancora nota. Vedi <code>RfPowerCtl</code> in <code>rf_protocol.h</code>.</li><li><code>main</code>: batteria della Main (<code>bat</code> in mV, <code>batPct</code> in %) e caricatore attivo (<code>charging</code>).</li><li><code>batPct</code> è calcolata dalla Main dalla tensione (le celle inviano solo i mV), per batterie al litio con step-up a potenza costante: 3900 mV o più = 100 %, 3100 mV = 0 %, seguendo la curva di scarica (3,5 V ≈ 22 %, 3,6 V ≈ 38 %, 3,7 V ≈ 62 %, 3,8 V ≈ 82 %). Il tempo residuo <code>batMin</code> conta invece anche l'energia tra 4,1 e 3,9 V. Vale -1 se la tensione non è ancora nota. In carica la tensione è più alta del reale, quindi la percentuale è sovrastimata.</li><li><code>batMin</code> (Main e Cell RF): tempo residuo stimato in minuti, <code>-1</code> se non disponibile (tensione non nota o batteria in carica), <code>-2</code> se la stima è in corso. A potenza assorbita costante la carica cala in modo lineare: la Main filtra la tensione (media esponenziale di circa un minuto), registra la carica una volta al minuto e ne ricava la pendenza con una regressione sugli ultimi 40 minuti. Finché i dati sono pochi usa il consumo medio delle sessioni precedenti (NVS <code>bat_rate</code> per la Main, <code>cbat_rate</code> per le Cell RF). Le Cell RF non comunicano se sono in carica: la Main lo deduce da una risalita della tensione. Vedi <code>battery_runtime.cpp</code>. Quando cambiano la percentuale o il tempo residuo, la Main invia un <code>TYPE_CELLS_UPDATED</code> al massimo una volta al minuto.</li><li><code>local</code>: ingressi locali della Main (vedi <code>/localInputsSave</code>); <code>barrier</code>/<code>pad</code> = ingresso attivo in questo momento.</li></ul>
+<h3 id="get-cellspair" class="route"><code>GET /cellsPair</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Apre o chiude l'abbinamento delle Cell RF. Con l'abbinamento aperto la Main lo segnala nel beacon radio e accetta le richieste: si abbina una Cell non abbinata, oppure una Cell già abbinata a un'altra Main che, da quando è accesa (da meno di 2 minuti), non ha mai sentito la sua Main. La nuova cella riceve la prima linea libera (non usata da ingressi locali o altre celle), lockout 200 ms e beep attivo.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>on</code></td><td><code>1</code> (default) apre, <code>0</code> chiude</td></tr><tr><td><code>s</code></td><td>Durata in secondi (default 60, max 600)</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>Pairing open</code> / <code>Pairing closed</code>, <code>503</code> se il modulo radio non risponde.</p>
+<h3 id="get-cellconfig" class="route"><code>GET /cellConfig</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Configura una Cell RF abbinata. La configurazione è salvata nella Main (<code>/rf_cells.json</code>) e arriva alla cella al sync successivo (entro ~1 s).</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>id</code></td><td>Id della cella (come in <code>/cells</code>)</td></tr><tr><td><code>line</code></td><td>(opz.) Linea 1–4, <code>0</code> = nessuna</td></tr><tr><td><code>lockoutMs</code></td><td>(opz.) <b>Ignorato</b> da MR1.3.0: il lockout di una Cell RF è il Ritardo (<code>d</code>) della sua linea, vedi <code>/checkPointFields</code></td></tr><tr><td><code>buzzer</code></td><td>(opz.) <code>1</code>/<code>0</code>, beep a ogni passaggio</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>OK</code>, <code>400</code> (valore non valido), <code>404</code> (cella RF sconosciuta).</p>
+<h3 id="get-cellcmd" class="route"><code>GET /cellCmd</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Comando a una Cell RF, consegnato al sync successivo.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>id</code></td><td>Id della cella</td></tr><tr><td><code>cmd</code></td><td><code>beep</code> = la cella lampeggia e suona per 3 s (per trovarla), <code>test</code> = passaggio di prova come se il sensore fosse scattato ora, <code>batcal</code> = taratura della batteria della cella</td></tr><tr><td><code>mv</code></td><td>(solo <code>batcal</code>) tensione della batteria della cella misurata al tester, 2500–5000 mV</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>OK</code>, <code>400</code>, <code>404</code>.</p>
+<h3 id="get-batterycurve" class="route"><code>GET /batteryCurve</code></h3>
+<p>Curve di scarica tensione → carica usate dalla Main: la tipica e quelle apprese (una per la Main, una comune alle Cell RF), più le scariche in registrazione. Vedi <code>battery_curve.cpp</code>.</p>
+<pre><code>{
+  &quot;grid&quot;: [3100, 3300, 3400, 3500, 3600, 3700, 3800, 3900, 4000, 4100],
+  &quot;default&quot;: [0, 3, 8, 17, 30, 48, 64, 78, 90, 100],
+  &quot;main&quot;: { &quot;n&quot;: 2, &quot;pct&quot;: [0, 2.5, 7.1, 15.8, 31.2, 50.4, 66, 80.3, 91.2, 100] },
+  &quot;cell&quot;: { &quot;n&quot;: 0, &quot;pct&quot;: null },
+  &quot;logging&quot;: [ { &quot;id&quot;: &quot;1a2b3c4d&quot;, &quot;minutes&quot;: 184, &quot;startMv&quot;: 4096, &quot;lastMv&quot;: 3712 } ]
+}</code></pre>
+<ul><li><code>pct</code> è la carica sulla scala intera (100 % = inizio della scarica sotto i 4100 mV) per ogni tensione di <code>grid</code>; <code>null</code> se la curva è quella tipica. <code>n</code> = scariche complete da cui è appresa (media delle ultime 4). La carica mostrata (<code>batPct</code>) è riportata a 100 % da 3900 mV.</li><li>Una scarica si registra (un campione ogni 2 minuti) da quando, dopo una carica piena, la tensione filtrata scende sotto i 4100 mV, fino allo spegnimento per batteria scarica; vale se dura almeno un'ora e finisce sotto i 3200 mV. Una ricarica o una cella spenta prima della fine la scartano.</li></ul>
+<h3 id="get-batterycurvereset" class="route"><code>GET /batteryCurveReset</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Torna alla curva tipica. Parametro <code>kind</code> = <code>main</code>, <code>cell</code> o <code>all</code>.</p>
+<h3 id="get-batterycal" class="route"><code>GET /batteryCal</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Taratura della batteria della Main. <code>mv</code> = tensione misurata al tester (2500–5000, meglio con il caricatore scollegato). La Main calcola il fattore del partitore e lo salva in NVS (<code>bat_factor</code>).</p>
+<p><b>Risposta:</b> il nuovo fattore (millesimi) o <code>400</code>.</p>
+<h3 id="get-cellremove" class="route"><code>GET /cellRemove</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Rimuove l'abbinamento di una Cell RF. Al sync successivo la Main risponde alla cella che non la conosce e la cella dimentica l'abbinamento (si può abbinare di nuovo).</p>
+<p><b>Parametri:</b> <code>id</code>. <b>Risposta:</b> <code>OK</code>, <code>400</code>, <code>404</code>.</p>
+<h3 id="get-localinputssave" class="route"><code>GET /localInputsSave</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Ingressi locali della Main (scheda <code>Chronofit_BLE</code>): fotocellula su GPIO17 e pedana su GPIO36. Ogni parametro è opzionale; salvati in NVS e applicati subito. Il lockout è quello della linea (<code>d1</code>–<code>d4</code>).</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>barrierLine</code></td><td>Linea della fotocellula 1–4, <code>0</code> = disattivata (default 1)</td></tr><tr><td><code>padLine</code></td><td>Linea della pedana 1–4, <code>0</code> = disattivata (default 0)</td></tr><tr><td><code>padEdge</code></td><td><code>0</code> = passaggio al contatto, <code>1</code> = al rilascio (default 1, partenza da pedana)</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>OK</code> o <code>400</code>.</p>
+<h3 id="get-remotecheckpoint" class="route"><code>GET /remoteCheckpoint</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Registra un passaggio proveniente da una fotocellula wireless (<code>Chronofit_Cell</code>) con timestamp già espresso nel clock <code>esp_timer</code> del base. Il passaggio entra nella stessa pipeline di un sensore cablato (sync su linea, avvio elapsed, buzzer, WebSocket).</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>lineNumber</code></td><td>int</td><td>Linea <b>1-based</b> (1–4), diversamente da <code>/checkPoint</code></td></tr><tr><td><code>t</code></td><td>uint64</td><td>Istante del fronte in µs, dominio <code>esp_timer</code> del base</td></tr><tr><td><code>seq</code></td><td>uint32</td><td>(opz.) Numero progressivo: uno stesso <code>seq</code> ripetuto sulla stessa linea risponde <code>DUP</code> senza duplicare il passaggio</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>OK</code>, <code>DUP</code>, oppure <code>400</code> (<code>Missed params</code>, <code>Bad lineNumber</code>, <code>Bad timestamp</code> se <code>t</code> è oltre 50 ms nel futuro o più vecchio di 5 minuti).</p>
+<h3 id="get-getcheckpoints" class="route"><code>GET /getCheckpoints</code></h3>
+<p>Scarica il file di sessione corrente (<code>session.json</code>) in streaming chunked.</p>
+<p><b>Risposta:</b> file NDJSON (newline-delimited JSON), una riga per ogni checkpoint.</p>
+<p><b>Formato riga:</b></p>
+<pre><code>{&quot;id&quot;:1,&quot;ln&quot;:1,&quot;lId&quot;:&quot;A1&quot;,&quot;c&quot;:42,&quot;h&quot;:10,&quot;m&quot;:23,&quot;s&quot;:45,&quot;ms&quot;:678,&quot;x&quot;:0,&quot;e&quot;:1,&quot;p&quot;:0,&quot;r&quot;:0}</code></pre>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>id</code></td><td>Indice progressivo del passaggio</td></tr><tr><td><code>ln</code></td><td>Numero linea</td></tr><tr><td><code>lId</code></td><td>ID linea (stringa)</td></tr><tr><td><code>c</code></td><td>Numero competitor</td></tr><tr><td><code>h</code>,<code>m</code>,<code>s</code>,<code>ms</code></td><td>Orario evento</td></tr><tr><td><code>x</code></td><td>Penalità (secondi)</td></tr><tr><td><code>e</code></td><td>Abilitato (1) / disabilitato (0)</td></tr><tr><td><code>p</code></td><td>Tipo prova/sensore (testo libero impostato dall'utente, es. "FPC 102")</td></tr><tr><td><code>r</code></td><td>Modalità trigger (<code>0</code> = automatico, <code>1</code> = manuale)</td></tr></tbody></table></div>
+<h3 id="get-downloadsession" class="route"><code>GET /downloadSession</code></h3>
+<p>Scarica il file di sessione come allegato (Content-Disposition: attachment).</p>
+<p><b>Risposta:</b> stesso formato di <code>/getCheckpoints</code>, con header per il download diretto.</p>
+<h3 id="get-athletes-post-athletes" class="route"><code>GET /athletes</code> · <code>POST /athletes</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Copia di sicurezza dell'elenco competitor della console, che il browser tiene nel <code>localStorage</code>: se la console si apre da un altro dispositivo o indirizzo, o i dati del sito vengono cancellati, l'elenco locale risulta vuoto e la console lo ripristina da questa copia.</p>
+<ul><li><code>GET</code>: restituisce il JSON dell'elenco (array di <code>{competitor, name, surname, team, …}</code>); 404 con <code>[]</code> se la copia non esiste.</li><li><code>POST</code>: corpo JSON dell'intero elenco (massimo 64 KB, scritto in <code>/athletes.json</code> in modo atomico). Risposta <code>{ &quot;ok&quot;: true }</code>, oppure 413 <code>size</code> / 500 <code>fs</code>.</li></ul>
+<p>La copia <b>si perde con l'aggiornamento del filesystem</b> (<code>fs.bin</code>); <code>/clearSession</code> non la tocca.</p>
+<h3 id="get-clearsession" class="route"><code>GET /clearSession</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Cancella l'intera sessione corrente (elimina <code>session.json</code>). Notifica tutti i client WebSocket.</p>
+<p><b>Risposta:</b> testo di conferma.</p>
+<h3 id="get-checkpointfields" class="route"><code>GET /checkPointFields</code></h3>
+<p>Aggiorna la configurazione di una linea tramite query string. Solo <code>l</code> è obbligatorio; gli altri parametri sono facoltativi — vengono modificati solo i campi presenti.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>✅</td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>string</td><td>—</td><td>ID linea</td></tr><tr><td><code>c</code></td><td>int</td><td>—</td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>int</td><td>—</td><td>Delay linea in millisecondi. È anche il lockout degli ingressi locali e delle Cell RF della linea (alle celle al massimo 60000); salvato in NVS, default 200</td></tr><tr><td><code>e</code></td><td>int</td><td>—</td><td>Abilitato: <code>1</code> / <code>0</code> (con <code>0</code> i passaggi restano in sessione come righe disabilitate, senza beep né start del tempo)</td></tr></tbody></table></div>
+<p><b>Esempio:</b> <code>GET /checkPointFields?l=2&amp;c=7&amp;e=1</code></p>
+<h3 id="get-linedisableafterpass" class="route"><code>GET /lineDisableAfterPass</code></h3>
+<p>Disattivazione automatica delle linee dopo il primo passaggio. Con il valore <code>1</code>, al primo passaggio una linea abilitata viene disattivata (<code>e = 0</code>, notificato con <code>TYPE_LINE_UPDATED</code>) e resta così finché non viene riabilitata con <code>/checkPointFields</code> (<code>e=1</code>). I passaggi successivi restano in sessione come righe disabilitate, senza beep e senza far partire il tempo trascorso. Salvato in NVS (<code>line_once</code>), default <code>0</code>.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>v</code></td><td>int</td><td>—</td><td><code>1</code> attiva, <code>0</code> disattiva. Senza parametro restituisce solo lo stato</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>{ &quot;v&quot;: 0 }</code></p>
+<h3 id="get-license" class="route"><code>GET /license</code></h3>
+<p>Stato della licenza a numero di accensioni (vedi <code>license.h</code>).</p>
+<p><b>Risposta:</b> <code>{ &quot;device&quot;: &quot;f43aece0f908&quot;, &quot;left&quot;: 49, &quot;unlimited&quot;: false, &quot;active&quot;: true, &quot;seq&quot;: 3, &quot;boot&quot;: 2716393851, &quot;contact&quot;: &quot;&quot; }</code></p>
+<ul><li><code>device</code>: codice dispositivo da comunicare al produttore (seriale della scheda, eFuse MAC in 12 cifre esadecimali, come <code>sn</code> in <code>/systemSettings</code>). <code>left</code>: accensioni residue dopo quella in corso (<code>-1</code> = illimitata). Un'accensione vera si conta solo dopo 90 s di funzionamento o al primo passaggio registrato (<code>LICENSE_COMMIT_MS</code>): programmazione, pressione di EN e monitor seriale non consumano utilizzi. <code>active</code>: <code>false</code> = licenza esaurita, i passaggi non vengono registrati. <code>boot</code> cambia a ogni avvio (la console mostra il popup una volta per avvio).</li></ul>
+<h3 id="get-licenseapply" class="route"><code>GET /licenseApply</code></h3>
+<p>Applica un codice di sblocco generato dal produttore (<code>Firmware/License/keygen.py</code>). Parametro <code>code</code> (16 caratteri, <code>XXXX-XXXX-XXXX-XXXX</code>). Imposta le accensioni residue al valore del codice.</p>
+<p><b>Risposta:</b> come <code>GET /license</code>; errore 400 <code>{ &quot;ok&quot;: false, &quot;error&quot;: &quot;format&quot; | &quot;invalid&quot; | &quot;used&quot; }</code>.</p>
+<h3 id="get-elapsedstartline" class="route"><code>GET /elapsedStartLine</code></h3>
+<p>Linea il cui primo passaggio fa partire il tempo trascorso (modalità elapsed). Senza parametri restituisce il valore attuale. Salvata in NVS (<code>el_start</code>), default <code>0</code>.</p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Obbligatorio</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>int</td><td>—</td><td><code>0</code> = qualsiasi linea, <code>1</code>–<code>4</code> = solo quella linea</td></tr></tbody></table></div>
+<p><b>Risposta:</b> <code>{ &quot;l&quot;: 0 }</code></p>
+<h3 id="post-checkpointfields" class="route"><code>POST /checkPointFields</code></h3>
+<p>Aggiorna la configurazione di una linea (competitor, ID linea, delay, stato). Tutti i campi sono inviati nel body.</p>
+<p><b>Body JSON:</b></p>
+<pre><code>{ &quot;l&quot;: 1, &quot;ld&quot;: &quot;A1&quot;, &quot;c&quot;: 42, &quot;d&quot;: 500, &quot;e&quot;: 1 }</code></pre>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>l</code></td><td>Numero linea (1–4)</td></tr><tr><td><code>ld</code></td><td>ID linea (stringa)</td></tr><tr><td><code>c</code></td><td>Numero competitor assegnato</td></tr><tr><td><code>d</code></td><td>Delay linea in millisecondi. È anche il lockout degli ingressi locali e delle Cell RF della linea (alle celle al massimo 60000); salvato in NVS, default 200</td></tr><tr><td><code>e</code></td><td>Abilitato: <code>1</code> / <code>0</code></td></tr></tbody></table></div>
+<h3 id="post-updatecheckpointrow" class="route"><code>POST /updateCheckPointRow</code></h3>
+<p>Modifica un passaggio esistente nella sessione (aggiorna <code>session.json</code>).</p>
+<p><b>Body JSON:</b></p>
+<pre><code>{ &quot;index&quot;: 5, &quot;lineNumber&quot;: 1, &quot;lineId&quot;: &quot;A1&quot;, &quot;competitor&quot;: 42, &quot;hour&quot;: 10, &quot;minute&quot;: 23, &quot;second&quot;: 45, &quot;millis&quot;: 678, &quot;penality&quot;: 0 }</code></pre>
+<p>Il campo <code>index</code> identifica il record da modificare. Se non esiste viene creato.</p></section>
+<section id="equitazione-salto-ostacoli"><h2>Equitazione (salto ostacoli)</h2>
+<p>Turno del cavaliere, campana, penalità e classifica, calcolati dalla Main (<code>equestrian.cpp</code>). È la <b>gara assistita</b>, spenta di default (<code>GET /eqEnable</code>): da spenta la Main non usa i passaggi per i turni, i comandi rispondono <code>off</code> e la linea di start del tempo trascorso è quella scelta con <code>/elapsedStartLine</code>, cioè il cronometraggio standard. Le pagine (<code>data/equestrian.js</code>, console e view equitazione) mostrano lo stato e inviano i comandi. Funziona sopra il cronometraggio elapsed normale: i passaggi restano registrati nella sessione come sempre.</p>
+<p><b>Turno</b> (<code>st</code>): <code>ready</code> (cavaliere selezionato, linee riarmate) → <code>countdown</code> (campana suonata, conto alla rovescia) → <code>running</code> (partito: passaggio sulla linea di partenza, fine del conto alla rovescia con partenza automatica, o comando) ⇄ <code>paused</code> (campana durante il percorso: interruzione) → <code>finished</code> (passaggio sulla linea di arrivo, tempo limite superato, eliminazione o ritiro) → <code>confirmed</code>. Un turno può diventare <code>cancelled</code>. Selezionando il cavaliere successivo il turno <code>finished</code> diventa <code>confirmed</code>, uno non ancora partito <code>cancelled</code>. Se la linea di partenza coincide con quella di arrivo, l'arrivo vale solo dopo 2 s dalla partenza.</p>
+<p><b>Calcolo</b> (per turno):</p>
+<ul><li>penalità percorso = Σ errori × punti; gli errori con secondi (es. rifiuto con abbattimento) li aggiungono al tempo;</li><li>eliminazione: errore con <code>elim</code>, errori di un gruppo arrivati a <code>elimAt</code> (es. 2° rifiuto), tempo limite superato, o manuale;</li><li>tempo = cronometrato (senza le interruzioni) + correzioni in secondi, troncato al centesimo; oppure il tempo corretto dal giudice (<code>time</code>);</li><li>penalità tempo = intervalli di <code>every</code> s oltre il tempo concesso (iniziati se <code>commenced</code>, altrimenti completi) × <code>amount</code>, in punti (<code>mode</code> 1) o in secondi aggiunti al tempo (<code>mode</code> 2);</li><li>tempo concesso = <code>ta</code> se impostato, altrimenti lunghezza / velocità arrotondato al secondo superiore; tempo limite = concesso × <code>tl</code>. La 2ª fase o il barrage usano <code>ta2</code> / <code>length2</code>, se impostati;</li><li>linea intermedia (<code>course.mid</code>): con una variante a due fasi consecutive (<code>final</code> 2, <code>consec</code>) è l'arrivo della 1ª fase. Se il cavaliere è netto (0 penalità, non eliminato né ritirato) la 1ª fase si chiude confermata e parte subito, da quell'istante, un nuovo turno della 2ª fase; altrimenti il turno finisce lì. Con le altre varianti registra solo il tempo intermedio del turno (<code>mid</code>). La Main arma con il cavaliere anche la linea intermedia.</li></ul>
+<p>Messaggi WebSocket: <code>{ &quot;t&quot;: 20, &quot;rev&quot;: 12, &quot;cur&quot;: {…turno…} }</code> (<code>TYPE_EQ_UPDATE</code>) a ogni cambiamento e ogni secondo durante conto alla rovescia e percorso; <code>{ &quot;t&quot;: 21 }</code> (<code>TYPE_EQ_CONFIG</code>) quando cambia il regolamento. Quando <code>rev</code> cambia le pagine ricaricano <code>GET /eq</code>.</p>
+<h3 id="get-eqenable" class="route"><code>GET /eqEnable</code></h3>
+<p>Accende (<code>on=1</code>) o spegne (<code>on=0</code>) la gara assistita, salvata in NVS (<code>eq_on</code>, default spenta). Senza parametri restituisce lo stato. Spegnendola il turno attivo viene chiuso (arrivato → confermato, altrimenti annullato) e la linea di start del tempo trascorso torna a quella di <code>/elapsedStartLine</code>. Invia <code>{ &quot;t&quot;: 21 }</code>.</p>
+<p><b>Risposta:</b> <code>{ &quot;on&quot;: true }</code></p>
+<h3 id="get-eq" class="route"><code>GET /eq</code></h3>
+<p>Stato completo: <code>on</code> (gara assistita accesa), regolamento (come <code>GET /eqConfig</code>), <code>rev</code>, <code>cur</code> (id del turno attivo, <code>0</code> = nessuno), <code>taMs</code> e <code>taMs2</code> (tempo concesso della 1ª e della 2ª fase/barrage) e <code>rounds</code>, tutti i turni (al massimo 400, salvati in <code>/eq_rounds.json</code>; vengono cancellati con la sessione).</p>
+<p>Turno: <code>{ &quot;id&quot;, &quot;comp&quot;, &quot;phase&quot;, &quot;v&quot; (variante), &quot;st&quot;, &quot;auto&quot; (partenza automatica), &quot;ta&quot;, &quot;tl&quot; (ms), &quot;t&quot; (tempo ms), &quot;fp&quot; (penalità percorso), &quot;tp&quot; (penalità tempo), &quot;pts&quot; (totale), &quot;tt&quot; (tempo con le penalità in secondi), &quot;elim&quot;, &quot;ret&quot;, &quot;reason&quot; (&quot;refusals&quot; | &quot;time_limit&quot; | &quot;manual&quot; | etichetta dell&#x27;errore), &quot;ovr&quot; (tempo corretto), &quot;mid&quot; (tempo intermedio ms, 0 = non passato), &quot;faults&quot; [conteggi per tipo], &quot;cd&quot; (ms al termine del conto alla rovescia) }</code>. <code>fp</code>, <code>tp</code> e <code>pts</code> sono in punti (anche decimali).</p>
+<h3 id="get-eqcmd" class="route"><code>GET /eqCmd</code></h3>
+<p>Comandi del turno. Risposta <code>{ &quot;ok&quot;: true }</code> o errore 400 <code>{ &quot;ok&quot;: false, &quot;error&quot;: &quot;off&quot; | &quot;running&quot; | &quot;state&quot; | &quot;no_round&quot; | &quot;fault&quot; | &quot;cmd&quot; }</code>.</p>
+<div class="tw"><table><thead><tr><th><code>c</code></th><th>Altri parametri</th><th>Effetto</th></tr></thead><tbody><tr><td><code>select</code></td><td><code>comp</code>, <code>phase</code> (opz.), <code>force=1</code>, <code>rearm=0</code> (opz.)</td><td>Nuovo turno per il cavaliere: assegna il suo numero alle linee di partenza e arrivo, le riabilita (non con <code>rearm=0</code>: ne lascia invariato lo stato) e mette il tempo trascorso in attesa. Con un turno in corso risponde <code>running</code>, salvo <code>force=1</code></td></tr><tr><td><code>reset</code></td><td><code>rearm=0</code> (opz.)</td><td>Reset del tempo trascorso: annulla il turno attivo (confermato se concluso) e ne crea uno pronto per lo stesso cavaliere, così la campana torna attiva. Con <code>rearm=0</code> le linee non vengono riabilitate. Senza turno attivo risponde <code>no_round</code></td></tr><tr><td><code>bell</code></td><td>—</td><td>Campana: avvia il conto alla rovescia, o interrompe / riprende il percorso</td></tr><tr><td><code>start</code> / <code>finish</code></td><td><code>id</code> (opz.)</td><td>Partenza / arrivo manuale</td></tr><tr><td><code>fault</code></td><td><code>k</code> (indice dell'errore), <code>d</code> (<code>1</code> / <code>-1</code>), <code>id</code></td><td>Aggiunge o toglie un errore; un'eliminazione ferma il percorso</td></tr><tr><td><code>status</code></td><td><code>s</code> = <code>elim</code> \</td><td><code>ret</code> \</td><td>vuoto, <code>id</code></td><td>Eliminato, ritirato o annulla lo stato</td></tr><tr><td><code>confirm</code> / <code>cancel</code></td><td><code>id</code></td><td>Conferma o annulla il turno</td></tr><tr><td><code>time</code></td><td><code>ms</code> (<code>-1</code> = torna al tempo cronometrato), <code>id</code></td><td>Tempo corretto dal giudice</td></tr><tr><td><code>phase</code></td><td><code>p</code> (<code>1</code> / <code>2</code>), <code>id</code></td><td>Fase o barrage del turno</td></tr></tbody></table></div>
+<p>Senza <code>id</code> il comando vale per il turno attivo.</p>
+<h3 id="get-eqconfig" class="route"><code>GET /eqConfig</code></h3>
+<p>Regolamento e dati della gara (salvati in NVS, chiave <code>eq_cfg</code>). Con <code>reset=1</code> ripristina le varianti predefinite.</p>
+<pre><code>{ &quot;v&quot;: 1,
+  &quot;variants&quot;: [ { &quot;name&quot;: &quot;Tabella A a tempo&quot;, &quot;cd&quot;: 45, &quot;auto&quot;: true, &quot;warn&quot;: true,
+                  &quot;tp&quot;: { &quot;mode&quot;: 1, &quot;every&quot;: 4, &quot;amount&quot;: 1, &quot;commenced&quot;: true }, &quot;tl&quot;: 2,
+                  &quot;rank&quot;: 0, &quot;final&quot;: 0, &quot;consec&quot;: false,
+                  &quot;faults&quot;: [ { &quot;label&quot;: &quot;Abbattimento&quot;, &quot;pts&quot;: 4, &quot;sec&quot;: 0, &quot;group&quot;: 0, &quot;elimAt&quot;: 0, &quot;elim&quot;: false } ] } ],
+  &quot;course&quot;: { &quot;variant&quot;: 0, &quot;start&quot;: 1, &quot;finish&quot;: 2, &quot;length&quot;: 350, &quot;speed&quot;: 350, &quot;ta&quot;: 0, &quot;phase&quot;: 1, &quot;mid&quot;: 0, &quot;length2&quot;: 0, &quot;ta2&quot;: 0 } }</code></pre>
+<ul><li><code>cd</code>: secondi di conto alla rovescia (<code>0</code> = niente), <code>auto</code>: partenza automatica allo zero, <code>warn</code>: beep negli ultimi 5 s;</li><li><code>tp.mode</code>: <code>0</code> nessuna penalità tempo, <code>1</code> in punti, <code>2</code> in secondi; <code>tl</code>: tempo limite come multiplo del concesso (<code>0</code> = nessuno);</li><li><code>rank</code>: <code>0</code> punti poi tempo, <code>1</code> solo tempo, <code>2</code> solo punti; <code>final</code>: <code>0</code> percorso unico, <code>1</code> con barrage, <code>2</code> due fasi; <code>consec</code>: due fasi consecutive (servono la linea intermedia);</li><li><code>faults</code> (max 8): <code>group</code> + <code>elimAt</code> = eliminazione al numero di errori del gruppo; <code>elim</code> = eliminazione immediata;</li><li><code>course</code>: variante in uso, linee di partenza e arrivo, lunghezza (m), velocità (m/min), tempo concesso fisso (ms, <code>0</code> = calcolato), fase predefinita, linea intermedia (<code>mid</code>, <code>0</code> = nessuna, diversa da partenza e arrivo), lunghezza e tempo concesso fisso della 2ª fase/barrage (<code>length2</code>, <code>ta2</code>, <code>0</code> = come la 1ª fase / calcolato).</li></ul>
+<h3 id="post-eqconfig" class="route"><code>POST /eqConfig</code></h3>
+<p>Salva il regolamento: corpo JSON come la risposta di <code>GET /eqConfig</code> (max 8 varianti). Risposta <code>{ &quot;ok&quot;: true }</code> o 400 <code>{ &quot;ok&quot;: false, &quot;error&quot;: &quot;config&quot; }</code>. La linea di partenza diventa anche la linea di start del tempo trascorso.</p></section>
+<section id="impostazioni-di-sistema"><h2>Impostazioni di sistema</h2>
+<h3 id="get-allsettings" class="route"><code>GET /allSettings</code></h3>
+<p>Restituisce tutte le impostazioni del dispositivo serializzate in JSON.</p>
+<p><b>Risposta JSON (campi principali):</b></p>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>c1</code>–<code>c4</code></td><td>Competitor assegnati alle linee 1–4</td></tr><tr><td><code>l1</code>–<code>l4</code></td><td>ID linea 1–4</td></tr><tr><td><code>d1</code>–<code>d4</code></td><td>Delay linee 1–4 (ms)</td></tr><tr><td><code>e1</code>–<code>e4</code></td><td>Stato abilitazione linee</td></tr><tr><td><code>sm</code></td><td>Modalità di sync (sempre <code>3</code> = elapsed)</td></tr><tr><td><code>utc</code></td><td>Offset UTC</td></tr><tr><td><code>sn</code></td><td>Nome stazione</td></tr><tr><td><code>bz</code></td><td>Buzzer abilitato (0/1)</td></tr></tbody></table></div>
+<h3 id="get-setattribute" class="route"><code>GET /setAttribute</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Aggiorna attributi del dispositivo.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>buzzerEnable</code></td><td>int</td><td><code>1</code> = buzzer abilitato</td></tr><tr><td><code>stationName</code></td><td>string</td><td>Nome della stazione</td></tr></tbody></table></div>
+<h3 id="get-systemsettings" class="route"><code>GET /systemSettings</code></h3>
+<p><b>Parametri opzionali:</b> <code>files=1</code> aggiunge <code>files</code> (elenco dei file: pesa svariati KB di RAM per richiesta, lo usa solo la pagina admin); <code>tasks=1</code> aggiunge <code>tasks</code> (stack libero in byte di ogni task, per dimensionarli).</p>
+<p>Restituisce informazioni complete sull'hardware e sul sistema.</p>
+<p><b>Risposta JSON (campi principali):</b></p>
+<div class="tw"><table><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>cpuTemp</code></td><td>Temperatura CPU</td></tr><tr><td><code>freeRam</code></td><td>RAM libera (byte)</td></tr><tr><td><code>minFreeRam</code></td><td>Minimo RAM libera raggiunto</td></tr><tr><td><code>maxAllocRam</code></td><td>Blocco di RAM libera più grande (byte): indica la frammentazione</td></tr><tr><td><code>resetReason</code></td><td>Motivo dell'ultimo riavvio (power-on, software, panic, watchdog, brownout…)</td></tr><tr><td><code>fwVersion</code></td><td>Versione firmware</td></tr><tr><td><code>hwName</code></td><td>Nome hardware</td></tr><tr><td><code>fsTotal</code> / <code>fsUsed</code></td><td>Dimensione filesystem totale/usata</td></tr><tr><td><code>files</code></td><td>Lista file nel filesystem</td></tr><tr><td><code>batteryMv</code></td><td>Batteria della Main (mV, mediana)</td></tr><tr><td><code>batteryPct</code></td><td>Carica della batteria della Main in % (stessa scala di <code>batPct</code> in <code>GET /cells</code>)</td></tr><tr><td><code>batteryMin</code></td><td>Tempo residuo stimato della batteria della Main in minuti (come <code>batMin</code> in <code>GET /cells</code>)</td></tr><tr><td><code>charging</code> / <code>charged</code></td><td>Caricatore attivo / carica completa</td></tr><tr><td><code>radioOk</code> / <code>radioId</code></td><td>Modulo NRF24 presente / id della Main (kit)</td></tr></tbody></table></div>
+<h3 id="get-reset" class="route"><code>GET /reset</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Riavvia il dispositivo (reboot).</p>
+<p><b>Risposta:</b> testo di conferma (il dispositivo si riavvia dopo l'invio).</p></section>
+<section id="branding-e-discipline"><h2>Branding e discipline</h2>
+<p>Impostazioni di branding/licensing a livello dealer: quali discipline sono<br>sbloccate nella schermata di selezione e se mostrare il logo sponsor<br>(<code>sponsor.png</code>, caricato da <code>sponsor.html</code>) sulle pagine. Pensate per essere<br>gestite da un tool esterno al dealer (o dalla pagina <code>branding.html</code>), non<br>dal cliente finale.</p>
+<h3 id="get-brandingsettings" class="route"><code>GET /brandingSettings</code></h3>
+<p>Restituisce lo stato corrente di branding/licensing.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{
+  &quot;disciplines&quot;: { &quot;regularity&quot;: 1, &quot;ski&quot;: 1, &quot;enduro&quot;: 1, &quot;equestrian&quot;: 0 },
+  &quot;showSponsorLogo&quot;: 1,
+  &quot;sponsorLogoExists&quot;: true
+}</code></pre>
+<p><code>disciplines</code> è una mappa <code>id disciplina → 0|1</code> (1 = abilitata, 0 = visibile<br>ma bloccata nella schermata di selezione). Un id assente equivale a <code>1</code><br>(abilitata). <code>showSponsorLogo</code> di default è <code>1</code> (per non cambiare il<br>comportamento sui device esistenti, dove <code>sponsor.png</code> è sempre mostrato<br>oggi). <code>sponsorLogoExists</code> indica se <code>/sponsor.png</code> è già stato caricato<br>(vedi <code>POST /upload</code>, o la pagina <code>sponsor.html</code>).</p>
+<h3 id="get-brandingsave" class="route"><code>GET /brandingSave</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Aggiorna lo stato di branding/licensing. Ogni parametro è opzionale: se<br>omesso, il relativo valore resta invariato.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>disciplines</code></td><td>string (JSON)</td><td>Mappa <code>{&quot;id&quot;:0\|1, ...}</code> da salvare così com'è</td></tr><tr><td><code>showSponsorLogo</code></td><td>int</td><td><code>1</code> = mostra <code>sponsor.png</code> sulle pagine, <code>0</code> = nascondilo</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma <code>OK</code>.</p></section>
+<section id="wifi"><h2>WiFi</h2>
+<h3 id="get-wificredential" class="route"><code>GET /wifiCredential</code></h3>
+<p>Restituisce lo stato della connessione WiFi STA.</p>
+<p><b>Risposta JSON:</b></p>
+<pre><code>{ &quot;ssid&quot;: &quot;MyNetwork&quot;, &quot;staConnected&quot;: true, &quot;staIp&quot;: &quot;192.168.1.42&quot; }</code></pre>
+<h3 id="get-wifiscan" class="route"><code>GET /wifiScan</code></h3>
+<p>Scansione asincrona delle reti WiFi vicine. Richiamarla finché <code>scanning</code> è <code>true</code>: la prima chiamata avvia la scansione, quelle successive restituiscono <code>{&quot;scanning&quot;:true}</code> finché è in corso, poi l'elenco.</p>
+<p>Se la STA non è connessa, la scansione sospende i tentativi di riconnessione (che altrimenti la farebbero fallire) e li riprende a fine scansione. Durante la scansione l'AP può sparire per qualche istante: il client deve ritentare.</p>
+<p><b>Risposta JSON (a scansione conclusa):</b></p>
+<pre><code>{ &quot;scanning&quot;: false, &quot;networks&quot;: [ { &quot;ssid&quot;: &quot;MyNetwork&quot;, &quot;rssi&quot;: -55, &quot;channel&quot;: 6, &quot;secure&quot;: true } ] }</code></pre>
+<h3 id="get-wificonnect" class="route"><code>GET /wifiConnect</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Avvia la connessione WiFi STA.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>ssid</code></td><td>string</td><td>SSID della rete</td></tr><tr><td><code>pw</code></td><td>string</td><td>Password della rete</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma (la connessione avviene in background).</p>
+<h3 id="get-wifistop" class="route"><code>GET /wifiStop</code></h3>
+<p>Interrompe i tentativi di riconnessione WiFi STA.</p>
+<p><b>Risposta:</b> testo di conferma.</p>
+<h3 id="get-setappassword" class="route"><code>GET /setApPassword</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Cambia la password dell'Access Point WiFi.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>current</code></td><td>string</td><td>Password attuale dell'AP</td></tr><tr><td><code>newpwd</code></td><td>string</td><td>Nuova password (minimo 8 caratteri)</td></tr></tbody></table></div>
+<p><b>Risposta:</b> testo di conferma o messaggio di errore.</p>
+<h3 id="get-resetappassword" class="route"><code>GET /resetApPassword</code></h3>
+<p>⚠️ <b>Non richiede autorizzazione</b> — route di emergenza per ripristinare la password AP al valore di default (chip ID). Accessibile via rete STA anche se si è persa la password AP.</p>
+<p><b>Risposta:</b> testo di conferma.</p></section>
+<section id="gestione-file"><h2>Gestione file</h2>
+<h3 id="get-download" class="route"><code>GET /download</code></h3>
+<p>Scarica un file dal filesystem dell'ESP32.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>file</code></td><td>string</td><td>Percorso del file (es. <code>/session.json</code>)</td></tr></tbody></table></div>
+<p>⚠️ Protetto da path traversal: sono ammessi solo percorsi relativi alla root del filesystem.</p>
+<h3 id="delete-delete" class="route"><code>DELETE /delete</code> <span class="lock" title="Richiede il token">🔒</span></h3>
+<p>Elimina un file dal filesystem.</p>
+<p><b>Parametri:</b></p>
+<div class="tw"><table><thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>file</code></td><td>string</td><td>Percorso del file da eliminare</td></tr></tbody></table></div>
+<h3 id="post-upload" class="route"><code>POST /upload</code></h3>
+<p>Upload generico di un file nel filesystem.</p>
+<p><b>Body:</b> <code>multipart/form-data</code> con il file nel campo <code>upload</code>.</p>
+<p>⚠️ Protetto da path traversal.</p>
+<h3 id="post-uploadfs" class="route"><code>POST /uploadFS</code></h3>
+<p>Upload di un'intera immagine del filesystem (LittleFS). Usato per l'aggiornamento OTA del filesystem.</p>
+<p><b>Body:</b> <code>multipart/form-data</code> con il file nel campo <code>fs</code>.</p></section>
+<section id="firmware-ota"><h2>Firmware OTA</h2>
+<h3 id="post-update" class="route"><code>POST /update</code></h3>
+<p>Aggiornamento firmware OTA.</p>
+<p><b>Body:</b> <code>multipart/form-data</code> con il file <code>.bin</code> nel campo <code>fw</code>.</p>
+<p><b>Risposta:</b> testo di conferma. Il dispositivo si riavvia automaticamente al termine.</p>
+<h3 id="post-updatefs" class="route"><code>POST /updatefs</code></h3>
+<p>Aggiornamento OTA del filesystem (LittleFS), usato dalla pagina <code>update.html</code>.</p>
+<p><b>Body:</b> <code>multipart/form-data</code> con l'immagine <code>.bin</code> del filesystem.</p>
+<p><b>Risposta:</b> <code>OK - Riavvio...</code> oppure <code>ERRORE</code>. Se va a buon fine il dispositivo si riavvia. 🔒 L'autorizzazione è verificata all'inizio dell'upload.</p></section>
+<section id="note-generali"><h2>Note generali</h2>
+<ul><li>Tutte le risposte sono in <code>text/plain</code> o <code>application/json</code> a seconda della route.</li><li>Il server non implementa CORS — le richieste cross-origin vanno gestite lato client.</li><li>Le route GET usano parametri query string (<code>?param=value&amp;...</code>).</li><li>Le route POST usano body JSON (<code>Content-Type: application/json</code>) salvo dove indicato diversamente (multipart).</li><li>Il WebSocket è l'unico canale bidirezionale; tutte le altre route sono unidirezionali (request/response).</li></ul></section>
+<footer>Le route marcate con 🔒 richiedono l'header <code>X-Token</code> se sul dispositivo è configurato un token.</footer>
+</main>
+</div>
+<script>
+document.getElementById('api-search').addEventListener('input', function () {
+  var q = this.value.trim().toLowerCase();
+  document.querySelectorAll('nav.toc ul li').forEach(function (li) {
+    li.classList.toggle('hidden', !!q && li.textContent.toLowerCase().indexOf(q) < 0);
+  });
+  document.querySelectorAll('nav.toc > ol > li').forEach(function (li) {
+    var subs = li.querySelectorAll('ul li'), any = false;
+    subs.forEach(function (s) { if (!s.classList.contains('hidden')) any = true; });
+    li.classList.toggle('hidden', !!q && !any && li.firstElementChild.textContent.toLowerCase().indexOf(q) < 0);
+  });
+});
+</script>
+</body>
+</html>

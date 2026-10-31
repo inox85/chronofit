@@ -1,9 +1,16 @@
 import gzip
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+# stdout rediretto (log di build) su Windows e cp1252: non deve fallire sui caratteri come →
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 data_dir = Path("data")
+
+# Su Windows npx è npx.cmd: subprocess senza shell non lo trova con il solo nome "npx"
+NPX = shutil.which("npx") or "npx"
 
 if not data_dir.exists():
     print("❌ Cartella 'data' non trovata!")
@@ -36,10 +43,11 @@ for f in js_files + gzip_files:
     if f in js_files:
         try:
             result = subprocess.run(
-                ["npx", "terser", str(f), "--compress", "--mangle"],
-                capture_output=True, text=True, check=True
+                [NPX, "terser", str(f), "--compress", "--mangle"],
+                capture_output=True, check=True
             )
-            content = result.stdout.encode()
+            # byte grezzi: con text=True Windows decodifica in cp1252 e fallisce sui caratteri UTF-8
+            content = result.stdout
             print(f"[MINIFY] {f.name} → {len(content)} bytes")
         except Exception as e:
             print(f"[WARN] terser fallito per {f.name}: {e}, uso file originale")

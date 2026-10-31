@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0">
+  <title>Chronofit</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+  <!-- COLORE DELLA STATUS BAR SU ANDROID -->
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="/manifest.json">
+  <script src="/i18n.js"></script>
+  <script src="/ui_dialogs.js"></script>
+
+  <!-- Questa pagina non ha la navbar della GUI operatore (che riserva 60px
+       in cima e per cui .container/.card.table-card hanno vincoli di
+       larghezza/altezza pensati per condividere lo spazio con una sidebar):
+       qui la card deve riempire l'intero schermo. -->
+  <style>
+    #view_container {
+      height: calc(100 * var(--zvh, 1vh));
+    }
+    #view_container .card.table-card {
+      max-width: none;
+      max-height: none;
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="splash">
+    <div class="splash-logos">
+      <img src="/logo.webp" alt="Logo">
+      <div class="splash-divider"></div>
+      <img src="/sponsor.png" alt="Sponsor" class="sponsor-visibility-toggle">
+    </div>
+    <p class="splash-label" data-i18n="splash.loading">Loading session...</p>
+  </div>
+
+  <script>
+    // Applica subito (sincrono) l'ultimo stato sponsor noto in cache, prima
+    // che il browser disegni lo splash: evita il lampeggio sponsor/separatore
+    // mentre si attende la risposta (per forza asincrona) di /brandingSettings.
+    (function() {
+      try {
+        var c = JSON.parse(localStorage.getItem('chronofit_branding_cache') || 'null');
+        if (c && !(c.showSponsorLogo && c.sponsorLogoExists)) {
+          document.querySelectorAll('.sponsor-visibility-toggle, .splash-divider').forEach(function(el) {
+            el.style.display = 'none';
+          });
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <div id="popup" class="popup hidden">No connection to Chronofit device</div>
+
+  <div id="view_container" class="container">
+
+    <div class="card table-card">
+
+      <div class="time-header">
+        <img src="/logo-black.png" alt="Logo" class="sponsor-logo">
+        <p id="time" style="font-size: 65px;">00:00:00.000</p>
+        <img src="/sponsor.png" alt="Sponsor" class="sponsor-img sponsor-visibility-toggle">
+      </div>
+
+      <!-- Equitazione: cavaliere in pista, tempo, risultato e classifica (equestrian.js) -->
+      <div id="eqViewPanel" class="eq-view-panel" data-state="none" style="display:none;">
+        <div id="eqViewRider" class="eq-view-rider"></div>
+        <div id="eqViewMeta" class="eq-view-meta"></div>
+        <div id="eqViewClock" class="eq-view-clock"></div>
+        <div id="eqViewResult" class="eq-view-result"></div>
+      </div>
+      <div id="eqViewRankWrap" class="table-wrapper" style="flex:0 1 auto; display:none;">
+        <table class="eq-view-rank"><thead><tr id="eqViewRankHead"></tr></thead><tbody id="eqViewRankBody"></tbody></table>
+      </div>
+      <div id="eqViewRows">
+      <div class="card-title" data-i18n="card.arrivals">Arrivals</div>
+
+      <!-- Stessa griglia (stesse colonne e stesse classi) della tabella Arrivi
+           della console (index.html), in sola lettura. Click sull'intestazione
+           = impostazioni della vista. -->
+      <div class="table-wrapper">
+        <table id="event-table" class="arrivals-table">
+          <thead>
+            <tr>
+              <th class="col-rank-col">🏅</th>
+              <th class="col-index-col">#</th>
+              <th class="col-line-col"      data-i18n="th.line">Line</th>
+              <th                           data-i18n="th.competitor">Comp.</th>
+              <th class="col-test-col"      data-i18n="th.test">Test</th>
+              <th class="col-name-col"      data-i18n="th.name">Name</th>
+              <th class="col-surname-col"   data-i18n="th.surname">Surname</th>
+              <th class="timestamp-col"     data-i18n="th.event_time">Event ⏱️</th>
+              <th class="elapsed-time-col"  data-i18n="th.elapsed">Elapsed ⏱️</th>
+              <th class="delta-time-col">Δ ⏱️</th>
+              <th class="penality-col">❌</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Impostazioni della vista. Di default seguono la console (stesso browser,
+       disciplina Equitazione attiva) o il preset Equitazione di disciplines.js;
+       una modifica qui vale solo per questa vista. -->
+  <div id="viewSettingsOverlay" class="fullscreen-overlay" style="display:none;">
+    <div class="fullscreen-popup">
+
+      <div class="input-row">
+        <label for="vs-sort-col" data-i18n="table.order_by" style="font-size:20px;">Order by</label>
+        <select id="vs-sort-col">
+          <option value="arrival"      data-i18n="table.arrival">Arrival (default)</option>
+          <option value="line"         data-i18n="table.line">Line</option>
+          <option value="competitor"   data-i18n="table.competitor">Competitor</option>
+          <option value="name"         data-i18n="table.name">Name</option>
+          <option value="surname"      data-i18n="table.surname">Surname</option>
+          <option value="event-time"   data-i18n="table.event_time">Event time</option>
+          <option value="elapsed-time" data-i18n="table.elapsed">Elapsed</option>
+          <option value="delta-time"   data-i18n="table.delta">Δ time</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <label for="vs-precision" data-i18n="table.time_precision" style="font-size:20px;">Time precision decimals</label>
+        <select id="vs-precision">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <label data-i18n="table.time_format" style="font-size:20px;">Time format</label>
+        <select class="time-format-select" onchange="setTimeFormat(this.value)">
+          <option value="clock">hh:mm:ss.mmm</option>
+          <option value="seconds">sss,mmm</option>
+        </select>
+      </div>
+      <div class="toggle-row" id="eqViewRowsRow" style="display:none;">
+        <span id="eqViewRowsLabel">Mostra anche la griglia dei passaggi</span>
+        <label class="switch"><input type="checkbox" id="eqViewRowsToggle" onchange="eqViewRowsChanged(this.checked)"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span data-i18n="table.reverse_order">Reverse row order</span>
+        <label class="switch"><input type="checkbox" id="vs-reverseOrder"><span class="slider"></span></label>
+      </div>
+
+      <hr class="divider">
+
+      <div class="toggle-row"><span data-i18n="table.show_rank">Show rank column</span>
+        <label class="switch"><input type="checkbox" id="vs-showRank"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_index">Show index column</span>
+        <label class="switch"><input type="checkbox" id="vs-showIndex"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_line">Show line column</span>
+        <label class="switch"><input type="checkbox" id="vs-showLine"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_test">Show test column</span>
+        <label class="switch"><input type="checkbox" id="vs-showTest"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_name">Show name column</span>
+        <label class="switch"><input type="checkbox" id="vs-showName"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_surname">Show surname column</span>
+        <label class="switch"><input type="checkbox" id="vs-showSurname"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_event_time">Show event time column</span>
+        <label class="switch"><input type="checkbox" id="vs-timestamp"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_elapsed">Show elapsed time column</span>
+        <label class="switch"><input type="checkbox" id="vs-elapsedTime"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_delta">Show incremental Δ column</span>
+        <label class="switch"><input type="checkbox" id="vs-deltaTime"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_penalty">Show penality column</span>
+        <label class="switch"><input type="checkbox" id="vs-penality"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_disabled">Show disabled line rows</span>
+        <label class="switch"><input type="checkbox" id="vs-showDisabled"><span class="slider"></span></label></div>
+
+      <hr class="divider">
+
+      <!-- Linee mostrate nella griglia (come il tab "Lines" della console) -->
+      <div class="toggle-row"><span data-i18n="table.show_line_1">Show line 1</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="1"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_line_2">Show line 2</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="2"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_line_3">Show line 3</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="3"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_line_4">Show line 4</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="4"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span data-i18n="table.show_out_of_sensor">Show out-of-sensor rows</span>
+        <label class="switch"><input type="checkbox" class="line-vis-toggle" data-line="6"><span class="slider"></span></label></div>
+
+      <div class="button-row">
+        <button class="big-button" data-i18n="view.use_console" id="resetViewSettings">Use console settings</button>
+        <button class="big-button" data-i18n="btn.close" id="closeViewSettings">Close</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/disciplines.js"></script>
+  <script src="/script_view_equitazione.js"></script>
+  <script src="/column_order.js"></script>
+  <script>
+    // ordine delle colonne scelto dall'utente (column_order.js)
+    ColumnOrder.register({ table: 'event-table', keys: ['rank', 'index', 'line', 'competitor', 'test', 'name', 'surname', 'timestamp', 'elapsed', 'delta', 'penalty'], editorAfter: '#vs-showDisabled', fallbackKeys: ['index:event-table'] });
+  </script>
+
+  <script src="/view_fullscreen.js"></script>
+  <script src="/zoom_controls.js"></script>
+  <script src="/equestrian.js"></script>
+  <script>eqViewInit();</script>
+</body>
+</html>

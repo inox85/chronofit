@@ -16,7 +16,7 @@
        riempie l'intero schermo (pensata per un secondo monitor/proiettore). -->
   <style>
     #view_container {
-      height: 100vh;
+      height: calc(100 * var(--zvh, 1vh));
     }
     #view_container .card.table-card {
       max-width: none;
@@ -197,5 +197,6 @@
   <script src="/script_enduro_competitor.js"></script>
 
   <script src="/view_fullscreen.js"></script>
+  <script src="/zoom_controls.js"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "params.h"
+#include "settings.h"
 #include <ESPAsyncWebServer.h>
 #include <TinyGPSPlus.h>
 #include <DNSServer.h>
@@ -65,16 +66,37 @@ String lineDevice[6] = {"", "", "", "", "Serivice", "Services"};
 int lineMode[6]   = {0, 0, 0, 0, 0, 1};   // 0=auto   | 1=manuale
 int competitors[6] = {0, 0, 0, 0, 0, 0};
 unsigned long delays[6] = {0, 0, 0, 0, 0, 0};
+
+void lineDelaysLoad() {
+  for (int i = 0; i < 4; i++) {
+    char key[12];
+    snprintf(key, sizeof(key), "ldelay_%d", i + 1);
+    delays[i] = (unsigned long)max(0, readIntFromSettings(key, (int)LINE_DELAY_DEFAULT_MS));
+  }
+}
+
+void lineDelaySet(int idx, long ms) {
+  if (idx < 0 || idx >= 6) return;
+  unsigned long v = ms < 0 ? 0 : (unsigned long)ms;
+  if (delays[idx] == v) return;
+  delays[idx] = v;
+  if (idx < 4) {
+    char key[12];
+    snprintf(key, sizeof(key), "ldelay_%d", idx + 1);
+    writeIntToSettings(key, (int)v);
+  }
+}
 int lineEnabled[6] = {1, 1, 1, 1, 1, 1};
 // Linea (1-4) il cui primo passaggio fa partire il tempo trascorso; 0 = qualsiasi (NVS el_start)
 int elapsedStartLine = 0;
+// 1 = una linea si disattiva da sola dopo il primo passaggio (NVS line_once)
 int lineDisableAfterPass = 0;
 volatile unsigned long lastSensorsSignal[6] = {0, 0, 0, 0, 0, 0};
 int sensorsPins[6] = { SENSOR_IN1, SENSOR_IN2, SENSOR_IN3, SENSOR_IN4, -1, -1 };
 volatile bool lastSensorState[6] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
 volatile bool sensorTriggered[6] = {false, false, false, false, false, false};
-volatile uint64_t sensorTime[6] = {0, 0, 0, 0, 0, 0};
 volatile bool sensorManual[6] = {false, false, false, false, false, false};
+volatile uint64_t sensorTime[6] = {0, 0, 0, 0, 0, 0};
 
 volatile int syncTestRequested = 0;
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chronofit — Manuale utente GPS</title>
+<title>Chronofit — Manuale GPS</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <style>
   :root {
@@ -48,27 +48,25 @@
   .box { border: 2px solid var(--primary); border-radius: 10px; padding: 8px 14px; text-align: center; background: #fff; font-size: 14px; }
   .box b { display: block; font-size: 15px; }
   .arrow { color: var(--muted); font-size: 14px; text-align: center; }
-  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
   .cardlet { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: #fcfcfc; }
   .cardlet h4 { margin: 0 0 6px; font-size: 15px; }
-  /* LED RGB della scheda */
-  .led { display: inline-block; width: 13px; height: 13px; border-radius: 50%; background: #cfcfcf; vertical-align: -1px; margin-right: 6px; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); --c: #e53935; }
-  .led.red    { --c: #e53935; } .led.green  { --c: #2e9d3a; } .led.yellow { --c: #f2c200; }
-  .led.blue   { --c: #1e63e0; } .led.orange { --c: #ff7a00; } .led.purple { --c: #8e24aa; }
-  .led.white  { --c: #ffffff; } .led.cyan   { --c: #0aa6a6; } .led.dim { --c: #5a9f9f; }
-  .led.on, .led.red, .led.green, .led.yellow, .led.blue, .led.orange, .led.purple, .led.white, .led.cyan, .led.dim { background: var(--c); box-shadow: 0 0 6px 2px color-mix(in srgb, var(--c) 55%, transparent); }
-  .led.white { border: 1px solid #bbb; }
-  .led.off { background: #cfcfcf; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); }
-  @keyframes blink { 0%,49.9% { background: var(--c); box-shadow: 0 0 6px 2px color-mix(in srgb, var(--c) 55%, transparent) } 50%,100% { background:#cfcfcf; box-shadow:none } }
-  @keyframes blip  { 0%,14.9% { background: var(--c); box-shadow: 0 0 6px 2px color-mix(in srgb, var(--c) 55%, transparent) } 15%,100% { background:#cfcfcf; box-shadow:none } }
-  .led.slow { animation: blink 1s infinite; } .led.blip { animation: blip 1s infinite; }
+  /* LED (la scheda GPS ha LED a colori: il colore conta) */
+  .led { display: inline-block; width: 13px; height: 13px; border-radius: 50%; background: #cfcfcf; vertical-align: -1px; margin-right: 6px; box-shadow: inset 0 -2px 3px rgba(0,0,0,.2); }
+  .led.green  { background: #43a047; box-shadow: 0 0 6px 2px rgba(67,160,71,.5); }
+  .led.yellow { background: #fdd835; box-shadow: 0 0 6px 2px rgba(253,216,53,.5); }
+  .led.red    { background: #e53935; box-shadow: 0 0 6px 2px rgba(229,57,53,.5); }
+  .led.blue   { background: #1e88e5; box-shadow: 0 0 6px 2px rgba(30,136,229,.5); }
+  .led.orange { background: #fb8c00; box-shadow: 0 0 6px 2px rgba(251,140,0,.5); }
+  @keyframes pps { 0%,19.9% { background:#1e88e5; box-shadow:0 0 6px 2px rgba(30,136,229,.5) } 20%,100% { background:#cfcfcf; box-shadow:none } }
+  .led.pps { animation: pps 1s infinite; }
+  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; border: 1px solid rgba(0,0,0,.15); }
   .badge { display: inline-block; font-size: 12px; font-weight: bold; border-radius: 10px; padding: 1px 8px; color: #fff; }
   .b-ok { background: var(--ok); } .b-grey { background: #9e9e9e; } .b-err { background: var(--err); }
   .bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; vertical-align: -2px; margin-right: 4px; }
   .bars i { width: 4px; background: #cfd4da; border-radius: 1px; }
   .bars i:nth-child(1){height:5px} .bars i:nth-child(2){height:8px} .bars i:nth-child(3){height:11px} .bars i:nth-child(4){height:14px}
   .g4 i { background: var(--ok); } .g3 i:nth-child(-n+3) { background: var(--ok); } .g2 i:nth-child(-n+2) { background: var(--warn); } .g1 i:nth-child(1) { background: var(--err); }
-  pre { background: #f4f4f4; border-radius: 8px; padding: 10px 12px; overflow: auto; font-size: 14px; }
   footer { text-align: center; color: var(--muted); font-size: 13px; padding: 10px 0 30px; }
   @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; max-height: none; } }
   @media print {
@@ -87,8 +85,8 @@
 <header>
   <img src="/logo.webp" alt="Chronofit">
   <div>
-    <h1>Manuale utente — Chronofit GPS</h1>
-    <div class="sub">Cronometro con orologio sincronizzato GPS · stampante termica · console web</div>
+    <h1>Manuale — Chronofit GPS</h1>
+    <div class="sub">Stazione di cronometraggio con console web · orologio sincronizzato via GPS</div>
   </div>
   <button class="print-btn" onclick="window.print()">🖨 Stampa / PDF</button>
 </header>
@@ -98,24 +96,24 @@
     <h2>Indice</h2>
     <ol>
       <li><a href="#sistema">Il sistema</a></li>
-      <li><a href="#alimentazione">Alimentazione e collegamenti</a></li>
-      <li><a href="#collegarsi">Collegarsi al dispositivo</a></li>
-      <li><a href="#avvio">Menu iniziale e discipline</a></li>
+      <li><a href="#collegamenti">Collegamenti e alimentazione</a></li>
+      <li><a href="#collegarsi">Collegarsi alla stazione</a></li>
+      <li><a href="#avvio">Apertura e discipline</a></li>
       <li><a href="#console">La console</a></li>
       <li><a href="#transiti">Gestione transiti (linee)</a></li>
-      <li><a href="#sync">Sincronizzazione dell'ora</a></li>
+      <li><a href="#sync">Orario e sincronizzazione</a></li>
       <li><a href="#passaggi">Lista passaggi</a></li>
+      <li><a href="#sessione">Sessione: scaricare, inviare, cancellare</a></li>
       <li><a href="#atleti">Registro atleti e file CSV</a></li>
-      <li><a href="#sessione">Sessione, stampa ed email</a></li>
       <li><a href="#fotocellule">Fotocellule wireless</a></li>
+      <li><a href="#stampa">Stampante termica</a></li>
+      <li><a href="#impostazioni">Impostazioni (WiFi, MQTT, Generali)</a></li>
       <li><a href="#led">Significato dei LED</a></li>
-      <li><a href="#wifi">WiFi esterna e internet</a></li>
-      <li><a href="#mqtt">MQTT</a></li>
-      <li><a href="#viste">Viste per secondo schermo</a></li>
-      <li><a href="#aggiornamento">Aggiornamento firmware</a></li>
-      <li><a href="#specifiche">Specifiche tecniche</a></li>
+      <li><a href="#viste">Viste per secondo schermo e video</a></li>
+      <li><a href="#licenza">Licenza</a></li>
+      <li><a href="#servizio">Pagine di servizio e aggiornamento</a></li>
       <li><a href="#problemi">Risoluzione dei problemi</a></li>
-      <li><a href="#api">API per sviluppatori</a></li>
+      <li><a href="#specifiche">Specifiche tecniche</a></li>
     </ol>
   </nav>
 
@@ -123,80 +121,115 @@
 
     <section id="sistema">
       <h2>1. Il sistema</h2>
-      <p>Chronofit GPS misura con precisione al millisecondo i tempi di passaggio di atleti o veicoli. Ogni passaggio riceve un <b>orario assoluto</b> sincronizzato con il riferimento UTC del GPS, così i tempi di più postazioni, anche lontane, si possono confrontare direttamente senza cavi di sincronismo.</p>
-      <p>Il dispositivo crea una <b>rete WiFi propria</b> e ospita la <b>console</b>: la apri dal browser di un telefono, tablet o PC, senza installare nulla.</p>
+      <p>Chronofit GPS è una stazione di cronometraggio: registra l'istante in cui un atleta o un veicolo passa davanti a una fotocellula o chiude un contatto. La stazione crea una rete WiFi propria e ospita la <b>console</b>: la apri dal browser di un telefono, tablet o PC, senza installare nulla.</p>
       <div class="diagram">
         <div class="box"><b>📱 Telefono / PC</b>console nel browser</div>
         <div class="arrow">WiFi<br>⟷</div>
-        <div class="box"><b>Chronofit GPS</b>cronometro · GPS · stampante</div>
-        <div class="arrow">contatto pulito<br>o WiFi ⟷</div>
-        <div class="box"><b>Sensori</b>fotocellule, pedane, <i>Cell</i> wireless</div>
+        <div class="box"><b>Chronofit GPS</b>4 ingressi · GPS · stampante</div>
+        <div class="arrow">WiFi<br>⟷</div>
+        <div class="box"><b>Chronofit Cell</b>fotocellule wireless (facoltative)</div>
       </div>
       <ul>
-        <li>Ogni passaggio viene assegnato a una <b>linea</b> (da 1 a 4): per esempio linea 1 partenza, linea 2 arrivo.</li>
-        <li>Funzioni opzionali: stampa su carta di ogni passaggio, invio della sessione via email (con internet), pubblicazione su MQTT, fotocellule wireless <i>Chronofit Cell</i>.</li>
+        <li>Ogni passaggio viene assegnato a una <b>linea</b> (da 1 a 4), per esempio linea 1 partenza e linea 2 arrivo. Ogni linea ha il suo colore: <span class="swatch" style="background:#ffcccc"></span>1 <span class="swatch" style="background:#ccffcc"></span>2 <span class="swatch" style="background:#ccccff"></span>3 <span class="swatch" style="background:#fff5cc"></span>4.</li>
+        <li>Oltre alle linee 1–4 esistono due linee speciali: la <b>5</b> (<i>Sync-Test</i>, righe del test di sincronizzazione) e la <b>6</b> (<i>F.P.</i>, passaggi "fuori pressostato" inseriti a mano).</li>
+        <li>Con la <b>sincronizzazione GPS</b> più stazioni, anche lontane tra loro, usano lo stesso riferimento orario (UTC) senza cavi di collegamento: i tempi registrati in punti diversi si possono confrontare direttamente.</li>
+        <li>La sessione (tutti i passaggi) resta salvata nella stazione anche quando la spegni.</li>
       </ul>
     </section>
 
-    <section id="alimentazione">
-      <h2>2. Alimentazione e collegamenti</h2>
+    <section id="collegamenti">
+      <h2>2. Collegamenti e alimentazione</h2>
       <table>
-        <tr><th>Connettore</th><th>Funzione</th></tr>
-        <tr><td><b>Ingresso sensori</b></td><td>Sensori a <b>contatto pulito normalmente aperto (N.O.)</b>, uno per linea.</td></tr>
-        <tr><td><b>Massa sensori</b></td><td>Riferimento di massa del contatto pulito.</td></tr>
-        <tr><td><b>USB Type-C "seriale"</b></td><td>Porta di comunicazione verso dispositivi esterni.</td></tr>
-        <tr><td><b>USB Type-C "alimentazione"</b></td><td>Ingresso per power bank o alimentatore USB.</td></tr>
-        <tr><td><b>Jack 2,5 × 5,5 mm</b></td><td>Ingresso per alimentazione a 12 V (per esempio batteria da 12 V).</td></tr>
-        <tr><td><b>LED di segnalazione</b></td><td>Quattro LED RGB: vedi <a href="#led">Significato dei LED</a>.</td></tr>
+        <tr><th>Connettore</th><th>Uso</th></tr>
+        <tr><td>Ingressi sensori (1–4) e massa</td><td>Contatto pulito normalmente aperto (N.O.): il passaggio viene registrato quando il contatto tra ingresso e massa si chiude.</td></tr>
+        <tr><td>USB Type-C seriale</td><td>Porta di comunicazione seriale verso dispositivi esterni.</td></tr>
+        <tr><td>USB Type-C alimentazione</td><td>Ingresso per power bank o alimentatore USB.</td></tr>
+        <tr><td>Jack di alimentazione</td><td>Ingresso 12 V (jack 2,5 × 5,5 mm), per esempio da una batteria.</td></tr>
+        <tr><td>LED di segnalazione</td><td>4 LED a colori, vedi <a href="#led">Significato dei LED</a>.</td></tr>
       </table>
-      <div class="warn"><b>Con la stampante</b> usa un power bank o un alimentatore USB da <b>almeno 3 A</b> sul connettore USB Type-C "alimentazione": la stampante assorbe molta corrente. <b>Senza stampa</b> basta un alimentatore USB da 1 A, oppure il jack a 12 V.</div>
-      <p>Per avere il fix GPS tieni il dispositivo con vista libera sul cielo (all'aperto o vicino a una finestra). La prima acquisizione dei satelliti può richiedere alcuni minuti.</p>
+      <h3>Alimentazione</h3>
+      <ul>
+        <li><b>Con la stampante</b>: power bank o alimentatore USB da almeno <b>3 A</b> sul connettore USB Type-C di alimentazione. I 3 A servono solo alla stampante.</li>
+        <li><b>Senza stampa</b>: basta un alimentatore USB da 1 A.</li>
+        <li>In alternativa: batteria 12 V sul jack 2,5 × 5,5 mm.</li>
+      </ul>
+      <p>All'accensione i LED fanno una breve animazione.</p>
     </section>
 
     <section id="collegarsi">
-      <h2>3. Collegarsi al dispositivo</h2>
+      <h2>3. Collegarsi alla stazione</h2>
       <ol class="steps">
-        <li>Accendi il dispositivo: i LED fanno una breve sequenza di colori (rosso, verde, blu, giallo).</li>
-        <li>Sul telefono o PC collegati alla rete WiFi <code>Chronofit_…</code>. La <b>password di fabbrica</b> coincide con la parte del nome dopo il trattino basso (l'identificativo della scheda), salvo che l'installatore non l'abbia cambiata.</li>
+        <li>Accendi la stazione.</li>
+        <li>Sul telefono o PC collegati alla rete WiFi <code>Chronofit_…</code>. La password di fabbrica coincide con la parte del nome dopo il trattino basso (il Chip ID della stazione). Si può cambiare dalla <a href="#servizio">pagina Admin</a>.</li>
         <li>Apri il browser all'indirizzo <code>http://192.168.10.1</code>.</li>
       </ol>
-      <div class="tip">Possono collegarsi più dispositivi insieme: per esempio un telefono come console e un PC con una vista a schermo intero. La card <b>Utilità</b> mostra quanti client sono collegati (icona 🔗).</div>
-      <p>La password dell'access point si cambia dalla pagina di amministrazione (<a href="/admin.html" target="_blank"><code>/admin.html</code></a>).</p>
+      <div class="tip">Possono collegarsi più dispositivi insieme: per esempio un telefono come console e un PC con una vista a schermo intero. La card <b>Utilità</b> mostra accanto a 🔗 quante pagine della stazione (console e viste) sono aperte in questo momento.</div>
+      <p>La stazione può collegarsi anche a una rete WiFi esterna con accesso a internet (vedi <a href="#impostazioni">Impostazioni → WiFi</a>). In quel caso la console si apre anche dall'indirizzo IP che la stazione riceve su quella rete, mostrato nella barra in alto.</p>
+      <div class="note">Su un PC Windows che si scollega da solo dalla rete della stazione (perché non ha internet), scarica lo <b>🖥️ Strumento fix WiFi</b> dalle Informazioni (tocca il logo). È un file da eseguire come amministratore; dopo, riavvia il PC.</div>
     </section>
 
     <section id="avvio">
-      <h2>4. Menu iniziale e discipline</h2>
-      <p>All'apertura compare il menu iniziale:</p>
+      <h2>4. Apertura e discipline</h2>
+      <p>All'apertura compare lo splash <i>Caricamento sessione...</i>, poi il menu iniziale con due scelte:</p>
       <ul>
-        <li><b>⏱️ Cronometraggio</b>: scegli la disciplina ed entri nella console.</li>
-        <li><b>🛠️ Utilità</b>: pagina di diagnostica del GPS e dello stato del dispositivo.</li>
+        <li><b>🛠️ Utilità</b>: apre la pagina <b>GPS Diagnostics</b> (stato del fix, qualità del segnale, satelliti visibili). La freccia ← in alto torna alla console.</li>
+        <li><b>⏱️ Cronometraggio</b>: apre <b>Seleziona disciplina</b>.</li>
       </ul>
-      <p>La <b>disciplina</b> imposta in automatico le colonne, l'ordinamento della lista passaggi e il <b>metodo di sincronizzazione</b> iniziale:</p>
+      <p>La disciplina imposta in un colpo solo colonne, ordinamento, decimali, schede e metodo di sincronizzazione adatti a quello sport. Dopo puoi comunque cambiare ogni impostazione.</p>
       <table>
-        <tr><th>Disciplina</th><th>Uso tipico</th><th>Sync iniziale</th></tr>
-        <tr><td>Generico</td><td>uso libero, tutte le colonne principali</td><td>Manuale</td></tr>
-        <tr><td>Regolarità</td><td>prove di regolarità</td><td>Chiusura linea</td></tr>
-        <tr><td>Enduro</td><td>partenze e arrivi su due tabelle, tempi netti</td><td>GPS</td></tr>
-        <tr><td>Sci</td><td>discese a cronometro</td><td>GPS</td></tr>
-        <tr><td>Equitazione</td><td>prova a tempo con penalità e classifica</td><td>Elapsed</td></tr>
+        <tr><th>Disciplina</th><th>Cosa imposta</th></tr>
+        <tr><td>🚗 Regolarità</td><td>Sync chiusura linea; colonne linea, Prova, Ril., Evento, Δ; ultimo passaggio in alto.</td></tr>
+        <tr><td>⛷️ Sci</td><td>Sync GPS; classifica, nome e cognome, Δ, penalità; modalità split competitore; 2 decimali; card Attesi nascosta.</td></tr>
+        <tr><td>🏍️ Enduro</td><td>Sync GPS; due liste passaggi (<b>Partenze</b> con le linee 1–2, <b>Arrivi</b> con le linee 3–4) e la card <b>Tempi netti</b>; il competitor scritto sulla linea 1 passa anche alla 2, quello della 3 anche alla 4.</td></tr>
+        <tr><td>🐎 Equitazione</td><td>Modalità elapsed (tempo trascorso); colonne linea, Prova, nome, cognome, Trascorso, Δ; 2 decimali; tempi in secondi (sss,mmm). Con il toggle <b>Gare</b>: turni, campana, penalità e classifica del salto ostacoli.</td></tr>
       </table>
-      <p>Alcune discipline possono essere <b>bloccate</b> sul tuo dispositivo (pacchetti a licenza): compaiono ma non si aprono. Contatta il rivenditore per sbloccarle.</p>
-      <p>Per cambiare disciplina tocca l'icona della disciplina in alto a destra. Tempi registrati e competitor restano anche cambiando disciplina.</p>
-      <p>Le bandierine in alto cambiano la lingua (italiano o inglese).</p>
+      <p>La scelta resta salvata nel browser: alle aperture successive la console si apre direttamente. Per cambiare disciplina tocca l'icona della disciplina nella barra in alto e conferma <i>Uscire dalla disciplina?</i>: i tempi registrati e i competitor restano. Una disciplina con 🔒 non è abilitata su questo dispositivo: contatta il rivenditore.</p>
+      <div class="note">Per Sci, Enduro ed Equitazione il metodo di sincronizzazione viene applicato subito. Per Regolarità (chiusura linea) devi ancora inserire l'ora e premere <b>Applica</b> (vedi <a href="#sync">Orario e sincronizzazione</a>).</div>
+      <h3>Gare di equitazione (salto ostacoli)</h3>
+      <p>Con la disciplina <b>Equitazione</b> compare in ⚙️ → <b>⚙️ Generali</b> il toggle <b>Gare</b>, spento di default. Con le altre discipline il toggle non si vede e il cronometro resta quello di sempre: cambiando o lasciando la disciplina le Gare si spengono subito, senza conferma. Quando le Gare sono accese, in cima alla console compare il <b>pannello del cavaliere</b> (numero e nome, tempo grande, pulsanti): il dispositivo segue il turno di ogni cavaliere, fa il conto alla rovescia dopo la campana, prende partenza e arrivo dalle fotocellule e <b>calcola da solo penalità e classifica</b>. Con l'interruttore <b>Classifica / Passaggi</b> scegli cosa vedere accanto al pannello: la classifica oppure la lista dei passaggi.</p>
+      <ul>
+        <li><b>Gara e regolamento</b> (⚙️ nel pannello): tipo di gara (Tabella A a tempo, con barrage, due fasi consecutive, senza cronometro, Tabella C), linee di partenza, arrivo e intermedia, lunghezza e velocità (il <b>tempo concesso</b> si calcola da solo, oppure lo scrivi a mano; il tempo limite è un multiplo del concesso) e, per ogni tipo, conto alla rovescia, penalità per il tempo concesso superato, errori ed eliminazioni (per esempio al 2° rifiuto). <b>Duplica</b> crea una variante per il tuo regolamento.</li>
+        <li><b>Turno</b>: seleziona il cavaliere dall'elenco <b>Attesi</b> o scrivendo il numero, poi <b>🔔 Campana</b> (conto alla rovescia con beep negli ultimi 5 secondi). Il tempo parte dalla fotocellula di partenza o, allo scadere, in automatico. <b>Interrompi / Riprendi</b> ferma e fa ripartire il tempo. All'arrivo il tempo si ferma e puoi <b>✔ Confermare</b> o scegliere il cavaliere successivo.</li>
+        <li><b>Errori</b>: tocca il pulsante dell'errore (Abbattimento, Rifiuto…) a ogni errore; <b>−</b> lo toglie. Eliminazione automatica al 2° rifiuto, alla caduta o al tempo limite. <b>Eliminato</b>, <b>Ritirato</b> e <b>Annulla turno</b> segnano a mano lo stato; <b>▶ Partenza</b> e <b>⏹ Arrivo</b> sostituiscono le fotocellule se non funzionano.</li>
+        <li><b>Classifica e correzioni</b>: tocca una riga per correggere errori, stato o tempo (tempo corretto dai giudici); il menu sceglie la fase (percorso base, barrage, 2ª fase, classifica finale) e <b>Esporta CSV</b> scarica la classifica. <b>📋 Copia risultato</b> prepara il testo da comunicare.</li>
+        <li><b>Due fasi consecutive</b>: imposta la linea intermedia (arrivo della 1ª fase). Se la 1ª fase è netta, al passaggio parte subito la 2ª con un doppio beep; altrimenti il turno finisce lì.</li>
+      </ul>
+      <p>La <a href="/view_equitazione.html" target="_blank"><code>/view_equitazione.html</code></a> mostra al pubblico cavaliere in pista, tempo, risultato e classifica. I turni restano salvati anche dopo un riavvio e si cancellano con <b>Cancella sessione</b>. <b>I valori predefiniti del regolamento sono un punto di partenza: verificali con il regolamento della gara (FEI/FISE) prima di usarli.</b></p>
+      <p>Tipi di gara, regolamento, penalità, classifica e correzioni sono descritti nel documento <a href="/manuale_gare.html" target="_blank"><b>Gare di equitazione</b></a>.</p>
     </section>
 
     <section id="console">
       <h2>5. La console</h2>
-      <p>La console è divisa in due zone: a sinistra i comandi, a destra la lista dei passaggi.</p>
+      <h3>Barra in alto</h3>
       <table>
-        <tr><th>Card</th><th>Contenuto</th></tr>
-        <tr><td><b>Attesi</b></td><td>Elenco degli atleti del registro non ancora transitati. Tocca un nome per metterlo sulla linea attiva; l'icona ✏️ accanto al titolo apre il registro per aggiungere o modificare un competitor.</td></tr>
-        <tr><td><b>Orario</b></td><td>L'orologio del dispositivo. Toccalo per aprire le impostazioni di sincronizzazione.</td></tr>
-        <tr><td><b>Gestione transiti</b></td><td>Una riga per linea: numero, tipo, concorrente, abilitazione. Vedi <a href="#transiti">Gestione transiti</a>.</td></tr>
-        <tr><td><b>Utilità</b> (stato)</td><td>🔗 client collegati · 🌍 stato di internet · 🛰️ stato del GPS · 📡 stato MQTT · icona del segnale = fotocellule wireless. Toccando le icone si aprono le impostazioni corrispondenti.</td></tr>
-        <tr><td><b>Lista passaggi</b></td><td>I passaggi registrati, in tempo reale. Vedi <a href="#passaggi">Lista passaggi</a>.</td></tr>
+        <tr><th>Elemento</th><th>Cosa fa</th></tr>
+        <tr><td>Logo Chronofit</td><td>Apre le <b>Informazioni</b>: versione firmware, 🔑 Licenza, 📄 Manuale (questo), 🐎 Gare di equitazione, 🔌 Manuale API, 🖥️ Strumento fix WiFi.</td></tr>
+        <tr><td>Indirizzo IP</td><td>Compare quando la stazione è collegata a una rete esterna, con il nome della rete (📶) e l'IP. Toccalo per copiare l'IP.</td></tr>
+        <tr><td>🔑 con un numero</td><td>Compare quando restano meno di 20 utilizzi di licenza (vedi <a href="#licenza">Licenza</a>).</td></tr>
+        <tr><td>Icona della disciplina</td><td>Esce dalla disciplina per sceglierne un'altra.</td></tr>
+        <tr><td>Monitor</td><td>Apre in una nuova finestra la vista della disciplina, da portare sul secondo schermo (vedi <a href="#viste">Viste</a>).</td></tr>
+        <tr><td>🔍− 🔍+</td><td>Rimpicciolisce o ingrandisce la pagina (dal 50 % al 200 %). Lo zoom resta salvato in quel browser.</td></tr>
+        <tr><td>Schermo intero</td><td>Entra o esce dallo schermo intero. La console lo richiede da sola all'apertura; se ne esci (Esc, gesto del telefono) questo pulsante lo riattiva. Su iPhone non è disponibile.</td></tr>
+        <tr><td>Bandierine</td><td>Lingua della console: italiano (predefinita) o inglese.</td></tr>
       </table>
-      <p>Il pulsante ⚙️ apre le <b>impostazioni</b> (Sync, WiFi, MQTT, Generali), il pulsante 🖨️ apre la stampa di righe selezionate.</p>
+      <p>I popup (conferme, messaggi, impostazioni) sono disegnati dentro la pagina: aprendoli non si esce dallo schermo intero. Mentre la console è aperta lo schermo del dispositivo resta acceso, se il browser lo permette.</p>
+      <h3>Card</h3>
+      <ul>
+        <li><b>Attesi</b>: gli atleti del registro in attesa di passare (vedi <a href="#atleti">Registro atleti</a>).</li>
+        <li><b>⚙️</b> apre le <a href="#impostazioni">Impostazioni</a>, <b>🖨️</b> la finestra di <a href="#stampa">Stampa</a>. Accanto c'è l'<b>orologio</b>: toccalo per il menu dell'orario.</li>
+        <li><b>Gestione transiti</b>: le 4 linee (vedi <a href="#transiti">Gestione transiti</a>).</li>
+        <li><b>Utilità</b>: lo stato della stazione, con la riga di stato della sincronizzazione:
+          <table>
+            <tr><th>Icona</th><th>Significato</th></tr>
+            <tr><td>🔗</td><td>Numero di pagine della stazione (console e viste) aperte in tempo reale. Le fotocellule wireless non vengono contate.</td></tr>
+            <tr><td>🌍</td><td>Rete esterna: 🟢 collegata con internet · 🟡 collegata senza internet · 🔄 connessione in corso · 🔁 riconnessione · 🔴 non collegata. Toccala per la scheda WiFi.</td></tr>
+            <tr><td>📡</td><td>MQTT: 🟢 collegato · 🔴 internet presente ma broker non raggiungibile · ⚫ senza internet. Toccala per la scheda MQTT.</td></tr>
+            <tr><td>🛰️</td><td>GPS: 🟢 fix valido con impulso PPS · 🟡 in attesa del segnale · 🔴 nessun segnale. Toccala per la scheda Sync.</td></tr>
+            <tr><td><span class="bars g4"><i></i><i></i><i></i><i></i></span></td><td>Fotocellule wireless: connesse / note. Toccala per l'elenco (vedi <a href="#fotocellule">Fotocellule wireless</a>).</td></tr>
+          </table>
+        </li>
+        <li><b>Lista passaggi</b>: i tempi registrati (vedi <a href="#passaggi">Lista passaggi</a>). In Enduro le liste sono due, <b>Partenze</b> e <b>Arrivi</b>, più la card <b>Tempi netti</b>.</li>
+      </ul>
     </section>
 
     <section id="transiti">
@@ -204,233 +237,309 @@
       <p>La card <b>Gestione transiti</b> ha una riga per ogni linea (1–4):</p>
       <table>
         <tr><th>Elemento</th><th>Cosa fa</th></tr>
-        <tr><td><b>Numero di linea</b> (riquadro colorato)</td><td><b>Tocco</b>: registra un passaggio manuale su quella linea, con l'ora del tocco. Le fotocellule wireless collegate a quella linea fanno anche loro il <b>beep</b>.<br><b>Pressione lunga (1 s)</b>: registra un passaggio "fuori pressostato" (linea F.P.) per il concorrente della linea.</td></tr>
-        <tr><td><b>Tipo</b></td><td>Tocca per aprire le impostazioni della linea: nome (campo <b>Prova</b>, per esempio "Barriera 1"), rilevamento <b>Auto/Man.</b>, <b>Ritardo (ms)</b>. Da qui puoi anche <b>Salva e stampa</b> uno scontrino con le impostazioni della linea.</td></tr>
-        <tr><td><b>Concorrente</b></td><td>Il numero del concorrente atteso su quella linea, assegnato al prossimo passaggio. <b>Pressione lunga</b>: apre il registro atleti.</td></tr>
-        <tr><td><b>✓</b></td><td>Abilita o disabilita la linea. Una linea disabilitata registra comunque i passaggi, ma li segna come disabilitati.</td></tr>
+        <tr><td><b>Linea</b> (numero nel riquadro colorato)</td><td><b>Tocco</b>: registra un passaggio manuale su quella linea, con l'ora del tocco.<br><b>Pressione lunga (1 s)</b>: registra un passaggio "fuori pressostato" (linea 6, <i>F.P.</i>) per il concorrente della linea.<br>Sotto il numero compare il <b>segnale</b> della fotocellula wireless assegnata alla linea.</td></tr>
+        <tr><td><b>Tipo</b></td><td>Mostra il nome della linea (<b>Prova</b>) e il tipo di rilevamento (<b>Auto</b> o <b>Man.</b>). Toccalo per aprire <b>Impostazioni checkpoint</b>.</td></tr>
+        <tr><td><b>Conc.</b></td><td>Il numero del concorrente atteso su quella linea, che viene assegnato al prossimo passaggio valido; dopo il passaggio il campo torna a 0. <b>Pressione lunga</b>: apre il registro competitori sulla scheda <b>Carica</b>.</td></tr>
+        <tr><td><b>✓</b></td><td>Abilita o disabilita la linea (grigio = disabilitata). Vedi sotto.<br>Con una tastiera collegata, i tasti <kbd>1</kbd>–<kbd>4</kbd> abilitano o disabilitano la linea corrispondente (non mentre scrivi in un campo o con un popup aperto).</td></tr>
       </table>
-      <div class="note"><b>Ritardo (ms)</b> è il tempo minimo fra due segnali sulla stessa linea: dopo un passaggio, per quel tempo, gli altri fronti vengono ignorati (evita i doppi tempi).</div>
+      <h3>Scorciatoie da tastiera</h3>
+      <p>Con una tastiera collegata (non mentre scrivi in un campo, con un popup aperto o con Ctrl/Alt/Cmd premuti):</p>
+      <table>
+        <tr><th>Tasto</th><th>Cosa fa</th></tr>
+        <tr><td><kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd></td><td>Passaggio manuale sulle linee <b>1, 2, 3, 4</b>, come il tocco sul numero della linea (la cella lampeggia). Vale anche con la linea disabilitata. Funziona con Maiusc o maiuscole bloccate, e il tasto tenuto premuto non ripete il passaggio.</td></tr>
+        <tr><td><kbd>1</kbd>–<kbd>4</kbd></td><td>Abilita o disabilita la linea corrispondente (come il pulsante ✓).</td></tr>
+      </table>
+      <h3>Linea disabilitata</h3>
+      <ul>
+        <li>I passaggi della barriera (ingresso cablato o fotocellula wireless) <b>vengono comunque salvati</b>, come righe disabilitate: le vedi attivando <b>Mostra righe linee disabilitate</b> nelle impostazioni della tabella.</li>
+        <li>Questi passaggi non fanno suonare il buzzer della stazione e non fanno partire il tempo trascorso.</li>
+        <li>Il competitor della linea <b>resta assegnato</b>: va al prossimo passaggio valido.</li>
+        <li>Il tocco sul numero della linea (e il pulsante <b>Start</b>) registra invece un passaggio valido anche con la linea disabilitata, e può far partire il tempo.</li>
+        <li>Dopo un'accensione le linee ripartono tutte abilitate.</li>
+      </ul>
+      <h3>Impostazioni checkpoint</h3>
+      <p>Il popup ha una tabella con le 4 linee:</p>
+      <table>
+        <tr><th>Colonna</th><th>Significato</th></tr>
+        <tr><td>Prova</td><td>Nome libero della linea o del dispositivo (es. "FPC 102", "Barriera 1"). Vuoto = <i>Non gestita</i>. Le linee con un nome sono le <b>linee gestite</b>, usate dall'assegnazione automatica del competitor.</td></tr>
+        <tr><td>Ril.</td><td><b>Auto</b> (sensore) o <b>Man.</b> (manuale): compare nella colonna Ril. e sullo scontrino.</td></tr>
+        <tr><td>ms</td><td>Ritardo della linea in millisecondi: dopo un passaggio sull'ingresso, per quel tempo eventuali altri fronti sulla stessa linea vengono ignorati. Evita i doppi tempi. Resta salvato nella stazione anche da spenta; di default è 0.</td></tr>
+        <tr><td>✓</td><td>Abilita o disabilita la linea, come nella card.</td></tr>
+        <tr><td>➡</td><td>Registra un passaggio manuale su quella linea.</td></tr>
+      </table>
+      <p>Sotto la tabella:</p>
+      <table>
+        <tr><th>Opzione</th><th>Effetto</th></tr>
+        <tr><td>Linea di start (tempo trascorso)</td><td>In modalità elapsed, la linea il cui primo passaggio fa partire il tempo. Con <b>Qualsiasi linea</b> vale il primo passaggio di una linea abilitata.</td></tr>
+        <tr><td>Azzera il tempo trascorso con un competitor digitato / … scelto dall'elenco</td><td>Con il tempo già partito, l'orologio torna in attesa dello start quando assegni un competitor in quel modo (scritto nel campo, oppure toccato negli Attesi o nel registro).</td></tr>
+        <tr><td>Mantieni input competitor attivo dopo rilevazione</td><td>Il campo competitor resta selezionato dopo un passaggio: puoi scrivere subito il numero successivo.</td></tr>
+        <tr><td>Assegnazione numero competitor</td><td><b>Assegna solo alla linea selezionata</b> · <b>Propaga a tutte le linee gestite</b> (sostituisce il numero delle altre) · <b>Propaga alle linee gestite libere</b> (solo dove non c'è già un competitor) · <b>Assegna sempre a tutte le linee</b> (un tocco nella lista Attesi assegna il numero a tutte le linee gestite, anche senza aver selezionato un campo). Sotto la tendina compare la spiegazione della scelta.</td></tr>
+        <tr><td>Disattiva la linea dopo il primo passaggio (riabilitala per riarmarla)</td><td>Dopo un passaggio la linea si disabilita da sola, anche se la console è chiusa. I passaggi successivi vengono salvati come righe disabilitate finché non la riabiliti.</td></tr>
+        <tr><td>Riarma la linea con un competitor digitato / … scelto dall'elenco</td><td>Assegnando un competitor in quel modo la linea si riabilita da sola (anche le linee su cui il numero viene propagato).</td></tr>
+        <tr><td>Auto-annulla battute ravvicinate · Soglia (ms)</td><td>Una seconda battuta sulla stessa linea entro la soglia (default 500 ms) viene annullata in automatico (🚫).</td></tr>
+        <tr><td>Cronometristi (nome e telefono)</td><td>Uno per riga: vengono stampati sullo scontrino delle impostazioni.</td></tr>
+      </table>
+      <p><b>🖨 Salva e stampa</b> salva e stampa lo scontrino completo delle linee (disciplina, nomi e tipo di rilevamento, ritardi, cronometristi). <b>Salva e chiudi</b> salva e stampa solo le linee cambiate. Se la stazione non conferma il salvataggio compare un avviso e il popup resta aperto: riprova.</p>
     </section>
 
     <section id="sync">
-      <h2>7. Sincronizzazione dell'ora</h2>
-      <p>Per aprire le impostazioni tocca l'<b>orario</b> e poi <b>Impostazioni</b> (oppure ⚙️ → scheda <b>Sync</b>). Il fix GPS è sempre mostrato, ma i dati del GPS comandano l'orologio solo con la modalità <b>GPS sync</b>.</p>
+      <h2>7. Orario e sincronizzazione</h2>
+      <p>Tocca l'<b>orologio</b> per il menu: <b>⚙️ Impostazioni</b> (scheda <b>🕐 Sync</b> delle impostazioni), <b>⏱️ Test sync</b>, <b>↩️ Home</b>. Nella scheda Sync scegli il <b>Metodo di sync</b> e premi <b>Applica</b>. In alto la scheda mostra sempre lo stato del GPS (latitudine, longitudine, satelliti), qualunque metodo sia scelto; i dati GPS però servono all'orologio solo con <b>Sync GPS</b>.</p>
       <table>
-        <tr><th>Modalità</th><th>Come funziona</th></tr>
-        <tr><td><b>Sync manuale</b></td><td>Inserisci l'ora e premi <b>Applica</b>: viene impostata subito. Adatta a regolazioni rapide o senza GPS.</td></tr>
-        <tr><td><b>Sync chiusura linea</b></td><td>Inserisci l'ora e premi <b>Applica</b>: il dispositivo aspetta la chiusura di una linea e <b>in quell'istante</b> imposta l'ora scelta. Allinea l'orologio a un evento esterno preciso.</td></tr>
-        <tr><td><b>Sync GPS</b></td><td>L'orologio si sincronizza da solo con il segnale <b>PPS</b> del GPS (un impulso allo scoccare di ogni secondo UTC). Scegli l'<b>intervallo di risincronizzazione</b> e il <b>fuso orario</b>; con <b>Sync una tantum</b> la sincronizzazione avviene una volta sola.</td></tr>
-        <tr><td><b>Elapsed (no sync)</b></td><td>Tempo trascorso: <b>Start</b> avvia il cronometro da zero, ogni <b>Stop</b> registra un passaggio senza fermare il conteggio, <b>Reset</b> riporta tutto in attesa. Per prove senza orario assoluto. La linea che fa partire il tempo si sceglie nel popup delle linee (<b>Linea di start (tempo trascorso)</b>); con <b>Qualsiasi linea</b> vale il primo passaggio di una linea abilitata, e una linea disabilitata non fa mai partire il tempo. Con <b>Azzera il tempo trascorso con un competitor digitato</b> e/o <b>… scelto dall'elenco</b> l'orologio torna in attesa dello start quando assegni un competitor in quel modo (scritto nel campo o toccato nell'elenco Attesi/registro). <b>Start</b> registra il passaggio sulla linea di start (la 1 con «Qualsiasi linea»).</td></tr>
+        <tr><th>Metodo</th><th>Come funziona</th></tr>
+        <tr><td><b>Sync manuale</b></td><td>Scrivi l'<b>Ora da impostare</b> (ore, minuti, secondi) e premi <b>Applica</b>: l'orologio la prende subito. Per regolazioni rapide o senza altre sorgenti.</td></tr>
+        <tr><td><b>Sync chiusura linea</b></td><td>Scrivi l'<b>Ora da sincronizzare</b> e premi <b>Applica</b>: la stazione resta in attesa (<i>in attesa del trigger...</i>). Alla prima chiusura di una linea l'orologio prende l'ora impostata. Quella chiusura serve solo a sincronizzare e non diventa un passaggio. Utile per allineare più stazioni a uno stesso segnale (per esempio un contatto chiuso insieme).</td></tr>
+        <tr><td><b>Sync GPS</b></td><td>L'orologio si allinea all'impulso PPS del ricevitore GPS, preciso all'inizio di ogni secondo UTC, appena c'è il fix. Scegli l'<b>Intervallo sync GPS</b> (<i>Sync una tantum</i>, oppure da 1 minuto a 24 ore: ogni quanto si riallinea) e il <b>Fuso orario</b>. Tra un allineamento e l'altro la stazione corregge la deriva del proprio oscillatore.</td></tr>
+        <tr><td><b>Modalità elapsed (no sync)</b></td><td>Cronometro a tempo trascorso: l'orologio resta a <code>00:00:00.000</code> e parte con il primo passaggio della linea di start. Vedi sotto.</td></tr>
       </table>
-      <p>Lo <b>stato</b> sotto l'orologio dice cosa sta succedendo, per esempio "Sync mode: GPS — 🟢 synced" oppure "Waiting for timing start…".</p>
-      <h3>Test della sincronizzazione GPS</h3>
-      <p>Dal menu aperto toccando l'orario puoi avviare il <b>test sync</b>: allo scoccare del minuto successivo il dispositivo simula la chiusura di una linea e aggiunge una riga sotto la <b>linea 5</b> (<i>test sync</i>). L'icona diventa cliccabile solo a test completato: significa che la sincronizzazione funziona.</p>
-      <div class="warn">Dopo un riavvio senza GPS l'ora riparte da zero finché non fai un nuovo sync. Con il GPS agganciato (LED4 blu che lampeggia ogni secondo) l'ora si recupera da sola.</div>
+      <h3>Riga di stato</h3>
+      <p>Nella card Utilità la riga di stato dice in che situazione è l'orologio, per esempio <i>Modo: Manuale — Stato: 🔴 non impostato</i>, <i>Modo: Linea — Stato: 🟢 sincronizzato</i>, <i>Modo: GPS — Stato: ⏳ in attesa del segnale...</i>, <i>Modo: GPS — Stato: 🟢 sincronizzato (resync 10m)</i>. Se la stampa è attiva, ogni sincronizzazione stampa anche uno scontrino con l'ora di sincronizzazione.</p>
+      <div class="warn">Dopo un'accensione l'ora manuale o da chiusura linea va <b>reimpostata</b>: finché non lo fai l'orologio mostra <code>00:00:00.000</code> e lo stato <i>non impostato</i>. Con Sync GPS la stazione si risincronizza da sola appena ritrova il segnale.</div>
+      <h3>Test della sincronizzazione</h3>
+      <p>Con Sync GPS attivo e sincronizzato, nel menu dell'orologio diventa disponibile <b>⏱️ Test sync</b>. Al minuto successivo (secondo :00) la stazione registra una riga sulla <b>linea 5</b> (<i>Sync-Test</i>) e, se la stampa è attiva, stampa una riga <i>CONFERMA</i> con l'ora. Avviando il test su più stazioni si verifica che registrino tutte lo stesso istante. Le righe di test sono nascoste di default: mostrale con <b>Mostra righe test sync</b> (scheda <b>👁 Linee</b> delle impostazioni della tabella).</p>
+      <h3>Modalità elapsed</h3>
+      <p>Nella card Gestione transiti compaiono i pulsanti <b>Start</b> e <b>Reset</b>.</p>
+      <ul>
+        <li>Il tempo parte con il primo passaggio della <b>Linea di start (tempo trascorso)</b> (vedi <a href="#transiti">Impostazioni checkpoint</a>). Il passaggio della barriera su una linea disabilitata non fa mai partire il tempo; il tocco sul numero della linea, i tasti <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> e il pulsante <b>Start</b> invece sì.</li>
+        <li><b>Start</b>: registra un passaggio manuale sulla linea di start (la 1 se è impostato <i>Qualsiasi linea</i>) e, se il cronometro è in attesa, lo avvia. A tempo avviato il pulsante diventa <b>Stop</b>: registra un altro passaggio sulla stessa linea, senza fermare il conteggio.</li>
+        <li><b>Reset</b>: riporta il cronometro in attesa del prossimo start. I tempi già registrati restano.</li>
+        <li>Un passaggio arrivato prima del primo start dall'accensione (per esempio su una linea disabilitata o non di start) compare come <b>prima dello start</b>: il suo tempo non ha un riferimento.</li>
+      </ul>
+      <div class="warn">La modalità elapsed resta salvata: dopo un'accensione la stazione è già in attesa dello start (<i>🟢 In attesa dell'avvio del timing...</i>). Il cronometro però riparte da zero: i tempi registrati prima dello spegnimento non sono confrontabili con quelli nuovi.</div>
     </section>
 
     <section id="passaggi">
       <h2>8. Lista passaggi</h2>
-      <p>Ogni passaggio diventa una riga, colorata come la linea da cui arriva. Le colonne <b>fisse</b> sono sempre presenti, quelle <b>opzionali</b> si attivano a seconda della prova.</p>
-      <table>
-        <tr><th>Colonna</th><th>Descrizione</th><th>Modificabile</th></tr>
-        <tr><td>Evento</td><td>Numero progressivo, in ordine di rilevazione.</td><td>No</td></tr>
-        <tr><td>Linea</td><td>Linea o ingresso che ha generato l'evento.</td><td>Sì</td></tr>
-        <tr><td>Concorrente</td><td>Pettorale o codice atleta.</td><td>Sì</td></tr>
-        <tr><td>Evento ⏱️ (opz.)</td><td>Orario assoluto del passaggio.</td><td>Sì</td></tr>
-        <tr><td>Δ (opz.)</td><td>Tempo rispetto al passaggio precedente.</td><td>Automatica</td></tr>
-        <tr><td>Trascorso (opz.)</td><td>Tempo dal primo passaggio della sessione.</td><td>Automatica</td></tr>
-        <tr><td>Penalità ❌ (opz.)</td><td>Penalità legata alla riga: tocca la cella e inserisci il valore.</td><td>Sì</td></tr>
-      </table>
-      <div class="note">Le colonne opzionali non sono salvate: sono <b>calcolate</b> in base alla vista. Se nascondi alcune righe, i Δ si ricalcolano di conseguenza.</div>
+      <p>Ogni passaggio diventa una riga, colorata come la sua linea. L'ultimo passaggio viene portato in vista e la console riproduce un suono diverso per ogni linea 1–4, ma solo per i passaggi validi (non per le righe disabilitate) e delle linee visibili in tabella.</p>
+      <p>Le colonne disponibili: <b>🏅</b> classifica · <b>#</b> numero progressivo · <b>Linea</b> · <b>Conc.</b> · <b>Prova</b> · <b>Ril.</b> · <b>Nome</b> · <b>Cognome</b> · <b>Evento ⏱️</b> = ora del passaggio · <b>T. gara</b> = tempo per concorrente (modalità split) · <b>Trascorso ⏱️</b> = tempo dal primo passaggio · <b>Δ ⏱️</b> = tempo dal passaggio precedente · <b>❌</b> penalità · <b>🚫</b> annulla · <b>Invia</b>.</p>
+      <div class="note">Trascorso, Δ e T. gara non vengono salvati: sono ricalcolati sulle righe visibili. Se nascondi una linea o delle righe, i valori cambiano di conseguenza.</div>
       <table>
         <tr><th>Azione</th><th>Come</th></tr>
-        <tr><td>Impostazioni della tabella</td><td>Tocca l'<b>intestazione</b>: schede <i>Ordina</i>, <i>Colonne</i>, <i>Righe</i>, <i>Linee</i> (quali linee mostrare), decimali e formato dei tempi (<code>hh:mm:ss.mmm</code> o secondi, <code>71,450</code>; il formato vale per tutte le tabelle e viste del browser).</td></tr>
+        <tr><td>Impostazioni della tabella</td><td>Tocca l'<b>intestazione</b> della tabella. Schede:
+          <ul>
+            <li><b>↕ Ordina</b>: Mostra colonna classifica, Ordina per (Arrivo, Linea, Competitore, Nome, Cognome, Ora evento, Tempo gara, Trascorso, Δ tempo), Ordine inverso.</li>
+            <li><b>📊 Colonne</b>: quali colonne mostrare, <b>Decimali precisione tempo</b> (1, 2 o 3) e <b>Formato tempi</b>: <code>hh:mm:ss.mmm</code> oppure in secondi (<code>71,450</code>); lo segue anche l'orologio grande. In fondo, <b>↕ Ordine colonne</b> sposta le colonne con le frecce ▲▼ (<i>Ordine predefinito</i> lo ripristina).</li>
+            <li><b>☰ Righe</b>: Mostra righe linee disabilitate, Modalità split competitore.</li>
+            <li><b>👁 Linee</b>: quali linee mostrare, Mostra righe test sync, Mostra righe fuori pressostato.</li>
+          </ul>
+          Ordine delle colonne e formato dei tempi restano salvati nel browser e valgono anche per le viste.</td></tr>
+        <tr><td>Penalità</td><td>Tocca la cella ❌ della riga, scrivi il valore in <i>Assegna penalità</i> e premi <b>Conferma</b>.</td></tr>
         <tr><td>Annullare un passaggio</td><td>Tocca 🚫: la riga resta, barrata, ed è esclusa dai calcoli. Tocca di nuovo per ripristinarla.</td></tr>
-        <tr><td>Modificare una riga</td><td><b>Pressione lunga</b> sulla riga: concorrente e altri campi.</td></tr>
-        <tr><td>➡ Invia</td><td>Ripubblica la riga su MQTT.</td></tr>
-        <tr><td>Azioni ⋮</td><td><b>Scarica sessione</b> · <b>Scarica vista</b> · <b>Invia via email</b> · <b>Cancella sessione</b>. Vedi <a href="#sessione">Sessione</a>.</td></tr>
+        <tr><td>Modificare una riga</td><td><b>Pressione lunga</b> sulla riga: puoi correggere il concorrente e l'ora (<code>hh:mm:ss.mmm</code>). La modifica si salva quando esci dal campo.</td></tr>
+        <tr><td>Invia ➡</td><td>Ristampa la riga (se <b>Stampa su carta</b> è attivo) e la ripubblica su MQTT.</td></tr>
+        <tr><td>Azioni ⋮</td><td>Vedi <a href="#sessione">Sessione</a>.</td></tr>
       </table>
-      <div class="tip">Con <b>Auto-annulla battute ravvicinate</b> (nelle impostazioni di una linea) una seconda battuta sulla stessa linea entro la soglia viene annullata in automatico.</div>
-    </section>
-
-    <section id="atleti">
-      <h2>9. Registro atleti e file CSV</h2>
-      <p>Con il registro, nella lista passaggi compaiono nome e cognome accanto al numero. Si apre con una <b>pressione lunga</b> sul campo concorrente di una linea. Le schede sono:</p>
-      <ul>
-        <li><b>Seleziona</b>: cerca un atleta e assegnalo alla linea.</li>
-        <li><b>Carica</b>: importa l'elenco da file <b>CSV</b> o JSON.</li>
-        <li><b>Manuale</b>: aggiungi un atleta alla volta.</li>
-        <li><b>Auto</b>: aggiunge da solo i numeri che arrivano dai passaggi, da MQTT o dalla tabella arrivi.</li>
-      </ul>
-      <h3>Formato del file CSV</h3>
-      <ul>
-        <li>Separatore <b>punto e virgola</b> <code>;</code> (è il "CSV" di Excel in italiano).</li>
-        <li>Prima riga con i nomi delle colonne. <code>competitor</code> (il numero di pettorale) è <b>obbligatoria</b>.</li>
-        <li><code>name</code> e <code>surname</code> vanno nelle colonne Nome e Cognome. Puoi aggiungere altre colonne (squadra, categoria…): compaiono nella scheda dell'atleta.</li>
-        <li>Non usare il <code>;</code> dentro i valori.</li>
-      </ul>
-      <pre>competitor;name;surname;team;category
-1;Mario;Rossi;ASD Firenze;Senior
-2;Giulia;Bianchi;ASD Firenze;Junior
-3;Luca;Verdi;Polisportiva Prato;Senior</pre>
-      <div class="note">Salvando da Excel scegli <b>"CSV UTF-8"</b> se ci sono lettere accentate. Il registro è salvato nel <b>browser</b>: va caricato su ogni dispositivo che usi come console o come vista.</div>
+      <h3>Modalità split competitore</h3>
+      <p>Raggruppa le righe per concorrente e calcola nella colonna <b>T. gara</b> il tempo di ciascuno dal suo primo passaggio. È la modalità usata dallo Sci.</p>
+      <h3>Tempi netti (Enduro)</h3>
+      <p>La card <b>Tempi netti</b> mostra per ogni concorrente Partenza, Arrivo e Tempo netto tra una linea di partenza e una di arrivo. Tocca l'intestazione per scegliere le linee: due coppie (<b>Abilita coppia 1</b>, <b>Abilita coppia 2</b>), di default 1 → 3 e 2 → 4, ordinamento, decimali e formato.</p>
     </section>
 
     <section id="sessione">
-      <h2>10. Sessione, stampa ed email</h2>
+      <h2>9. Sessione: scaricare, inviare, cancellare</h2>
+      <p>Il pulsante <b>⋮</b> della lista passaggi apre <b>Azioni</b>:</p>
       <table>
-        <tr><th>Azione</th><th>Cosa fa</th></tr>
-        <tr><td><b>Scarica sessione</b> (raw)</td><td>Scarica il file completo con i dati grezzi, come registrati. Non include le elaborazioni (Δ, tempi trascorsi).</td></tr>
-        <tr><td><b>Scarica vista</b></td><td>Scarica la tabella come la vedi, con solo righe e colonne visibili e tutte le elaborazioni (Δ, trascorsi, filtri).</td></tr>
-        <tr><td><b>Invia via email</b></td><td>Invia la sessione (file raw) via posta elettronica. Richiede internet: vedi <a href="#wifi">WiFi esterna</a>.</td></tr>
-        <tr><td><b>Cancella sessione</b></td><td>Elimina definitivamente i dati e ne crea una nuova, vuota.</td></tr>
+        <tr><th>Pulsante</th><th>Cosa fa</th></tr>
+        <tr><td>Scarica sessione</td><td>File CSV con tutti i passaggi registrati dalla stazione, così come sono stati salvati (senza Trascorso, Δ e filtri).</td></tr>
+        <tr><td>Scarica vista</td><td>File CSV della tabella così come la vedi: solo righe e colonne visibili, con i tempi calcolati.</td></tr>
+        <tr><td>Invia via email</td><td>Attivo solo con la stazione collegata a internet (🌍 🟢) e almeno un passaggio. Inserisci l'indirizzo e premi <b>Conferma</b>: la stazione invia in allegato il file <code>session.txt</code> (un passaggio per riga in formato JSON, non CSV) con le coordinate GPS del luogo e un link alla mappa.</td></tr>
+        <tr><td>Cancella sessione</td><td>Dopo la conferma <i>Eliminare l'intera sessione?</i> cancella tutti i passaggi dalla stazione e ne avvia una nuova. L'elenco dei competitor resta e tutti tornano tra gli Attesi.</td></tr>
       </table>
-      <div class="warn">La cancellazione <b>non è reversibile</b>: scarica o invia i dati prima.</div>
-      <h3>Stampa su carta</h3>
+      <div class="warn">La cancellazione della sessione non si può annullare: scarica prima i tempi.</div>
+    </section>
+
+    <section id="atleti">
+      <h2>10. Registro atleti e file CSV</h2>
+      <p>Con il registro, nella lista passaggi compaiono nome e cognome accanto al numero. Si apre con una <b>pressione lunga</b> sul campo Conc. di una linea, oppure con l'icona ✏️ della card Attesi. Le schede sono:</p>
       <ul>
-        <li>Nella scheda <b>Generali</b> delle impostazioni (<i>Print</i> in inglese), <b>Stampa su carta</b> abilita la stampa automatica di ogni passaggio.</li>
-        <li>Il pulsante 🖨️ stampa un intervallo di righe, con formato e campi a scelta e anteprima.</li>
-        <li>Con <b>Salva e stampa</b> (impostazioni di una linea) esce uno scontrino con i dati della linea e i <b>cronometristi</b> (nome e telefono, uno per riga) che scrivi nello stesso riquadro.</li>
+        <li><b>Seleziona</b>: cerca un atleta (pettorale, nome, cognome) e premi <b>Assegna</b> per metterlo sulla linea. <b>Reset assegnati</b> azzera l'elenco degli atleti già assegnati.</li>
+        <li><b>Carica</b>: trascina nell'area (o toccala per scegliere) un file <b>CSV</b> o JSON, oppure incolla il testo e premi <b>Anteprima</b>. Ogni caricamento passa dall'anteprima. <b>Cancella</b> svuota il registro.</li>
+        <li><b>Manuale</b>: aggiungi un atleta alla volta (Numero, Nome, Cognome, Squadra), o correggi quello con lo stesso numero.</li>
+        <li><b>Auto</b>: aggiunge da solo al registro i numeri che arrivano dai passaggi (<b>Acquisisci dalla tabella arrivi</b>, scegliendo le linee) o da MQTT (<b>Acquisisci da MQTT</b>).</li>
       </ul>
+      <h3>Card Attesi</h3>
+      <p>Elenca gli atleti del registro in attesa. Seleziona il campo Conc. di una linea e tocca un nome per metterlo su quella linea. In Enduro un atleta esce dagli Attesi quando passa su una linea della lista Arrivi; in Equitazione con le Gare accese, quando il suo turno è concluso (con le Gare il tocco su un nome sceglie il cavaliere senza dover selezionare prima un campo Conc.).</p>
+      <h3>Formato del file CSV</h3>
+      <ul>
+        <li>Separatore: <b>punto e virgola</b> <code>;</code> (il "CSV" di Excel in italiano), virgola o tabulazione, riconosciuto da solo. Le virgolette permettono di usare il separatore dentro un valore.</li>
+        <li>Prima riga con i nomi delle colonne. <code>competitor</code> (il numero di pettorale) è <b>obbligatoria</b>; vanno bene anche <code>pettorale</code>, <code>bib</code>, <code>numero</code>.</li>
+        <li><code>name</code>/<code>nome</code>, <code>surname</code>/<code>cognome</code> e <code>team</code>/<code>squadra</code> vanno nelle colonne corrispondenti. Puoi aggiungere altre colonne (categoria…): compaiono nella scheda dell'atleta.</li>
+        <li>È accettato anche un file senza intestazione con le colonne <code>pettorale;squadra;cognome;nome</code> (le colonne successive vengono ignorate).</li>
+      </ul>
+      <pre style="background:#f4f4f4;border-radius:8px;padding:10px 12px;overflow:auto;font-size:14px;">competitor;name;surname;team;category
+1;Mario;Rossi;ASD Firenze;Senior
+2;Giulia;Bianchi;ASD Firenze;Junior
+3;Luca;Verdi;Polisportiva Prato;Senior</pre>
+      <p><a href="/esempio_atleti.csv" download>⬇ Scarica il file CSV di esempio</a> e compilalo con Excel o LibreOffice.</p>
+      <p>Prima di importare un CSV compare l'<b>Anteprima importazione</b>: quanti competitor verranno caricati, le righe scartate (pettorale non valido), i pettorali ripetuti (vale il primo) e un avviso se il file sembra salvato con una codifica diversa da UTF-8. Scegli se <b>Sostituire l'elenco attuale</b> (chi non è nel file viene rimosso) o <b>Aggiungere e aggiornare per pettorale</b> (chi ha lo stesso pettorale viene aggiornato, gli altri restano). La tabella mostra per ogni riga lo <b>Stato</b> (Nuovo, Aggiornato, Invariato, Ripetuto). Premi <b>Importa</b> per confermare.</p>
+      <div class="note">Salvando da Excel scegli <b>"CSV UTF-8 (delimitato da virgole)"</b> se ci sono lettere accentate. Nonostante il nome, con le impostazioni italiane Excel usa il punto e virgola. Il registro è salvato nel browser: va caricato su ogni dispositivo che usi come console o come vista.</div>
     </section>
 
     <section id="fotocellule">
       <h2>11. Fotocellule wireless</h2>
-      <p>Le fotocellule <b>Chronofit Cell</b> (stessa scheda, firmware dedicato) si collegano via WiFi al dispositivo, cronometrano il passaggio con la propria precisione e lo inviano. Ogni cella corrisponde a una <b>linea</b>.</p>
-      <h3>Configurare una cella</h3>
+      <p>Le fotocellule <b>Chronofit Cell</b> si collegano alla rete WiFi della stazione e le inviano i passaggi della loro linea. Ogni cella timbra il passaggio con il proprio orologio, allineato a quello della stazione; se la rete perde un invio, il passaggio resta in coda nella cella e viene reinviato. La stazione memorizza al massimo 8 celle. Quando registri un passaggio manuale su una linea (tocco sul numero, tasti <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> o Start), anche le celle connesse su quella linea suonano.</p>
+      <p>La linea, il lockout e la rete a cui collegarsi si impostano sulla cella stessa, dalla sua pagina di configurazione (rete <code>ChronofitCell_…</code>, indirizzo <code>192.168.11.1</code>). Il Ritardo (ms) delle linee della stazione vale per gli ingressi cablati, non per le celle.</p>
+      <h3>Elenco delle celle</h3>
+      <p>Tocca l'icona del segnale nella card <b>Utilità</b> per aprire <b>Fotocellule wireless</b>:</p>
+      <table>
+        <tr><th>Colonna</th><th>Significato</th></tr>
+        <tr><td>Linea · Cella</td><td>La linea a cui vanno i passaggi e l'identificativo breve della cella.</td></tr>
+        <tr><td>Stato</td><td><span class="badge b-ok">Connessa</span> la cella comunica · <span class="badge b-grey">Persa</span> non si sente da più di 10 s (tra parentesi da quanto) · <span class="badge b-err">Conflitto di linea</span> due celle connesse sulla stessa linea.</td></tr>
+        <tr><td>Segnale</td><td>Potenza del segnale WiFi:
+          <span class="bars g4"><i></i><i></i><i></i><i></i></span>≥ −55 dBm ·
+          <span class="bars g3"><i></i><i></i><i></i><i></i></span>≥ −65 dBm ·
+          <span class="bars g2"><i></i><i></i><i></i><i></i></span>≥ −75 dBm ·
+          <span class="bars g1"><i></i><i></i><i></i><i></i></span>sotto.</td></tr>
+        <tr><td>RTT · FW · IP</td><td>Tempo di risposta della rete, versione del firmware e indirizzo della cella.</td></tr>
+        <tr><td>Ultimo passaggio</td><td>Da quanto tempo è arrivato l'ultimo passaggio (tra parentesi quanti in tutto).</td></tr>
+      </table>
+      <p>Sotto il numero di ogni linea, nella card Gestione transiti, compare il segnale della cella di quella linea: barrato in rosso se la cella è persa, un triangolo rosso se c'è un conflitto. Quando una cella si collega o si perde compare un avviso in alto.</p>
+      <p>I passaggi delle celle si comportano come quelli degli ingressi cablati: su una linea disabilitata vengono salvati come righe disabilitate.</p>
+    </section>
+
+    <section id="stampa">
+      <h2>12. Stampante termica</h2>
+      <p>Con <b>Stampa su carta</b> attivo (⚙️ → <b>⚙️ Generali</b>) la stazione stampa da sola:</p>
+      <ul>
+        <li>ogni passaggio (numero, linea, concorrente, ora);</li>
+        <li>uno scontrino a ogni sincronizzazione dell'orologio e la riga <i>CONFERMA</i> del test sync;</li>
+        <li>il nome della stazione quando lo cambi.</li>
+      </ul>
+      <p>L'impostazione resta salvata anche dopo lo spegnimento. Con <b>Stampa su carta</b> spenta la stazione non stampa nulla, neanche dai pulsanti di stampa: la console avvisa che la stampa è disattivata.</p>
+      <h3>Stampa a richiesta</h3>
+      <p>Il pulsante <b>🖨️</b> accanto all'orologio apre <b>🖨️ Stampa</b>, che stampa righe della lista passaggi:</p>
+      <ul>
+        <li><b>Intervallo righe</b>: <b>Da #</b> … <b>A #</b>, posizioni nella lista così come la vedi.</li>
+        <li><b>Formato riga</b>: testo con i campi tra graffe, per esempio <code>#{index} {test} {competitor} {line} {delta}</code>. <b>Campi</b> mostra i campi disponibili ({index}, {line}, {competitor}, {name}, {surname}, {time}, {race}, {elapsed}, {delta}, {penality}, {test}, {trigger}); <b>Predefinito</b> ripristina il formato standard.</li>
+        <li><b>Separatore righe</b>: testo stampato tra una riga e l'altra (facoltativo).</li>
+        <li><b>Anteprima</b> delle prime righe, poi <b>🖨 Stampa</b> con la barra di avanzamento. <b>Chiudi</b> interrompe la stampa.</li>
+      </ul>
+      <p>Inoltre: <b>🖨 Salva e stampa</b> nelle Impostazioni checkpoint stampa lo scontrino delle linee, e un tocco sulla riga della posizione GPS (scheda 🕐 Sync) stampa i dati del fix.</p>
+      <div class="note">La stampante richiede un alimentatore da 3 A (vedi <a href="#collegamenti">Alimentazione</a>).</div>
+    </section>
+
+    <section id="impostazioni">
+      <h2>13. Impostazioni (WiFi, MQTT, Generali)</h2>
+      <p>Il pulsante ⚙️ apre <b>Impostazioni</b>, con quattro schede. La scheda <b>🕐 Sync</b> è descritta in <a href="#sync">Orario e sincronizzazione</a>.</p>
+      <h3>🌍 WiFi</h3>
+      <p>Collega la stazione a una rete esterna con internet, necessaria per l'invio via email e per MQTT.</p>
       <ol class="steps">
-        <li>Accendi la cella e collegati alla sua rete <code>ChronofitCell_…</code> (password di fabbrica = identificativo dopo il trattino basso). Apri <code>http://192.168.11.1</code>.</li>
-        <li>In <b>Rete verso il base</b> premi <b>Cerca</b>, scegli la rete del Chronofit GPS (<code>Chronofit_…</code>) e inserisci la sua password. L'indirizzo del base di solito resta <code>192.168.10.1</code>.</li>
-        <li>Scegli la <b>linea del base</b> simulata (1–4), l'<b>ingresso fisico</b> (IN1–IN4) e il <b>lockout</b> dopo un passaggio (evita i doppi tempi).</li>
-        <li>Premi <b>Salva e riavvia</b>. La cella si collega da sola e, accesa prima o dopo il base, si riaggancia ogni volta.</li>
+        <li>Scrivi l'<b>SSID</b> oppure premi <b>🔍 Cerca reti</b> e scegli la rete dall'elenco.</li>
+        <li>Inserisci la <b>Password</b> (<b>Mostra password</b> per controllarla) e premi <b>Connetti</b>.</li>
+        <li>A connessione riuscita la scheda mostra <i>Già connesso con indirizzo IP</i>: tocca l'indirizzo per copiarlo, oppure usa <b>📋 Copia link</b> o <b>↗ Apri</b>. <b>⛔ Disconnetti</b> scollega la stazione.</li>
       </ol>
-      <h3>Stato sul Chronofit GPS</h3>
-      <p>Sotto il numero di ogni linea compare l'icona del <b>segnale</b> della cella. Nella card <b>Utilità</b> il contatore e il dettaglio (tocca l'icona) mostrano linea, stato, segnale, RTT, versione e ultimo passaggio. Una cella <span class="badge b-ok">Connessa</span> è stata sentita negli ultimi 10 s; se non si sente più diventa <span class="badge b-grey">Persa</span> e resta in elenco; se due celle usano la stessa linea compare <span class="badge b-err">Conflitto</span>.</p>
-      <p>Segnale:
-        <span class="bars g4"><i></i><i></i><i></i><i></i></span>ottimo ·
-        <span class="bars g3"><i></i><i></i><i></i><i></i></span>buono ·
-        <span class="bars g2"><i></i><i></i><i></i><i></i></span>medio ·
-        <span class="bars g1"><i></i><i></i><i></i><i></i></span>debole. Il segnale dipende dalla distanza e dagli ostacoli: tieni la cella sollevata da terra e in vista del dispositivo.</p>
-      <div class="note">Un passaggio <b>simulato dalla console</b> (tocco sul numero di linea, <b>Start</b>/<b>Stop</b>) fa suonare anche le celle di quella linea, con lo stesso lampo del LED 3 di un passaggio vero. Il beep si sente se è attivo nelle impostazioni della cella; la richiesta viaggia senza conferma, quindi se la rete la perde la cella non suona.</div>
-      <div class="tip">Le celle sono sincronizzate al microsecondo con il Chronofit GPS: l'errore tipico è di 1–2 ms. Un passaggio non consegnato resta in coda nella cella (fino a 5 minuti) e viene reinviato.</div>
+      <p>La stazione si ricollega da sola alla rete salvata a ogni accensione, finché non premi Disconnetti. Se la rete cade e la stazione continua a riprovare compare <b>⛔ Interrompi riconnessione</b>.</p>
+      <div class="warn">Quando la stazione si collega alla rete esterna, la sua rete WiFi cambia canale e i dispositivi collegati vengono disconnessi per qualche secondo: ricollegati e ricarica la pagina. Fai il collegamento prima della gara.</div>
+      <h3>📡 MQTT</h3>
+      <p>Con internet la stazione pubblica ogni passaggio su un broker MQTT, sul topic <code>prefisso/evento/stazione/chip/checkpoint</code> (l'anteprima compare sotto i campi). Può anche ricevere i passaggi di altre stazioni.</p>
+      <table>
+        <tr><th>Campo</th><th>Significato</th></tr>
+        <tr><td>Prefisso topic · Nome evento</td><td>Le prime parti del topic di pubblicazione (il nome della stazione è quello impostato in Generali).</td></tr>
+        <tr><td>Topic sottoscrizione</td><td>Il topic da cui ricevere i passaggi di altre stazioni.</td></tr>
+        <tr><td>Abilita notifiche</td><td>Mostra una scheda in alto per ogni passaggio ricevuto (con <b>✕ Chiudi tutti</b> se sono più di una).</td></tr>
+        <tr><td>Acquisisci riga</td><td>Aggiunge alla sessione il passaggio ricevuto.</td></tr>
+        <tr><td>Acquisizione</td><td><b>Immediata</b> (subito; <b>Mostra popup info</b> decide se avvisare) · <b>Conferma manuale</b> (accetti o scarti dalla scheda) · <b>Temporizzata</b> (dopo <b>Timeout (s)</b> la scheda decide da sola: <b>Alla scadenza</b> Accetta o Rifiuta).</td></tr>
+        <tr><td>⚙️ Impostazioni broker</td><td><b>Indirizzo broker</b>, <b>Porta</b>, <b>Usa credenziali</b> (utente e password), poi <b>Salva broker</b>.</td></tr>
+      </table>
+      <p>Premi <b>Salva</b> per salvare il resto della scheda. Lo stato del collegamento è l'icona 📡 della card Utilità.</p>
+      <h3>⚙️ Generali</h3>
+      <ul>
+        <li><b>Nome stazione timing</b>: identifica la stazione (compare nel topic MQTT).</li>
+        <li><b>Stampa su carta</b>: stampa automatica dei passaggi (vedi <a href="#stampa">Stampante</a>).</li>
+        <li><b>Abilita buzzer</b>: la stazione suona a ogni passaggio, con un segnale diverso per ogni linea. L'impostazione resta salvata anche dopo lo spegnimento.</li>
+        <li><b>Schermo intero</b>: come il pulsante nella barra in alto.</li>
+        <li><b>Gare</b> (solo con la disciplina Equitazione): accende le gare assistite, vedi <a href="#avvio">Apertura e discipline</a>.</li>
+      </ul>
     </section>
 
     <section id="led">
-      <h2>12. Significato dei LED</h2>
-      <p>Il Chronofit GPS ha <b>4 LED RGB</b>. Alla accensione fanno una sequenza <span class="led red"></span><span class="led green"></span><span class="led blue"></span><span class="led yellow"></span> e poi segnalano lo stato. Numerali da 1 nell'ordine della scheda.</p>
-      <div class="grid2">
-        <div class="cardlet">
-          <h4>Chronofit GPS</h4>
-          <table>
-            <tr><td><b>LED1</b><br>WiFi</td><td><span class="led red"></span>nessun dispositivo collegato alla rete del Chronofit<br><span class="led yellow"></span>dispositivo collegato, <b>senza internet</b><br><span class="led green"></span>dispositivo collegato e internet disponibile</td></tr>
-            <tr><td><b>LED2</b><br>Traffico</td><td><span class="led green"></span>invio dati al browser<br><span class="led orange"></span>ricezione di una richiesta<br><span class="led off"></span>nessun traffico</td></tr>
-            <tr><td><b>LED3</b><br>Linee</td><td>Si accende quando un ingresso è <b>chiuso</b>. Ogni ingresso ha il suo colore: <span class="led red"></span>IN1 · <span class="led green"></span>IN2 · <span class="led blue"></span>IN3 · <span class="led yellow"></span>IN4. Più ingressi chiusi insieme sommano i colori. <span class="led off"></span>tutti aperti.</td></tr>
-            <tr><td><b>LED4</b><br>GPS / PPS</td><td><span class="led blue blip"></span>lampo breve una volta al secondo: il GPS ha il fix e il PPS è attivo<br><span class="led off"></span>fisso spento: nessun fix (cielo non visibile, ricevitore in avvio)</td></tr>
-          </table>
-        </div>
-        <div class="cardlet">
-          <h4>Fotocellula Cell (wireless)</h4>
-          <table>
-            <tr><td><b>LED1</b><br>Collegamento</td><td><span class="led purple slow"></span>SSID del base non configurato<br><span class="led red"></span>non collegata al base<br><span class="led yellow"></span>collegata, clock non ancora sincronizzato<br><span class="led green"></span>collegata e sincronizzata<br><span class="led orange"></span>sincronizzata ma rete lenta (RTT &gt; 20 ms)</td></tr>
-            <tr><td><b>LED2</b><br>Segnale</td><td><span class="led green"></span>buono (≥ −60 dBm)<br><span class="led yellow"></span>medio (≥ −75 dBm)<br><span class="led red"></span>debole<br><span class="led off"></span>non collegata</td></tr>
-            <tr><td><b>LED3</b><br>Sensore</td><td><span class="led white"></span>ingresso attivo: utile per allineare la fotocellula<br><span class="led blue blip"></span>lampo = passaggio rilevato</td></tr>
-            <tr><td><b>LED4</b><br>Consegna</td><td><span class="led red"></span>errore negli ultimi 10 s<br><span class="led orange"></span>passaggi in coda, non ancora consegnati<br><span class="led green blip"></span>lampo = consegnato al base<br><span class="led dim"></span>qualcuno è collegato alla rete di configurazione della cella<br><span class="led off"></span>nulla da segnalare</td></tr>
-          </table>
-        </div>
-      </div>
-      <p>La cella emette anche un <b>beep breve</b> a ogni passaggio (disattivabile dalla sua pagina). Il Chronofit GPS ha il <b>buzzer</b>, abilitabile nelle impostazioni: suona a ogni passaggio con un pattern diverso per linea.</p>
-    </section>
-
-    <section id="wifi">
-      <h2>13. WiFi esterna e internet</h2>
-      <p>Il Chronofit può collegarsi anche a una rete WiFi esistente (router o hotspot del telefono): serve per inviare email, per l'ora via internet e per aggiornare il firmware. Apri <b>⚙️ → WiFi</b> (o tocca 🌍):</p>
-      <ol class="steps">
-        <li>Premi <b>🔍 Cerca reti</b> e scegli la rete dall'elenco (🔒 = protetta), oppure scrivi l'SSID.</li>
-        <li>Inserisci la password e premi <b>Connetti</b>.</li>
-        <li>A connessione avvenuta compare l'<b>indirizzo IP</b> ricevuto. Toccalo per copiarlo, oppure usa <b>📋 Copia link</b> e <b>↗ Apri</b> per aprire la console da quella rete.</li>
-      </ol>
-      <div class="warn"><b>Importante:</b> il dispositivo ha una sola radio. Quando si collega a una rete WiFi, la sua rete (access point) <b>si sposta sullo stesso canale</b> di quella rete, e i dispositivi collegati cadono per qualche secondo prima di riagganciarsi. Per questo conviene collegare la WiFi esterna <b>a gara ferma</b>, non durante le prove. Se il router è sul <b>canale 6</b> fisso (2,4 GHz) la caduta non avviene.</div>
-      <div class="note">Il link <code>http://&lt;IP&gt;/</code> funziona solo dai dispositivi collegati a quella stessa rete WiFi, non da chi è sulla rete del Chronofit.</div>
-      <p>Il pulsante <b>⛔ Disconnetti</b> scollega la rete esterna.</p>
-    </section>
-
-    <section id="mqtt">
-      <h2>14. MQTT</h2>
-      <p>Con internet disponibile, ogni passaggio può essere pubblicato su un <b>broker MQTT</b> e altri dispositivi possono ricevere messaggi dal broker. Si imposta in <b>⚙️ → MQTT</b>:</p>
+      <h2>14. Significato dei LED</h2>
+      <p>La stazione ha 4 LED a colori: qui il <b>colore</b> conta.</p>
       <table>
-        <tr><th>Campo</th><th>Significato</th></tr>
-        <tr><td>Prefisso topic, Nome evento</td><td>Costruiscono il topic di pubblicazione: <code>prefisso/evento/stazione/id/checkpoint</code>.</td></tr>
-        <tr><td>Topic sottoscrizione</td><td>Dove ascoltare i messaggi in arrivo.</td></tr>
-        <tr><td>Abilita notifiche</td><td>Mostra una scheda a schermo all'arrivo di un messaggio.</td></tr>
-        <tr><td>Acquisisci riga</td><td>Trasforma il messaggio in una riga della sessione. <b>Immediata</b>: subito · <b>Conferma manuale</b>: tu accetti o scarti · <b>Temporizzata</b>: dopo un timeout accetta o rifiuta.</td></tr>
-        <tr><td>Impostazioni broker</td><td>Indirizzo, porta ed eventuali credenziali (Salva broker).</td></tr>
+        <tr><th>LED</th><th>Significato</th></tr>
+        <tr><td><b>LED1</b> WiFi</td><td><span class="led green"></span>dispositivo collegato e stazione con internet · <span class="led yellow"></span>dispositivo collegato, senza internet · <span class="led red"></span>nessun dispositivo collegato</td></tr>
+        <tr><td><b>LED2</b> Comunicazione</td><td><span class="led green"></span>la stazione sta inviando dati · <span class="led orange"></span>la stazione sta ricevendo dati · <span class="led"></span>nessun traffico</td></tr>
+        <tr><td><b>LED3</b> Linee</td><td>Si accende quando un ingresso è chiuso, con il colore della linea: <span class="led red"></span>1 · <span class="led green"></span>2 · <span class="led blue"></span>3 · <span class="led yellow"></span>4. Con più ingressi chiusi insieme i colori si mescolano. Utile per controllare il cablaggio e l'allineamento delle fotocellule.</td></tr>
+        <tr><td><b>LED4</b> PPS</td><td><span class="led pps"></span>lampeggio blu una volta al secondo: il GPS riceve l'impulso PPS · <span class="led"></span>spento: nessun impulso</td></tr>
       </table>
-      <p>L'icona 📡 nella card Utilità mostra lo stato: 🟢 connesso · 🔴 internet presente ma broker non raggiungibile · ⚫ nessun internet.</p>
     </section>
 
     <section id="viste">
-      <h2>15. Viste per secondo schermo</h2>
-      <p>Da un altro dispositivo collegato al Chronofit (TV, proiettore, tablet) puoi aprire una vista di sola lettura, che si aggiorna in tempo reale:</p>
+      <h2>15. Viste per secondo schermo e video</h2>
+      <p>Da un altro dispositivo collegato alla stazione (TV, proiettore, tablet) puoi aprire una pagina di sola lettura, che si aggiorna in tempo reale. Il pulsante con il monitor nella barra in alto apre direttamente quella della disciplina.</p>
       <table>
         <tr><th>Indirizzo</th><th>Contenuto</th></tr>
-        <tr><td><a href="/view.html" target="_blank"><code>/view.html</code></a></td><td>orologio e lista passaggi</td></tr>
-        <tr><td><a href="/view_equitazione.html" target="_blank"><code>/view_equitazione.html</code></a></td><td>orologio e classifica per l'equitazione</td></tr>
-        <tr><td><a href="/view_enduro.html" target="_blank"><code>/view_enduro.html</code></a></td><td>vista Enduro con tempi netti</td></tr>
-        <tr><td><a href="/enduro_competitor_start.html" target="_blank"><code>/enduro_competitor_start.html</code></a> · <a href="/enduro_competitor_finish.html" target="_blank"><code>…_finish.html</code></a></td><td>schermate per i concorrenti: ultima partenza e ultimo arrivo</td></tr>
-        <tr><td><a href="/sponsor.html" target="_blank"><code>/sponsor.html</code></a></td><td>schermata sponsor</td></tr>
-        <tr><td><a href="/stream.html" target="_blank"><code>/stream.html</code></a></td><td>visualizzazione di uno streaming video</td></tr>
+        <tr><td><a href="/view.html" target="_blank"><code>/view.html</code></a></td><td>orologio e lista passaggi (Regolarità, Sci)</td></tr>
+        <tr><td><a href="/view_equitazione.html" target="_blank"><code>/view_equitazione.html</code></a></td><td>lista passaggi come nella console in Equitazione (tocca l'intestazione per le impostazioni); con le Gare accese anche cavaliere in pista, tempo e classifica</td></tr>
+        <tr><td><a href="/view_enduro.html" target="_blank"><code>/view_enduro.html</code></a></td><td>tempi netti dell'Enduro</td></tr>
+        <tr><td><a href="/enduro_competitor_start.html" target="_blank"><code>/enduro_competitor_start.html</code></a> · <a href="/enduro_competitor_finish.html" target="_blank"><code>…_finish.html</code></a></td><td>schermate per i concorrenti: ultima partenza e ultimo arrivo (con tempo impiegato, posizione e distacco)</td></tr>
+        <tr><td><a href="/broadcast.html" target="_blank"><code>/broadcast.html</code></a> · <a href="/stream.html" target="_blank"><code>/stream.html</code></a></td><td>video di una telecamera (MJPEG, HLS o file video, indicando il suo indirizzo) con sopra i dati del concorrente e/o la tabella dei passaggi della linea scelta. Si configurano dal pulsante ⚙️ della pagina. Il video HLS carica la libreria <code>hls.js</code> da internet: serve una connessione sul dispositivo che apre la pagina (MJPEG e file video no).</td></tr>
       </table>
+      <p>Anche le viste hanno in basso a destra i pulsanti di zoom e schermo intero.</p>
       <div class="note">Nome e cognome compaiono solo se nel browser di quel dispositivo è stato caricato il registro atleti.</div>
     </section>
 
-    <section id="aggiornamento">
-      <h2>16. Aggiornamento firmware</h2>
-      <p>Dalla pagina <a href="/update.html" target="_blank"><code>/update.html</code></a> carichi il nuovo firmware (<code>fw.bin</code>) o la nuova interfaccia (<code>fs.bin</code>). La versione installata è nelle informazioni del dispositivo (tocca il logo in alto).</p>
-      <div class="warn">L'aggiornamento dell'<b>interfaccia</b> (<code>fs.bin</code>) cancella la sessione: scarica prima i tempi. L'aggiornamento del solo <b>firmware</b> non cancella nulla.</div>
+    <section id="licenza">
+      <h2>16. Licenza</h2>
+      <p>La stazione funziona con una licenza a numero di accensioni: <b>ogni accensione</b> consuma un utilizzo, ma solo se la stazione resta accesa almeno <b>90 secondi</b> o registra un passaggio. I riavvii, la programmazione e l'aggiornamento del firmware, la pressione del tasto EN e l'apertura del monitor seriale non lo consumano.</p>
+      <ul>
+        <li>Quando restano meno di 20 utilizzi compare <b>🔑</b> con il numero nella barra in alto e, a ogni apertura della console (dopo lo splash), un avviso: contatta il produttore per avere per tempo un nuovo codice.</li>
+        <li>A licenza esaurita la stazione <b>non registra passaggi</b> e il tempo trascorso non parte, finché non inserisci un codice di sblocco. La finestra della licenza resta aperta e la barra mostra <i>🔑 Esaurita</i>.</li>
+        <li>Con una <b>licenza illimitata</b> la finestra dice <i>Licenza illimitata</i> e in Informazioni compare ∞: non scatta nessun avviso.</li>
+      </ul>
+      <ol class="steps">
+        <li>Apri la finestra <b>Licenza</b>: tocca 🔑 nella barra, oppure il logo → Informazioni → <b>🔑 Licenza</b>.</li>
+        <li>Invia al produttore il <b>Codice dispositivo</b> mostrato nella finestra.</li>
+        <li>Scrivi il codice di sblocco ricevuto (16 caratteri, <code>XXXX-XXXX-XXXX-XXXX</code>) e premi <b>Attiva</b>.</li>
+      </ol>
+      <p>Ogni codice vale per un solo dispositivo e si può usare una sola volta.</p>
     </section>
 
-    <section id="specifiche">
-      <h2>17. Specifiche tecniche</h2>
+    <section id="servizio">
+      <h2>17. Pagine di servizio e aggiornamento</h2>
       <table>
-        <tr><th>Caratteristica</th><th>Valore</th></tr>
-        <tr><td>Peso</td><td>300 g</td></tr>
-        <tr><td>Dimensioni</td><td>128 × 140 × 64 mm</td></tr>
-        <tr><td>Potenza di trasmissione WiFi</td><td>100 mW</td></tr>
-        <tr><td>Alimentazione</td><td>USB Type-C 5 V / 3 A · jack 2,5 × 5,5 mm 12 V / 2 A</td></tr>
-        <tr><td>Risoluzione temporale</td><td>0,001 s</td></tr>
-        <tr><td>Accuratezza dell'oscillatore</td><td>±10 ppm (0 °C – 45 °C)</td></tr>
-        <tr><td>Ingressi</td><td>4 contatti puliti N.O.</td></tr>
-        <tr><td>Interfaccia</td><td>WiFi 2,4 GHz (access point + station), console web</td></tr>
+        <tr><th>Pagina</th><th>Contenuto</th></tr>
+        <tr><td><a href="/gps.html" target="_blank"><code>/gps.html</code></a> (menu iniziale → Utilità)</td><td><b>GPS Diagnostics</b>: stato del fix, ora UTC, posizione, HDOP, satelliti in uso e visibili, mappa del cielo.</td></tr>
+        <tr><td><a href="/admin.html" target="_blank"><code>/admin.html</code></a></td><td><b>Area Admin</b>, protetta da password: informazioni sul dispositivo (firmware, temperature, calibrazione dell'orologio), file in memoria e cambio della password della rete WiFi della stazione (almeno 8 caratteri).</td></tr>
+        <tr><td><a href="/update.html" target="_blank"><code>/update.html</code></a></td><td>Aggiornamento: scheda <b>Firmware</b> o <b>Filesystem</b>, scegli il file <code>.bin</code> e conferma. Al termine la stazione si riavvia.</td></tr>
+        <tr><td><a href="/api.html" target="_blank"><code>/api.html</code></a> (Informazioni → 🔌 Manuale API)</td><td>Le <b>Web API</b>: comandi HTTP e WebSocket per leggere i tempi e lo stato della stazione da altri programmi.</td></tr>
       </table>
+      <div class="warn">L'aggiornamento del <b>Filesystem</b> riscrive la memoria in cui è salvata la sessione: scarica prima i tempi. L'aggiornamento del solo <b>Firmware</b> non cancella la sessione.</div>
     </section>
 
     <section id="problemi">
       <h2>18. Risoluzione dei problemi</h2>
       <table>
         <tr><th>Problema</th><th>Cosa fare</th></tr>
-        <tr><td>"Nessuna connessione al dispositivo"</td><td>Verifica di essere collegato alla rete WiFi del Chronofit e ricarica la pagina.</td></tr>
-        <tr><td>Il GPS non aggancia</td><td>Porta il dispositivo all'aperto con vista libera sul cielo e attendi qualche minuto: LED4 deve lampeggiare una volta al secondo.</td></tr>
-        <tr><td>L'orologio è a 00:00:00</td><td>Non c'è sincronizzazione: scegli un metodo in <a href="#sync">Sincronizzazione</a>.</td></tr>
-        <tr><td>Doppi passaggi</td><td>Aumenta il <b>Ritardo (ms)</b> della linea, o il <b>lockout</b> della cella.</td></tr>
-        <tr><td>La stampante non stampa</td><td>Controlla che la <b>stampa su carta</b> sia attiva, che ci sia la carta e che l'alimentatore sia da almeno 3 A.</td></tr>
-        <tr><td>Una cella resta "Persa"</td><td>Controlla che sia accesa (LED1 verde) e vicina; guarda la sua pagina <code>http://192.168.11.1</code> e verifica SSID e password del base.</td></tr>
-        <tr><td>Si perde la connessione dopo aver collegato la WiFi esterna</td><td>È normale: l'access point cambia canale. Attendi qualche secondo e riconnettiti; vedi <a href="#wifi">WiFi esterna</a>.</td></tr>
+        <tr><td>"Nessuna connessione al dispositivo Chronofit"</td><td>Verifica di essere collegato alla rete WiFi della stazione e ricarica la pagina.</td></tr>
+        <tr><td>Il PC si scollega dalla rete della stazione</td><td>Usa lo Strumento fix WiFi (Informazioni) e riavvia il PC.</td></tr>
+        <tr><td>Orologio a 00:00:00.000, stato "non impostato"</td><td>Dopo l'accensione l'ora manuale va reimpostata: tocca l'orologio → Impostazioni, inserisci l'ora e premi Applica.</td></tr>
+        <tr><td>GPS sempre 🟡 o 🔴</td><td>Porta la stazione all'aperto con il cielo libero e attendi il fix. Controlla i satelliti in Utilità → GPS Diagnostics.</td></tr>
+        <tr><td>Test sync non disponibile</td><td>Serve Sync GPS attivo e sincronizzato (stato 🟢).</td></tr>
+        <tr><td>Doppi passaggi</td><td>Aumenta il ritardo (ms) della linea, o attiva Auto-annulla battute ravvicinate. Per una fotocellula wireless aumenta il lockout sulla cella.</td></tr>
+        <tr><td>Passaggi mancanti di atleti vicini</td><td>Il ritardo o il lockout è troppo lungo: riducilo.</td></tr>
+        <tr><td>Passaggi che non compaiono</td><td>La linea è disabilitata (righe nascoste: attiva Mostra righe linee disabilitate) o nascosta nella scheda 👁 Linee. Controlla anche la licenza.</td></tr>
+        <tr><td>Una cella resta "Persa"</td><td>Controlla che sia accesa e collegata alla rete della stazione; avvicinala.</td></tr>
+        <tr><td>Triangolo rosso su una linea</td><td>Due celle sono sulla stessa linea: cambia la linea di una delle due.</td></tr>
+        <tr><td>"Invia via email" non attivo</td><td>Collega la stazione a una rete con internet (🌍 🟢) e verifica che ci sia almeno un passaggio.</td></tr>
+        <tr><td>La stampante non stampa o si spegne</td><td>Verifica che Stampa su carta sia attivo e che l'alimentatore fornisca 3 A.</td></tr>
         <tr><td>Nome e cognome vuoti</td><td>Carica il registro atleti nel browser del dispositivo che stai usando.</td></tr>
       </table>
     </section>
 
-    <section id="api">
-      <h2>19. API per sviluppatori</h2>
-      <p>Il dispositivo risponde a richieste HTTP GET: si possono leggere valori, interrogare lo stato e leggere la configurazione da qualsiasi software. Alcuni esempi (indirizzo della rete del Chronofit):</p>
+    <section id="specifiche">
+      <h2>19. Specifiche tecniche</h2>
       <table>
-        <tr><th>Richiesta</th><th>Descrizione</th></tr>
-        <tr><td><code>http://192.168.10.1/time</code></td><td>Orario attuale (JSON)</td></tr>
-        <tr><td><code>http://192.168.10.1/getCheckpoints</code></td><td>Elenco dei passaggi della sessione (JSON)</td></tr>
-        <tr><td><code>http://192.168.10.1/allSettings</code></td><td>Impostazioni del sistema</td></tr>
-        <tr><td><code>http://192.168.10.1/downloadSession</code></td><td>Scarica il file della sessione</td></tr>
-        <tr><td><code>http://192.168.10.1/clearSession</code></td><td>Cancella la sessione (protetta da token, se impostato)</td></tr>
+        <tr><th>Caratteristica</th><th>Valore</th></tr>
+        <tr><td>Peso</td><td>300 g</td></tr>
+        <tr><td>Dimensioni</td><td>128 × 140 × 64 mm</td></tr>
+        <tr><td>Potenza di trasmissione WiFi</td><td>100 mW</td></tr>
+        <tr><td>Alimentazione</td><td>USB Type-C 5 V 3 A (con stampante) · USB 1 A (senza stampante) · jack 2,5 × 5,5 mm 12 V 2 A</td></tr>
+        <tr><td>Ingressi</td><td>4 linee, contatto pulito N.O.</td></tr>
+        <tr><td>Risoluzione temporale</td><td>0,001 s</td></tr>
+        <tr><td>Accuratezza dell'oscillatore</td><td>±10 ppm (0 °C – 45 °C)</td></tr>
+        <tr><td>Sincronizzazione</td><td>manuale, chiusura linea, GPS con impulso PPS, oppure tempo trascorso</td></tr>
       </table>
-      <p>L'elenco completo delle route, con parametri e formato delle risposte, è nel documento <b>API</b> del prodotto.</p>
     </section>
 
     <footer>Chronofit · GPS <span id="fw"></span> · <a href="mailto:info@chronofit.it">info@chronofit.it</a></footer>
@@ -438,7 +547,7 @@
 </div>
 
 <script>
-  // Versione firmware in fondo alla pagina (se il dispositivo risponde)
+  // Versione firmware in fondo alla pagina (se la stazione risponde)
   fetch('/systemSettings').then(r => r.json()).then(d => {
     if (d.fwVer) document.getElementById('fw').textContent = d.fwVer;
   }).catch(() => {});

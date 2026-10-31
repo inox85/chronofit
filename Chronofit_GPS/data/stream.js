@@ -791,8 +791,8 @@ document.getElementById("openSettings").addEventListener("click", openSettings);
 document.getElementById("cancelSettings").addEventListener("click", closeSettings);
 document.getElementById("confirmSettings").addEventListener("click", applySettings);
 
-document.getElementById("clearAthleteRegistry").addEventListener("click", () => {
-  if (!confirm("Svuotare il registro atleti?")) return;
+document.getElementById("clearAthleteRegistry").addEventListener("click", async () => {
+  if (!(await uiConfirm("Svuotare il registro atleti?"))) return;
   saveAthleteRegistry([]);
   document.getElementById("athleteJson").value = "";
   showGeneralPopup("Registro atleti svuotato", "#c0392b", 2000);

@@ -1,0 +1,5 @@
+python esptool --chip esp32 --port "COM" --baud 921600  --before default_reset --after hard_reset write_flash  -z --flash_mode keep --flash_freq keep --flash_size keep 0x1000 "C:\Users\Davide\AppData\Local\Temp\arduino\sketches\E2243DE6F2108487A8F4BE7162A07252/Chronofit_BLE.ino.bootloader.bin" 0x8000 "C:\Users\Davide\AppData\Local\Temp\arduino\sketches\E2243DE6F2108487A8F4BE7162A07252/Chronofit_BLE.ino.partitions.bin" 0xe000 "C:\Users\Davide\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.0.5/tools/partitions/boot_app0.bin" 0x10000 "C:\Users\Davide\AppData\Local\Temp\arduino\sketches\E2243DE6F2108487A8F4BE7162A07252/Chronofit_BLE.ino.bin"
+
+Cartella setting per compilazione:
+
+C:\Users\Davide\AppData\Local\Arduino15\packages\esp32\hardware\esp32\3.0.5
