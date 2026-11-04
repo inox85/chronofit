@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Il Chronofit serve la console in HTTP su un indirizzo IP locale (192.168.10.1): il traffico in chiaro va consentito -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

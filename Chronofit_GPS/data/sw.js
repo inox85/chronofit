@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chronofit-v31';
+const CACHE_NAME = 'chronofit-v32';
 
 const STATIC_ASSETS = [
   '/index.html',

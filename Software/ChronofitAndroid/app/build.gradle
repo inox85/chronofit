@@ -1,0 +1,32 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'it.chemitec.chronofit'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'it.chemitec.chronofit'
+        minSdk 29          // Android 10: salvataggio nei Download con MediaStore senza permessi
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+// Nessuna dipendenza: solo il framework Android (WebView di sistema)

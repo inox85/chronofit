@@ -58,6 +58,7 @@ function setClock(el, h, m, s) {
   el.innerText = clockText(h, m, s);
 }
 function refreshClock() {
+  if (eqClockFrozen()) { renderTable(); return; }
   if (lastClockHms) setClock(document.getElementById('time'), ...lastClockHms);
 }
 
@@ -319,6 +320,8 @@ function renderTable() {
     row._elapsedMs = el < 0 ? null : el;
   });
 
+  updateFrozenClock(visible, prec);
+
   // Ordinamento: come applyTableSort della console (verso naturale crescente
   // per le colonne di tempo, reverseOrder in XOR).
   const sc = p.sortCol;
@@ -441,8 +444,46 @@ window.addEventListener('storage', (e) => {
 function updateClockFromData(data) {
   const timeEl = document.getElementById('time');
   if (!timeEl) return;
+  if (eqClockFrozen()) return;   // con le Gare accese l'orologio resta sull'ultimo passaggio (updateFrozenClock)
   setClock(timeEl, data.h, data.m, data.s);
 }
+
+// Con le Gare accese (come nella Main RF) l'orologio non scorre: resta fermo sul trascorso
+// dell'ultimo passaggio valido (ultimo in ordine cronologico fra le righe visibili, esclusi
+// annullati e disabilitati), lo stesso valore della colonna Trascorso. Con le Gare spente
+// resta l'orologio della stazione (TYPE_TIME_UPDATE).
+function eqClockFrozen() {
+  return typeof EQ !== 'undefined' && EQ.on &&
+         (typeof eqDisciplineActive !== 'function' || eqDisciplineActive());
+}
+
+function updateFrozenClock(visibleChrono, prec) {
+  if (!eqClockFrozen()) return;
+  const timeEl = document.getElementById('time');
+  if (!timeEl) return;
+  let ms = 0;
+  for (let i = visibleChrono.length - 1; i >= 0; i--) {
+    const r = visibleChrono[i];
+    if (r.dataset.cancelled === '1' || r.dataset.enabled === '0') continue;
+    if (r._elapsedMs == null) continue;
+    ms = r._elapsedMs;
+    break;
+  }
+  timeEl.innerText = formatDuration(ms, prec);
+}
+
+// Le Gare si accendono o spengono dopo il caricamento (stato letto dalla Main): ridisegna l'orologio
+window.addEventListener('load', () => {
+  if (typeof EQ === 'undefined' || !Array.isArray(EQ.listeners)) return;
+  let last = null;
+  EQ.listeners.push(() => {
+    const f = eqClockFrozen();
+    if (f === last) return;
+    last = f;
+    try { renderTable(); } catch (e) { /* tabella non pronta */ }
+    if (!f && lastClockHms) setClock(document.getElementById('time'), ...lastClockHms);
+  });
+});
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
 let ws;
