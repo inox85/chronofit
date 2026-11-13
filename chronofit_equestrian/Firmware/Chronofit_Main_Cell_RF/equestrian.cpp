@@ -548,6 +548,20 @@ static EqRound *newRound(int comp, int phase) {
   return &r;
 }
 
+// Regolamento, tempo concesso e tempo limite di un turno si fissano alla sua creazione. Se il
+// regolamento o i dati del percorso cambiano prima della partenza, il turno pronto (o in conto
+// alla rovescia) li riprende, altrimenti la console mostra ancora i valori vecchi finché non si
+// riseleziona il cavaliere. Un turno già partito o concluso non cambia mai.
+static void refreshPendingRound() {
+  EqRound *r = cur();
+  if (!r || (r->state != EQ_READY && r->state != EQ_COUNTDOWN)) return;
+  if (r->state == EQ_READY || r->variant >= s_nVar) r->variant = s_course.variant;
+  r->taMs = courseTaMs(r->phase);
+  const EqVariant &v = s_var[r->variant];
+  r->tlMs = v.tlFactorX100 && r->taMs ? (uint32_t)((uint64_t)r->taMs * v.tlFactorX100 / 100) : 0;
+  changed();
+}
+
 static const char *cmdSelect(int comp, int phase, bool force, bool rearm) {
   EqRound *c = cur();
   if (c) {
@@ -863,6 +877,7 @@ void equestrianRegisterRoutes(AsyncWebServer &server) {
       s_cfgSave = true;
       s_cfgBroadcast = true;
       applyStartLine();
+      refreshPendingRound();
     }
     JsonDocument doc;
     cfgToJson(doc);
@@ -886,6 +901,7 @@ void equestrianRegisterRoutes(AsyncWebServer &server) {
           s_cfgSave = true;
           s_cfgBroadcast = true;
           applyStartLine();
+          refreshPendingRound();
         }
       }
       body = "";
